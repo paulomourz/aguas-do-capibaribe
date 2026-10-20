@@ -1,0 +1,13 @@
+# Documentação
+
+| Pasta | Para quem | Conteúdo |
+|---|---|---|
+| [`guia/`](guia/) | toda a equipe, banca e quem vai usar | **Guia do Águas do Capibaribe** em PDF: como o sistema funciona e como rodar |
+| [`tecnico/`](tecnico/) | quem desenvolve | [endpoints da API](tecnico/api.md) e [banco de dados e servidor](tecnico/banco-remoto.md) |
+| [`gestao/`](gestao/LEIA-ME.md) | equipe e orientador | termo de abertura (TAP) e pitch |
+| `assets/` | READMEs | imagens usadas na documentação |
+| `privado/` | só a equipe | acessos e senhas; **fica fora do Git** |
+
+Os guias de cada parte do código ficam junto dela: [`../backend/README.md`](../backend/README.md)
+(API), [`../database/LEIA-ME.md`](../database/LEIA-ME.md) (banco) e [`../iot/LEIA-ME.md`](../iot/LEIA-ME.md)
+(sensor simulado).

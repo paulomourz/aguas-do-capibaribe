@@ -1,0 +1,341 @@
+import { useEffect, useRef, useState } from 'react'
+import {
+  Banner,
+  Button,
+  Card,
+  CardHeader,
+  DataTable,
+  DiamondDivider,
+  EmptyState,
+  ErrorState,
+  Field,
+  LoadingBlock,
+  LogoMark,
+  PageHeader,
+  StatePreview,
+  Select,
+  StatusBadge,
+  statusMeta,
+} from '../components/ui'
+import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
+import { desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, statusDe, type Resumo } from '../domain'
+import { Link, navigate } from '../router'
+import { periodoAtual, useApp, useEstadoTela, useResumo } from '../store'
+
+/* ---------- G7 Relatórios ---------- */
+
+export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; anoInicial?: number }) {
+  const { nomeProcesso, notificar } = useApp()
+  const atual = periodoAtual()
+  const [mes, setMes] = useState(mesInicial ?? atual.mes)
+  const [ano, setAno] = useState(anoInicial ?? atual.ano)
+  const consulta = useResumo(mes, ano)
+  const [estado, setEstado] = useEstadoTela(consulta)
+  const [gerando, setGerando] = useState(false)
+  const [falhaPdf, setFalhaPdf] = useState(false)
+
+  const dados = estado === 'vazio' ? [] : consulta.dados
+  const real = dados.reduce((s, r) => s + r.real, 0)
+  const esperado = dados.reduce((s, r) => s + r.esperado, 0)
+  const lotes = dados.reduce((s, r) => s + r.lotes, 0)
+  const periodo = `${meses[mes - 1]} de ${ano}`
+  const podeExportar = estado !== 'carregando' && estado !== 'erro' && dados.length > 0
+
+  function exportar() {
+    setFalhaPdf(false)
+    setGerando(true)
+    setTimeout(() => {
+      setGerando(false)
+      if (estado === 'erro') return
+      notificar(`PDF de ${periodo.toLowerCase()} gerado com sucesso.`)
+      navigate(`/relatorios/pdf?mes=${mes}&ano=${ano}`)
+    }, 1400)
+  }
+
+  const totalDesvio = esperado ? desvioDe(real, esperado) : 0
+  const tdF = 'border-t-2 border-line-strong bg-page px-4 py-4 font-semibold text-ink first:pl-6 last:pr-6'
+
+  return (
+    <div className="flex flex-col gap-6 lg:gap-8">
+      <StatePreview value={estado} onChange={setEstado} />
+      <PageHeader
+        title="Relatórios"
+        description="Consumo consolidado por tipo de processo no período escolhido."
+      />
+
+      <Card className="p-4 sm:p-6">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,240px)_minmax(0,160px)_1fr] sm:items-end">
+          <Field id="mes" label="Mês">
+            <Select id="mes" value={mes} disabled={gerando} onChange={(e) => setMes(Number(e.target.value))}>
+              {meses.map((m, i) => (
+                <option key={m} value={i + 1}>
+                  {m}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field id="ano" label="Ano">
+            <Select id="ano" value={ano} disabled={gerando} onChange={(e) => setAno(Number(e.target.value))}>
+              {[atual.ano, atual.ano - 1].map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Button variant="secondary" icon={<IconDownload size={20} />} onClick={exportar} loading={gerando} disabled={!podeExportar} className="w-full sm:w-auto">
+              {gerando ? 'Gerando PDF…' : 'Exportar PDF'}
+            </Button>
+          </div>
+        </div>
+        {gerando && (
+          <p role="status" className="mt-4 text-[15px] text-ink-2">
+            Gerando o PDF de {periodo.toLowerCase()}. Isso pode levar alguns segundos.
+          </p>
+        )}
+        {falhaPdf && (
+          <div className="mt-4">
+            <Banner tone="crit" title="Não foi possível gerar o PDF">
+              Tente novamente em instantes. Os filtros escolhidos foram mantidos.
+            </Banner>
+          </div>
+        )}
+      </Card>
+
+      <Card as="section" className="overflow-hidden">
+        <CardHeader
+          title="Consumo por tipo de processo"
+          subtitle={
+            <span className="flex items-center gap-2">
+              <IconCalendar size={16} /> {periodo}
+              {dados.length > 0 && estado === 'dados' && <span className="tabular-nums">· {fmtNum(lotes)} lotes</span>}
+            </span>
+          }
+        />
+        <div className="mt-4">
+          {estado === 'carregando' ? (
+            <LoadingBlock rows={4} label="Carregando relatório…" />
+          ) : estado === 'erro' ? (
+            <ErrorState title="Não foi possível carregar o relatório" onRetry={() => setEstado('dados')} />
+          ) : dados.length === 0 ? (
+            <EmptyState
+              icon={<IconCalendar size={28} />}
+              title="Sem dados no período"
+              description={`Não há lotes registrados em ${periodo.toLowerCase()}. Escolha outro mês ou ano.`}
+            />
+          ) : (
+            <DataTable<Resumo>
+              rows={dados}
+              rowKey={(r) => r.processoId}
+              caption={`Consumo por tipo de processo em ${periodo}`}
+              minWidth={720}
+              cols={[
+                { key: 'p', header: 'Processo', mobile: 'title', render: (r) => <span className="font-semibold">{nomeProcesso(r.processoId)}</span> },
+                { key: 'l', header: 'Lotes', num: true, render: (r) => fmtNum(r.lotes) },
+                { key: 'c', header: 'Consumido (L)', num: true, render: (r) => fmtNum(r.real) },
+                { key: 'e', header: 'Esperado (L)', num: true, render: (r) => fmtNum(r.esperado) },
+                { key: 'd', header: 'Desvio', num: true, mobile: 'value', render: (r) => <span className="font-semibold">{fmtPct(desvioDe(r.real, r.esperado))}</span> },
+                { key: 's', header: 'Status', mobile: 'badge', render: (r) => <StatusBadge status={statusDe(desvioDe(r.real, r.esperado))} size="sm" /> },
+              ]}
+              footer={
+                <tr>
+                  <td className={tdF}>Total</td>
+                  <td className={`${tdF} text-right tabular-nums`}>{fmtNum(lotes)}</td>
+                  <td className={`${tdF} whitespace-nowrap text-right tabular-nums`}>{fmtNum(real)}</td>
+                  <td className={`${tdF} whitespace-nowrap text-right tabular-nums`}>{fmtNum(esperado)}</td>
+                  <td className={`${tdF} text-right tabular-nums`}>{fmtPct(totalDesvio)}</td>
+                  <td className={tdF}>
+                    <StatusBadge status={statusDe(totalDesvio)} size="sm" />
+                  </td>
+                </tr>
+              }
+            />
+          )}
+          {/* Totais no mobile */}
+          {estado === 'dados' && dados.length > 0 && (
+            <div className="flex flex-col gap-3 border-t-2 border-line-strong bg-page px-4 py-4 md:hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-base font-semibold">Total</span>
+                <span className="font-display text-lg font-semibold tabular-nums">{fmtPct(totalDesvio)}</span>
+              </div>
+              <dl className="grid grid-cols-2 gap-2 text-[15px]">
+                <div>
+                  <dt className="text-[13px] text-ink-2">Consumido</dt>
+                  <dd className="font-semibold tabular-nums">{fmtL(real)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[13px] text-ink-2">Esperado</dt>
+                  <dd className="font-semibold tabular-nums">{fmtL(esperado)}</dd>
+                </div>
+              </dl>
+              <StatusBadge status={statusDe(totalDesvio)} size="sm" />
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+/* ---------- G8 Pré-visualização do PDF (A4 vertical) ---------- */
+
+const A4_W = 794
+const A4_H = 1123
+
+export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
+  const { nomeProcesso, usuario, notificar } = useApp()
+  const wrap = useRef<HTMLDivElement>(null)
+  const [escala, setEscala] = useState(1)
+  const [geradoEm] = useState(() => new Date())
+
+  useEffect(() => {
+    const el = wrap.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setEscala(Math.min(1, e.contentRect.width / A4_W)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const consulta = useResumo(mes, ano)
+  const dados = consulta.dados
+  const real = dados.reduce((s, r) => s + r.real, 0)
+  const esperado = dados.reduce((s, r) => s + r.esperado, 0)
+  const lotes = dados.reduce((s, r) => s + r.lotes, 0)
+  const periodo = `${meses[mes - 1]} de ${ano}`
+  const nomeArquivo = `relatorio-agua-${meses[mes - 1].toLowerCase()}-${ano}.pdf`
+
+  return (
+    <div className="flex flex-col gap-6 lg:gap-8">
+      <PageHeader
+        title="Pré-visualização do PDF"
+        description={`${nomeArquivo} · A4 vertical`}
+        back={
+          <Link to={`/relatorios?mes=${mes}&ano=${ano}`} className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-[15px] font-semibold text-link hover:underline">
+            <IconArrowLeft size={18} /> Relatórios
+          </Link>
+        }
+        actions={
+          <>
+            <Button variant="secondary" icon={<IconPrinter size={18} />} onClick={() => window.print()}>
+              Imprimir
+            </Button>
+            <Button icon={<IconDownload size={18} />} onClick={() => notificar(`${nomeArquivo} baixado.`)}>
+              Baixar PDF
+            </Button>
+          </>
+        }
+      />
+
+      <div ref={wrap} className="rounded-[8px] bg-neutral-bg p-0 sm:p-8">
+        <div className="mx-auto" style={{ width: A4_W * escala, height: A4_H * escala }}>
+          <article
+            aria-label={`Relatório de consumo de água, ${periodo}`}
+            className="origin-top-left bg-white text-ink shadow-xl"
+            style={{ width: A4_W, height: A4_H, transform: `scale(${escala})` }}
+          >
+            <div className="h-1 bg-terracota" />
+            <div className="flex h-[calc(100%-4px)] flex-col px-16 py-14">
+              <header className="flex items-start justify-between gap-6">
+                <div className="flex items-center gap-3">
+                  <LogoMark size={52} />
+                  <div>
+                    <p className="font-display text-[22px] font-bold text-brand">Águas do Capibaribe</p>
+                    <p className="text-[13px] text-ink-2">Gestão de consumo de água por lote</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[13px] text-ink-2">Período</p>
+                  <p className="font-display text-[18px] font-semibold">{periodo}</p>
+                </div>
+              </header>
+              <DiamondDivider tone="areia" opacity={1} className="my-8" />
+
+              <h1 className="text-[28px] font-bold">Relatório de consumo por tipo de processo</h1>
+              <p className="mt-2 text-[15px] text-ink-2">
+                Comparação entre o consumo real de água e o total esperado pelas metas dos processos.
+              </p>
+
+              {dados.length === 0 ? (
+                <p className="mt-10 rounded-lg bg-page p-6 text-[15px] text-ink-2">
+                  {consulta.carregando ? 'Carregando dados do período…' : consulta.erro ? 'Não foi possível carregar os dados do período.' : 'Não há lotes registrados neste período.'}
+                </p>
+              ) : (
+                <>
+                  <div className="mt-8 grid grid-cols-3 gap-4">
+                    {[
+                      ['Total consumido', fmtL(real)],
+                      ['Total esperado', fmtL(esperado)],
+                      ['Desvio geral', fmtPct(desvioDe(real, esperado))],
+                    ].map(([l, v]) => (
+                      <div key={l} className="rounded-lg border border-line px-4 py-3">
+                        <p className="text-[13px] text-ink-2">{l}</p>
+                        <p className="mt-1 font-display text-[22px] font-semibold tabular-nums">{v}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <table className="mt-8 w-full border-collapse text-left text-[14px]">
+                    <thead>
+                      <tr className="border-b-2 border-brand">
+                        {['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'Desvio', 'Situação'].map((h, i) => (
+                          <th key={h} className={`py-2 text-[13px] font-medium text-ink-2 ${i > 0 && i < 5 ? 'text-right' : ''} ${i === 5 ? 'pl-6' : ''}`}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dados.map((r) => {
+                        const dv = desvioDe(r.real, r.esperado)
+                        const m = statusMeta[statusDe(dv)]
+                        return (
+                          <tr key={r.processoId} className="border-b border-line">
+                            <td className="py-3 font-semibold">{nomeProcesso(r.processoId)}</td>
+                            <td className="py-3 text-right tabular-nums">{fmtNum(r.lotes)}</td>
+                            <td className="py-3 text-right whitespace-nowrap tabular-nums">{fmtNum(r.real)}</td>
+                            <td className="py-3 text-right whitespace-nowrap tabular-nums">{fmtNum(r.esperado)}</td>
+                            <td className="py-3 text-right font-semibold tabular-nums">{fmtPct(dv)}</td>
+                            <td className={`py-3 pl-6 ${m.text}`}>
+                              <span className="inline-flex items-center gap-1.5 font-semibold">
+                                <m.Icon size={15} strokeWidth={2.2} /> {m.label}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-ink bg-page">
+                        <td className="py-3 pl-2 font-semibold">Total</td>
+                        <td className="py-3 text-right font-semibold tabular-nums">{fmtNum(lotes)}</td>
+                        <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">{fmtNum(real)}</td>
+                        <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">{fmtNum(esperado)}</td>
+                        <td className="py-3 text-right font-semibold tabular-nums">{fmtPct(desvioDe(real, esperado))}</td>
+                        <td className="py-3 pl-6" />
+                      </tr>
+                    </tfoot>
+                  </table>
+                  <p className="mt-4 text-[12px] text-ink-2">
+                    Desvio = (consumido − esperado) ÷ esperado. Valores em litros.
+                  </p>
+                </>
+              )}
+
+              <footer className="mt-auto">
+                <DiamondDivider tone="terracota" opacity={0.4} className="mb-4" />
+                <div className="flex justify-between text-[12px] text-ink-2">
+                  <span>
+                    Gerado em {fmtDataHora(geradoEm)}
+                    {usuario ? ` por ${usuario.nome}` : ''}
+                  </span>
+                  <span>Página 1 de 1</span>
+                </div>
+              </footer>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  )
+}

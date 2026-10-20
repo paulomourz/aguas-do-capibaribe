@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "author": "Águas do Capibaribe",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "vazao", "top": -120, "left": 150, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnLote",
+      "top": 150,
+      "left": 200,
+      "attrs": { "color": "green", "label": "Iniciar/Encerrar lote" }
+    },
+    { "type": "wokwi-led", "id": "ledLote", "top": -110, "left": -110, "attrs": { "color": "blue" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -20,
+      "left": -130,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "vazao:VCC", "esp:3V3", "red", [] ],
+    [ "vazao:GND", "esp:GND.1", "black", [] ],
+    [ "vazao:SIG", "esp:34", "green", [] ],
+    [ "btnLote:1.l", "esp:4", "blue", [] ],
+    [ "btnLote:2.l", "esp:GND.2", "black", [] ],
+    [ "esp:25", "esp:27", "orange", [] ],
+    [ "esp:2", "r1:2", "violet", [] ],
+    [ "r1:1", "ledLote:A", "violet", [] ],
+    [ "ledLote:C", "esp:GND.1", "black", [] ]
+  ]
+}

@@ -1,0 +1,477 @@
+<!doctype html>
+<!--
+  Fonte do "Guia do Águas do Capibaribe".
+  Para gerar o PDF de novo depois de editar: rode gerar-pdf.ps1 (nesta pasta).
+  As imagens vêm de src/assets/ do próprio projeto.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Guia do Águas do Capibaribe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --marinho: #12344d;
+    --marinho-2: #1b4965;
+    --agua: #7dc8ed;
+    --areia: #d9c7a3;
+    --sertao: #f3ecdf;
+    --sertao-2: #faf6ee;
+    --terracota: #b5543a;
+    --couro: #8b5a2b;
+    --tinta: #1f2933;
+    --tinta-2: #52606d;
+    --linha: #e5dfd3;
+    --ok: #14633a; --ok-bg: #e3f3e9;
+    --warn: #7a5200; --warn-bg: #fff1cc;
+    --crit: #a3201a; --crit-bg: #fbe4e2;
+  }
+  @page {
+    size: A4;
+    margin: 20mm 18mm 22mm 18mm;
+    @bottom-left { content: "Águas do Capibaribe · Guia do sistema"; font: 500 8.5pt Inter, sans-serif; color: #8a7a5c; }
+    @bottom-right { content: counter(page); font: 600 9pt Inter, sans-serif; color: #12344d; }
+  }
+  @page capa { margin: 0; @bottom-left { content: none } @bottom-right { content: none } }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 400 10.5pt/1.6 Inter, sans-serif; color: var(--tinta); background: #fff; }
+  h1, h2, h3 { font-family: 'Bricolage Grotesque', Inter, sans-serif; color: var(--marinho); letter-spacing: -0.01em; }
+  h2 { font-size: 22pt; line-height: 1.15; margin: 0 0 4mm; }
+  h3 { font-size: 13pt; margin: 7mm 0 2mm; }
+  p { margin: 0 0 3mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  strong { font-weight: 600; color: var(--tinta); }
+  code { font: 500 9pt/1.4 'Consolas', 'Courier New', monospace; background: var(--sertao); padding: 0.3mm 1.2mm; border-radius: 1mm; color: var(--marinho); }
+  pre { font: 400 8.8pt/1.55 'Consolas', 'Courier New', monospace; background: var(--marinho); color: #e8f1f7; padding: 4mm 5mm; border-radius: 2.5mm; margin: 0 0 4mm; white-space: pre-wrap; break-inside: avoid; }
+  pre .c { color: var(--areia); }
+  table { width: 100%; border-collapse: collapse; margin: 1mm 0 5mm; font-size: 9.6pt; break-inside: avoid; }
+  th { text-align: left; font-weight: 600; color: var(--tinta-2); background: var(--sertao); padding: 2.2mm 3mm; border-bottom: 1px solid var(--areia); }
+  td { padding: 2.2mm 3mm; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  .secao { break-before: page; }
+  .rotulo { display: flex; align-items: center; gap: 2.5mm; font: 600 9.5pt Inter, sans-serif; color: var(--couro); margin-bottom: 2mm; }
+  .rotulo::before { content: ""; width: 2.3mm; height: 2.3mm; background: var(--terracota); transform: rotate(45deg); }
+  .abertura { font-size: 12pt; line-height: 1.55; color: var(--tinta-2); max-width: 150mm; margin-bottom: 6mm; }
+  .nota { background: var(--sertao); border-left: 1.2mm solid var(--terracota); border-radius: 0 2mm 2mm 0; padding: 3.5mm 5mm; margin: 2mm 0 5mm; break-inside: avoid; }
+  .nota.agua { border-left-color: var(--marinho); background: #e8f1f7; }
+  .nota p:last-child { margin: 0; }
+  .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin: 2mm 0 5mm; }
+  .cartao { border: 1px solid var(--linha); border-radius: 2.5mm; padding: 4mm 4.5mm; break-inside: avoid; }
+  .cartao h4 { font: 700 11pt 'Bricolage Grotesque', sans-serif; color: var(--marinho); margin: 0 0 1.5mm; }
+  .cartao p { margin: 0; font-size: 9.8pt; color: var(--tinta-2); }
+  .formula { font: 600 12.5pt 'Bricolage Grotesque', sans-serif; color: var(--marinho); background: var(--sertao); border-radius: 2.5mm; padding: 4mm 5mm; text-align: center; margin: 2mm 0 5mm; }
+  .selo { display: inline-flex; align-items: center; gap: 1.2mm; font-weight: 600; font-size: 8.8pt; padding: 0.6mm 2.6mm; border-radius: 99px; white-space: nowrap; }
+  .s-ok { color: var(--ok); background: var(--ok-bg); } .s-warn { color: var(--warn); background: var(--warn-bg); } .s-crit { color: var(--crit); background: var(--crit-bg); }
+  .passos { list-style: none; padding: 0; counter-reset: passo; }
+  .passos > li { counter-increment: passo; padding-left: 11mm; margin-bottom: 4mm; break-inside: avoid; display: flow-root; }
+  .passos > li::before { content: counter(passo); float: left; margin: 0 0 0 -11mm; width: 7mm; height: 7mm; border-radius: 50%; background: var(--marinho); color: #fff; font: 700 9.5pt/7mm Inter, sans-serif; text-align: center; }
+  .passos > li > strong:first-child { display: block; font-size: 11pt; color: var(--marinho); margin-bottom: 0.5mm; }
+  .fluxo { display: flex; align-items: center; justify-content: center; gap: 3mm; margin: 3mm 0 5mm; break-inside: avoid; }
+  .fluxo .no { padding: 3mm 5mm; border-radius: 2.5mm; font-weight: 600; text-align: center; font-size: 10pt; }
+  .fluxo .seta { color: var(--tinta-2); font-size: 14pt; }
+  .serra { display: block; width: 100%; height: 26mm; margin-top: 8mm; }
+
+  /* ---------- Capa ---------- */
+  .capa { page: capa; position: relative; height: 297mm; width: 210mm; overflow: hidden; background: var(--marinho); color: #fff; padding: 26mm 22mm; display: flex; flex-direction: column; }
+  .capa .ondas { position: absolute; inset: auto 0 0 0; height: 62%; }
+  .capa .marca { position: relative; display: flex; align-items: center; gap: 4mm; }
+  .medalhao { display: grid; place-items: center; border-radius: 50%; background: var(--sertao); box-shadow: 0 0 0 1mm rgba(217,199,163,.6); }
+  .capa .medalhao { width: 19mm; height: 19mm; }
+  .capa .medalhao img { width: 15mm; height: 15mm; object-fit: contain; }
+  .capa .nome { font: 700 17pt 'Bricolage Grotesque', sans-serif; }
+  .capa .sub { color: var(--areia); font-size: 10.5pt; }
+  .capa h1 { position: relative; color: #fff; font-size: 44pt; line-height: 1.04; margin: 48mm 0 6mm; max-width: 150mm; }
+  .capa .chamada { position: relative; font-size: 14pt; line-height: 1.5; color: #c9d9e5; max-width: 130mm; }
+  .capa .rodape { position: relative; margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; font-size: 9.5pt; color: #c9d9e5; }
+  .capa .rodape strong { color: var(--areia); font-weight: 600; }
+
+  /* ---------- Sumário ---------- */
+  .sumario ol { list-style: none; padding: 0; counter-reset: s; margin-top: 6mm; }
+  .sumario li { counter-increment: s; display: flex; align-items: baseline; gap: 4mm; padding: 3.2mm 0; border-bottom: 1px solid var(--linha); margin: 0; }
+  .sumario li::before { content: counter(s, decimal-leading-zero); font: 700 12pt 'Bricolage Grotesque', sans-serif; color: var(--terracota); width: 9mm; }
+  .sumario .t { font: 600 12pt 'Bricolage Grotesque', sans-serif; color: var(--marinho); }
+  .sumario .d { color: var(--tinta-2); font-size: 9.6pt; margin-left: auto; text-align: right; max-width: 85mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ CAPA ============ -->
+<section class="capa">
+  <svg class="ondas" viewBox="0 0 736 491" preserveAspectRatio="xMidYMax slice" style="-webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%); mask-image: linear-gradient(to bottom, transparent, #000 25%)">
+    <defs>
+      <filter id="f-ondas" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.8 -0.8 -0.8 0 1.9" result="m" />
+        <feFlood flood-color="#d9c7a3" flood-opacity="0.16" result="c" />
+        <feComposite in="c" in2="m" operator="in" />
+      </filter>
+    </defs>
+    <image href="../../../src/assets/wave-minimal-reference.jpg" width="736" height="491" filter="url(#f-ondas)" />
+  </svg>
+  <div class="marca">
+    <span class="medalhao"><img src="../../../src/assets/logo.png" alt=""></span>
+    <span><div class="nome">Águas do Capibaribe</div><div class="sub">Gestão de água por lote</div></span>
+  </div>
+  <h1>Guia do Águas do Capibaribe</h1>
+  <p class="chamada">Como o sistema funciona no dia a dia da lavanderia e como colocá-lo para rodar, do banco de dados ao sensor.</p>
+  <div class="rodape">
+    <span><strong>Versão 1.0</strong> · 20 de outubro de 2026</span>
+    <span>Toritama · Caruaru · Santa Cruz do Capibaribe</span>
+  </div>
+</section>
+
+<!-- ============ SUMÁRIO ============ -->
+<section class="sumario">
+  <div class="rotulo">Neste guia</div>
+  <h2>Sumário</h2>
+  <ol>
+    <li><span class="t">O que é o Águas do Capibaribe</span><span class="d">o problema e quem usa</span></li>
+    <li><span class="t">Processos, metas e lotes</span><span class="d">esperado, desvio e status</span></li>
+    <li><span class="t">Alertas</span><span class="d">a regra dos 3 lotes seguidos</span></li>
+    <li><span class="t">Perfis e telas</span><span class="d">o que o gestor e o operador veem</span></li>
+    <li><span class="t">O sistema no dia a dia</span><span class="d">primeiro acesso, registro de lote e acompanhamento</span></li>
+    <li><span class="t">O sensor de vazão</span><span class="d">o lote que chega sozinho</span></li>
+    <li><span class="t">Como as peças se conectam</span><span class="d">front-end, API, banco e sensor</span></li>
+    <li><span class="t">Como rodar o sistema</span><span class="d">passo a passo no computador</span></li>
+    <li><span class="t">Problemas comuns</span><span class="d">o que fazer quando algo não sobe</span></li>
+    <li><span class="t">Cuidados e boas práticas</span><span class="d">senhas, banco oficial e testes</span></li>
+    <li><span class="t">Onde encontrar mais</span><span class="d">mapa da documentação e equipe</span></li>
+  </ol>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="secao">
+  <div class="rotulo">1 · Visão geral</div>
+  <h2>O que é o Águas do Capibaribe</h2>
+  <p class="abertura">As lavanderias de jeans do Agreste Pernambucano usam muita água em cada lavagem e quase nunca sabem quanto cada processo gasta de verdade. O Águas do Capibaribe mede o consumo <strong>lote a lote</strong> e compara com uma meta, para que a lavanderia veja na hora onde a água está sobrando.</p>
+
+  <h3>O que o sistema faz</h3>
+  <div class="grade">
+    <div class="cartao"><h4>Define metas</h4><p>Cada processo de lavagem (estonagem, tingimento, amaciamento…) ganha uma meta de litros por lote ou por peça.</p></div>
+    <div class="cartao"><h4>Registra o consumo real</h4><p>A cada lote, o operador informa as peças e os litros usados. Um sensor também pode enviar o lote sozinho.</p></div>
+    <div class="cartao"><h4>Compara com a meta</h4><p>O sistema calcula o esperado e o desvio em porcentagem assim que o lote é registrado.</p></div>
+    <div class="cartao"><h4>Avisa quando foge do controle</h4><p>Três lotes seguidos acima da meta no mesmo processo geram um alerta para o gestor.</p></div>
+  </div>
+
+  <h3>Quem usa</h3>
+  <table>
+    <tr><th style="width:28%">Quem</th><th>O que faz no sistema</th></tr>
+    <tr><td><strong>Gestor</strong></td><td>Cadastra processos, metas e usuários; acompanha dashboard, alertas e relatórios; vê todos os lotes.</td></tr>
+    <tr><td><strong>Operador</strong></td><td>Registra os lotes no chão de fábrica e consulta o histórico dos próprios lotes.</td></tr>
+    <tr><td><strong>Sensor de vazão</strong></td><td>Um ESP32 (hoje simulado no Wokwi) que entra no sistema como operador e envia os lotes medidos.</td></tr>
+  </table>
+
+  <div class="nota"><p><strong>Projeto acadêmico.</strong> Os relatórios são gerenciais e não têm validade jurídica.</p></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="secao">
+  <div class="rotulo">2 · Conceitos</div>
+  <h2>Processos, metas e lotes</h2>
+  <p class="abertura">Tudo no sistema gira em torno de três ideias: o <strong>processo</strong> tem uma meta, cada <strong>lote</strong> registra o que foi gasto, e a diferença entre os dois é o <strong>desvio</strong>.</p>
+
+  <h3>Processo e meta</h3>
+  <p>A meta pode ser de dois tipos, escolhidos no cadastro do processo:</p>
+  <table>
+    <tr><th style="width:26%">Unidade da meta</th><th style="width:34%">Como o esperado é calculado</th><th>Exemplo</th></tr>
+    <tr><td><strong>Litros por lote</strong></td><td>O esperado é a própria meta, qualquer que seja o número de peças.</td><td>Tingimento com meta de 1.500 L/lote → esperado 1.500 L.</td></tr>
+    <tr><td><strong>Litros por peça</strong></td><td>O esperado é a meta multiplicada pelas peças do lote.</td><td>Estonagem com 12 L/peça e 100 peças → esperado 1.200 L.</td></tr>
+  </table>
+
+  <h3>Lote</h3>
+  <p>Um lote é uma carga que passou por um processo. O operador informa o <strong>processo</strong>, a <strong>quantidade de peças</strong> e os <strong>litros utilizados</strong>. O <strong>esperado</strong> é calculado pelo próprio banco de dados no momento do registro, com a meta que valia naquela hora. Se a meta mudar depois, os lotes antigos continuam com o esperado da época.</p>
+
+  <h3>Desvio</h3>
+  <div class="formula">desvio = (litros usados − esperado) ÷ esperado × 100</div>
+  <p>Exemplo: esperado de 1.200 L e consumo de 1.290 L dão desvio de <strong>+7,5%</strong>. Desvio negativo quer dizer que o lote gastou menos que a meta.</p>
+
+  <h3>Status do lote</h3>
+  <p>As telas classificam cada desvio em três faixas:</p>
+  <table>
+    <tr><th style="width:30%">Status</th><th>Faixa de desvio</th></tr>
+    <tr><td><span class="selo s-ok">Dentro da meta</span></td><td>até 0% (gastou a meta ou menos)</td></tr>
+    <tr><td><span class="selo s-warn">Atenção</span></td><td>acima de 0% e até +8%</td></tr>
+    <tr><td><span class="selo s-crit">Crítico</span></td><td>acima de +8%</td></tr>
+  </table>
+  <div class="nota"><p>Essas faixas são <strong>provisórias</strong>: os limites oficiais ainda serão definidos pela equipe, e hoje a classificação é feita só no front-end.</p></div>
+
+  <div class="nota agua"><p><strong>Lote não se altera nem se apaga.</strong> O banco bloqueia qualquer mudança em lotes já registrados: o histórico de consumo é o registro fiel do que aconteceu. Se um lote for digitado errado, registre o correto e explique o caso ao gestor.</p></div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="secao">
+  <div class="rotulo">3 · Alertas</div>
+  <h2>A regra dos 3 lotes seguidos</h2>
+  <p class="abertura">Um lote acima da meta pode ser um acaso. Três seguidos no mesmo processo indicam um problema na máquina, na receita ou no procedimento. É isso que dispara um alerta.</p>
+
+  <ol class="passos">
+    <li><strong>Quando nasce um alerta</strong>Quando os 3 lotes mais recentes de um mesmo processo gastam <strong>mais</strong> que o esperado (sem tolerância: qualquer litro acima conta), o sistema cria um alerta <em>aberto</em> com esses 3 lotes.</li>
+    <li><strong>Quando a sequência continua</strong>Se o alerta ainda está aberto ou em análise e chega mais um lote acima da meta logo em seguida, esse lote entra no mesmo alerta, em vez de abrir outro.</li>
+    <li><strong>Quando a sequência quebra</strong>Um lote dentro da meta interrompe a sequência. Depois de um alerta resolvido, só uma <strong>nova</strong> sequência de 3 lotes abre outro alerta.</li>
+  </ol>
+
+  <h3>A vida de um alerta</h3>
+  <div class="fluxo">
+    <span class="no s-crit">Aberto</span><span class="seta">→</span>
+    <span class="no" style="background:#e3eef5;color:#12344d">Em análise</span><span class="seta">→</span>
+    <span class="no s-ok">Resolvido</span>
+  </div>
+  <p>O gestor muda o status pela tela <strong>Alertas</strong>, abrindo o detalhe do alerta. Também é possível ir direto de <em>aberto</em> para <em>resolvido</em>. Um alerta resolvido não volta atrás.</p>
+
+  <h3>O que o gestor vê</h3>
+  <ul>
+    <li>No <strong>Dashboard</strong>, os alertas ativos aparecem no topo, com o desvio médio de cada um.</li>
+    <li>No menu, o item <strong>Alertas</strong> mostra quantos estão abertos ou em análise.</li>
+    <li>No detalhe do alerta, a tabela mostra a sequência de lotes que o gerou, do mais antigo ao mais recente.</li>
+  </ul>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="secao">
+  <div class="rotulo">4 · Perfis e telas</div>
+  <h2>O que cada pessoa vê</h2>
+  <p class="abertura">Não existe cadastro público: quem cria os acessos é o gestor. Cada pessoa entra com o usuário e a senha que recebeu e vê só as telas do seu perfil.</p>
+
+  <table>
+    <tr><th style="width:26%">Tela</th><th>Para que serve</th><th style="width:13%">Gestor</th><th style="width:13%">Operador</th></tr>
+    <tr><td><strong>Dashboard</strong></td><td>Consumo do mês, meta, desvio geral, alertas ativos e gráfico meta x real por processo</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Alertas</strong></td><td>Alertas abertos, em análise e resolvidos; mudança de status</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido; impressão ou PDF</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado e desvio</td><td>sim</td><td>sim</td></tr>
+    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtro por processo</td><td>todos</td><td>os próprios</td></tr>
+    <tr><td><strong>Processos e metas</strong></td><td>Cadastrar processos e ajustar metas</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Configurações</strong></td><td>Trocar o próprio nome e a própria senha</td><td>sim</td><td>sim</td></tr>
+  </table>
+
+  <h3>Regras de acesso</h3>
+  <ul>
+    <li>O login dura <strong>8 horas</strong>. Depois disso, o sistema pede para entrar de novo.</li>
+    <li>Quem é desativado perde o acesso <strong>na hora</strong>, mesmo com a tela aberta.</li>
+    <li>O administrador principal, <code>capibaribe.admin</code>, não pode ser desativado.</li>
+    <li>Hoje o banco oficial tem só <strong>dois usuários fixos</strong>: <code>capibaribe.admin</code> (gestor, administrador do site) e <code>sensor.wokwi</code> (operador, usado pelo sensor), e nenhum processo ou lote. As senhas ficam em <code>docs/privado/acessos-e-senhas.md</code>, fora do Git.</li>
+    <li>Quem esquecer a senha pede ao gestor, que usa <strong>Redefinir senha</strong> na tela Usuários e entrega a nova senha à pessoa. A antiga deixa de valer na hora.</li>
+    <li>A própria senha se troca em <strong>Configurações</strong>, informando a senha atual. A senha do administrador principal só ele mesmo troca.</li>
+  </ul>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="secao">
+  <div class="rotulo">5 · Uso</div>
+  <h2>O sistema no dia a dia</h2>
+
+  <h3>Primeiro acesso do gestor</h3>
+  <ol class="passos">
+    <li><strong>Entre como administrador</strong>Use o login <code>capibaribe.admin</code> e a senha definida na instalação (variável <code>ADMIN_SENHA</code>).</li>
+    <li><strong>Troque a senha</strong>Em <strong>Configurações</strong>, informe a senha atual e uma nova, com pelo menos 8 caracteres.</li>
+    <li><strong>Cadastre os processos</strong>Em <strong>Processos e metas</strong> → <strong>Novo processo</strong>: nome, unidade da meta (por lote ou por peça) e o valor.</li>
+    <li><strong>Crie os acessos</strong>Em <strong>Usuários</strong>, crie um acesso para cada operador (e outros gestores, se houver) e entregue o usuário e a senha à pessoa. Na mesma tela dá para redefinir a senha de quem esqueceu.</li>
+  </ol>
+
+  <h3>Registrando um lote (operador)</h3>
+  <ol class="passos">
+    <li><strong>Abra Registro de lotes</strong>É a primeira tela do operador ao entrar.</li>
+    <li><strong>Preencha os três campos</strong>Escolha o processo executado na máquina, informe a quantidade de peças e os litros usados.</li>
+    <li><strong>Registre e confira</strong>O resultado aparece na hora: esperado, real, desvio e status. O lote fica no histórico.</li>
+  </ol>
+
+  <h3>Acompanhando o mês (gestor)</h3>
+  <ul>
+    <li>O <strong>Dashboard</strong> mostra o mês de referência, que também aparece no topo da tela.</li>
+    <li>No gráfico <strong>Meta x real</strong>, cada processo tem dois copos: o claro é a meta e o escuro é o consumo real.</li>
+    <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Imprimir</strong> ou <strong>Exportar PDF</strong> para guardar.</li>
+  </ul>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="secao">
+  <div class="rotulo">6 · IoT</div>
+  <h2>O sensor de vazão</h2>
+  <p class="abertura">Na fase 1 do IoT, um ESP32 simulado no Wokwi faz o papel de um medidor instalado na máquina. Para o sistema, ele é só mais um operador: entra com usuário e senha e registra lotes.</p>
+
+  <div class="fluxo">
+    <span class="no" style="background:#f3ecdf;color:#8b5a2b">ESP32 no Wokwi</span><span class="seta">→</span>
+    <span class="no" style="background:#f3ecdf;color:#8b5a2b">Túnel cloudflared</span><span class="seta">→</span>
+    <span class="no" style="background:#12344d;color:#fff">API</span><span class="seta">→</span>
+    <span class="no" style="background:#12344d;color:#fff">PostgreSQL</span>
+  </div>
+
+  <h3>Como um lote é medido</h3>
+  <ol class="passos">
+    <li><strong>Abrir a água</strong>O potenciômetro faz o papel da vazão: girar abre mais ou menos água.</li>
+    <li><strong>Iniciar o lote</strong>O botão verde liga a medição; o LED azul acende e o monitor serial mostra vazão e litros.</li>
+    <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 faz login na API, procura o processo pelo nome e envia peças e litros. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
+  </ol>
+
+  <div class="nota"><p><strong>Projeto no Wokwi.</strong> Só duas abas: <code>sketch.ino</code> e <code>diagram.json</code>. No começo do <code>sketch.ino</code>, preencha <code>API_URL</code> com o endereço do túnel (com <code>http://</code> e <code>/api</code> no final) e <code>SENHA</code> com a senha do <code>sensor.wokwi</code>. Essas duas linhas preenchidas ficam só no Wokwi, nunca no repositório.</p></div>
+
+  <div class="nota"><p><strong>Qual processo o sensor mede?</strong> O que estiver em <code>PROCESSO_NOME</code>, no <code>sketch.ino</code>, escrito como aparece no site (por exemplo, <code>"Estonagem"</code>). O sensor descobre o id sozinho pela API, então não é preciso consultar o banco. Se o nome não existir, o monitor serial lista os processos cadastrados. O guia completo, com o circuito e os erros comuns, está em <code>iot/LEIA-ME.md</code>.</p></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="secao">
+  <div class="rotulo">7 · Arquitetura</div>
+  <h2>Como as peças se conectam</h2>
+  <p class="abertura">O sistema tem quatro partes. O ponto central é a API: nem o site nem o sensor falam direto com o banco.</p>
+
+  <svg viewBox="0 0 600 230" style="width:100%;height:auto;margin:2mm 0 6mm" font-family="Inter, sans-serif">
+    <defs><marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#52606d"/></marker></defs>
+    <rect x="10" y="20" width="160" height="70" rx="10" fill="#f3ecdf"/>
+    <text x="90" y="50" text-anchor="middle" font-weight="700" font-size="14" fill="#12344d">Site (front-end)</text>
+    <text x="90" y="70" text-anchor="middle" font-size="11" fill="#52606d">React no navegador</text>
+    <rect x="10" y="140" width="160" height="70" rx="10" fill="#f3ecdf"/>
+    <text x="90" y="170" text-anchor="middle" font-weight="700" font-size="14" fill="#12344d">Sensor ESP32</text>
+    <text x="90" y="190" text-anchor="middle" font-size="11" fill="#52606d">Wokwi + túnel</text>
+    <rect x="230" y="60" width="170" height="110" rx="12" fill="#12344d"/>
+    <text x="315" y="100" text-anchor="middle" font-weight="700" font-size="15" fill="#fff">API</text>
+    <text x="315" y="120" text-anchor="middle" font-size="11" fill="#d9c7a3">Spring Boot · regras,</text>
+    <text x="315" y="136" text-anchor="middle" font-size="11" fill="#d9c7a3">login, perfis, alertas</text>
+    <rect x="460" y="70" width="130" height="90" rx="12" fill="#1b4965"/>
+    <text x="525" y="108" text-anchor="middle" font-weight="700" font-size="14" fill="#fff">PostgreSQL</text>
+    <text x="525" y="128" text-anchor="middle" font-size="11" fill="#c9d9e5">banco aguas</text>
+    <path d="M170 55 C200 55 205 95 228 98" fill="none" stroke="#52606d" stroke-width="2" marker-end="url(#seta)"/>
+    <path d="M170 175 C200 175 205 135 228 132" fill="none" stroke="#52606d" stroke-width="2" marker-end="url(#seta)"/>
+    <path d="M400 115 L458 115" fill="none" stroke="#52606d" stroke-width="2" marker-end="url(#seta)"/>
+    <text x="198" y="40" font-size="10" fill="#8b5a2b">JSON</text>
+    <text x="410" y="105" font-size="10" fill="#8b5a2b">SQL</text>
+  </svg>
+
+  <table>
+    <tr><th style="width:22%">Parte</th><th style="width:30%">Tecnologia</th><th>Onde está no projeto</th></tr>
+    <tr><td><strong>Front-end</strong></td><td>React 19, Vite, Tailwind CSS</td><td>raiz do repositório (<code>src/</code>), exigência do Figma Make</td></tr>
+    <tr><td><strong>API</strong></td><td>Java 21, Spring Boot 3.5, JWT</td><td><code>backend/</code></td></tr>
+    <tr><td><strong>Banco</strong></td><td>PostgreSQL 18</td><td><code>database/banco.sql</code></td></tr>
+    <tr><td><strong>Sensor</strong></td><td>ESP32 simulado no Wokwi</td><td><code>iot/</code></td></tr>
+  </table>
+
+  <h3>Três decisões importantes</h3>
+  <ul>
+    <li><strong>O banco guarda as regras críticas.</strong> O cálculo do esperado e a proibição de alterar lotes ficam em triggers do PostgreSQL. A API não cria nem altera tabelas: só confere, ao subir, se o esquema bate.</li>
+    <li><strong>O dono do lote vem do login.</strong> A API nunca aceita que alguém informe “quem registrou”: usa sempre a pessoa do token.</li>
+    <li><strong>Cada requisição confere o usuário no banco.</strong> Assim, desativar alguém tem efeito imediato.</li>
+  </ul>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="secao">
+  <div class="rotulo">8 · Instalação</div>
+  <h2>Como rodar o sistema</h2>
+  <p class="abertura">O passo a passo abaixo coloca o sistema inteiro para rodar num computador com Windows. Os comandos funcionam no PowerShell.</p>
+
+  <h3>Requisitos</h3>
+  <table>
+    <tr><th style="width:24%">Ferramenta</th><th style="width:20%">Versão</th><th>Para quê</th></tr>
+    <tr><td>JDK</td><td>21 ou mais novo</td><td>rodar a API</td></tr>
+    <tr><td>Maven</td><td>3.9 ou mais novo</td><td>compilar e subir a API</td></tr>
+    <tr><td>PostgreSQL</td><td>18</td><td>banco de dados (o <code>psql</code> precisa ser 18+)</td></tr>
+    <tr><td>Node.js</td><td>22 ou mais novo</td><td>rodar o site</td></tr>
+    <tr><td>pnpm</td><td>10</td><td>instalar o site (<code>npx pnpm@10</code> também serve)</td></tr>
+    <tr><td>cloudflared</td><td>qualquer</td><td>só para o sensor simulado</td></tr>
+  </table>
+
+  <ol class="passos">
+    <li><strong>Banco de dados</strong>Crie um banco vazio e aplique o esquema. O banco oficial já existe e se chama <code>aguas</code>; faça isto só numa máquina nova.
+<pre>psql -U postgres -c "create database aguas"
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql</pre></li>
+    <li><strong>Configuração da API</strong>Em <code>backend/</code>, copie <code>.env.example</code> para <code>.env</code> e preencha:
+<pre>DB_HOST=localhost        <span class="c"># endereço do PostgreSQL</span>
+DB_NAME=aguas
+DB_USER=...              <span class="c"># de preferência aguas_api, não postgres</span>
+DB_PASSWORD=...
+JWT_SECRET=...           <span class="c"># 32+ caracteres aleatórios</span>
+ADMIN_SENHA=...          <span class="c"># só na 1ª vez: cria o capibaribe.admin</span>
+CORS_ORIGINS=http://localhost:8443</pre>
+Para gerar o <code>JWT_SECRET</code> no PowerShell:
+<pre>[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])</pre></li>
+    <li><strong>Subir a API</strong>Ainda em <code>backend/</code>. Quando aparecer <code>Started AguasApiApplication</code>, ela está no ar em <code>http://localhost:8080/api</code>. Deixe o terminal aberto.
+<pre>cd backend
+mvn spring-boot:run</pre></li>
+    <li><strong>Configuração do site</strong>Na raiz do projeto, crie o arquivo <code>.env.local</code>:
+<pre>VITE_USAR_MOCK=false
+VITE_API_URL=http://localhost:8080/api</pre></li>
+    <li><strong>Subir o site</strong>Num segundo terminal, na raiz do projeto:
+<pre>pnpm install
+pnpm dev</pre>
+Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code>.</li>
+    <li><strong>Sensor (opcional)</strong>Abra o túnel com <code>cloudflared tunnel --url http://localhost:8080</code> e siga o <code>iot/LEIA-ME.md</code> para configurar o Wokwi.</li>
+  </ol>
+
+  <div class="nota agua"><p><strong>Modo simulado, sem API.</strong> Sem o <code>.env.local</code>, o site roda com dados de exemplo em memória, ótimo para apresentações. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Esses acessos só existem no modo simulado.</p></div>
+
+  <h3>Testes automáticos</h3>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 25 testes de regras, segurança e validação. Os 15 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado e apagado na hora; o passo a passo está no <code>backend/README.md</code>. Em 20/10/2026, os 40 testes passaram.</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="secao">
+  <div class="rotulo">9 · Ajuda</div>
+  <h2>Problemas comuns</h2>
+  <table>
+    <tr><th style="width:34%">O que aparece</th><th style="width:30%">Causa provável</th><th>Como resolver</th></tr>
+    <tr><td>API não sobe: <code>JWT_SECRET ausente ou curto</code></td><td>falta o segredo no <code>.env</code></td><td>Gere um segredo de 32+ caracteres e coloque em <code>JWT_SECRET</code>.</td></tr>
+    <tr><td>API não sobe: administrador principal não existe</td><td>banco novo sem <code>ADMIN_SENHA</code></td><td>Defina <code>ADMIN_SENHA</code> (8 a 72 caracteres) e suba de novo.</td></tr>
+    <tr><td>API não sobe: erro de validação do esquema</td><td>banco diferente do <code>banco.sql</code></td><td>Aplique o <code>database/banco.sql</code> num banco vazio.</td></tr>
+    <tr><td>Site: “Não foi possível conectar ao servidor”</td><td>API desligada ou origem fora do <code>CORS_ORIGINS</code></td><td>Confira se a API está no ar e se o endereço exato do site (ex.: <code>http://localhost:8443</code>) está em <code>CORS_ORIGINS</code>.</td></tr>
+    <tr><td>Login funciona no PC, mas não no celular</td><td>o celular abre o site por outro endereço (IP)</td><td>Inclua <code>http://IP-DO-PC:8443</code> em <code>CORS_ORIGINS</code> e reinicie a API.</td></tr>
+    <tr><td><code>pnpm dev</code>: “Cannot find module … vite”</td><td>dependências incompletas</td><td>Rode <code>pnpm install</code> de novo.</td></tr>
+    <tr><td><code>pnpm dev</code>: porta 8443 em uso</td><td>outro site já está rodando</td><td>Feche o outro terminal; a porta é fixa para combinar com o CORS.</td></tr>
+    <tr><td><code>psql</code>: erro em <code>\restrict</code></td><td><code>psql</code> antigo</td><td>Use o <code>psql</code> do PostgreSQL 18.</td></tr>
+    <tr><td>Sensor: “Processo … não encontrado”</td><td><code>PROCESSO_NOME</code> diferente dos nomes do site</td><td>Copie o nome de um processo da lista que aparece no monitor serial.</td></tr>
+    <tr><td>Senha do admin “incorreta”, mas está certa</td><td>o site está no modo simulado: o <code>.env.local</code> foi salvo com BOM</td><td>Salve o <code>.env.local</code> em UTF-8 sem BOM (no VS Code, canto inferior direito) e recarregue o site.</td></tr>
+    <tr><td>Alguém esqueceu a senha</td><td>—</td><td>O gestor usa <strong>Redefinir senha</strong> na tela Usuários.</td></tr>
+    <tr><td>Testes de integração “skipped”</td><td>sem Docker e sem banco temporário</td><td>Normal. Para rodá-los, siga a seção Testes do <code>backend/README.md</code>.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="secao">
+  <div class="rotulo">10 · Segurança</div>
+  <h2>Cuidados e boas práticas</h2>
+  <div class="grade">
+    <div class="cartao"><h4>Senhas fora do Git</h4><p><code>backend/.env</code>, <code>.env.local</code> e a senha do sensor (preenchida só no Wokwi) nunca vão para o repositório. Acessos da equipe ficam em <code>docs/privado/</code>, também fora do Git.</p></div>
+    <div class="cartao"><h4>Banco oficial é sagrado</h4><p>O <code>aguas</code> guarda só dados reais desde 20/10/2026. Nunca rode testes nele: os testes usam bancos temporários <code>*_teste</code>.</p></div>
+    <div class="cartao"><h4>Usuário próprio no banco</h4><p>Antes de publicar, troque o <code>postgres</code> por um usuário <code>aguas_api</code> sem permissão de apagar (receita em <code>docs/tecnico/banco-remoto.md</code>).</p></div>
+    <div class="cartao"><h4>Senhas fortes e pessoais</h4><p>Cada pessoa tem o próprio acesso. Senhas têm pelo menos 8 caracteres e são guardadas só como hash.</p></div>
+    <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o cloudflared aberto, a API fica acessível pela internet. Feche o túnel ao terminar de usar o sensor.</p></div>
+    <div class="cartao"><h4>Fluxo de trabalho</h4><p>Nada de commit direto na <code>main</code>: crie uma <code>feature/</code> a partir da <code>develop</code> e abra um pull request.</p></div>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="secao">
+  <div class="rotulo">11 · Referências</div>
+  <h2>Onde encontrar mais</h2>
+  <table>
+    <tr><th style="width:38%">Arquivo</th><th>O que tem</th></tr>
+    <tr><td><code>README.md</code></td><td>visão geral, como rodar e status do projeto</td></tr>
+    <tr><td><code>backend/README.md</code></td><td>configuração da API, administrador principal, regras e testes</td></tr>
+    <tr><td><code>database/LEIA-ME.md</code></td><td>tabelas, triggers e o banco oficial</td></tr>
+    <tr><td><code>docs/tecnico/api.md</code></td><td>todos os endpoints da API, erros e validações</td></tr>
+    <tr><td><code>docs/tecnico/banco-remoto.md</code></td><td>servidor de banco, permissões e situação atual</td></tr>
+    <tr><td><code>iot/LEIA-ME.md</code></td><td>sensor simulado no Wokwi, passo a passo</td></tr>
+    <tr><td><code>docs/guia/fonte/</code></td><td>fonte deste guia; rode <code>gerar-pdf.ps1</code> para gerar o PDF de novo</td></tr>
+  </table>
+
+  <h3>Equipe</h3>
+  <table>
+    <tr><th style="width:50%">Nome</th><th>Papel</th></tr>
+    <tr><td>Pedro</td><td>Full Stack / PO</td></tr>
+    <tr><td>Abraão Filipe</td><td>Back-end</td></tr>
+    <tr><td>João Bezerra</td><td>Back-end</td></tr>
+    <tr><td>Matheus Andrade</td><td>Front-end</td></tr>
+    <tr><td>Mateus Basilio</td><td>Banco de dados</td></tr>
+    <tr><td>Paulo Moura</td><td>DevOps</td></tr>
+    <tr><td>Fabio Cesar Figueiredo de Medeiros Chicout</td><td>Orientador</td></tr>
+  </table>
+
+  <svg class="serra" viewBox="0 44 264 76" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 72 L14 72 L24 61 L118 59 L128 67 L148 67 L159 56 L232 55 L242 64 L264 64 V120 H0 Z" fill="#d9c7a3" fill-opacity=".5"/>
+    <path d="M0 90 C8 80 22 80 30 86 C40 66 62 66 72 84 C80 78 90 78 96 86 C108 70 128 70 138 84 C150 58 176 58 186 82 C194 76 204 76 210 86 C222 70 244 70 252 84 L264 82 V120 H0 Z" fill="#d9c7a3"/>
+    <path d="M0 98 Q11 92 22 98 T44 98 T66 98 T88 98 T110 98 T132 98 T154 98 T176 98 T198 98 T220 98 T242 98 T264 98 V120 H0 Z" fill="#12344d"/>
+    <path d="M14 106 q6 -3 12 0 t12 0 M70 111 q6 -3 12 0 t12 0 M124 105 q6 -3 12 0 t12 0 M178 110 q6 -3 12 0 t12 0 M226 105 q6 -3 12 0 t12 0" fill="none" stroke="#7dc8ed" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Texto: o Git guarda com LF e converte conforme o sistema de quem baixa.
+* text=auto
+
+# Scripts de shell precisam de LF mesmo no Windows.
+*.sh text eol=lf
+
+# Binários: sem conversão de fim de linha nem diff de texto.
+# (Sem Git LFS: os arquivos do projeto são pequenos, e a Vercel não baixa LFS por padrão.)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.zip  binary

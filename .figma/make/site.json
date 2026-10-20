@@ -1,0 +1,11 @@
+{
+  "title": "AGUAS DO CAPIBARIBE",
+  "description": "Manage water consumption for industrial laundries with real-time tracking, goal setting, and alerts, tailored for operators and managers in Brazil.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
