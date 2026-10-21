@@ -165,7 +165,7 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 
 ## 📌 Status
 
-Comparado ao Termo de Abertura v2 (12/10/2026).
+Comparado ao [Termo de Abertura v2.1](docs/gestao/TAP.pdf) (20/10/2026).
 
 **Pronto**
 
