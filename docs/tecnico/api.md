@@ -39,8 +39,8 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /usuarios` | gestor | — | `UsuarioDTO[]` |
 | `POST /usuarios` | gestor | `{nome, usuario, perfil, senha}` | `201 UsuarioDTO` |
 | `PATCH /usuarios/{id}` | a própria pessoa | `{nome?, senha?, senhaAtual?}` (`senhaAtual` é obrigatória quando há `senha`) | `UsuarioDTO` |
-| `PATCH /usuarios/{id}/senha` | gestor (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO` |
-| `PATCH /usuarios/{id}/ativo` | gestor (não em si mesmo) | `{ativo}` | `UsuarioDTO` |
+| `PATCH /usuarios/{id}/senha` | gestor (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO`; registra `REDEFINICAO_SENHA` na auditoria |
+| `PATCH /usuarios/{id}/ativo` | gestor (não em si mesmo) | `{ativo}` | `UsuarioDTO`; registra `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO` na auditoria |
 | `GET /processos` | autenticado | — | `ProcessoDTO[]` |
 | `POST /processos` | gestor | `{nome, unidade, meta}` | `201 ProcessoDTO` |
 | `PUT /processos/{id}` | gestor | `{nome, unidade, meta}` | `ProcessoDTO` |

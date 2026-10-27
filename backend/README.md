@@ -183,6 +183,11 @@ Para inserir outro gestor sem passar pelo site:
   bytes, armazenadas só como hash BCrypt. Para trocar a própria senha é preciso informar a senha
   atual. Cada pessoa só altera a própria conta; o gestor pode redefinir a senha de outra pessoa
   (`PATCH /usuarios/{id}/senha`), exceto a do administrador principal, e não pode desativar a si mesmo.
+- **Auditoria:** redefinir a senha, desativar ou reativar outra pessoa grava em `auditoria_usuario`
+  quem fez (`gestor_id`), em quem (`usuario_afetado_id`), a ação e a hora, na mesma transação da
+  mudança (se uma falhar, as duas são desfeitas). Ações recusadas não geram registro. A tabela não
+  tem coluna de senha, e o banco bloqueia UPDATE e DELETE nela (`trg_auditoria_imutavel`); a API
+  também escreve uma linha `Auditoria: ...` no log, só com ids.
 - **Sessão:** JWT HS256 válido por 8 horas. A cada requisição autenticada, a API consulta o usuário
   no banco: se ele foi desativado, recebe 401 na hora, e o perfil considerado é sempre o do banco.
 - **Relatório mensal:** o mês é definido no fuso `America/Recife`.
@@ -237,6 +242,6 @@ psql -U postgres -c "drop database aguas_verificacao_teste"
 ```
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
-temporário também funciona. Resultado em 27/10/2026, com JDK 25: **41 testes, todos passando** (26
-unitários e de web + 15 de integração). Os 15 de `IntegracaoPostgresContainerTest` aparecem como
+temporário também funciona. Resultado em 27/10/2026, com JDK 25: **46 testes, todos passando** (30
+unitários e de web + 16 de integração). Os 16 de `IntegracaoPostgresContainerTest` aparecem como
 *skipped* sem Docker: são os mesmos testes de integração, na versão com contêiner.

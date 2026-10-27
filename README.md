@@ -177,7 +177,7 @@ mvn test
 | `SegurancaWebTest` | não | 401/403 por perfil, validações, formato de erro |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 
-São 41 testes: 26 unitários e de web + 15 de integração com PostgreSQL 18. Os de integração usam um
+São 46 testes: 30 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 

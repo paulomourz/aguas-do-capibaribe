@@ -325,6 +325,41 @@ abstract class IntegracaoPostgresBase {
         // operador não redefine senha de ninguém
         enviar(patch("/usuarios/" + g.id() + "/senha"), op, Map.of("senha", "redefinida-789"))
                 .andExpect(status().isForbidden());
+
+        // Auditoria (issue #16): só a redefinição que deu certo fica registrada, com gestor, afetado e hora.
+        assertThat(auditoriaDe(op.id())).containsExactly("REDEFINICAO_SENHA por " + g.id());
+        assertThat(auditoriaDe(g.id())).isEmpty();
+        assertThat(jdbc.queryForObject(
+                "select data_hora > now() - interval '1 minute' from auditoria_usuario where usuario_afetado_id = ?",
+                Boolean.class, op.id())).isTrue();
+    }
+
+    @Test
+    void desativarEReativarFicamNaAuditoriaQueNaoPodeSerAlteradaNemApagada() throws Exception {
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", false)).andExpect(status().isOk());
+        enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", true)).andExpect(status().isOk());
+        assertThat(auditoriaDe(op.id()))
+                .containsExactly("DESATIVACAO_USUARIO por " + g.id(), "REATIVACAO_USUARIO por " + g.id());
+
+        // A tabela não tem nenhuma coluna para senha ou hash.
+        assertThat(jdbc.queryForList(
+                "select column_name from information_schema.columns where table_name = 'auditoria_usuario'", String.class))
+                .containsExactlyInAnyOrder("id", "gestor_id", "usuario_afetado_id", "acao", "data_hora");
+
+        Integer id = jdbc.queryForObject("select max(id) from auditoria_usuario where usuario_afetado_id = ?", Integer.class, op.id());
+        assertThatThrownBy(() -> jdbc.update("update auditoria_usuario set acao = 'REDEFINICAO_SENHA' where id = ?", id))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update("delete from auditoria_usuario where id = ?", id))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    /** Ações registradas sobre um usuário, em ordem, no formato "ACAO por gestorId". */
+    private List<String> auditoriaDe(int usuarioId) {
+        return jdbc.queryForList(
+                "select acao || ' por ' || gestor_id from auditoria_usuario where usuario_afetado_id = ? order by id",
+                String.class, usuarioId);
     }
 
     @Test
