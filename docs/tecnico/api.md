@@ -1,5 +1,9 @@
 # API REST: endpoints
 
+> **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
+> Lá estão as 16 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
+
 Base: `http://<host>:8080/api`. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
 `2026-10-15T00:03:58.229Z`). Números decimais vão como números JSON.
 

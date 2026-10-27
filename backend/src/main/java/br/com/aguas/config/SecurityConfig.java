@@ -37,6 +37,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(a -> a
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers("/error").permitAll()
+                // Documentação (Swagger UI); desligável com SWAGGER_ATIVO=false
+                .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("GESTOR")
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("GESTOR")
                 .requestMatchers(HttpMethod.PATCH, "/usuarios/*/ativo").hasRole("GESTOR")

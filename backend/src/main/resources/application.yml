@@ -47,3 +47,17 @@ app:
     senha: ${ADMIN_SENHA:}
   # Fuso usado para definir o mês dos relatórios.
   fuso-relatorios: America/Recife
+  # Versão do pom.xml (preenchida no build); aparece no Swagger.
+  versao: '@project.version@'
+
+# Swagger UI em /api/swagger-ui.html e especificação em /api/v3/api-docs.
+# SWAGGER_ATIVO=false desliga os dois (por exemplo, em produção).
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ATIVO:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ATIVO:true}
+    persist-authorization: true
+    operations-sorter: method
+    display-request-duration: true
+  default-produces-media-type: application/json

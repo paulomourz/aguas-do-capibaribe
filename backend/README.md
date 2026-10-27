@@ -53,6 +53,7 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `JWT_EXPIRACAO` | não (`8h`) | Validade do login, sem renovação automática |
 | `CORS_ORIGINS` | sim, para o navegador | Origens do front, separadas por vírgula. `*` é recusado |
 | `SERVER_PORT` | não (8080) | Porta HTTP da API |
+| `SWAGGER_ATIVO` | não (true) | `false` desliga o Swagger UI e a especificação OpenAPI (ex.: em produção) |
 | `ADMIN_SENHA` | só na 1ª inicialização | Senha (8 a 72 bytes) do administrador principal, usada apenas para criá-lo |
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
 
@@ -72,12 +73,25 @@ Todas as rotas ficam sob o prefixo `/api` (ex.: `http://localhost:8080/api/auth/
 ```bash
 cd backend
 mvn spring-boot:run            # desenvolvimento
-mvn clean package              # gera target/aguas-api-1.0.0.jar
-java -jar target/aguas-api-1.0.0.jar
+mvn clean package              # gera target/aguas-api-<versão>.jar (ex.: aguas-api-0.1.0-alpha.jar)
+java -jar target/aguas-api-0.1.0-alpha.jar
 ```
 
 Com o `java -jar`, rode o comando dentro de `backend/` para o `.env` ser encontrado, ou defina as
 variáveis no sistema.
+
+### Documentação interativa (Swagger)
+
+Com a API no ar, abra **http://localhost:8080/api/swagger-ui.html**. A página lista as 16 rotas por
+grupo (Auth, Processos, Lotes, Alertas, Usuários e Relatórios), com o formato de cada pedido e
+resposta, e permite testá-las:
+
+1. Em **POST /auth/login**, clique em *Try it out*, informe usuário e senha e clique em *Execute*.
+2. Copie o `token` da resposta, clique em **Authorize** (cadeado no topo), cole o token e confirme.
+3. As outras rotas passam a ser chamadas com `Authorization: Bearer <token>`.
+
+A especificação OpenAPI em JSON fica em `/api/v3/api-docs` (dá para importar no Postman ou Insomnia).
+Para desligar as duas páginas, use `SWAGGER_ATIVO=false`. A versão exibida vem do `pom.xml`.
 
 ### Front-end apontando para a API
 
