@@ -371,6 +371,10 @@
   </table>
 
   <ol class="passos">
+    <li><strong>Baixar o projeto</strong>Clone o repositório e mude para a branch <code>develop</code>, onde está o trabalho do dia a dia (a <code>main</code> só recebe as versões entregues).
+<pre>git clone https://github.com/paulomourz/aguas-do-capibaribe.git
+cd aguas-do-capibaribe
+git checkout develop</pre></li>
     <li><strong>Banco de dados</strong>Crie um banco vazio e aplique o esquema. O banco oficial já existe e se chama <code>aguas</code>; faça isto só numa máquina nova.
 <pre>psql -U postgres -c "create database aguas"
 psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql</pre></li>
@@ -389,7 +393,9 @@ Para gerar o <code>JWT_SECRET</code> no PowerShell:
 mvn spring-boot:run</pre></li>
     <li><strong>Configuração do site</strong>Na raiz do projeto, crie o arquivo <code>.env.local</code>:
 <pre>VITE_USAR_MOCK=false
-VITE_API_URL=http://localhost:8080/api</pre></li>
+VITE_API_URL=http://localhost:8080/api
+VITE_NOME_LAVANDERIA=Nome da lavanderia</pre>
+Salve em UTF-8 <strong>sem BOM</strong>; com BOM, o site cai no modo simulado.</li>
     <li><strong>Subir o site</strong>Num segundo terminal, na raiz do projeto:
 <pre>pnpm install
 pnpm dev</pre>
@@ -400,7 +406,10 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Modo simulado, sem API.</strong> Sem o <code>.env.local</code>, o site roda com dados de exemplo em memória, ótimo para apresentações. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Esses acessos só existem no modo simulado.</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 25 testes de regras, segurança e validação. Os 15 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado e apagado na hora; o passo a passo está no <code>backend/README.md</code>. Em 20/10/2026, os 40 testes passaram.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 26 testes de regras, segurança e validação. Os 15 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado e apagado na hora; o passo a passo está no <code>backend/README.md</code>. Em 27/10/2026, com JDK 25, os 41 testes passaram.</p>
+
+  <h3>Documentação interativa da API</h3>
+  <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 16 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
 </section>
 
 <!-- ============ 9 ============ -->

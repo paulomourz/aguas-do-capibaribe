@@ -237,5 +237,6 @@ psql -U postgres -c "drop database aguas_verificacao_teste"
 ```
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
-temporário também funciona. Resultado em 20/10/2026: **40 testes, todos passando** (25 unitários e de
-web + 15 de integração).
+temporário também funciona. Resultado em 27/10/2026, com JDK 25: **41 testes, todos passando** (26
+unitários e de web + 15 de integração). Os 15 de `IntegracaoPostgresContainerTest` aparecem como
+*skipped* sem Docker: são os mesmos testes de integração, na versão com contêiner.
