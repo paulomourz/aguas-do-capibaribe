@@ -121,6 +121,10 @@ psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -
 ```
 
 No fim, o terceiro comando mostra o que o `aguas_api` pode fazer em cada tabela (nenhum `delete`).
+
+> **Já tem o banco de uma versão anterior?** Não recrie: aplique os scripts de `database/migracoes/`
+> que ainda não rodou, antes de subir a API nova. A lista está no
+> [`database/LEIA-ME.md`](database/LEIA-ME.md#atualizar-um-banco-que-já-existe-migrações).
 O banco começa vazio. Na primeira inicialização, a API cria o administrador principal
 `capibaribe.admin` com a senha de `ADMIN_SENHA` ([detalhes](backend/README.md#administrador-principal));
 os outros usuários são criados na tela **Usuários**.
@@ -181,7 +185,7 @@ mvn test
 | `SegurancaWebTest` | não | 401/403 por perfil, validações, formato de erro |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 
-São 41 testes: 26 unitários e de web + 15 de integração com PostgreSQL 18. Os de integração usam um
+São 46 testes: 30 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 

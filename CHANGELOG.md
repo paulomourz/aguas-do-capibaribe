@@ -10,6 +10,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 - **Documentação interativa da API (Swagger UI)** em `/api/swagger-ui.html`, com as 16 rotas por grupo,
   exemplos, erros possíveis e login por token (botão Authorize). Desligável com `SWAGGER_ATIVO=false`.
+- **Auditoria das ações do gestor** (issue #16): redefinir senha, desativar e reativar outra pessoa
+  ficam registrados em `auditoria_usuario` (quem, em quem, o quê, quando), sem senha e sem poder ser
+  alterados ou apagados. 46 testes (30 unitários e de web + 16 de integração).
+
+### Banco de dados
+
+- **Migração obrigatória** para bancos já existentes, antes de subir a API nova:
+  `database/migracoes/001-auditoria-usuario.sql`. Bancos novos já recebem a tabela pelo `banco.sql`.
 
 ### Segurança
 
@@ -19,8 +27,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 ### Documentação
 
 - Passo do `aguas_api` no "Como rodar" do README, no guia e no `database/LEIA-ME.md`.
-- README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`); 41 testes
-  (26 unitários e de web + 15 de integração).
+- README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`).
 
 ## [0.1.0-alpha] - 2026-10-27
 
