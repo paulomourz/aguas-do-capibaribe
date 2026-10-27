@@ -127,6 +127,7 @@ Na raiz, crie `.env.local` a partir de `.env.example`:
 ```
 VITE_USAR_MOCK=false
 VITE_API_URL=http://localhost:8080/api
+VITE_NOME_LAVANDERIA=Nome da lavanderia   # aparece no relatório em PDF
 ```
 
 ```bash
@@ -174,13 +175,12 @@ Comparado ao [Termo de Abertura v2.1](docs/gestao/TAP.pdf) (20/10/2026).
 - ✅ Processos e metas
 - ✅ Registro de lote com desvio e histórico por perfil
 - ✅ Alertas (3 lotes seguidos acima da meta) com status
-- ✅ Dashboard e relatório mensal
+- ✅ Dashboard e relatório mensal, com download direto em PDF
 - ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes, encontrando o processo pelo nome
 - ✅ Identidade visual "sertão e água"
 
 **Próximos passos**
 
-- 🟡 Exportar o relatório em PDF (hoje pelo "Imprimir" do navegador)
 - 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
 - ⬜ Inativar processo
 - ⬜ API conectando com usuário próprio (`aguas_api`) em vez de `postgres`
