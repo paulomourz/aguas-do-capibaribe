@@ -23,30 +23,31 @@ Nenhuma credencial deve ser enviada por chat nem gravada no Git: os valores vão
 | Senha desse usuário | `DB_PASSWORD` | entregue por canal seguro |
 | Exigência de SSL | `DB_SSLMODE` | `require` ou `verify-full` se a conexão sair da rede local |
 
-## 3. Usuário da aplicação (sugestão de permissões mínimas)
+## 3. Usuário da aplicação (permissões mínimas)
 
-A API precisa ler e gravar dados, mas não alterar a estrutura. Execute como dono do banco, trocando os
-nomes:
+A API precisa ler e gravar dados, mas não alterar a estrutura. O script
+[`../../database/seguranca-usuario-api.sql`](../../database/seguranca-usuario-api.sql) cria o usuário
+`aguas_api` com essas permissões e, no fim, mostra uma tabela do que ele pode fazer em cada tabela.
+Execute como dono do banco (psql 18+). A senha entra pela linha de comando e não fica no arquivo:
 
-```sql
-CREATE ROLE aguas_api LOGIN PASSWORD '<defina uma senha forte>';
-GRANT CONNECT ON DATABASE <banco> TO aguas_api;
-GRANT USAGE ON SCHEMA public TO aguas_api;
-GRANT SELECT, INSERT, UPDATE ON usuario, processo, alerta TO aguas_api;
-GRANT SELECT, INSERT ON lote, alerta_lote TO aguas_api;
-GRANT SELECT ON v_alertas, v_historico_lotes TO aguas_api;
-GRANT USAGE, SELECT ON SEQUENCE usuario_id_seq, processo_id_seq, lote_id_seq, alerta_id_seq TO aguas_api;
+```powershell
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha forte>' -f database/seguranca-usuario-api.sql
 ```
+
+Depois, no `backend/.env`, troque `DB_USER=aguas_api` e `DB_PASSWORD=<a mesma senha>` e reinicie a API.
+O `application.yml` não muda: ele só lê `DB_USER` e `DB_PASSWORD`.
 
 Por que esses privilégios:
 
 - `UPDATE` em `processo` e `usuario` cobre a edição de metas, de nome e de senha e a
-  ativação/desativação de acesso.
+  ativação/desativação de acesso. Em `processo`, ele também é exigido pelo `SELECT ... FOR UPDATE`
+  que serializa os registros de lote.
 - Em `alerta`, o `UPDATE` serve para mudar o status.
 - `lote` só precisa de `INSERT`, porque o trigger já impede alterações.
 - A API não faz `DELETE` em nenhuma tabela.
 - Sem `DELETE`, `TRUNCATE` e `CREATE`, um erro ou invasão na API não consegue apagar dados nem alterar
-  o esquema.
+  o esquema. `DROP` e `ALTER` já são barrados porque as tabelas pertencem ao `postgres`: só o dono
+  altera a estrutura.
 
 ## 4. Rede
 
