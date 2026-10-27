@@ -201,13 +201,12 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 - ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes, encontrando o processo pelo nome
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
+- ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
 
 **Próximos passos**
 
 - 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
 - ⬜ Inativar processo
-- 🟡 Usuário restrito `aguas_api` no banco: script pronto (`database/seguranca-usuario-api.sql`);
-  falta aplicar no banco oficial
 - ⬜ API publicada num endereço fixo (semana 5)
 
 ## 🌿 Fluxo de trabalho (GitFlow)
