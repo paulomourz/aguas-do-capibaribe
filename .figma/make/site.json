@@ -1,6 +1,7 @@
 {
   "title": "AGUAS DO CAPIBARIBE",
-  "description": "Manage water consumption for industrial laundries with real-time tracking, goal setting, and alerts, tailored for operators and managers in Brazil.",
+  "description": "Gestão do consumo de água por lote para lavanderias industriais, com metas, alertas e acompanhamento em tempo real.",
+  "language": "pt-BR",
   "robots": {
     "index": false
   },
