@@ -11,8 +11,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 - **Documentação interativa da API (Swagger UI)** em `/api/swagger-ui.html`, com as 16 rotas por grupo,
   exemplos, erros possíveis e login por token (botão Authorize). Desligável com `SWAGGER_ATIVO=false`.
 
+### Segurança
+
+- Usuário restrito `aguas_api` para a API (`database/seguranca-usuario-api.sql`): lê, insere e
+  atualiza, sem `DELETE`, `TRUNCATE`, `DROP` nem `ALTER`. O `backend/.env.example` já vem com ele.
+
 ### Documentação
 
+- Passo do `aguas_api` no "Como rodar" do README, no guia e no `database/LEIA-ME.md`.
 - README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`); 41 testes
   (26 unitários e de web + 15 de integração).
 
