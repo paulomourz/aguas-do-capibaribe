@@ -262,7 +262,7 @@ export function AlertaDetalhe({ id }: { id: string }) {
             <Button variant="secondary" onClick={() => setAcao(null)} disabled={salvando}>
               Cancelar
             </Button>
-            <Button onClick={confirmar} loading={salvando}>
+            <Button onClick={confirmar} loading={salvando} data-autofocus>
               {acao === 'resolvido' ? 'Confirmar resolução' : 'Confirmar análise'}
             </Button>
           </>

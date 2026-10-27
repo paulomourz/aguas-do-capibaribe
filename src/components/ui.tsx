@@ -855,6 +855,7 @@ export function Modal({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const titleId = safeId(useId(), 'mt')
+  const descId = `${titleId}-desc`
   const fechar = useRef(onClose)
   fechar.current = onClose
 
@@ -864,7 +865,8 @@ export function Modal({
     const el = ref.current
     const focaveis = () =>
       Array.from(el?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select, textarea, [href]') ?? [])
-    const primeiro = el?.querySelector<HTMLElement>('input, select') ?? focaveis()[0]
+    // data-autofocus marca a ação principal (Enter confirma); senão, o primeiro campo.
+    const primeiro = el?.querySelector<HTMLElement>('[data-autofocus]:not([disabled]), input, select') ?? focaveis()[0]
     primeiro?.focus()
     document.body.style.overflow = 'hidden'
     function onKey(e: KeyboardEvent) {
@@ -885,7 +887,9 @@ export function Modal({
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
-      anterior?.focus?.()
+      // Só devolve o foco se a tela não o levou para outro lugar (ex.: o resultado do lote).
+      const atual = document.activeElement
+      if (!atual || atual === document.body || el?.contains(atual)) anterior?.focus?.()
     }
   }, [open])
 
@@ -898,6 +902,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description ? descId : undefined}
         className={cx(
           'rise relative flex w-full flex-col bg-white shadow-2xl',
           size === 'sm' ? 'sm:max-w-[480px]' : 'sm:max-w-[560px]',
@@ -910,7 +915,11 @@ export function Modal({
             <h2 id={titleId} className="text-[22px] font-semibold leading-tight text-ink">
               {title}
             </h2>
-            {description && <p className="mt-1 text-[15px] text-ink-2">{description}</p>}
+            {description && (
+              <p id={descId} className="mt-1 text-[15px] text-ink-2">
+                {description}
+              </p>
+            )}
           </div>
           <button
             type="button"
