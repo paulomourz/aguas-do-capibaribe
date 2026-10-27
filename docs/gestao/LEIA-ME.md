@@ -5,6 +5,8 @@ Documentos do projeto que não são código.
 | Pasta ou arquivo | Conteúdo | Situação |
 |---|---|---|
 | [`TAP.pdf`](TAP.pdf) | Termo de Abertura do Projeto e backlog de histórias (v2.1, 20/10/2026) | ✅ |
+| [`ERS.pdf`](ERS.pdf) | Especificação de Requisitos de Software, norma IEEE 830 (v1.0, 27/10/2026) | ✅ |
+| [`ERS.docx`](ERS.docx) | A mesma especificação, editável no Word (gere o PDF de novo depois de editar) | ✅ |
 | `pitch/` | Roteiro e slides do pitch (vídeos: só o link, num arquivo `.md`) | a adicionar |
 
 O guia geral do sistema (como funciona e como rodar) fica em [`../guia/`](../guia/).
