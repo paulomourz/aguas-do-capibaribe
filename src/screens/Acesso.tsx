@@ -4,7 +4,7 @@ import { IconCompass, IconLock } from '../components/icons'
 import { navigate } from '../router'
 import { errosDaApi, homeDe, useApp } from '../store'
 import waveReference from '../assets/wave-minimal-reference.jpg'
-import AppLayout, { Footer, OndaAtiva } from '../layouts/AppLayout'
+import AppLayout, { Footer } from '../layouts/AppLayout'
 import logoUrl from '../assets/logo.png'
 
 /* ---------- A1 Login ---------- */
@@ -101,8 +101,6 @@ export function Login({ next }: { next?: string }) {
 
       {/* Formulário */}
       <section className="relative flex flex-1 flex-col overflow-hidden bg-sertao">
-        {/* as ondas do painel azul continuam aqui, em azul clarinho sobre a areia */}
-        <WavePattern cor="var(--color-brand)" opacidade={0.12} />
         <div className="relative flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
           <div className="w-full max-w-[400px]">
             <div className="mb-10 lg:hidden">
@@ -140,9 +138,8 @@ export function Login({ next }: { next?: string }) {
                 />
               </Field>
 
-              <Button type="submit" size="lg" full loading={carregando} className="relative mt-2 overflow-hidden">
-                {!carregando && <OndaAtiva />}
-                <span className="relative">{carregando ? 'Entrando…' : 'Entrar'}</span>
+              <Button type="submit" size="lg" full loading={carregando} className="mt-2">
+                {carregando ? 'Entrando…' : 'Entrar'}
               </Button>
             </form>
 
