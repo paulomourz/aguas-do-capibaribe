@@ -13,7 +13,7 @@
 
     <groupId>br.com.aguas</groupId>
     <artifactId>aguas-api</artifactId>
-    <version>1.0.0</version>
+    <version>0.1.0-alpha</version>
     <name>aguas-api</name>
     <description>API REST do sistema Águas do Capibaribe (gestão de consumo de água)</description>
 

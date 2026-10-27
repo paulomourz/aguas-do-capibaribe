@@ -79,6 +79,7 @@ flowchart LR
 | [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md) e [gestão](docs/gestao/LEIA-ME.md) |
 | `public/` | Arquivos servidos como estão (favicon) |
 | `.figma/` | Configuração do Figma Make. Não editar |
+| [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
 ## 🚀 Como rodar
 
@@ -166,7 +167,8 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 
 ## 📌 Status
 
-Comparado ao [Termo de Abertura v2.1](docs/gestao/TAP.pdf) (20/10/2026).
+Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está no
+[`CHANGELOG.md`](CHANGELOG.md). Comparado ao [Termo de Abertura v2.1](docs/gestao/TAP.pdf) (20/10/2026):
 
 **Pronto**
 
