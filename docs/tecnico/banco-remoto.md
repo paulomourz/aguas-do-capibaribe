@@ -79,8 +79,10 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
 - **Não existe mais banco de teste permanente.** O antigo `aguas_teste` foi apagado. Os testes de
   integração usam um banco descartável criado só na hora e apagado ao final (ver
   [`../../backend/README.md`](../../backend/README.md#testes)). Nunca rode os testes no `aguas`.
-- **Pendente:** a API ainda se conecta como `postgres` (superusuário). Antes de publicar, crie o
-  usuário `aguas_api` da seção 3 e troque `DB_USER`/`DB_PASSWORD` no `backend/.env`.
+- **Pendente:** o script do `aguas_api` (seção 3) está pronto e testado (os 15 testes de integração
+  passam conectados com ele), mas o banco oficial ainda não o recebeu: a API da máquina de DevOps ainda
+  conecta como `postgres`. Falta rodar o script no `aguas` e trocar `DB_USER`/`DB_PASSWORD` no
+  `backend/.env` dessa máquina.
 - **Servidor remoto:** a conexão com um PostgreSQL em outra máquina ainda não foi testada. Na
   primeira conexão, confirme que:
   1. a API inicia sem erro de validação do esquema (`Started AguasApiApplication` no log);
