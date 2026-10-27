@@ -119,6 +119,8 @@ cp .env.example .env     # preencha banco, JWT_SECRET e CORS_ORIGINS
 mvn spring-boot:run      # http://localhost:8080/api
 ```
 
+Com a API no ar, a documentação interativa (Swagger) fica em
+**http://localhost:8080/api/swagger-ui.html**: lista as 16 rotas e permite testá-las no navegador.
 Configuração completa, regras implementadas e testes: [`backend/README.md`](backend/README.md).
 
 ### 3. Front-end
