@@ -68,7 +68,7 @@ Não é preciso inserir ninguém à mão. Na primeira inicialização num banco 
 administrador principal (`capibaribe.admin`, perfil gestor) com a senha de `ADMIN_SENHA`, guardada só
 como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.md#administrador-principal).
 
-## 6. Situação atual (20/10/2026)
+## 6. Situação atual
 
 - **Banco oficial:** `aguas`, no PostgreSQL 18 da máquina de DevOps (`DB_HOST=localhost`). Desde
   20/10/2026 ele tem só os **dois usuários fixos**: `capibaribe.admin` (gestor, administrador do
@@ -83,6 +83,8 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
   seção 3). Conferido: login, processos, lotes, usuários, relatório e Swagger funcionam, e
   `DELETE FROM lote` é recusado. O `postgres` fica só para administrar o banco. A senha está em
   `docs/privado/acessos-e-senhas.md`, fora do Git.
+- **Migrações aplicadas no banco oficial:** `001-auditoria-usuario.sql` (27/10/2026). A tabela
+  `auditoria_usuario` já registra as ações do gestor sobre outros usuários.
 - **Servidor remoto:** a conexão com um PostgreSQL em outra máquina ainda não foi testada. Na
   primeira conexão, confirme que:
   1. a API inicia sem erro de validação do esquema (`Started AguasApiApplication` no log);

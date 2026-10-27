@@ -58,7 +58,7 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
 
 **Banco oficial.** O banco em uso é o `aguas` (veja a situação atual em
-[`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md#6-situação-atual-20102026)). A API
+[`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md#6-situação-atual)). A API
 conecta com o usuário próprio `aguas_api` (sem `DELETE`, `TRUNCATE`, `DROP` nem `ALTER`), criado por
 [`../database/seguranca-usuario-api.sql`](../database/seguranca-usuario-api.sql), e não com o
 superusuário `postgres` (no banco oficial desde 27/10/2026). Os 15 testes de integração também passam

@@ -253,6 +253,7 @@
     <li>Hoje o banco oficial tem só <strong>dois usuários fixos</strong>: <code>capibaribe.admin</code> (gestor, administrador do site) e <code>sensor.wokwi</code> (operador, usado pelo sensor), e nenhum processo ou lote. As senhas ficam em <code>docs/privado/acessos-e-senhas.md</code>, fora do Git.</li>
     <li>Quem esquecer a senha pede ao gestor, que usa <strong>Redefinir senha</strong> na tela Usuários e entrega a nova senha à pessoa. A antiga deixa de valer na hora.</li>
     <li>A própria senha se troca em <strong>Configurações</strong>, informando a senha atual. A senha do administrador principal só ele mesmo troca.</li>
+    <li>Toda redefinição de senha, desativação ou reativação feita por um gestor fica registrada na <strong>auditoria</strong> (quem fez, em quem e quando). O registro não guarda senha nenhuma e não pode ser alterado nem apagado.</li>
   </ul>
 </section>
 
@@ -379,7 +380,8 @@ git checkout develop</pre></li>
 <pre>psql -U postgres -c "create database aguas"
 psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql</pre>
 Depois crie o usuário da aplicação, <code>aguas_api</code>, que só lê, insere e atualiza. A senha escolhida aqui vai no <code>DB_PASSWORD</code>:
-<pre>psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='SENHA' -f database/seguranca-usuario-api.sql</pre></li>
+<pre>psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='SENHA' -f database/seguranca-usuario-api.sql</pre>
+<strong>Já tem um banco de uma versão anterior?</strong> Não recrie: aplique, em ordem, os scripts de <code>database/migracoes/</code> que ainda não rodou, antes de subir a API nova (lista no <code>database/LEIA-ME.md</code>).</li>
     <li><strong>Configuração da API</strong>Em <code>backend/</code>, copie <code>.env.example</code> para <code>.env</code> e preencha:
 <pre>DB_HOST=localhost        <span class="c"># endereço do PostgreSQL</span>
 DB_NAME=aguas
@@ -422,7 +424,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <tr><th style="width:34%">O que aparece</th><th style="width:30%">Causa provável</th><th>Como resolver</th></tr>
     <tr><td>API não sobe: <code>JWT_SECRET ausente ou curto</code></td><td>falta o segredo no <code>.env</code></td><td>Gere um segredo de 32+ caracteres e coloque em <code>JWT_SECRET</code>.</td></tr>
     <tr><td>API não sobe: administrador principal não existe</td><td>banco novo sem <code>ADMIN_SENHA</code></td><td>Defina <code>ADMIN_SENHA</code> (8 a 72 caracteres) e suba de novo.</td></tr>
-    <tr><td>API não sobe: erro de validação do esquema</td><td>banco diferente do <code>banco.sql</code></td><td>Aplique o <code>database/banco.sql</code> num banco vazio.</td></tr>
+    <tr><td>API não sobe: erro de validação do esquema (ex.: <code>missing table [auditoria_usuario]</code>)</td><td>banco de uma versão anterior, sem as migrações novas</td><td>Aplique os scripts de <code>database/migracoes/</code> que faltam (lista no <code>database/LEIA-ME.md</code>). Banco novo: use o <code>database/banco.sql</code> num banco vazio.</td></tr>
     <tr><td>Site: “Não foi possível conectar ao servidor”</td><td>API desligada ou origem fora do <code>CORS_ORIGINS</code></td><td>Confira se a API está no ar e se o endereço exato do site (ex.: <code>http://localhost:8443</code>) está em <code>CORS_ORIGINS</code>.</td></tr>
     <tr><td>Login funciona no PC, mas não no celular</td><td>o celular abre o site por outro endereço (IP)</td><td>Inclua <code>http://IP-DO-PC:8443</code> em <code>CORS_ORIGINS</code> e reinicie a API.</td></tr>
     <tr><td><code>pnpm dev</code>: “Cannot find module … vite”</td><td>dependências incompletas</td><td>Rode <code>pnpm install</code> de novo.</td></tr>

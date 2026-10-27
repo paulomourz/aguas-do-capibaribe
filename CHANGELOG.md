@@ -28,6 +28,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 - Passo do `aguas_api` no "Como rodar" do README, no guia e no `database/LEIA-ME.md`.
 - README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`).
+- README: como trabalhar numa issue (fechar à mão depois do merge na `develop`, migrações quando o
+  banco muda) e próximos passos apontando para as Issues do GitHub.
+- Guia: auditoria nas regras de acesso, migrações no "Como rodar" e o erro de esquema nos problemas
+  comuns.
 
 ## [0.1.0-alpha] - 2026-10-27
 

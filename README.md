@@ -131,7 +131,7 @@ os outros usuários são criados na tela **Usuários**.
 
 > **Banco oficial:** o `aguas` tem dois usuários fixos, `capibaribe.admin` (administrador do site) e
 > `sensor.wokwi` (sensor). Os processos reais são cadastrados pelo site. As senhas ficam fora do Git.
-> Situação atual: [`docs/tecnico/banco-remoto.md`](docs/tecnico/banco-remoto.md#6-situação-atual-20102026).
+> Situação atual: [`docs/tecnico/banco-remoto.md`](docs/tecnico/banco-remoto.md#6-situação-atual).
 
 ### 2. API
 
@@ -197,7 +197,7 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 **Pronto**
 
 - ✅ Login, perfis (gestor/operador), gestão de usuários e da própria conta
-- ✅ Gestor redefine a senha de outra pessoa
+- ✅ Gestor redefine a senha de outra pessoa, com registro de auditoria (quem fez, em quem e quando)
 - ✅ Processos e metas
 - ✅ Registro de lote com desvio e histórico por perfil
 - ✅ Alertas (3 lotes seguidos acima da meta) com status
@@ -209,7 +209,12 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 
 **Próximos passos**
 
+O que falta fazer está nas [**Issues do GitHub**](https://github.com/paulomourz/aguas-do-capibaribe/issues),
+abertas pelo orientador, com prioridade e critérios de aceitação. Entre elas:
+
 - 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
+- ⬜ Modo simulado desligado por padrão no site
+- ⬜ CI no GitHub Actions, versionamento do banco com Flyway e testes de aceitação
 - ⬜ Inativar processo
 - ⬜ API publicada num endereço fixo (semana 5)
 
@@ -251,6 +256,17 @@ git push -u origin feature/minha-funcionalidade
 ```
 
 Antes do pull request, rode `mvn test` (back-end) e `pnpm build` (front-end).
+
+**Trabalhando numa issue:**
+
+1. Crie a branch a partir da `develop` (ex.: `feature/status-na-api`) e escreva `Closes #N` na
+   descrição do pull request.
+2. Como o pull request entra na `develop` (e não na `main`), o GitHub **não fecha a issue sozinho**.
+   Depois do merge, feche a issue com um comentário apontando o PR.
+3. **Mudou o banco?** Atualize o `banco.sql` (para bancos novos) **e** crie um script numerado em
+   `database/migracoes/` (para bancos que já existem). Avise a equipe para rodá-lo antes de subir a
+   API nova, e registre a mudança no [`CHANGELOG.md`](CHANGELOG.md).
+4. Depois do `git pull` na `develop`, confira se entrou alguma migração nova em `database/migracoes/`.
 
 > [!WARNING]
 > **Nunca suba segredos.** `backend/.env`, `.env.local` e `docs/privado/` estão no `.gitignore`.
