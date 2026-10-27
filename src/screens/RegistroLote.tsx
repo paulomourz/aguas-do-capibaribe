@@ -254,7 +254,7 @@ export default function RegistroLote() {
             <Button variant="secondary" onClick={() => setConfirmar(false)} disabled={enviando}>
               Voltar e corrigir
             </Button>
-            <Button onClick={enviar} loading={enviando}>
+            <Button onClick={enviar} loading={enviando} data-autofocus>
               {enviando ? 'Registrando…' : 'Confirmar registro'}
             </Button>
           </>

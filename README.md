@@ -13,7 +13,7 @@
   <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white">
-  <img alt="Java 21" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white">
+  <img alt="Java 25 LTS" src="https://img.shields.io/badge/Java-25%20LTS-ED8B00?logo=openjdk&logoColor=white">
   <img alt="Spring Boot 3.5" src="https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?logo=springboot&logoColor=white">
   <img alt="PostgreSQL 18" src="https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white">
   <img alt="ESP32 no Wokwi" src="https://img.shields.io/badge/IoT-ESP32_(Wokwi)-E7352C?logo=espressif&logoColor=white">
@@ -73,12 +73,13 @@ flowchart LR
 | Pasta | Conteúdo |
 |---|---|
 | `/` (raiz) | Front-end React 19 + Vite + Tailwind (estrutura exigida pelo Figma Make) |
-| [`backend/`](backend/README.md) | API REST em Java 21 + Spring Boot 3.5 |
+| [`backend/`](backend/README.md) | API REST em Java 25 LTS + Spring Boot 3.5 |
 | [`database/`](database/LEIA-ME.md) | Esquema PostgreSQL (`banco.sql`, dump do PostgreSQL 18.6) |
 | [`iot/`](iot/LEIA-ME.md) | Sensor de vazão simulado no Wokwi (ESP32): código, circuito e guia |
 | [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md) e [gestão](docs/gestao/LEIA-ME.md) |
 | `public/` | Arquivos servidos como estão (favicon) |
 | `.figma/` | Configuração do Figma Make. Não editar |
+| [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
 ## 🚀 Como rodar
 
@@ -86,7 +87,7 @@ flowchart LR
 
 | Ferramenta | Versão | Para quê |
 |---|---|---|
-| JDK | 21 ou mais novo | API |
+| JDK | 25 (LTS) ou mais novo | API |
 | Maven | 3.9 ou mais novo | API |
 | PostgreSQL | 18 | banco (o `psql` precisa ser 18+ por causa do dump) |
 | Node.js | 22 ou mais novo | front-end |
@@ -127,6 +128,7 @@ Na raiz, crie `.env.local` a partir de `.env.example`:
 ```
 VITE_USAR_MOCK=false
 VITE_API_URL=http://localhost:8080/api
+VITE_NOME_LAVANDERIA=Nome da lavanderia   # aparece no relatório em PDF
 ```
 
 ```bash
@@ -165,7 +167,8 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 
 ## 📌 Status
 
-Comparado ao Termo de Abertura v2 (12/10/2026).
+Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está no
+[`CHANGELOG.md`](CHANGELOG.md). Comparado ao [Termo de Abertura v2.1](docs/gestao/TAP.pdf) (20/10/2026):
 
 **Pronto**
 
@@ -174,13 +177,12 @@ Comparado ao Termo de Abertura v2 (12/10/2026).
 - ✅ Processos e metas
 - ✅ Registro de lote com desvio e histórico por perfil
 - ✅ Alertas (3 lotes seguidos acima da meta) com status
-- ✅ Dashboard e relatório mensal
+- ✅ Dashboard e relatório mensal, com download direto em PDF
 - ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes, encontrando o processo pelo nome
 - ✅ Identidade visual "sertão e água"
 
 **Próximos passos**
 
-- 🟡 Exportar o relatório em PDF (hoje pelo "Imprimir" do navegador)
 - 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
 - ⬜ Inativar processo
 - ⬜ API conectando com usuário próprio (`aguas_api`) em vez de `postgres`

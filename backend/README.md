@@ -1,6 +1,6 @@
 # Águas do Capibaribe: API (back-end)
 
-API REST em Java 21 + Spring Boot 3.5 + Maven. Ela atende o front-end React deste repositório e usa o
+API REST em Java 25 (LTS) + Spring Boot 3.5 + Maven. Ela atende o front-end React deste repositório e usa o
 PostgreSQL definido em [`../database/banco.sql`](../database/banco.sql).
 
 > O banco **não é criado nem alterado** pela API. O Hibernate roda com `ddl-auto=validate`: na
@@ -9,7 +9,7 @@ PostgreSQL definido em [`../database/banco.sql`](../database/banco.sql).
 
 ## Requisitos
 
-- JDK 21
+- JDK 25 (LTS)
 - Maven 3.9 ou superior
 - Acesso de rede ao PostgreSQL 18 com o esquema de `database/banco.sql` já aplicado
 - Opcional, para os testes de integração: Docker **ou** um PostgreSQL local descartável (ver [Testes](#testes))

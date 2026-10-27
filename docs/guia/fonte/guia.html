@@ -280,7 +280,7 @@
   <ul>
     <li>O <strong>Dashboard</strong> mostra o mês de referência, que também aparece no topo da tela.</li>
     <li>No gráfico <strong>Meta x real</strong>, cada processo tem dois copos: o claro é a meta e o escuro é o consumo real.</li>
-    <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Imprimir</strong> ou <strong>Exportar PDF</strong> para guardar.</li>
+    <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. Mês sem lotes não gera relatório.</li>
   </ul>
 </section>
 
@@ -340,7 +340,7 @@
   <table>
     <tr><th style="width:22%">Parte</th><th style="width:30%">Tecnologia</th><th>Onde está no projeto</th></tr>
     <tr><td><strong>Front-end</strong></td><td>React 19, Vite, Tailwind CSS</td><td>raiz do repositório (<code>src/</code>), exigência do Figma Make</td></tr>
-    <tr><td><strong>API</strong></td><td>Java 21, Spring Boot 3.5, JWT</td><td><code>backend/</code></td></tr>
+    <tr><td><strong>API</strong></td><td>Java 25 LTS, Spring Boot 3.5, JWT</td><td><code>backend/</code></td></tr>
     <tr><td><strong>Banco</strong></td><td>PostgreSQL 18</td><td><code>database/banco.sql</code></td></tr>
     <tr><td><strong>Sensor</strong></td><td>ESP32 simulado no Wokwi</td><td><code>iot/</code></td></tr>
   </table>
@@ -362,7 +362,7 @@
   <h3>Requisitos</h3>
   <table>
     <tr><th style="width:24%">Ferramenta</th><th style="width:20%">Versão</th><th>Para quê</th></tr>
-    <tr><td>JDK</td><td>21 ou mais novo</td><td>rodar a API</td></tr>
+    <tr><td>JDK</td><td>25 (LTS) ou mais novo</td><td>rodar a API</td></tr>
     <tr><td>Maven</td><td>3.9 ou mais novo</td><td>compilar e subir a API</td></tr>
     <tr><td>PostgreSQL</td><td>18</td><td>banco de dados (o <code>psql</code> precisa ser 18+)</td></tr>
     <tr><td>Node.js</td><td>22 ou mais novo</td><td>rodar o site</td></tr>

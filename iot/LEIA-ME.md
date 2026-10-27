@@ -17,7 +17,7 @@ como um dispositivo real faria (US-09, fase 1 do IoT).
 
 - PostgreSQL com o esquema de `database/banco.sql` aplicado. A API confere as tabelas ao subir e não
   sobe se forem diferentes.
-- JDK 21 (ou mais novo) e Maven 3.9+. Para conferir: `java -version` e `mvn -v`.
+- JDK 25 (LTS ou mais novo) e Maven 3.9+. Para conferir: `java -version` e `mvn -v`.
 
 ## 1. Conta do sensor no banco (uma vez só)
 

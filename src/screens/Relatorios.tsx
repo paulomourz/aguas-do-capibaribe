@@ -18,39 +18,53 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
-import { desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, statusDe, type Resumo } from '../domain'
+import { desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
 import { periodoAtual, useApp, useEstadoTela, useResumo } from '../store'
+
+/** Gera o PDF de verdade e baixa. A biblioteca só é carregada no primeiro uso. */
+function useBaixarPdf() {
+  const { nomeProcesso, usuario, notificar } = useApp()
+  const [gerando, setGerando] = useState(false)
+  const [falha, setFalha] = useState(false)
+
+  async function baixar(mes: number, ano: number, linhas: Resumo[]) {
+    setFalha(false)
+    setGerando(true)
+    try {
+      const { baixarRelatorioPdf } = await import('../services/relatorioPdf')
+      const nome = await baixarRelatorioPdf({ mes, ano, linhas, nomeProcesso, responsavel: usuario?.nome })
+      notificar(`${nome} baixado.`)
+    } catch (e) {
+      console.error(e)
+      setFalha(true)
+    } finally {
+      setGerando(false)
+    }
+  }
+
+  return { baixar, gerando, falha }
+}
 
 /* ---------- G7 Relatórios ---------- */
 
 export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; anoInicial?: number }) {
-  const { nomeProcesso, notificar } = useApp()
+  const { nomeProcesso } = useApp()
   const atual = periodoAtual()
   const [mes, setMes] = useState(mesInicial ?? atual.mes)
   const [ano, setAno] = useState(anoInicial ?? atual.ano)
   const consulta = useResumo(mes, ano)
   const [estado, setEstado] = useEstadoTela(consulta)
-  const [gerando, setGerando] = useState(false)
-  const [falhaPdf, setFalhaPdf] = useState(false)
+  const { baixar, gerando, falha: falhaPdf } = useBaixarPdf()
 
   const dados = estado === 'vazio' ? [] : consulta.dados
   const real = dados.reduce((s, r) => s + r.real, 0)
   const esperado = dados.reduce((s, r) => s + r.esperado, 0)
   const lotes = dados.reduce((s, r) => s + r.lotes, 0)
   const periodo = `${meses[mes - 1]} de ${ano}`
-  const podeExportar = estado !== 'carregando' && estado !== 'erro' && dados.length > 0
-
-  function exportar() {
-    setFalhaPdf(false)
-    setGerando(true)
-    setTimeout(() => {
-      setGerando(false)
-      if (estado === 'erro') return
-      notificar(`PDF de ${periodo.toLowerCase()} gerado com sucesso.`)
-      navigate(`/relatorios/pdf?mes=${mes}&ano=${ano}`)
-    }, 1400)
-  }
+  const carregado = estado !== 'carregando' && estado !== 'erro'
+  const podeExportar = carregado && dados.length > 0
+  const semLotes = carregado && dados.length === 0
 
   const totalDesvio = esperado ? desvioDe(real, esperado) : 0
   const tdF = 'border-t-2 border-line-strong bg-page px-4 py-4 font-semibold text-ink first:pl-6 last:pr-6'
@@ -83,16 +97,40 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
               ))}
             </Select>
           </Field>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <Button variant="secondary" icon={<IconDownload size={20} />} onClick={exportar} loading={gerando} disabled={!podeExportar} className="w-full sm:w-auto">
-              {gerando ? 'Gerando PDF…' : 'Exportar PDF'}
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="text"
+              icon={<IconPrinter size={20} />}
+              onClick={() => navigate(`/relatorios/pdf?mes=${mes}&ano=${ano}`)}
+              disabled={!podeExportar || gerando}
+              aria-describedby={semLotes ? 'aviso-sem-lotes' : undefined}
+            >
+              Pré-visualizar e imprimir
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<IconDownload size={20} />}
+              onClick={() => baixar(mes, ano, dados)}
+              loading={gerando}
+              disabled={!podeExportar}
+              aria-describedby={semLotes ? 'aviso-sem-lotes' : undefined}
+              className="w-full sm:w-auto"
+            >
+              {gerando ? 'Gerando PDF…' : 'Baixar PDF'}
             </Button>
           </div>
         </div>
         {gerando && (
           <p role="status" className="mt-4 text-[15px] text-ink-2">
-            Gerando o PDF de {periodo.toLowerCase()}. Isso pode levar alguns segundos.
+            Gerando {nomeArquivoRelatorio(mes, ano)}…
           </p>
+        )}
+        {semLotes && (
+          <div id="aviso-sem-lotes" className="mt-4">
+            <Banner tone="info" title="Sem lotes neste período">
+              Não há lotes registrados em {periodo.toLowerCase()}, por isso não há relatório para baixar. Escolha outro mês ou ano.
+            </Banner>
+          </div>
         )}
         {falhaPdf && (
           <div className="mt-4">
@@ -184,7 +222,8 @@ const A4_W = 794
 const A4_H = 1123
 
 export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
-  const { nomeProcesso, usuario, notificar } = useApp()
+  const { nomeProcesso, usuario } = useApp()
+  const { baixar, gerando, falha } = useBaixarPdf()
   const wrap = useRef<HTMLDivElement>(null)
   const [escala, setEscala] = useState(1)
   const [geradoEm] = useState(() => new Date())
@@ -203,7 +242,7 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
   const esperado = dados.reduce((s, r) => s + r.esperado, 0)
   const lotes = dados.reduce((s, r) => s + r.lotes, 0)
   const periodo = `${meses[mes - 1]} de ${ano}`
-  const nomeArquivo = `relatorio-agua-${meses[mes - 1].toLowerCase()}-${ano}.pdf`
+  const nomeArquivo = nomeArquivoRelatorio(mes, ano)
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
@@ -220,12 +259,17 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
             <Button variant="secondary" icon={<IconPrinter size={18} />} onClick={() => window.print()}>
               Imprimir
             </Button>
-            <Button icon={<IconDownload size={18} />} onClick={() => notificar(`${nomeArquivo} baixado.`)}>
-              Baixar PDF
+            <Button icon={<IconDownload size={18} />} onClick={() => baixar(mes, ano, dados)} loading={gerando} disabled={dados.length === 0}>
+              {gerando ? 'Gerando PDF…' : 'Baixar PDF'}
             </Button>
           </>
         }
       />
+      {falha && (
+        <Banner tone="crit" title="Não foi possível gerar o PDF">
+          Tente novamente em instantes.
+        </Banner>
+      )}
 
       <div ref={wrap} className="rounded-[8px] bg-neutral-bg p-0 sm:p-8">
         <div className="mx-auto" style={{ width: A4_W * escala, height: A4_H * escala }}>

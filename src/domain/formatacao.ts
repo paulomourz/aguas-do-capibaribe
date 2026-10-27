@@ -21,3 +21,7 @@ export const meses = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
+
+/** aguas-do-capibaribe-relatorio-AAAA-MM.pdf */
+export const nomeArquivoRelatorio = (mes: number, ano: number) =>
+  `aguas-do-capibaribe-relatorio-${ano}-${String(mes).padStart(2, '0')}.pdf`

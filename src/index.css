@@ -25,8 +25,9 @@
   --color-disabled-bg: #cbd2d9;
   --color-disabled-ink: #616e7c;
   --color-disabled-field: #f5f3ef;
-  --color-field-border: #9aa5b1;
-  --color-field-border-hover: #7b8794;
+  /* Bordas de campo com contraste mínimo de 3:1 (WCAG 1.4.11) sobre branco e areia */
+  --color-field-border: #7b8794;
+  --color-field-border-hover: #616e7c;
   --color-zebra: #fbfaf7;
   --color-nav-hover: #f3f0ea;
   --color-track: #f1ede5;

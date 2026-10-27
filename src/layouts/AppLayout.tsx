@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cx } from '../components/ui'
 import logoUrl from '../assets/logo.png'
 import {
@@ -134,16 +134,14 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
                                 sel ? 'font-semibold' : 'text-ink-2 hover:bg-white/70 hover:text-ink',
                               )}
                             >
-                              {/* o copo d'água tem o tamanho do ícone + texto selecionados */}
                               <span
                                 className={cx(
-                                  'relative inline-flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2',
-                                  sel && 'bg-glass text-white shadow-md',
+                                  'inline-flex items-center gap-3 rounded-lg px-3 py-2',
+                                  sel && 'bg-brand text-white shadow-sm',
                                 )}
                               >
-                                {sel && <OndaAtiva />}
-                                <Icon size={20} className="relative" />
-                                <span className="relative">{label}</span>
+                                <Icon size={20} />
+                                <span>{label}</span>
                               </span>
                               {id === 'alertas' && abertos > 0 && (
                                 <span className="ml-auto">
@@ -213,24 +211,6 @@ function NuvensDoTopo() {
         />
       ))}
     </svg>
-  )
-}
-
-/** Copo d'água do item ativo (e do botão de login): o selecionado é "água". */
-export function OndaAtiva() {
-  // Mesmas classes dos copos do gráfico Meta x real (index.css): água sobe, ondula e solta bolhas.
-  const copo = { '--water-level': '84%', '--water-delay': '0ms', position: 'absolute', inset: 0, borderRadius: 'inherit', cursor: 'inherit' } as CSSProperties
-  return (
-    <span aria-hidden="true" className="water-column water-column--real pointer-events-none" style={copo}>
-      <span className="water-fill">
-        <span className="water-surface" />
-        <span className="water-ripple" />
-        <span className="water-bubble water-bubble--one" />
-        <span className="water-bubble water-bubble--two" />
-        <span className="water-bubble water-bubble--three" />
-      </span>
-      <span className="water-glass-shine" />
-    </span>
   )
 }
 
