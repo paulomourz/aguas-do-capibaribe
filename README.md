@@ -83,6 +83,20 @@ flowchart LR
 
 ## 🚀 Como rodar
 
+> [!IMPORTANT]
+> **Num PC novo, comece pela `develop`.** O GitHub abre na `main`, que só recebe as versões entregues;
+> o trabalho do dia a dia está na `develop`.
+>
+> ```bash
+> git clone https://github.com/paulomourz/aguas-do-capibaribe.git
+> cd aguas-do-capibaribe
+> git checkout develop
+> ```
+>
+> Depois siga os passos abaixo: requisitos, banco, API e front-end. O banco do seu PC começa vazio (só a
+> estrutura do `banco.sql`) e os arquivos de senha (`backend/.env`, `.env.local`) não vêm do GitHub:
+> cada pessoa cria os seus a partir dos `.env.example`.
+
 ### Requisitos
 
 | Ferramenta | Versão | Para quê |
@@ -163,7 +177,7 @@ mvn test
 | `SegurancaWebTest` | não | 401/403 por perfil, validações, formato de erro |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 
-São 40 testes: 25 unitários e de web + 15 de integração com PostgreSQL 18. Os de integração usam um
+São 41 testes: 26 unitários e de web + 15 de integração com PostgreSQL 18. Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
@@ -181,7 +195,8 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 - ✅ Alertas (3 lotes seguidos acima da meta) com status
 - ✅ Dashboard e relatório mensal, com download direto em PDF
 - ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes, encontrando o processo pelo nome
-- ✅ Identidade visual "sertão e água"
+- ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
+- ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 
 **Próximos passos**
 
