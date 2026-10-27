@@ -377,11 +377,13 @@ cd aguas-do-capibaribe
 git checkout develop</pre></li>
     <li><strong>Banco de dados</strong>Crie um banco vazio e aplique o esquema. O banco oficial já existe e se chama <code>aguas</code>; faça isto só numa máquina nova.
 <pre>psql -U postgres -c "create database aguas"
-psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql</pre></li>
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql</pre>
+Depois crie o usuário da aplicação, <code>aguas_api</code>, que só lê, insere e atualiza. A senha escolhida aqui vai no <code>DB_PASSWORD</code>:
+<pre>psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='SENHA' -f database/seguranca-usuario-api.sql</pre></li>
     <li><strong>Configuração da API</strong>Em <code>backend/</code>, copie <code>.env.example</code> para <code>.env</code> e preencha:
 <pre>DB_HOST=localhost        <span class="c"># endereço do PostgreSQL</span>
 DB_NAME=aguas
-DB_USER=...              <span class="c"># de preferência aguas_api, não postgres</span>
+DB_USER=aguas_api        <span class="c"># criado no passo do banco; nunca o postgres</span>
 DB_PASSWORD=...
 JWT_SECRET=...           <span class="c"># 32+ caracteres aleatórios</span>
 ADMIN_SENHA=...          <span class="c"># só na 1ª vez: cria o capibaribe.admin</span>
@@ -440,7 +442,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="grade">
     <div class="cartao"><h4>Senhas fora do Git</h4><p><code>backend/.env</code>, <code>.env.local</code> e a senha do sensor (preenchida só no Wokwi) nunca vão para o repositório. Acessos da equipe ficam em <code>docs/privado/</code>, também fora do Git.</p></div>
     <div class="cartao"><h4>Banco oficial é sagrado</h4><p>O <code>aguas</code> guarda só dados reais desde 20/10/2026. Nunca rode testes nele: os testes usam bancos temporários <code>*_teste</code>.</p></div>
-    <div class="cartao"><h4>Usuário próprio no banco</h4><p>Antes de publicar, troque o <code>postgres</code> por um usuário <code>aguas_api</code> sem permissão de apagar (receita em <code>docs/tecnico/banco-remoto.md</code>).</p></div>
+    <div class="cartao"><h4>Usuário próprio no banco</h4><p>A API conecta como <code>aguas_api</code>, que só lê, insere e atualiza: não apaga dados nem muda tabelas. Ele é criado por <code>database/seguranca-usuario-api.sql</code>.</p></div>
     <div class="cartao"><h4>Senhas fortes e pessoais</h4><p>Cada pessoa tem o próprio acesso. Senhas têm pelo menos 8 caracteres e são guardadas só como hash.</p></div>
     <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o cloudflared aberto, a API fica acessível pela internet. Feche o túnel ao terminar de usar o sensor.</p></div>
     <div class="cartao"><h4>Fluxo de trabalho</h4><p>Nada de commit direto na <code>main</code>: crie uma <code>feature/</code> a partir da <code>develop</code> e abra um pull request.</p></div>

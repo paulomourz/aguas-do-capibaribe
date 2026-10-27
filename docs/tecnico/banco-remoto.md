@@ -79,8 +79,10 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
 - **Não existe mais banco de teste permanente.** O antigo `aguas_teste` foi apagado. Os testes de
   integração usam um banco descartável criado só na hora e apagado ao final (ver
   [`../../backend/README.md`](../../backend/README.md#testes)). Nunca rode os testes no `aguas`.
-- **Pendente:** a API ainda se conecta como `postgres` (superusuário). Antes de publicar, crie o
-  usuário `aguas_api` da seção 3 e troque `DB_USER`/`DB_PASSWORD` no `backend/.env`.
+- **Usuário da API:** desde 27/10/2026 a API da máquina de DevOps conecta como `aguas_api` (script da
+  seção 3). Conferido: login, processos, lotes, usuários, relatório e Swagger funcionam, e
+  `DELETE FROM lote` é recusado. O `postgres` fica só para administrar o banco. A senha está em
+  `docs/privado/acessos-e-senhas.md`, fora do Git.
 - **Servidor remoto:** a conexão com um PostgreSQL em outra máquina ainda não foi testada. Na
   primeira conexão, confirme que:
   1. a API inicia sem erro de validação do esquema (`Started AguasApiApplication` no log);

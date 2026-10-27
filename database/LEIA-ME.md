@@ -28,7 +28,14 @@ do esquema (psql 18 ou mais novo):
 ```bash
 psql -U postgres -c "create database aguas"
 psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha forte>' -f database/seguranca-usuario-api.sql
 ```
+
+| Arquivo | Para quê |
+|---|---|
+| `banco.sql` | estrutura do banco: tabelas, triggers e views, sem nenhum dado |
+| `seguranca-usuario-api.sql` | cria o usuário `aguas_api`, que a API usa, só com ler, inserir e atualizar (sem apagar nem mudar a estrutura) |
+| `migracoes/` | scripts para atualizar bancos que já existem (veja abaixo) |
 
 ## Atualizar um banco que já existe (migrações)
 

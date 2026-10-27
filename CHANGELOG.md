@@ -19,10 +19,15 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 - **Migração obrigatória** para bancos já existentes, antes de subir a API nova:
   `database/migracoes/001-auditoria-usuario.sql`. Bancos novos já recebem a tabela pelo `banco.sql`.
 
+### Segurança
+
+- Usuário restrito `aguas_api` para a API (`database/seguranca-usuario-api.sql`): lê, insere e
+  atualiza, sem `DELETE`, `TRUNCATE`, `DROP` nem `ALTER`. O `backend/.env.example` já vem com ele.
+
 ### Documentação
 
-- README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`); 41 testes
-  (26 unitários e de web + 15 de integração).
+- Passo do `aguas_api` no "Como rodar" do README, no guia e no `database/LEIA-ME.md`.
+- README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`).
 
 ## [0.1.0-alpha] - 2026-10-27
 

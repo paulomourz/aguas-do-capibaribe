@@ -110,13 +110,21 @@ flowchart LR
 
 ### 1. Banco de dados
 
-Crie um banco vazio e aplique o esquema:
+Crie um banco vazio, aplique o esquema e crie o usuário da aplicação (`aguas_api`, sem permissão de
+apagar dados nem de mudar a estrutura). Escolha uma senha para ele: é a que vai no `DB_PASSWORD` do
+`backend/.env`.
 
 ```bash
 psql -U postgres -c "create database aguas"
 psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha do aguas_api>' -f database/seguranca-usuario-api.sql
 ```
 
+No fim, o terceiro comando mostra o que o `aguas_api` pode fazer em cada tabela (nenhum `delete`).
+
+> **Já tem o banco de uma versão anterior?** Não recrie: aplique os scripts de `database/migracoes/`
+> que ainda não rodou, antes de subir a API nova. A lista está no
+> [`database/LEIA-ME.md`](database/LEIA-ME.md#atualizar-um-banco-que-já-existe-migrações).
 O banco começa vazio. Na primeira inicialização, a API cria o administrador principal
 `capibaribe.admin` com a senha de `ADMIN_SENHA` ([detalhes](backend/README.md#administrador-principal));
 os outros usuários são criados na tela **Usuários**.
@@ -129,7 +137,7 @@ os outros usuários são criados na tela **Usuários**.
 
 ```bash
 cd backend
-cp .env.example .env     # preencha banco, JWT_SECRET e CORS_ORIGINS
+cp .env.example .env     # preencha banco (DB_USER=aguas_api), JWT_SECRET, ADMIN_SENHA e CORS_ORIGINS
 mvn spring-boot:run      # http://localhost:8080/api
 ```
 
@@ -197,12 +205,12 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 - ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes, encontrando o processo pelo nome
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
+- ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
 
 **Próximos passos**
 
 - 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
 - ⬜ Inativar processo
-- ⬜ API conectando com usuário próprio (`aguas_api`) em vez de `postgres`
 - ⬜ API publicada num endereço fixo (semana 5)
 
 ## 🌿 Fluxo de trabalho (GitFlow)
