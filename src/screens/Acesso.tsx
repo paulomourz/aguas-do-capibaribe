@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
-import { Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
-import { IconCompass, IconLock } from '../components/icons'
+import { AvisoModoSimulado, Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
+import { IconCloudOff, IconCompass, IconLock, IconRefresh } from '../components/icons'
 import { navigate } from '../router'
 import { errosDaApi, homeDe, useApp } from '../store'
 import waveReference from '../assets/wave-minimal-reference.jpg'
@@ -70,6 +70,8 @@ export function Login({ next }: { next?: string }) {
   }
 
   return (
+    <>
+    <AvisoModoSimulado />
     <div className="flex min-h-screen flex-col bg-page lg:flex-row">
       {/* Painel de marca */}
       <section className="on-dark relative hidden overflow-hidden bg-brand text-white lg:flex lg:w-[46%] lg:flex-col">
@@ -148,6 +150,7 @@ export function Login({ next }: { next?: string }) {
         </div>
       </section>
     </div>
+    </>
   )
 }
 
@@ -206,6 +209,26 @@ export function SessaoExpirada({ next }: { next?: string }) {
         action={
           <Button size="lg" full onClick={() => navigate(next ? `/login?next=${encodeURIComponent(next)}` : '/login')}>
             Ir para o login
+          </Button>
+        }
+      />
+    </PublicShell>
+  )
+}
+
+/* ---------- A5 Servidor fora do ar (havia sessão salva) ---------- */
+
+export function SemConexao() {
+  const { tentarConectar } = useApp()
+  return (
+    <PublicShell>
+      <Aviso
+        icon={<IconCloudOff size={30} />}
+        title="Não foi possível conectar ao servidor."
+        text="O sistema não respondeu. Sua sessão continua salva: confira se a API está no ar e tente de novo. Se o problema continuar, avise o responsável pelo sistema."
+        action={
+          <Button size="lg" full icon={<IconRefresh size={20} />} onClick={tentarConectar}>
+            Tentar novamente
           </Button>
         }
       />

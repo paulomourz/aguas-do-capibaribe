@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { cx } from '../components/ui'
+import { AvisoModoSimulado, cx } from '../components/ui'
 import logoUrl from '../assets/logo.png'
+import pacote from '../../package.json'
 import {
   IconBell,
   IconCalendar,
@@ -53,6 +54,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
         Pular para o conteúdo
       </a>
 
+      <AvisoModoSimulado />
       <header className="on-dark sticky top-0 z-30 bg-brand text-white">
         <NuvensDoTopo />
         <div className="relative flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">
@@ -182,7 +184,7 @@ export function Footer() {
       <hr className="mb-6 border-line" />
       <div className="flex flex-col gap-1 text-[13px] text-ink-2 sm:flex-row sm:items-center sm:justify-between">
         <span>Águas do Capibaribe · Gestão de consumo de água por lote</span>
-        <span>Versão 1.0</span>
+        <span>Versão {pacote.version}</span>
       </div>
     </footer>
   )

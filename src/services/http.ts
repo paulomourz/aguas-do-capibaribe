@@ -1,7 +1,8 @@
 import type { ErroApiDTO } from './tipos'
 
-export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'
-export const USAR_MOCK = (import.meta.env.VITE_USAR_MOCK ?? 'true') !== 'false'
+export const API_URL: string = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api'
+/** Padrão: API real. O modo simulado (dados em memória) só liga com VITE_USAR_MOCK=true. */
+export const USAR_MOCK = import.meta.env.VITE_USAR_MOCK?.trim().toLowerCase() === 'true'
 
 export const CHAVE_TOKEN = 'ac-token'
 export const obterToken = () => sessionStorage.getItem(CHAVE_TOKEN)

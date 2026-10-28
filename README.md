@@ -147,25 +147,25 @@ Configuração completa, regras implementadas e testes: [`backend/README.md`](ba
 
 ### 3. Front-end
 
-Na raiz, crie `.env.local` a partir de `.env.example`:
-
-```
-VITE_USAR_MOCK=false
-VITE_API_URL=http://localhost:8080/api
-VITE_NOME_LAVANDERIA=Nome da lavanderia   # aparece no relatório em PDF
-```
-
 ```bash
 pnpm install
 pnpm dev                 # http://localhost:8443
 ```
 
-> [!TIP]
-> Salve o `.env.local` em **UTF-8 sem BOM** (no VS Code, canto inferior direito). Com BOM, o Vite não
-> reconhece a primeira linha, o site cai no modo simulado e o login do admin dá "senha incorreta".
+O site **sempre usa a API**: sem configuração nenhuma, ele procura em `http://localhost:8080/api`. Se a
+API estiver em outro endereço, ou para pôr o nome da lavanderia no relatório em PDF, crie o
+`.env.local` na raiz a partir do `.env.example` (salve em UTF-8 sem BOM):
 
-Sem o `.env.local`, o front roda no **modo simulado**: dados de exemplo em memória, sem API. Logins de
-demonstração: `gestor.demo` ou `operador01`, senha `capibaribe` (só funcionam no modo simulado).
+```
+VITE_API_URL=http://localhost:8080/api
+VITE_NOME_LAVANDERIA=Nome da lavanderia
+```
+
+Com a API desligada, o site avisa "Não foi possível conectar ao servidor." em vez de quebrar.
+
+> **Modo simulado (só para demonstração sem back-end):** com `VITE_USAR_MOCK=true` no `.env.local`, o
+> site usa dados de exemplo em memória, nada é gravado, e uma faixa amarela no topo avisa isso. Logins:
+> `gestor.demo` ou `operador01`, senha `capibaribe`. Não use em entregas.
 
 ### 4. IoT simulado (opcional)
 
@@ -196,7 +196,7 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 
 **Pronto**
 
-- ✅ Login, perfis (gestor/operador), gestão de usuários e da própria conta
+- ✅ Login, perfis (gestor/operador), gestão de usuários e da própria conta, sempre contra a API real
 - ✅ Gestor redefine a senha de outra pessoa, com registro de auditoria (quem fez, em quem e quando)
 - ✅ Processos e metas
 - ✅ Registro de lote com desvio e histórico por perfil
@@ -213,7 +213,6 @@ O que falta fazer está nas [**Issues do GitHub**](https://github.com/paulomourz
 abertas pelo orientador, com prioridade e critérios de aceitação. Entre elas:
 
 - 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
-- ⬜ Modo simulado desligado por padrão no site
 - ⬜ CI no GitHub Actions, versionamento do banco com Flyway e testes de aceitação
 - ⬜ Inativar processo
 - ⬜ API publicada num endereço fixo (semana 5)
