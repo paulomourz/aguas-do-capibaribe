@@ -183,9 +183,10 @@ mvn test
 |---|---|---|
 | `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, desvio, CORS, JWT |
 | `SegurancaWebTest` | não | 401/403 por perfil, validações, formato de erro |
+| `ProcessoControllerTest` | não | meta zero ou negativa e nome repetido no cadastro de processos |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 
-São 46 testes: 30 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
+São 56 testes: 40 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 

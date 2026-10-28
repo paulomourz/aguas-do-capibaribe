@@ -210,6 +210,7 @@ mvn test
 |---|---|---|
 | `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, fórmula do desvio, CORS, JWT |
 | `SegurancaWebTest` | não (serviços simulados) | 401/403 por perfil, usuário desativado, validações (422), formato de erro, CORS |
+| `ProcessoControllerTest` | não (repositório simulado) | cadastro e edição de processos: meta zero ou negativa, campos faltando, nome repetido (US-02) |
 | `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável criado com `banco.sql` |
 | `IntegracaoPostgresLocalTest` | PostgreSQL local descartável | os mesmos testes, sem Docker |
 
@@ -244,6 +245,6 @@ psql -U postgres -c "drop database aguas_verificacao_teste"
 ```
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
-temporário também funciona. Resultado em 27/10/2026, com JDK 25: **46 testes, todos passando** (30
+temporário também funciona. Resultado em 28/10/2026, com JDK 25: **56 testes, todos passando** (40
 unitários e de web + 16 de integração). Os 16 de `IntegracaoPostgresContainerTest` aparecem como
 *skipped* sem Docker: são os mesmos testes de integração, na versão com contêiner.
