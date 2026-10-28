@@ -19,6 +19,12 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   servidor." (com "Tentar novamente"), em vez de "sessão expirada". Rodapé com a versão do
   `package.json`.
 
+### Testes
+
+- **Cadastro de processos coberto por testes** (issue #17): `ProcessoControllerTest` confere que meta zero
+  ou negativa, unidade ou meta faltando e nome repetido (ao criar e ao editar) voltam com o erro no campo
+  certo (422 ou 409) e não gravam nada. 56 testes (40 unitários e de web + 16 de integração).
+
 ### Banco de dados
 
 - **Migração obrigatória** para bancos já existentes, antes de subir a API nova:
