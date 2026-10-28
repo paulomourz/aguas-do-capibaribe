@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AvisoModoSimulado, cx } from '../components/ui'
 import logoUrl from '../assets/logo.png'
+import pacote from '../../package.json'
 import {
   IconBell,
   IconCalendar,
@@ -183,7 +184,7 @@ export function Footer() {
       <hr className="mb-6 border-line" />
       <div className="flex flex-col gap-1 text-[13px] text-ink-2 sm:flex-row sm:items-center sm:justify-between">
         <span>Águas do Capibaribe · Gestão de consumo de água por lote</span>
-        <span>Versão 1.0</span>
+        <span>Versão {pacote.version}</span>
       </div>
     </footer>
   )

@@ -14,6 +14,10 @@ type Ctx = {
   usuario: Usuario | null
   /** Verificando a sessão salva ao abrir/recarregar a página. */
   restaurando: boolean
+  /** Havia sessão salva, mas a API não respondeu: não é sessão expirada. */
+  semConexao: boolean
+  /** Tenta de novo recuperar a sessão salva (depois de "sem conexão"). */
+  tentarConectar: () => void
   /** Carregando os dados após o login. */
   carregando: boolean
   erroCarga: string | null
@@ -83,6 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [restaurando, setRestaurando] = useState(() => !!api.obterToken())
   const [carregando, setCarregando] = useState(false)
   const [erroCarga, setErroCarga] = useState<string | null>(null)
+  const [semConexao, setSemConexao] = useState(false)
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [processos, setProcessos] = useState<Processo[]>([])
   const [lotes, setLotes] = useState<Lote[]>([])
@@ -133,26 +138,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Recupera a sessão salva ao abrir a página.
+  // Recupera a sessão salva ao abrir a página. Token recusado (401) = sessão expirada;
+  // servidor fora do ar = mantém o token e mostra "sem conexão", para tentar de novo.
+  const restaurar = useCallback(
+    (vivo: () => boolean = () => true) => {
+      if (!api.obterToken()) return
+      setRestaurando(true)
+      setSemConexao(false)
+      api
+        .me()
+        .then((dto) => {
+          if (!vivo()) return
+          const u = deUsuario(dto)
+          setUsuario(u)
+          void carregarDados(u)
+        })
+        .catch((e) => {
+          if (!vivo()) return
+          if (e instanceof api.ApiError && e.status === 401) api.limparSessao()
+          else setSemConexao(true)
+        })
+        .finally(() => vivo() && setRestaurando(false))
+    },
+    [carregarDados],
+  )
+
   useEffect(() => {
-    if (!api.obterToken()) return
     let vivo = true
-    api
-      .me()
-      .then((dto) => {
-        if (!vivo) return
-        const u = deUsuario(dto)
-        setUsuario(u)
-        void carregarDados(u)
-      })
-      .catch((e) => {
-        if (e instanceof api.ApiError && e.status === 401) api.limparSessao()
-      })
-      .finally(() => vivo && setRestaurando(false))
+    restaurar(() => vivo)
     return () => {
       vivo = false
     }
-  }, [carregarDados])
+  }, [restaurar])
 
   // O servidor recusou o token (expirou ou o acesso foi desativado).
   useEffect(() => {
@@ -174,6 +191,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: Ctx = {
     usuario,
     restaurando,
+    semConexao,
+    tentarConectar: () => restaurar(),
     carregando,
     erroCarga,
     recarregar: () => {

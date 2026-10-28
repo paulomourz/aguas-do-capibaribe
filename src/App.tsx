@@ -4,7 +4,7 @@ import type { AlertaStatus, Perfil } from './domain'
 import { navigate, useRoute } from './router'
 import { AppProvider, homeDe, periodoAtual, useApp } from './store'
 import AppLayout, { type MenuId } from './layouts/AppLayout'
-import { AcessoNegado, Login, NaoEncontrada, SessaoExpirada } from './screens/Acesso'
+import { AcessoNegado, Login, NaoEncontrada, SemConexao, SessaoExpirada } from './screens/Acesso'
 import RegistroLote, { ResultadoLote } from './screens/RegistroLote'
 import Historico from './screens/Historico'
 import Dashboard from './screens/Dashboard'
@@ -59,7 +59,7 @@ function resolver(path: string, q: URLSearchParams, perfil?: Perfil): Rota | nul
 
 function Roteador() {
   const { path, query } = useRoute()
-  const { usuario, restaurando, toast, fecharToast } = useApp()
+  const { usuario, restaurando, semConexao, toast, fecharToast } = useApp()
 
   let titulo = 'Águas do Capibaribe'
   let tela: ReactNode
@@ -77,6 +77,9 @@ function Roteador() {
     if (!rota) {
       titulo = 'A4 Página não encontrada'
       tela = <NaoEncontrada />
+    } else if (!usuario && semConexao) {
+      titulo = 'A5 Sem conexão com o servidor'
+      tela = <SemConexao />
     } else if (!usuario) {
       titulo = 'A2 Faça login para continuar'
       tela = <SessaoExpirada next={path + (query.toString() ? `?${query}` : '')} />
