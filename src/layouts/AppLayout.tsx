@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { cx } from '../components/ui'
+import { AvisoModoSimulado, cx } from '../components/ui'
 import logoUrl from '../assets/logo.png'
 import {
   IconBell,
@@ -53,6 +53,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
         Pular para o conteúdo
       </a>
 
+      <AvisoModoSimulado />
       <header className="on-dark sticky top-0 z-30 bg-brand text-white">
         <NuvensDoTopo />
         <div className="relative flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">

@@ -6,7 +6,7 @@ import * as api from './services'
 
 /*
  * Estado global da aplicação. Todos os dados passam por src/services:
- * com VITE_USAR_MOCK=false vão para a API REST; caso contrário, usam a simulação em memória.
+ * por padrão vão para a API REST; só com VITE_USAR_MOCK=true usam a simulação em memória.
  * Os DTOs da API (ids numéricos, datas ISO) são convertidos para os tipos usados pelas telas.
  */
 
