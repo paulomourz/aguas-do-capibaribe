@@ -13,6 +13,11 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 - **Auditoria das ações do gestor** (issue #16): redefinir senha, desativar e reativar outra pessoa
   ficam registrados em `auditoria_usuario` (quem, em quem, o quê, quando), sem senha e sem poder ser
   alterados ou apagados. 46 testes (30 unitários e de web + 16 de integração).
+- **Site usa a API real por padrão** (issue #5): sem `.env.local`, conecta em
+  `http://localhost:8080/api`. O modo simulado só liga com `VITE_USAR_MOCK=true` e mostra uma faixa de
+  aviso. Com a API fora do ar, o login e a recarga da página mostram "Não foi possível conectar ao
+  servidor." (com "Tentar novamente"), em vez de "sessão expirada". Rodapé com a versão do
+  `package.json`.
 
 ### Banco de dados
 

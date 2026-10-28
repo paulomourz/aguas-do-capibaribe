@@ -98,16 +98,15 @@ Para desligar as duas páginas, use `SWAGGER_ATIVO=false`. A versão exibida vem
 
 ### Front-end apontando para a API
 
-Na raiz do repositório, crie `.env.local` a partir de `.env.example`:
+O front usa a API por padrão, em `http://localhost:8080/api`. Para outro endereço, crie o `.env.local`
+na raiz a partir do `.env.example` (UTF-8 sem BOM):
 
 ```
-VITE_USAR_MOCK=false
 VITE_API_URL=http://localhost:8080/api
 ```
 
-Depois rode `pnpm install` e `pnpm dev` (Node 22, conforme `.mise.toml`). Sem `VITE_USAR_MOCK=false`,
-o front continua no modo simulado e não chama a API. Salve o arquivo em UTF-8 **sem BOM**: com BOM, a
-primeira linha é ignorada e o site cai no modo simulado.
+Depois rode `pnpm install` e `pnpm dev` (Node 22, conforme `.mise.toml`). O modo simulado, sem API,
+só liga com `VITE_USAR_MOCK=true` e mostra uma faixa de aviso no topo.
 
 ## Administrador principal
 
