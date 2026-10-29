@@ -194,7 +194,7 @@
     <tr><td><span class="selo s-warn">Atenção</span></td><td>acima de 0% e até +8%</td></tr>
     <tr><td><span class="selo s-crit">Crítico</span></td><td>acima de +8%</td></tr>
   </table>
-  <div class="nota"><p>Essas faixas são <strong>provisórias</strong>: os limites oficiais ainda serão definidos pela equipe, e hoje a classificação é feita só no front-end.</p></div>
+  <div class="nota"><p>Essas faixas são <strong>provisórias</strong>: os limites oficiais ainda serão definidos pela equipe. A cor de cada lote vem da API; totais e médias ainda são classificados no front-end.</p></div>
 
   <div class="nota agua"><p><strong>Lote não se altera nem se apaga.</strong> O banco bloqueia qualquer mudança em lotes já registrados: o histórico de consumo é o registro fiel do que aconteceu. Se um lote for digitado errado, registre o correto e explique o caso ao gestor.</p></div>
 </section>
@@ -408,7 +408,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Modo simulado, só para demonstração.</strong> O site sempre usa a API. Para mostrar o sistema sem back-end, coloque <code>VITE_USAR_MOCK=true</code> no <code>.env.local</code>: os dados ficam em memória, nada é gravado e uma faixa amarela no topo avisa isso. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Não use em entregas.</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 40 testes de regras, segurança e validação. Os 16 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado e apagado na hora; o passo a passo está no <code>backend/README.md</code>. Em 28/10/2026, com JDK 25, os 56 testes passaram.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 41 testes de regras, segurança e validação. Os 16 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado e apagado na hora; o passo a passo está no <code>backend/README.md</code>. Em 29/10/2026, com JDK 25, os 57 testes passaram.</p>
 
   <h3>Documentação interativa da API</h3>
   <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 16 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
