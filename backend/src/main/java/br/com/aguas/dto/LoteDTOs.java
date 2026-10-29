@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 
 import br.com.aguas.entity.Lote;
+import br.com.aguas.entity.StatusConformidade;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -13,12 +14,16 @@ public final class LoteDTOs {
 
     private LoteDTOs() {}
 
-    /** "data" = lote.registrado_em; "desvio" em %, mesma fórmula da view v_historico_lotes. */
+    /**
+     * "data" = lote.registrado_em; "desvio" em %, mesma fórmula da view v_historico_lotes;
+     * "statusConformidade" = faixa do desvio (StatusConformidade.de).
+     */
     public record LoteDTO(Integer id, Integer processoId, Integer pecas, BigDecimal litros, BigDecimal esperado,
-                          BigDecimal desvio, Instant data, Integer usuarioId) {
+                          BigDecimal desvio, StatusConformidade statusConformidade, Instant data, Integer usuarioId) {
         public static LoteDTO de(Lote l) {
+            BigDecimal desvio = calcularDesvio(l.getLitros(), l.getEsperado());
             return new LoteDTO(l.getId(), l.getProcessoId(), l.getPecas(), l.getLitros(), l.getEsperado(),
-                    calcularDesvio(l.getLitros(), l.getEsperado()), l.getRegistradoEm().toInstant(), l.getUsuarioId());
+                    desvio, StatusConformidade.de(desvio), l.getRegistradoEm().toInstant(), l.getUsuarioId());
         }
     }
 

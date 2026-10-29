@@ -153,6 +153,10 @@ abstract class IntegracaoPostgresBase {
         assertThat(l2.get("esperado").decimalValue()).isEqualByComparingTo("800");
         assertThat(l2.get("desvio").decimalValue()).isEqualByComparingTo("-5.00");
 
+        assertThat(l1.get("statusConformidade").asText()).isEqualTo("ATENCAO");
+        assertThat(l2.get("statusConformidade").asText()).isEqualTo("DENTRO_DA_META");
+        assertThat(lote(g, porLote, 140, "900").get("statusConformidade").asText()).isEqualTo("CRITICO");
+
         BigDecimal desvioView = jdbc.queryForObject("select desvio_percentual from v_historico_lotes where lote_id = ?",
                 BigDecimal.class, l1.get("id").asInt());
         assertThat(desvioView).isEqualByComparingTo(l1.get("desvio").decimalValue());
