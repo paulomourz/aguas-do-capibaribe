@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from 'react'
 import type { ToastData, ViewState } from './components/ui'
-import type { Alerta, AlertaStatus, Lote, Perfil, Processo, Resumo, Unidade, Usuario } from './domain'
+import { statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
 import { ANO_ATUAL, MES_ATUAL } from './mock'
 import * as api from './services'
 
@@ -68,6 +68,7 @@ const deLote = (l: api.LoteDTO): Lote => ({
   litros: Number(l.litros),
   esperado: Number(l.esperado),
   desvio: Number(l.desvio),
+  status: statusDaApi[l.statusConformidade],
   data: new Date(l.data),
 })
 const deResumo = (r: api.ResumoDTO): Resumo => ({ processoId: txt(r.processoId), real: Number(r.real), esperado: Number(r.esperado), lotes: Number(r.lotes) })

@@ -4,6 +4,8 @@ export type Id = number
 export type Perfil = 'gestor' | 'operador'
 export type Unidade = 'lote' | 'peca'
 export type StatusAlerta = 'aberto' | 'analise' | 'resolvido'
+/** Faixa do desvio do lote, calculada pelo servidor. */
+export type StatusConformidade = 'DENTRO_DA_META' | 'ATENCAO' | 'CRITICO'
 
 export type UsuarioDTO = { id: Id; nome: string; usuario: string; perfil: Perfil; ativo: boolean }
 export type NovoUsuarioDTO = { nome: string; usuario: string; perfil: Perfil; senha: string }
@@ -23,6 +25,7 @@ export type LoteDTO = {
   litros: number
   esperado: number
   desvio: number
+  statusConformidade: StatusConformidade
   data: string
   usuarioId: Id
 }

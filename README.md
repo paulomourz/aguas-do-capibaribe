@@ -186,7 +186,7 @@ mvn test
 | `ProcessoControllerTest` | não | meta zero ou negativa e nome repetido no cadastro de processos |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 
-São 56 testes: 40 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
+São 57 testes: 41 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
@@ -213,7 +213,7 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 O que falta fazer está nas [**Issues do GitHub**](https://github.com/paulomourz/aguas-do-capibaribe/issues),
 abertas pelo orientador, com prioridade e critérios de aceitação. Entre elas:
 
-- 🟡 Status verde/amarelo/vermelho calculado no back-end (hoje só no front)
+- 🟡 Status verde/amarelo/vermelho: lotes já vêm classificados pela API; falta fechar os limites oficiais e levar totais e médias para o back-end
 - ⬜ CI no GitHub Actions, versionamento do banco com Flyway e testes de aceitação
 - ⬜ Inativar processo
 - ⬜ API publicada num endereço fixo (semana 5)

@@ -18,6 +18,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   aviso. Com a API fora do ar, o login e a recarga da página mostram "Não foi possível conectar ao
   servidor." (com "Tentar novamente"), em vez de "sessão expirada". Rodapé com a versão do
   `package.json`.
+- **Status do lote calculado pela API** (issue #3): cada lote sai com `statusConformidade`
+  (`DENTRO_DA_META`, `ATENCAO` ou `CRITICO`) e o site usa essa faixa no Histórico, nos lotes do alerta
+  e no registro. Limites provisórios (0% e 8%). Totais e médias ainda são classificados no site.
+  57 testes (41 unitários e de web + 16 de integração).
 
 ### Testes
 

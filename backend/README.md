@@ -193,8 +193,10 @@ Para inserir outro gestor sem passar pelo site:
 - **Sessão:** JWT HS256 válido por 8 horas. A cada requisição autenticada, a API consulta o usuário
   no banco: se ele foi desativado, recebe 401 na hora, e o perfil considerado é sempre o do banco.
 - **Relatório mensal:** o mês é definido no fuso `America/Recife`.
-- **Faixas ok / atenção / crítico:** continuam só no front (`src/domain/regras.ts`) e são
-  **ilustrativas**. A API não classifica lotes.
+- **Faixas ok / atenção / crítico:** cada lote sai da API com `statusConformidade`
+  (`DENTRO_DA_META` se desvio ≤ 0%, `ATENCAO` se ≤ 8%, `CRITICO` acima), calculado por
+  `StatusConformidade.de`. Os limites são **provisórios** até a equipe fechar os oficiais. Totais e
+  médias (relatório, dashboard, média do alerta) ainda são classificados no front, com os mesmos limites.
 
 Endpoints: [`../docs/tecnico/api.md`](../docs/tecnico/api.md). Dados que o responsável pelo banco
 precisa fornecer: [`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md).
@@ -208,7 +210,7 @@ mvn test
 
 | Conjunto | Precisa de banco? | O que cobre |
 |---|---|---|
-| `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, fórmula do desvio, CORS, JWT |
+| `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, fórmula do desvio, faixas de conformidade, CORS, JWT |
 | `SegurancaWebTest` | não (serviços simulados) | 401/403 por perfil, usuário desativado, validações (422), formato de erro, CORS |
 | `ProcessoControllerTest` | não (repositório simulado) | cadastro e edição de processos: meta zero ou negativa, campos faltando, nome repetido (US-02) |
 | `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável criado com `banco.sql` |
@@ -245,6 +247,6 @@ psql -U postgres -c "drop database aguas_verificacao_teste"
 ```
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
-temporário também funciona. Resultado em 28/10/2026, com JDK 25: **56 testes, todos passando** (40
+temporário também funciona. Resultado em 29/10/2026, com JDK 25: **57 testes, todos passando** (41
 unitários e de web + 16 de integração). Os 16 de `IntegracaoPostgresContainerTest` aparecem como
 *skipped* sem Docker: são os mesmos testes de integração, na versão com contêiner.

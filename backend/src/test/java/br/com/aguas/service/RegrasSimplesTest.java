@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import br.com.aguas.config.AppProperties;
 import br.com.aguas.dto.LoteDTOs;
 import br.com.aguas.entity.StatusAlerta;
+import br.com.aguas.entity.StatusConformidade;
 import br.com.aguas.security.JwtService;
 
 class RegrasSimplesTest {
@@ -31,6 +32,16 @@ class RegrasSimplesTest {
         assertThat(LoteDTOs.calcularDesvio(new BigDecimal("1290.00"), new BigDecimal("1200.00"))).isEqualByComparingTo("7.50");
         assertThat(LoteDTOs.calcularDesvio(new BigDecimal("760.00"), new BigDecimal("800.00"))).isEqualByComparingTo("-5.00");
         assertThat(LoteDTOs.calcularDesvio(new BigDecimal("1000.00"), new BigDecimal("3.00"))).isEqualByComparingTo("33233.33");
+    }
+
+    @Test
+    void faixaDeConformidadeRespeitaAsFronteiras() {
+        assertThat(StatusConformidade.de(new BigDecimal("-5.00"))).isEqualTo(StatusConformidade.DENTRO_DA_META);
+        assertThat(StatusConformidade.de(new BigDecimal("0.00"))).isEqualTo(StatusConformidade.DENTRO_DA_META);
+        assertThat(StatusConformidade.de(new BigDecimal("0.01"))).isEqualTo(StatusConformidade.ATENCAO);
+        assertThat(StatusConformidade.de(new BigDecimal("8.00"))).isEqualTo(StatusConformidade.ATENCAO);
+        assertThat(StatusConformidade.de(new BigDecimal("8.01"))).isEqualTo(StatusConformidade.CRITICO);
+        assertThat(StatusConformidade.de(new BigDecimal("33233.33"))).isEqualTo(StatusConformidade.CRITICO);
     }
 
     @Test
