@@ -21,7 +21,6 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 - **Status do lote calculado pela API** (issue #3): cada lote sai com `statusConformidade`
   (`DENTRO_DA_META`, `ATENCAO` ou `CRITICO`) e o site usa essa faixa no Histórico, nos lotes do alerta
   e no registro. Limites provisórios (0% e 8%). Totais e médias ainda são classificados no site.
-  Explicação em [`docs/tecnico/status-conformidade.md`](docs/tecnico/status-conformidade.md).
   57 testes (41 unitários e de web + 16 de integração).
 
 ### Testes
