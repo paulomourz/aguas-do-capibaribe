@@ -2,7 +2,7 @@
 
 import type { Alerta, Lote } from '../domain/tipos'
 import { processosIniciais } from './processos'
-import { desvioDe, esperadoDe } from '../domain/regras'
+import { desvioDe, esperadoDe, statusDe } from '../domain/regras'
 
 /* ---------- Lotes (setembro de 2026) ---------- */
 
@@ -11,7 +11,8 @@ const dt = (mes: number, dia: number, h: number, m: number) => new Date(2026, me
 function criarLote(id: string, processoId: string, pecas: number, litros: number, data: Date, usuarioId: string): Lote {
   const p = processosIniciais.find((x) => x.id === processoId)!
   const esperado = esperadoDe(p, pecas)
-  return { id, processoId, pecas, litros, esperado, desvio: desvioDe(litros, esperado), data, usuarioId }
+  const desvio = desvioDe(litros, esperado)
+  return { id, processoId, pecas, litros, esperado, desvio, status: statusDe(desvio), data, usuarioId }
 }
 
 // [processo, peças, litros, dia, hora, minuto, usuário] — do mais recente ao mais antigo

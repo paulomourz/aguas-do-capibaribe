@@ -238,7 +238,7 @@ export function AlertaDetalhe({ id }: { id: string }) {
               { key: 'r', header: 'Real (L)', num: true, render: (l) => fmtNum(l.litros) },
               { key: 'e', header: 'Esperado (L)', num: true, render: (l) => fmtNum(l.esperado) },
               { key: 'v', header: 'Desvio', num: true, mobile: 'value', render: (l) => <span className="font-semibold">{fmtPct(l.desvio)}</span> },
-              { key: 's', header: 'Status', mobile: 'badge', render: (l) => <StatusBadge status={statusDe(l.desvio)} size="sm" /> },
+              { key: 's', header: 'Status', mobile: 'badge', render: (l) => <StatusBadge status={l.status} size="sm" /> },
             ]}
           />
         </div>

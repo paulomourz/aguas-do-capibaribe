@@ -1,5 +1,6 @@
 /* Tipos usados pelas telas. O store converte os DTOs da API (src/services/tipos.ts) para estes tipos. */
 
+import type { Status } from '../components/ui'
 import type { Perfil, StatusAlerta, Unidade } from '../services/tipos'
 
 // Valores aceitos pelo banco; definidos uma única vez no contrato da API.
@@ -17,6 +18,8 @@ export type Lote = {
   litros: number
   esperado: number
   desvio: number
+  /** Faixa do desvio, vinda da API (statusConformidade). */
+  status: Status
   data: Date
   usuarioId: string
 }
