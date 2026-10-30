@@ -28,6 +28,8 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 - **Cadastro de processos coberto por testes** (issue #17): `ProcessoControllerTest` confere que meta zero
   ou negativa, unidade ou meta faltando e nome repetido (ao criar e ao editar) voltam com o erro no campo
   certo (422 ou 409) e não gravam nada. 56 testes (40 unitários e de web + 16 de integração).
+- **CI no GitHub Actions** (issue #7): `backend-test` roda `mvn clean test` no Java 25 e falha se a
+  integração for pulada; `frontend-build` roda `tsc --noEmit` e `pnpm build`. Badge no README.
 
 ### Banco de dados
 

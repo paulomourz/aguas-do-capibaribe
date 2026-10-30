@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/ci.yml/badge.svg?branch=develop"></a>
   <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white">
@@ -189,6 +190,10 @@ mvn test
 São 57 testes: 41 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
+
+A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
+`develop`: `backend-test` (os 57 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
+Não faça merge com check vermelho.
 
 ## 📌 Status
 

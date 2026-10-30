@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-test:
+    name: backend-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Integração roda no PostgreSQL 18 do Testcontainers
+      - name: Testes
+        run: mvn -B clean test
+
+      # Sem Docker o Testcontainers pula a integração e o build passa mesmo assim
+      - name: Integração rodou?
+        run: |
+          relatorio=target/surefire-reports/TEST-br.com.aguas.integracao.IntegracaoPostgresContainerTest.xml
+          if [ ! -f "$relatorio" ] || ! head -n 2 "$relatorio" | grep -q 'skipped="0"'; then
+            echo "::error::Testes de integração não rodaram (Docker indisponível?)"
+            exit 1
+          fi
+
+  frontend-build:
+    name: frontend-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      # Mesmas versões do .mise.toml
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.3
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm build
