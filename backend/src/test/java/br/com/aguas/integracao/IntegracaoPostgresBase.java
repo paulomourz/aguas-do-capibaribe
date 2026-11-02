@@ -54,7 +54,7 @@ abstract class IntegracaoPostgresBase {
     private static final String SENHA = "senha-de-teste-123";
 
     /** Começa num valor da hora atual: logins e nomes não se repetem entre rodadas no mesmo banco de teste. */
-    private static final AtomicInteger seq = new AtomicInteger((int) (System.currentTimeMillis() / 1000 % 1_000_000) * 1000);
+    static final AtomicInteger seq = new AtomicInteger((int) (System.currentTimeMillis() / 1000 % 1_000_000) * 1000);
 
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
@@ -75,7 +75,7 @@ abstract class IntegracaoPostgresBase {
         return new Conta(id, login, entrar(login, SENHA));
     }
 
-    private String entrar(String login, String senha) throws Exception {
+    String entrar(String login, String senha) throws Exception {
         String corpo = mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("usuario", login, "senha", senha))))
                 .andExpect(status().isOk())
@@ -83,15 +83,15 @@ abstract class IntegracaoPostgresBase {
         return json.readTree(corpo).get("token").asText();
     }
 
-    private ResultActions chamar(MockHttpServletRequestBuilder req, Conta c) throws Exception {
+    ResultActions chamar(MockHttpServletRequestBuilder req, Conta c) throws Exception {
         return mvc.perform(req.header(HttpHeaders.AUTHORIZATION, "Bearer " + c.token()));
     }
 
-    private ResultActions enviar(MockHttpServletRequestBuilder req, Conta c, Object corpo) throws Exception {
+    ResultActions enviar(MockHttpServletRequestBuilder req, Conta c, Object corpo) throws Exception {
         return chamar(req.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpo)), c);
     }
 
-    private JsonNode ler(ResultActions r) throws Exception {
+    JsonNode ler(ResultActions r) throws Exception {
         return json.readTree(r.andReturn().getResponse().getContentAsString());
     }
 
@@ -105,14 +105,14 @@ abstract class IntegracaoPostgresBase {
         return ler(enviar(post("/lotes"), quem, corpo).andExpect(status().isCreated()));
     }
 
-    private List<JsonNode> alertasDo(Conta gestor, int processoId) throws Exception {
+    List<JsonNode> alertasDo(Conta gestor, int processoId) throws Exception {
         List<JsonNode> r = new ArrayList<>();
         ler(chamar(get("/alertas"), gestor).andExpect(status().isOk()))
                 .forEach(a -> { if (a.get("processoId").asInt() == processoId) r.add(a); });
         return r;
     }
 
-    private static List<Integer> ids(JsonNode arr) {
+    static List<Integer> ids(JsonNode arr) {
         List<Integer> r = new ArrayList<>();
         arr.forEach(n -> r.add(n.asInt()));
         return r;
@@ -428,7 +428,7 @@ abstract class IntegracaoPostgresBase {
         assertThat(setembro.get("real").decimalValue()).isEqualByComparingTo("130");
     }
 
-    private static JsonNode filtrar(JsonNode lista, int processoId) {
+    static JsonNode filtrar(JsonNode lista, int processoId) {
         for (JsonNode n : lista) if (n.get("processoId").asInt() == processoId) return n;
         throw new AssertionError("Processo " + processoId + " ausente no resumo: " + lista);
     }
