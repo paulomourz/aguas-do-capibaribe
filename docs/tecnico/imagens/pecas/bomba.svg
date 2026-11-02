@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 230" width="420" height="230">
+  <title>Ilustração de uma mini bomba de diafragma R385</title>
+  <rect width="420" height="230" fill="#ffffff"/>
+  <!-- bicos de entrada e saída -->
+  <rect x="58" y="62" width="58" height="22" rx="4" fill="#d7dde2" stroke="#52606d" stroke-width="2"/>
+  <rect x="58" y="146" width="58" height="22" rx="4" fill="#d7dde2" stroke="#52606d" stroke-width="2"/>
+  <!-- cabeça da bomba -->
+  <rect x="104" y="48" width="84" height="134" rx="30" fill="#e8f1f7" stroke="#1b4965" stroke-width="3"/>
+  <circle cx="146" cy="115" r="30" fill="#ffffff" stroke="#1b4965" stroke-width="2"/>
+  <circle cx="146" cy="115" r="7" fill="#1b4965"/>
+  <!-- motor -->
+  <rect x="188" y="62" width="130" height="106" rx="10" fill="#6b7780" stroke="#1f2933" stroke-width="3"/>
+  <line x1="188" y1="84" x2="318" y2="84" stroke="#4b5660" stroke-width="2"/>
+  <line x1="188" y1="146" x2="318" y2="146" stroke="#4b5660" stroke-width="2"/>
+  <!-- terminais -->
+  <path d="M318 96 H352 V80 H372" fill="none" stroke="#c0392b" stroke-width="4"/>
+  <path d="M318 134 H352 V150 H372" fill="none" stroke="#222222" stroke-width="4"/>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#1f2933">
+    <text x="86" y="50" text-anchor="middle">entrada</text>
+    <text x="86" y="192" text-anchor="middle">saída</text>
+    <text x="253" y="120" text-anchor="middle" fill="#ffffff" font-weight="bold">motor 12 V</text>
+    <text x="146" y="208" text-anchor="middle">cabeça</text>
+  </g>
+</svg>

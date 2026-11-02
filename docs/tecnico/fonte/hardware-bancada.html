@@ -1,0 +1,296 @@
+<!doctype html>
+<!--
+  Fonte do PDF "Bancada física com sensor YF-S201". O conteúdo acompanha ../hardware-bancada.md.
+  Para gerar o PDF de novo depois de editar: rode gerar-pdf.ps1 (nesta pasta).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Bancada física com sensor YF-S201</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --marinho: #12344d;
+    --marinho-2: #1b4965;
+    --areia: #d9c7a3;
+    --sertao: #f3ecdf;
+    --terracota: #b5543a;
+    --couro: #8b5a2b;
+    --tinta: #1f2933;
+    --tinta-2: #52606d;
+    --linha: #e5dfd3;
+  }
+  @page {
+    size: A4;
+    margin: 20mm 18mm 22mm 18mm;
+    @bottom-left { content: "Águas do Capibaribe · Bancada física"; font: 500 8.5pt Inter, sans-serif; color: #8a7a5c; }
+    @bottom-right { content: counter(page); font: 600 9pt Inter, sans-serif; color: #12344d; }
+  }
+  @page capa { margin: 0; @bottom-left { content: none } @bottom-right { content: none } }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 400 10.5pt/1.55 Inter, sans-serif; color: var(--tinta); background: #fff; }
+  h1, h2, h3 { font-family: 'Bricolage Grotesque', Inter, sans-serif; color: var(--marinho); letter-spacing: -0.01em; }
+  h2 { font-size: 22pt; line-height: 1.15; margin: 0 0 4mm; }
+  h3 { font-size: 13pt; margin: 6mm 0 2mm; break-after: avoid; }
+  p { margin: 0 0 3mm; }
+  ol, ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  strong { font-weight: 600; }
+  a { color: var(--marinho-2); }
+  code { font: 500 9pt/1.4 'Consolas', 'Courier New', monospace; background: var(--sertao); padding: 0.3mm 1.2mm; border-radius: 1mm; color: var(--marinho); }
+  pre { font: 400 9pt/1.6 'Consolas', 'Courier New', monospace; background: var(--marinho); color: #e8f1f7; padding: 4mm 5mm; border-radius: 2.5mm; margin: 0 0 4mm; white-space: pre-wrap; break-inside: avoid; }
+  table { width: 100%; border-collapse: collapse; margin: 1mm 0 5mm; font-size: 9.4pt; line-height: 1.45; break-inside: avoid; }
+  th { text-align: left; font-weight: 600; color: var(--tinta-2); background: var(--sertao); padding: 2mm 2.8mm; border-bottom: 1px solid var(--areia); }
+  td { padding: 2mm 2.8mm; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  td.preco, th.preco { white-space: nowrap; }
+  tr.total td { font-weight: 600; color: var(--marinho); background: var(--sertao); border-bottom: 0; }
+  .secao { break-before: page; }
+  .rotulo { display: flex; align-items: center; gap: 2.5mm; font: 600 9.5pt Inter, sans-serif; color: var(--couro); margin-bottom: 2mm; }
+  .rotulo::before { content: ""; width: 2.3mm; height: 2.3mm; background: var(--terracota); transform: rotate(45deg); }
+  .abertura { font-size: 11.5pt; line-height: 1.5; color: var(--tinta-2); margin-bottom: 5mm; }
+  .nota { background: var(--sertao); border-left: 1.2mm solid var(--terracota); border-radius: 0 2mm 2mm 0; padding: 3mm 4.5mm; margin: 2mm 0 4mm; break-inside: avoid; }
+  .nota.agua { border-left-color: var(--marinho); background: #e8f1f7; }
+  .nota p:last-child { margin: 0; }
+  .pequeno { font-size: 9pt; color: var(--tinta-2); }
+  figure { margin: 2mm 0 4mm; break-inside: avoid; }
+  figure img { display: block; width: 100%; border: 1px solid var(--linha); border-radius: 2.5mm; }
+
+  /* ---------- Capa ---------- */
+  .capa { page: capa; position: relative; height: 297mm; width: 210mm; overflow: hidden; background: var(--marinho); color: #fff; padding: 26mm 22mm; display: flex; flex-direction: column; break-after: page; }
+  .capa .ondas { position: absolute; inset: auto 0 0 0; width: 100%; height: 62%; }
+  .capa .marca { position: relative; display: flex; align-items: center; gap: 4mm; }
+  .medalhao { display: grid; place-items: center; width: 19mm; height: 19mm; border-radius: 50%; background: var(--sertao); box-shadow: 0 0 0 1mm rgba(217,199,163,.6); }
+  .medalhao img { width: 15mm; height: 15mm; object-fit: contain; }
+  .capa .nome { font: 700 17pt 'Bricolage Grotesque', sans-serif; }
+  .capa .sub { color: var(--areia); font-size: 10.5pt; }
+  .capa h1 { position: relative; color: #fff; font-size: 40pt; line-height: 1.06; margin: 48mm 0 6mm; max-width: 155mm; }
+  .capa .chamada { position: relative; font-size: 14pt; line-height: 1.5; color: #c9d9e5; max-width: 135mm; }
+  .capa .rodape { position: relative; margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; font-size: 9.5pt; color: #c9d9e5; }
+  .capa .rodape strong { color: var(--areia); font-weight: 600; }
+
+  /* ---------- Sumário ---------- */
+  .sumario ol { list-style: none; padding: 0; counter-reset: s; margin: 5mm 0 6mm; }
+  .sumario li { counter-increment: s; display: flex; align-items: baseline; gap: 4mm; padding: 3mm 0; border-bottom: 1px solid var(--linha); margin: 0; }
+  .sumario li::before { content: counter(s, decimal-leading-zero); font: 700 12pt 'Bricolage Grotesque', sans-serif; color: var(--terracota); width: 9mm; }
+  .sumario .t { font: 600 12pt 'Bricolage Grotesque', sans-serif; color: var(--marinho); }
+  .sumario .d { color: var(--tinta-2); font-size: 9.6pt; margin-left: auto; text-align: right; max-width: 85mm; }
+
+  /* ---------- Fotos das peças ---------- */
+  .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin: 3mm 0 0; }
+  .peca { border: 1px solid var(--linha); border-radius: 2.5mm; overflow: hidden; break-inside: avoid; }
+  .peca .foto { position: relative; height: 33mm; overflow: hidden; background: #fff; border-bottom: 1px solid var(--linha); }
+  .peca .foto img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .peca .foto img.cobre { object-fit: cover; }
+  .peca .legenda { padding: 2.5mm 3.5mm; }
+  .peca h4 { font: 700 10.5pt 'Bricolage Grotesque', sans-serif; color: var(--marinho); margin: 0 0 0.5mm; }
+  .peca p { margin: 0; font-size: 8.8pt; line-height: 1.4; color: var(--tinta-2); }
+  .fontes li { font-size: 9.6pt; margin-bottom: 2mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ CAPA ============ -->
+<section class="capa">
+  <svg class="ondas" viewBox="0 0 736 491" preserveAspectRatio="xMidYMax slice" style="-webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%); mask-image: linear-gradient(to bottom, transparent, #000 25%);">
+    <defs>
+      <filter id="f-ondas" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.8 -0.8 -0.8 0 1.9" result="m" />
+        <feFlood flood-color="#d9c7a3" flood-opacity="0.16" result="c" />
+        <feComposite in="c" in2="m" operator="in" />
+      </filter>
+    </defs>
+    <image href="../../../src/assets/wave-minimal-reference.jpg" width="736" height="491" filter="url(#f-ondas)" />
+  </svg>
+  <div class="marca">
+    <span class="medalhao"><img src="../../../src/assets/logo.png" alt=""></span>
+    <span><div class="nome">Águas do Capibaribe</div><div class="sub">Gestão de água por lote</div></span>
+  </div>
+  <h1>Bancada física com sensor YF-S201</h1>
+  <p class="chamada">Especificação técnica das peças, do circuito e da calibração: do simulador Wokwi à medição de água de verdade.</p>
+  <div class="rodape">
+    <span><strong>Versão 1.0</strong> · 2 de novembro de 2026</span>
+    <span>Issue #14</span>
+  </div>
+</section>
+
+<!-- ============ SUMÁRIO ============ -->
+<section class="sumario">
+  <div class="rotulo">Neste documento</div>
+  <h2>Sumário</h2>
+  <p class="abertura">Mostra as peças, a ligação elétrica e a calibração necessárias para trocar o simulador Wokwi por um sensor de vazão real.</p>
+  <ol>
+    <li><span class="t">Peças</span><span class="d">lista, preços, fotos e especificações</span></li>
+    <li><span class="t">Ligação elétrica</span><span class="d">circuito e conferência com o multímetro</span></li>
+    <li><span class="t">Medição e calibração</span><span class="d">de pulsos para litros</span></li>
+    <li><span class="t">Do Wokwi para a bancada</span><span class="d">o que muda no sketch</span></li>
+    <li><span class="t">Fontes</span><span class="d">dados e créditos das imagens</span></li>
+  </ol>
+  <div class="nota">
+    <p><strong>Situação:</strong> proposta ainda não montada. Os valores vêm das fichas técnicas e de contas, sem medição em bancada. Confirme na ficha do modelo comprado e meça antes de ligar.</p>
+  </div>
+</section>
+
+<!-- ============ 1. PEÇAS ============ -->
+<section class="secao">
+  <div class="rotulo">Seção 1</div>
+  <h2>Peças</h2>
+  <p class="pequeno">Preços de anúncios no Mercado Livre em 02/11/2026, em período de promoções e sem somar frete. Podem mudar; confirme na hora da compra.</p>
+  <table>
+    <tr><th>Peça</th><th>Qtde</th><th>Função</th><th class="preco">Preço</th></tr>
+    <tr><td>ESP32 DevKit com ESP-WROOM-32</td><td>1</td><td>lê o sensor e envia o lote pela API</td><td class="preco">R$ 34 a 49</td></tr>
+    <tr><td>Sensor de vazão YF-S201 (rosca de 1/2")</td><td>1</td><td>mede a água</td><td class="preco">R$ 28 a 45</td></tr>
+    <tr><td>Mini bomba de diafragma R385, 12 V</td><td>1</td><td>faz a água circular</td><td class="preco">R$ 34 a 59</td></tr>
+    <tr><td>Fonte 12 V, 1 A</td><td>1</td><td>alimenta só a bomba</td><td class="preco">R$ 27 a 44</td></tr>
+    <tr><td>Protoboard de 830 pontos com jumpers</td><td>1</td><td>ligações</td><td class="preco">R$ 25 a 37</td></tr>
+    <tr><td>Resistores de 10 kΩ (3) e 220 Ω (1), botão e LED</td><td>1 kit</td><td>divisor de tensão, início e fim do lote, aviso de lote em andamento</td><td class="preco">R$ 5 a 10 (estimado)</td></tr>
+    <tr><td>Mangueira, adaptadores de 1/2" e abraçadeiras</td><td>1 kit</td><td>liga a bomba ao sensor</td><td class="preco">R$ 20 a 40 (estimado)</td></tr>
+    <tr><td>Reservatório e recipiente graduado</td><td>1 de cada</td><td>guardar a água e conferir o volume</td><td class="preco">reaproveitável</td></tr>
+    <tr><td>Multímetro</td><td>1</td><td>conferir as tensões antes de ligar</td><td class="preco">emprestado</td></tr>
+    <tr class="total"><td colspan="3">Total, sem frete e sem contar o que a equipe já tiver</td><td class="preco">cerca de R$ 175 a 285</td></tr>
+  </table>
+
+  <div class="rotulo" style="break-before:page">Seção 1 · continuação</div>
+  <h2>Como são as peças</h2>
+  <p class="pequeno">Fotos ilustrativas: a aparência varia conforme o fabricante. Créditos na seção 5.</p>
+  <div class="pecas">
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/esp32.jpg" alt="ESP32 DevKit" class="cobre" style="object-position:50% 6%"></div><div class="legenda"><h4>ESP32 DevKit</h4><p>O cérebro da bancada: conta os pulsos e envia o lote pelo Wi-Fi.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/sensor.jpg" alt="Sensor de vazão de 1/2""></div><div class="legenda"><h4>Sensor de vazão de 1/2"</h4><p>Fica no caminho da água e gera pulsos conforme ela passa. Foto de um modelo do mesmo tipo do YF-S201.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/bomba.svg" alt="Mini bomba R385"></div><div class="legenda"><h4>Mini bomba R385</h4><p>Faz a água circular. Desenho ilustrativo, feito para este documento.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/fonte.jpg" alt="Fonte de alimentação" style="position:absolute;left:0;top:-38mm;width:175%;height:auto;object-fit:initial"></div><div class="legenda"><h4>Fonte 12 V, 1 A</h4><p>Alimenta só a bomba. Foto de um adaptador parecido; o modelo comprado precisa ser de 12 V.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/protoboard.png" alt="Protoboard"></div><div class="legenda"><h4>Protoboard</h4><p>Permite ligar as peças sem solda.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/jumpers.jpg" alt="Jumpers"></div><div class="legenda"><h4>Jumpers</h4><p>Fios com pontas prontas para as ligações na protoboard.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/resistores.jpg" alt="Resistores"></div><div class="legenda"><h4>Resistores</h4><p>Formam o divisor de tensão que protege o pino do ESP32.</p></div></div>
+    <div class="peca"><div class="foto"><img src="../imagens/pecas/multimetro.jpg" alt="Multímetro"></div><div class="legenda"><h4>Multímetro</h4><p>Confere as tensões antes de ligar o sensor no ESP32.</p></div></div>
+  </div>
+
+  <div class="rotulo" style="break-before:page">Seção 1 · continuação</div>
+  <h3 style="margin-top:0">Especificações do sensor</h3>
+  <table>
+    <tr><th>Item</th><th>Valor</th></tr>
+    <tr><td>Alimentação</td><td>5 a 18 V (mínimo testado: 4,5 V)</td></tr>
+    <tr><td>Consumo</td><td>até 15 mA em 5 V</td></tr>
+    <tr><td>Faixa de vazão</td><td>1 a 30 L/min</td></tr>
+    <tr><td>Saída</td><td>pulsos de 5 V (TTL), com ciclo de 50% ± 10%</td></tr>
+    <tr><td>Pulsos por litro</td><td>cerca de 450</td></tr>
+    <tr><td>Precisão</td><td>cerca de ±10% sem calibrar</td></tr>
+    <tr><td>Fios</td><td>vermelho (alimentação), preto (GND), amarelo (sinal)</td></tr>
+  </table>
+  <p class="pequeno">As fichas consultadas divergem em alguns valores. Aqui ficou o mais conservador.</p>
+
+  <h3>Vazão da bomba</h3>
+  <p>A bomba R385 é anunciada com cerca de <strong>1,5 a 2 L/min</strong>, em 12 V e 0,5 a 0,7 A com carga. É pouco acima do mínimo do sensor (1 L/min), e as mangueiras e adaptadores podem reduzir a vazão. Antes de comprar o restante, teste a vazão com um recipiente graduado. Se ficar abaixo de 1 L/min, deixe a água cair por gravidade de um reservatório mais alto ou use uma bomba maior.</p>
+</section>
+
+<!-- ============ 2. LIGAÇÃO ============ -->
+<section class="secao">
+  <div class="rotulo">Seção 2</div>
+  <h2>Ligação elétrica</h2>
+  <figure><img src="../imagens/bancada-circuito.svg" alt="Circuito elétrico e caminho da água na bancada"></figure>
+  <table>
+    <tr><th>Fio do sensor</th><th>Liga em</th><th>Observação</th></tr>
+    <tr><td>Vermelho</td><td>VIN (5 V) do ESP32</td><td>com o ESP32 alimentado pela USB</td></tr>
+    <tr><td>Preto</td><td>GND do ESP32</td><td>mesmo GND do sensor e do ESP32</td></tr>
+    <tr><td>Amarelo (sinal)</td><td>R1 de 10 kΩ, depois GPIO 27</td><td>R2 de 20 kΩ vai do GPIO 27 ao GND</td></tr>
+  </table>
+  <p>O pino 27 é o que o <code>iot/sketch.ino</code> já usa para contar os pulsos. Botão e LED continuam nos pinos 4 e 2. R2 pode ser feito com dois resistores de 10 kΩ em série. A bomba fica ligada só na fonte de 12 V, sem nenhum fio em comum com o ESP32.</p>
+</section>
+
+<section class="secao">
+  <div class="rotulo">Seção 2 · continuação</div>
+  <h3 style="margin-top:0">Por que o divisor de tensão</h3>
+  <p>O sinal do sensor é de 5 V. Pela ficha do ESP32, o nível alto aceito no pino vai de 2,475 V a cerca de 3,6 V (<code>0,75 x VDD</code> a <code>VDD + 0,3 V</code>, com VDD de 3,3 V). Ligar o sinal direto pode queimar a placa. O divisor reduz a tensão para dentro dessa faixa:</p>
+  <pre>V no pino = 5 V x R2 / (R1 + R2) = 5 V x 20 kΩ / (10 kΩ + 20 kΩ) = 3,33 V</pre>
+
+  <h3>Conferência antes de ligar no ESP32</h3>
+  <p>As fichas consultadas não informam como é o circuito interno da saída, e isso pode mudar entre fabricantes. Por isso, meça primeiro, com o divisor montado, o sensor ligado em 5 V e o <strong>fio ainda solto do pino 27</strong>. Gire a hélice devagar, soprando ou com água, e meça o ponto entre R1 e R2 em relação ao GND:</p>
+  <table>
+    <tr><th>O multímetro mostra</th><th>O que fazer</th></tr>
+    <tr><td>Alterna entre perto de 0 V e 2,5 a 3,3 V</td><td>Pode ligar no pino 27</td></tr>
+    <tr><td>Acima de 3,3 V</td><td>Não ligue. Confira os valores e a posição de R1 e R2</td></tr>
+    <tr><td>Fica sempre perto de 0 V ou abaixo de 2,5 V</td><td>A saída provavelmente precisa de pull-up. Tire R1 e R2, ligue o sinal no pino 27 com um resistor de 10 kΩ do sinal para o <strong>3,3 V</strong> (nunca para o 5 V) e meça de novo</td></tr>
+  </table>
+  <p>Se o sinal ficar instável, com contagem a mais sem água passando, use fios curtos e afaste os fios do sinal dos da bomba.</p>
+  <div class="nota">
+    <p><strong>Segurança:</strong> mantenha a eletrônica longe da água, não alimente a bomba pelo ESP32 e só mexa nas ligações com tudo desligado.</p>
+  </div>
+</section>
+
+<!-- ============ 3. MEDIÇÃO ============ -->
+<section class="secao">
+  <div class="rotulo">Seção 3</div>
+  <h2>Medição e calibração</h2>
+  <p>O sensor gera pulsos conforme a hélice gira. A especificação é:</p>
+  <pre>frequência (Hz)  = 7,5 x vazão (L/min)
+vazão (L/min)    = frequência (Hz) / 7,5
+pulsos por litro = 7,5 x 60 = 450
+litros do lote   = total de pulsos / PULSOS_POR_LITRO</pre>
+  <table>
+    <tr><th>Vazão</th><th>Frequência</th></tr>
+    <tr><td>1 L/min (mínimo do sensor)</td><td>7,5 Hz</td></tr>
+    <tr><td>1,5 a 2 L/min (bomba R385)</td><td>11 a 15 Hz</td></tr>
+    <tr><td>30 L/min (máximo do sensor)</td><td>225 Hz</td></tr>
+  </table>
+
+  <h3>Como calibrar</h3>
+  <p>A contagem também muda com a vazão, a pressão e a posição do sensor. Calibre com a montagem final:</p>
+  <ol>
+    <li>Encha um recipiente graduado com um volume conhecido, de pelo menos 5 L, passando pelo sensor. Com a bomba R385, isso leva cerca de 3 minutos.</li>
+    <li>Anote o <strong>Acumulado</strong> que o sketch mostra no monitor serial.</li>
+    <li>Calcule e repita pelo menos 3 vezes, usando a média:</li>
+  </ol>
+  <pre>PULSOS_POR_LITRO novo = PULSOS_POR_LITRO atual x litros mostrados / litros reais</pre>
+  <p>Exemplo: o sketch com 450 mostrou 5,20 L e o recipiente marcou 5,00 L. O novo valor é 450 x 5,20 / 5,00 = <strong>468</strong>.</p>
+  <div class="nota">
+    <p><strong>Cuidado:</strong> ao encerrar um lote, o sketch envia o lote para a API, e lotes não podem ser apagados. Faça a calibração com um banco temporário, nunca com o banco oficial <code>aguas</code>.</p>
+  </div>
+</section>
+
+<!-- ============ 4. DO WOKWI PARA A BANCADA ============ -->
+<section class="secao">
+  <div class="rotulo">Seção 4</div>
+  <h2>Do Wokwi para a bancada</h2>
+  <table>
+    <tr><th>Onde</th><th>Mudança</th><th>Motivo</th></tr>
+    <tr><td>Montagem</td><td>Tirar o fio entre os pinos 25 e 27 e o potenciômetro</td><td>os pulsos passam a vir do sensor</td></tr>
+    <tr><td><code>loop()</code> e <code>ajustarGerador()</code></td><td>Retirar o gerador de pulsos</td><td>ele só existe para simular o sensor</td></tr>
+    <tr><td>Mensagem <code>Vazão: ...</code> no serial</td><td>Calcular a vazão pelos pulsos do último segundo</td><td>hoje ela usa <code>freqAtual</code>, que vem do gerador simulado</td></tr>
+    <tr><td><code>WIFI_SSID</code> e <code>WIFI_SENHA</code></td><td>Usar a rede do local</td><td>o valor atual é a rede do simulador</td></tr>
+    <tr><td><code>WiFi.begin(WIFI_SSID, WIFI_SENHA, 6)</code></td><td>Tirar o <code>6</code></td><td>ele fixa o canal usado no Wokwi, e a rede real pode estar em outro</td></tr>
+    <tr><td><code>API_URL</code></td><td>Usar o endereço da API publicada</td><td>a comunicação segura é tratada na issue #13</td></tr>
+    <tr><td><code>PULSOS_POR_LITRO</code></td><td>Usar o valor calibrado</td><td>seção 3</td></tr>
+    <tr><td><code>PROCESSO_NOME</code> e <code>PECAS</code></td><td>Usar um processo de bancada</td><td>ver abaixo</td></tr>
+  </table>
+  <div class="nota agua">
+    <p><strong>Meta da demonstração:</strong> uma bancada mede poucos litros, enquanto as metas reais são de lavanderia. Se usar um processo real, o desvio sai muito abaixo da meta. Para demonstrar, cadastre um processo próprio, por exemplo com meta de 5 L por lote. Assim, medir mais de 5 L em 3 lotes seguidos abre o alerta.</p>
+  </div>
+</section>
+
+<!-- ============ 5. FONTES ============ -->
+<section class="secao">
+  <div class="rotulo">Seção 5</div>
+  <h2>Fontes</h2>
+  <p>Consultadas em 02/11/2026.</p>
+  <ul class="fontes">
+    <li><a href="https://documentation.espressif.com/esp32_datasheet_en.pdf">Espressif, ficha técnica do ESP32, v5.3</a>: limites de tensão dos pinos.</li>
+    <li><a href="https://components101.com/sensors/yf-s201-water-flow-measurement-sensor">Components101, YF-S201</a>: especificações e fios do sensor.</li>
+    <li><a href="https://www.altronics.com.au/product/j0085-yf-s201-hall-effect-water-flow-sensor">Altronics, YF-S201</a>: precisão, calibração e tipo de saída.</li>
+    <li><a href="https://elecrow.com/6-12v-r385-dc-diaphragm-pumps.html">Elecrow, bomba R385</a>: especificações da bomba.</li>
+    <li>Mercado Livre, buscas por <a href="https://lista.mercadolivre.com.br/sensor-de-fluxo-yf-s201">sensor YF-S201</a>, <a href="https://lista.mercadolivre.com.br/esp32-devkit-wroom-30-pinos">ESP32</a>, <a href="https://lista.mercadolivre.com.br/mini-bomba-agua-12v-rs385-diafragma">bomba R385</a>, <a href="https://lista.mercadolivre.com.br/kit-protoboard-830-jumpers">protoboard</a> e <a href="https://lista.mercadolivre.com.br/fonte-12v-1a-chaveada-p4">fonte</a>: preços.</li>
+  </ul>
+  <h3>Créditos das imagens</h3>
+  <ul class="fontes">
+    <li>ESP32 DevKit (recortada): Edwiyanto, <a href="https://commons.wikimedia.org/wiki/File:ESP32_Dev_Board.jpg">Wikimedia Commons</a>, CC BY-SA 4.0.</li>
+    <li>Sensor de vazão: <a href="https://wiki.seeedstudio.com/G1_and_2_inch_Water_Flow_Sensor/">Seeed Studio Wiki</a>, CC BY-SA 3.0.</li>
+    <li>Fonte (recortada): Evan-Amos, <a href="https://commons.wikimedia.org/wiki/File:NEC-PC-Engine-AC-Adapter.jpg">Wikimedia Commons</a>, domínio público.</li>
+    <li>Protoboard: Guhuru, <a href="https://commons.wikimedia.org/wiki/File:Breadboard.png">Wikimedia Commons</a>, CC0.</li>
+    <li>Jumpers: oomlout, <a href="https://commons.wikimedia.org/wiki/File:A_few_Jumper_Wires.jpg">Wikimedia Commons</a>, CC BY-SA 2.0.</li>
+    <li>Resistores: Evan-Amos, <a href="https://commons.wikimedia.org/wiki/File:Electronic-Axial-Lead-Resistors-Array.jpg">Wikimedia Commons</a>, domínio público.</li>
+    <li>Multímetro: André Karwath, <a href="https://commons.wikimedia.org/wiki/File:Digital_Multimeter_Aka.jpg">Wikimedia Commons</a>, CC BY-SA 2.5.</li>
+    <li>Bomba R385 e circuito: desenhos feitos para este documento.</li>
+  </ul>
+</section>
+
+</body>
+</html>
