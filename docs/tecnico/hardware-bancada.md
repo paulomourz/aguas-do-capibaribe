@@ -1,7 +1,7 @@
 # Bancada física com ESP32 e sensor YF-S201
 
-Especificação técnica e ponto de verificação da issue #14. Serve para a equipe e o orientador decidirem
-se o projeto monta a bancada física ou entrega a simulação do Wokwi como resultado final do PI.
+Especificação técnica da bancada física. A entrega do PI usa a simulação do Wokwi; este documento mostra o
+que seria preciso para montar a bancada com um sensor real.
 
 > **Situação:** proposta ainda não montada. Os valores vêm das fichas técnicas e de contas, sem medição em
 > bancada. Confirme na ficha do modelo comprado e meça antes de ligar.
@@ -139,43 +139,7 @@ por exemplo com meta de 5 L por lote. Assim, medir mais de 5 L em 3 lotes seguid
 **Segurança:** mantenha a eletrônica longe da água, não alimente a bomba pelo ESP32 e só mexa nas ligações
 com tudo desligado.
 
-## 5. Ponto de verificação
-
-A decisão é da equipe com o orientador. Os campos abaixo devem ser preenchidos na reunião.
-
-**Data:** ____/____/______
-
-**Participantes:** ________________________________________________
-
-| Critério | Pergunta | Situação encontrada | Atende? |
-|---|---|---|---|
-| Componentes | Temos ou conseguimos as peças da seção 1 a tempo? | | ☐ Sim ☐ Não |
-| Orçamento | Quem paga, e o valor cabe no projeto? | | ☐ Sim ☐ Não |
-| Software | O site, a API e o envio pelo Wokwi estão estáveis? | | ☐ Sim ☐ Não |
-| Prazo | Sobra tempo para comprar, montar, calibrar e ensaiar antes do fim do semestre? | | ☐ Sim ☐ Não |
-| Responsável | Alguém assume montar e levar a bancada para a banca? | | ☐ Sim ☐ Não |
-
-**Regra sugerida:** avançar para a bancada só se todos os critérios forem "Sim". Com qualquer "Não", a
-entrega fica com a simulação do Wokwi.
-
-**Decisão:**
-
-- [ ] Avançar para a bancada física
-- [ ] Encerrar com a simulação do Wokwi como resultado final do PI
-
-**Justificativa:** ________________________________________________
-
-**Parecer do orientador:** ________________________________________
-
-**Assinatura ou registro de aprovação:** ____________________________
-
-### Sugestão técnica (não é a decisão)
-
-Manter o Wokwi como entrega garantida e tratar a bancada como acréscimo, se os critérios forem atendidos.
-O código de contagem de pulsos é o mesmo nos dois casos, então a simulação já demonstra a regra de negócio
-sem o risco de falha de montagem no dia da banca.
-
-## 6. Fontes
+## 5. Fontes
 
 Consultadas em 02/11/2026.
 

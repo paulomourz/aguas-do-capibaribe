@@ -1,4 +1,4 @@
-/* Regras de exibição usadas pelas telas (prévia do esperado, desvio, classificação ilustrativa). */
+/* Regras de exibição usadas pelas telas (prévia do esperado, desvio, classificação). */
 
 import type { Status } from '../components/ui'
 import type { StatusConformidade } from '../services/tipos'
@@ -16,7 +16,7 @@ export function desvioDe(real: number, esperado: number) {
 export const statusDaApi: Record<StatusConformidade, Status> = { DENTRO_DA_META: 'ok', ATENCAO: 'warn', CRITICO: 'crit' }
 
 /*
- * Faixas ilustrativas, espelho de StatusConformidade no backend. Usadas só para totais e médias
+ * Mesmos limites de StatusConformidade no backend: mudar nos dois. Usadas só para totais e médias
  * (relatório, dashboard, média do alerta) e para o modo simulado; lotes usam o status da API.
  * Configuração única de faixas (desvio em %, limite superior inclusivo). Nunca exibir na interface.
  */
