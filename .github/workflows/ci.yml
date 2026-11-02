@@ -78,7 +78,8 @@ jobs:
       - name: Testa site, login, processos e registro de lote pelo Nginx
         run: |
           testar() {
-            curl -fsS http://localhost:3000/ | grep -q 'id="root"'
+            # O Nginx pode levar alguns segundos para aceitar a primeira conexão.
+            curl -fsS --retry 15 --retry-delay 2 --retry-all-errors http://localhost:3000/ | grep -q 'id="root"'
             curl -fsS -o /dev/null http://localhost:3000/api/swagger-ui/index.html
             senha=$(docker compose exec -T backend cat /segredos/admin)
             corpo=$(jq -n --arg s "$senha" '{usuario: "capibaribe.admin", senha: $s}')
