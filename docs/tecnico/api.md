@@ -64,7 +64,7 @@ ResumoDTO   = { processoId, real, esperado, lotes }
 
 ## Validações
 
-Os limites vêm das colunas e restrições do `banco.sql`:
+Os limites vêm das colunas e restrições criadas pelas migrações (`V1__cria_tabelas_principais.sql`):
 
 | Campo | Regra |
 |---|---|

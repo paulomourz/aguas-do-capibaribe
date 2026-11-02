@@ -15,8 +15,8 @@ como um dispositivo real faria (US-09, fase 1 do IoT).
 
 ## Antes de começar
 
-- PostgreSQL com o esquema de `database/banco.sql` aplicado. A API confere as tabelas ao subir e não
-  sobe se forem diferentes.
+- PostgreSQL com as migrações Flyway aplicadas ([`../database/LEIA-ME.md`](../database/LEIA-ME.md)).
+  A API confere as tabelas ao subir e não sobe se forem diferentes.
 - JDK 25 (LTS ou mais novo) e Maven 3.9+. Para conferir: `java -version` e `mvn -v`.
 
 ## 1. Conta do sensor no banco (uma vez só)

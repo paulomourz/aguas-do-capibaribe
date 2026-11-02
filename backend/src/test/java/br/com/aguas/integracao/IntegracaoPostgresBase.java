@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
 
+import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationState;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,7 +36,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Testes de integração contra um PostgreSQL criado a partir de database/banco.sql.
+ * Testes de integração contra um PostgreSQL com o esquema criado pelas migrações do Flyway.
  * Nunca usam o banco real: as subclasses só aceitam um contêiner descartável
  * (IntegracaoPostgresContainerTest) ou um banco local cujo nome termina em "_teste"
  * (IntegracaoPostgresLocalTest).
@@ -59,6 +61,7 @@ abstract class IntegracaoPostgresBase {
     @Autowired PasswordEncoder encoder;
     @Autowired ObjectMapper json;
     @Autowired DataSource dataSource;
+    @Autowired Flyway flyway;
 
     record Conta(int id, String login, String token) {}
 
@@ -122,6 +125,28 @@ abstract class IntegracaoPostgresBase {
         try (var c = dataSource.getConnection()) {
             assertThat(c.getMetaData().getURL()).containsPattern("//(localhost|127\\.0\\.0\\.1):\\d+/\\w+_teste");
         }
+    }
+
+    @Test
+    void flywayAplicouTodasAsMigracoesEmOrdem() {
+        // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
+        var aplicadas = flyway.info().applied();
+        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4");
+        assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
+        assertThat(flyway.info().pending()).isEmpty();
+
+        List<String> iniciais = jdbc.queryForList(
+                "select nome from processo where nome in ('Amaciamento', 'Estonagem', 'Tingimento', 'Alvejamento')",
+                String.class);
+        assertThat(iniciais).containsExactlyInAnyOrder("Amaciamento", "Estonagem", "Tingimento", "Alvejamento");
+    }
+
+    @Test
+    void reinicioValidaChecksumsENaoRecriaNada() {
+        // Mesmo efeito de a API subir de novo num banco já migrado.
+        flyway.validate();
+        assertThat(flyway.migrate().migrationsExecuted).isZero();
+        assertThat(flyway.info().applied()).hasSize(4);
     }
 
     @Test

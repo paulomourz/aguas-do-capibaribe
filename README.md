@@ -62,12 +62,14 @@ lote, a água gasta com a meta de cada processo e avisa quando o consumo foge do
 flowchart LR
     W["🖥️ Front-end<br/>React + Vite"] -- "REST / JSON" --> A["⚙️ API<br/>Spring Boot"]
     S["📡 ESP32 (Wokwi)<br/>sensor de vazão"] -- "túnel cloudflared" --> A
-    A -- "JPA" --> B[("🐘 PostgreSQL<br/>banco.sql")]
+    A -- "JPA + Flyway" --> B[("🐘 PostgreSQL")]
 ```
 
 - O front-end **nunca** acessa o banco: tudo passa pela API.
 - O ESP32 simulado é só mais um cliente da API: faz login e envia o lote.
-- A API não cria nem altera tabelas: o esquema é o de [`database/banco.sql`](database/banco.sql).
+- O esquema é versionado com Flyway: as migrações em
+  [`backend/src/main/resources/db/migration/`](backend/src/main/resources/db/migration/) são aplicadas
+  pela API ao subir ([`database/LEIA-ME.md`](database/LEIA-ME.md)).
 
 ### Estrutura do repositório
 
@@ -75,7 +77,7 @@ flowchart LR
 |---|---|
 | `/` (raiz) | Front-end React 19 + Vite + Tailwind (estrutura exigida pelo Figma Make) |
 | [`backend/`](backend/README.md) | API REST em Java 25 LTS + Spring Boot 3.5 |
-| [`database/`](database/LEIA-ME.md) | Esquema PostgreSQL (`banco.sql`, dump do PostgreSQL 18.6) |
+| [`database/`](database/LEIA-ME.md) | Guia do banco PostgreSQL e script do usuário `aguas_api` (as migrações Flyway ficam no `backend/`) |
 | [`iot/`](iot/LEIA-ME.md) | Sensor de vazão simulado no Wokwi (ESP32): código, circuito e guia |
 | [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md) e [gestão](docs/gestao/LEIA-ME.md) |
 | `public/` | Arquivos servidos como estão (favicon) |
@@ -94,8 +96,8 @@ flowchart LR
 > git checkout develop
 > ```
 >
-> Depois siga os passos abaixo: requisitos, banco, API e front-end. O banco do seu PC começa vazio (só a
-> estrutura do `banco.sql`) e os arquivos de senha (`backend/.env`, `.env.local`) não vêm do GitHub:
+> Depois siga os passos abaixo: requisitos, banco, API e front-end. O banco do seu PC começa só com a
+> estrutura e os processos iniciais das migrações, e os arquivos de senha (`backend/.env`, `.env.local`) não vêm do GitHub:
 > cada pessoa cria os seus a partir dos `.env.example`.
 
 ### Requisitos
@@ -104,29 +106,31 @@ flowchart LR
 |---|---|---|
 | JDK | 25 (LTS) ou mais novo | API |
 | Maven | 3.9 ou mais novo | API |
-| PostgreSQL | 18 | banco (o `psql` precisa ser 18+ por causa do dump) |
+| PostgreSQL | 18 | banco |
 | Node.js | 22 ou mais novo | front-end |
 | pnpm | 10 | front-end (`npx pnpm@10` também serve) |
 | cloudflared | qualquer | só para o IoT simulado |
 
 ### 1. Banco de dados
 
-Crie um banco vazio, aplique o esquema e crie o usuário da aplicação (`aguas_api`, sem permissão de
-apagar dados nem de mudar a estrutura). Escolha uma senha para ele: é a que vai no `DB_PASSWORD` do
-`backend/.env`.
+Crie um banco vazio, aplique as migrações do Flyway e crie o usuário da aplicação (`aguas_api`, sem
+permissão de apagar dados nem de mudar a estrutura). Escolha uma senha para ele: é a que vai no
+`DB_PASSWORD` do `backend/.env`. PowerShell, dentro de `backend/`:
 
-```bash
+```powershell
 psql -U postgres -c "create database aguas"
-psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql
-psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha do aguas_api>' -f database/seguranca-usuario-api.sql
+$env:FLYWAY_URL = "jdbc:postgresql://localhost:5432/aguas"; $env:FLYWAY_USER = "postgres"; $env:FLYWAY_PASSWORD = "<senha do postgres>"
+mvn flyway:migrate
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha do aguas_api>' -f ../database/seguranca-usuario-api.sql
 ```
 
-No fim, o terceiro comando mostra o que o `aguas_api` pode fazer em cada tabela (nenhum `delete`).
+No fim, o último comando mostra o que o `aguas_api` pode fazer em cada tabela (nenhum `delete`).
 
-> **Já tem o banco de uma versão anterior?** Não recrie: aplique os scripts de `database/migracoes/`
-> que ainda não rodou, antes de subir a API nova. A lista está no
-> [`database/LEIA-ME.md`](database/LEIA-ME.md#atualizar-um-banco-que-já-existe-migrações).
-O banco começa vazio. Na primeira inicialização, a API cria o administrador principal
+> **Já tem o banco de antes do Flyway (criado pelo antigo `banco.sql`)?** Não recrie: na primeira subida
+> da API nova, use `FLYWAY_BASELINE=true` uma vez
+> ([`database/LEIA-ME.md`](database/LEIA-ME.md#banco-que-já-existia-antes-do-flyway-o-aguas)).
+
+O banco começa sem usuários. Na primeira inicialização, a API cria o administrador principal
 `capibaribe.admin` com a senha de `ADMIN_SENHA` ([detalhes](backend/README.md#administrador-principal));
 os outros usuários são criados na tela **Usuários**.
 
@@ -138,7 +142,7 @@ os outros usuários são criados na tela **Usuários**.
 
 ```bash
 cd backend
-cp .env.example .env     # preencha banco (DB_USER=aguas_api), JWT_SECRET, ADMIN_SENHA e CORS_ORIGINS
+cp .env.example .env     # preencha banco (DB_USER=aguas_api), FLYWAY_USER/FLYWAY_PASSWORD, JWT_SECRET, ADMIN_SENHA e CORS_ORIGINS
 mvn spring-boot:run      # http://localhost:8080/api
 ```
 
@@ -187,12 +191,13 @@ mvn test
 | `ProcessoControllerTest` | não | meta zero ou negativa e nome repetido no cadastro de processos |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 
-São 57 testes: 41 unitários e de web + 16 de integração com PostgreSQL 18. Os de integração usam um
+São 59 testes: 41 unitários e de web + 18 de integração com PostgreSQL 18 (o banco começa vazio e o
+Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
-`develop`: `backend-test` (os 57 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
+`develop`: `backend-test` (os 59 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
 Não faça merge com check vermelho.
 
 ## 📌 Status
@@ -212,6 +217,7 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
+- ✅ Versionamento do banco com migrações Flyway (V1 a V4), aplicadas ao subir a API
 
 **Próximos passos**
 
@@ -219,7 +225,7 @@ O que falta fazer está nas [**Issues do GitHub**](https://github.com/paulomourz
 abertas pelo orientador, com prioridade e critérios de aceitação. Entre elas:
 
 - 🟡 Status verde/amarelo/vermelho: lotes já vêm classificados pela API; falta fechar os limites oficiais e levar totais e médias para o back-end
-- ⬜ CI no GitHub Actions, versionamento do banco com Flyway e testes de aceitação
+- ⬜ Testes de aceitação
 - ⬜ Inativar processo
 - ⬜ API publicada num endereço fixo (semana 5)
 
@@ -268,10 +274,12 @@ Antes do pull request, rode `mvn test` (back-end) e `pnpm build` (front-end).
    descrição do pull request.
 2. Como o pull request entra na `develop` (e não na `main`), o GitHub **não fecha a issue sozinho**.
    Depois do merge, feche a issue com um comentário apontando o PR.
-3. **Mudou o banco?** Atualize o `banco.sql` (para bancos novos) **e** crie um script numerado em
-   `database/migracoes/` (para bancos que já existem). Avise a equipe para rodá-lo antes de subir a
-   API nova, e registre a mudança no [`CHANGELOG.md`](CHANGELOG.md).
-4. Depois do `git pull` na `develop`, confira se entrou alguma migração nova em `database/migracoes/`.
+3. **Mudou o banco?** Crie uma migração nova (`V5__descricao.sql`, o próximo número) em
+   `backend/src/main/resources/db/migration/`. **Nunca edite uma migração que já está na `develop`**:
+   o Flyway confere o checksum e a API não sobe. Registre a mudança no [`CHANGELOG.md`](CHANGELOG.md).
+   Passo a passo no [`database/LEIA-ME.md`](database/LEIA-ME.md#mudou-o-banco-crie-uma-migração-nova).
+4. Depois do `git pull` na `develop`, não precisa rodar nada no banco: a API aplica as migrações novas
+   ao subir.
 
 > [!WARNING]
 > **Nunca suba segredos.** `backend/.env`, `.env.local` e `docs/privado/` estão no `.gitignore`.
