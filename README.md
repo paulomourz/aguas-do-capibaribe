@@ -100,6 +100,25 @@ flowchart LR
 > estrutura e os processos iniciais das migrações, e os arquivos de senha (`backend/.env`, `.env.local`) não vêm do GitHub:
 > cada pessoa cria os seus a partir dos `.env.example`.
 
+### Com Docker (um comando só)
+
+Precisa apenas do Docker com o Docker Compose. Na raiz do projeto:
+
+```bash
+docker compose up -d --build
+docker compose logs segredos   # mostra o login e a senha inicial do administrador
+```
+
+O site abre em <http://localhost:3000> e o Swagger em <http://localhost:3000/api/swagger-ui.html>. A primeira
+subida baixa as imagens e compila tudo, então precisa de internet e demora alguns minutos.
+
+- **Banco próprio:** é separado do PostgreSQL instalado no PC e já vem com os processos iniciais.
+- **Senhas:** são sorteadas na primeira subida e ficam só em um volume do Docker, fora do Git.
+- **Parar:** `docker compose down` mantém os dados. Com `docker compose down -v`, os dados e as senhas são **apagados**.
+- **IoT simulado:** aponte o túnel para o site (`cloudflared tunnel --url http://localhost:3000`). O `/api` continua igual.
+
+Para rodar sem Docker, siga os passos abaixo.
+
 ### Requisitos
 
 | Ferramenta | Versão | Para quê |

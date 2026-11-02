@@ -64,3 +64,36 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
+
+  docker-compose:
+    name: docker-compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Sobe os três serviços
+        run: docker compose up -d --build
+
+      - name: Testa site, login, processos e registro de lote pelo Nginx
+        run: |
+          testar() {
+            curl -fsS http://localhost:3000/ | grep -q 'id="root"'
+            curl -fsS -o /dev/null http://localhost:3000/api/swagger-ui/index.html
+            senha=$(docker compose exec -T backend cat /segredos/admin)
+            corpo=$(jq -n --arg s "$senha" '{usuario: "capibaribe.admin", senha: $s}')
+            token=$(curl -fsS -H 'Content-Type: application/json' -d "$corpo" http://localhost:3000/api/auth/login | jq -r .token)
+            curl -fsS -H "Authorization: Bearer $token" http://localhost:3000/api/processos > processos.json
+            test "$(jq length processos.json)" -ge 4
+            lote=$(jq -c '{processoId: .[0].id, pecas: 1, litros: 100}' processos.json)
+            curl -fsS -o /dev/null -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$lote" http://localhost:3000/api/lotes
+          }
+          testar
+          # Dados e senhas precisam sobreviver a uma nova subida.
+          docker compose down
+          docker compose up -d
+          testar
+
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose logs --no-color db backend frontend
