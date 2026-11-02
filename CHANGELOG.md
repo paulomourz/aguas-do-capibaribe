@@ -33,8 +33,15 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Banco de dados
 
+- **Versionamento com Flyway** (issue #8): o esquema passa a ser criado e evoluído por migrações em
+  `backend/src/main/resources/db/migration/`, aplicadas pela API ao subir: V1 (tabelas, índices e
+  views), V2 (triggers do esperado e da imutabilidade do lote), V3 (processos iniciais) e V4
+  (`auditoria_usuario`). O `database/banco.sql` e o `database/migracoes/` saem (V1, V2 e V4 reproduzem o
+  mesmo esquema). Novas variáveis: `FLYWAY_USER`, `FLYWAY_PASSWORD`, `FLYWAY_ATIVO`, `FLYWAY_BASELINE`.
+  **Banco oficial:** subir uma vez com `FLYWAY_BASELINE=true` (ver `database/LEIA-ME.md`).
+  59 testes (41 unitários e de web + 18 de integração).
 - **Migração obrigatória** para bancos já existentes, antes de subir a API nova:
-  `database/migracoes/001-auditoria-usuario.sql`. Bancos novos já recebem a tabela pelo `banco.sql`.
+  `database/migracoes/001-auditoria-usuario.sql` (hoje V4 do Flyway).
 
 ### Segurança
 

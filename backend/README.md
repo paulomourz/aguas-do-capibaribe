@@ -1,17 +1,18 @@
 # Águas do Capibaribe: API (back-end)
 
-API REST em Java 25 (LTS) + Spring Boot 3.5 + Maven. Ela atende o front-end React deste repositório e usa o
-PostgreSQL definido em [`../database/banco.sql`](../database/banco.sql).
+API REST em Java 25 (LTS) + Spring Boot 3.5 + Maven. Ela atende o front-end React deste repositório e usa
+um PostgreSQL cujo esquema é versionado com Flyway ([`../database/LEIA-ME.md`](../database/LEIA-ME.md)).
 
-> O banco **não é criado nem alterado** pela API. O Hibernate roda com `ddl-auto=validate`: na
-> inicialização ele só confere se tabelas e colunas batem com as entidades e, se não baterem, a API
-> não sobe.
+> Na inicialização, o **Flyway** aplica as migrações pendentes de `src/main/resources/db/migration/`
+> (e confere o checksum das já aplicadas). Depois, o Hibernate roda com `ddl-auto=validate`: só confere
+> se tabelas e colunas batem com as entidades e, se não baterem, a API não sobe. O Hibernate nunca
+> cria nem altera tabelas.
 
 ## Requisitos
 
 - JDK 25 (LTS)
 - Maven 3.9 ou superior
-- Acesso de rede ao PostgreSQL 18 com o esquema de `database/banco.sql` já aplicado
+- Acesso de rede a um PostgreSQL 18 (o esquema vem das migrações Flyway)
 - Opcional, para os testes de integração: Docker **ou** um PostgreSQL local descartável (ver [Testes](#testes))
 
 ## Estrutura
@@ -28,11 +29,12 @@ backend/
     │   ├── controller/           Auth, Usuario, Processo, Lote, Alerta, Relatorio
     │   ├── service/              regras de negócio; RegraDeAlerta é a regra pura dos 3 lotes
     │   ├── repository/           Spring Data JPA
-    │   ├── entity/               mapeamento 1:1 das tabelas do banco.sql
+    │   ├── entity/               mapeamento 1:1 das tabelas criadas pelas migrações
     │   ├── dto/                  contratos JSON (mesmos nomes de src/services/tipos.ts do front)
     │   ├── exception/            erros no formato {codigo, mensagem, campos}
     │   └── ferramentas/          GerarHashSenha (hash BCrypt para o primeiro gestor)
     ├── main/resources/application.yml
+    ├── main/resources/db/migration/  migrações Flyway (V1__..., V2__...), aplicadas em ordem
     └── test/java/br/com/aguas/   testes unitários, web (MockMvc) e de integração (PostgreSQL)
 ```
 
@@ -49,6 +51,9 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `DB_USER` / `DB_PASSWORD` | sim | Usuário e senha da API no banco |
 | `DB_SSLMODE` | não (`prefer`) | `disable`, `prefer`, `require` ou `verify-full` |
 | `DB_POOL_MAX` | não (10) | Máximo de conexões simultâneas |
+| `FLYWAY_USER` / `FLYWAY_PASSWORD` | sim, com `DB_USER=aguas_api` | Dono do banco, usado só para as migrações. Sem elas, o Flyway usa `DB_USER`, que não pode criar tabelas |
+| `FLYWAY_ATIVO` | não (true) | `false`: a API não aplica migrações (rode `mvn flyway:migrate` à mão) |
+| `FLYWAY_BASELINE` | não (false) | `true` **uma vez**, no banco que já existia antes do Flyway ([detalhes](../database/LEIA-ME.md#banco-que-já-existia-antes-do-flyway-o-aguas)) |
 | `JWT_SECRET` | sim | Pelo menos 32 caracteres aleatórios. Gere com `openssl rand -base64 48`. Sem ele, a API não sobe |
 | `JWT_EXPIRACAO` | não (`8h`) | Validade do login, sem renovação automática |
 | `CORS_ORIGINS` | sim, para o navegador | Origens do front, separadas por vírgula. `*` é recusado |
@@ -118,7 +123,7 @@ O sistema sempre tem um administrador principal (perfil gestor), por padrão com
   (de 8 a 72 bytes). Sem o administrador e sem `ADMIN_SENHA`, a API não sobe.
 - Se ele já existe, a API não altera nada: a senha trocada pelo site continua valendo. Depois da
   primeira inicialização, `ADMIN_SENHA` pode ser removida do ambiente.
-- A senha nunca fica no código nem no `banco.sql`; vem só do `backend/.env` ou das variáveis do
+- A senha nunca fica no código nem nas migrações; vem só do `backend/.env` ou das variáveis do
   servidor. Troque-a pelo site no primeiro acesso.
 - O administrador principal não pode ser desativado. Login e nome podem ser mudados com
   `ADMIN_LOGIN` e `ADMIN_NOME`.
@@ -213,8 +218,12 @@ mvn test
 | `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, fórmula do desvio, faixas de conformidade, CORS, JWT |
 | `SegurancaWebTest` | não (serviços simulados) | 401/403 por perfil, usuário desativado, validações (422), formato de erro, CORS |
 | `ProcessoControllerTest` | não (repositório simulado) | cadastro e edição de processos: meta zero ou negativa, campos faltando, nome repetido (US-02) |
-| `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável criado com `banco.sql` |
+| `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável, que começa vazio: o Flyway aplica V1 a V4 na subida |
 | `IntegracaoPostgresLocalTest` | PostgreSQL local descartável | os mesmos testes, sem Docker |
+
+Dois desses testes conferem o Flyway: `flywayAplicouTodasAsMigracoesEmOrdem` (banco vazio recebe V1 a
+V4, com os processos iniciais) e `reinicioValidaChecksumsENaoRecriaNada` (uma nova subida valida os
+checksums e não executa nada).
 
 Os testes de integração **nunca usam o banco real**. Sem Docker, a classe de contêiner aparece como
 *skipped*. Antes de desistir, o Testcontainers procura o Docker por cerca de 3 minutos.
@@ -224,8 +233,7 @@ Sem Docker, com um PostgreSQL 18 instalado localmente, dá para criar um cluster
 ```bash
 initdb -D /tmp/pg-teste -U postgres --auth=trust -E UTF8 --locale=C
 pg_ctl -D /tmp/pg-teste -o "-p 55432 -c listen_addresses=localhost" -l /tmp/pg-teste.log start
-psql -h localhost -p 55432 -U postgres -c "create database aguas_teste"
-psql -h localhost -p 55432 -U postgres -d aguas_teste -v ON_ERROR_STOP=1 -f ../database/banco.sql
+psql -h localhost -p 55432 -U postgres -c "create database aguas_teste"   # vazio: o Flyway cria o esquema
 TESTE_PG_URL=jdbc:postgresql://localhost:55432/aguas_teste mvn test
 pg_ctl -D /tmp/pg-teste stop                # depois, apague a pasta /tmp/pg-teste
 ```
@@ -239,14 +247,17 @@ No mesmo PostgreSQL da máquina, sem cluster separado (PowerShell, dentro de `ba
 
 ```powershell
 psql -U postgres -c "create database aguas_verificacao_teste"
-psql -U postgres -d aguas_verificacao_teste -v ON_ERROR_STOP=1 -f ../database/banco.sql
 $env:TESTE_PG_URL = "jdbc:postgresql://localhost:5432/aguas_verificacao_teste"
 $env:TESTE_PG_PASSWORD = "<senha do postgres>"
 mvn test
 psql -U postgres -c "drop database aguas_verificacao_teste"
 ```
 
+Para testar conectado como `aguas_api`, use `TESTE_PG_USER=aguas_api` e informe o dono do esquema
+para as migrações em `TESTE_FLYWAY_USER` / `TESTE_FLYWAY_PASSWORD`.
+
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
-temporário também funciona. Resultado em 29/10/2026, com JDK 25: **57 testes, todos passando** (41
-unitários e de web + 16 de integração). Os 16 de `IntegracaoPostgresContainerTest` aparecem como
-*skipped* sem Docker: são os mesmos testes de integração, na versão com contêiner.
+temporário também funciona (na segunda, o Flyway só valida). Resultado em 02/11/2026, com JDK 25:
+**59 testes, todos passando** (41 unitários e de web + 18 de integração), tanto como `postgres` quanto
+como `aguas_api`. Os 18 de `IntegracaoPostgresContainerTest` aparecem como *skipped* sem Docker: são
+os mesmos testes de integração, na versão com contêiner.

@@ -342,13 +342,13 @@
     <tr><th style="width:22%">Parte</th><th style="width:30%">Tecnologia</th><th>Onde está no projeto</th></tr>
     <tr><td><strong>Front-end</strong></td><td>React 19, Vite, Tailwind CSS</td><td>raiz do repositório (<code>src/</code>), exigência do Figma Make</td></tr>
     <tr><td><strong>API</strong></td><td>Java 25 LTS, Spring Boot 3.5, JWT</td><td><code>backend/</code></td></tr>
-    <tr><td><strong>Banco</strong></td><td>PostgreSQL 18</td><td><code>database/banco.sql</code></td></tr>
+    <tr><td><strong>Banco</strong></td><td>PostgreSQL 18, migrações Flyway</td><td><code>backend/src/main/resources/db/migration/</code></td></tr>
     <tr><td><strong>Sensor</strong></td><td>ESP32 simulado no Wokwi</td><td><code>iot/</code></td></tr>
   </table>
 
   <h3>Três decisões importantes</h3>
   <ul>
-    <li><strong>O banco guarda as regras críticas.</strong> O cálculo do esperado e a proibição de alterar lotes ficam em triggers do PostgreSQL. A API não cria nem altera tabelas: só confere, ao subir, se o esquema bate.</li>
+    <li><strong>O banco guarda as regras críticas.</strong> O cálculo do esperado e a proibição de alterar lotes ficam em triggers do PostgreSQL. O esquema é versionado com Flyway: ao subir, a API aplica as migrações pendentes e o Hibernate só confere se o esquema bate.</li>
     <li><strong>O dono do lote vem do login.</strong> A API nunca aceita que alguém informe “quem registrou”: usa sempre a pessoa do token.</li>
     <li><strong>Cada requisição confere o usuário no banco.</strong> Assim, desativar alguém tem efeito imediato.</li>
   </ul>
@@ -365,7 +365,7 @@
     <tr><th style="width:24%">Ferramenta</th><th style="width:20%">Versão</th><th>Para quê</th></tr>
     <tr><td>JDK</td><td>25 (LTS) ou mais novo</td><td>rodar a API</td></tr>
     <tr><td>Maven</td><td>3.9 ou mais novo</td><td>compilar e subir a API</td></tr>
-    <tr><td>PostgreSQL</td><td>18</td><td>banco de dados (o <code>psql</code> precisa ser 18+)</td></tr>
+    <tr><td>PostgreSQL</td><td>18</td><td>banco de dados</td></tr>
     <tr><td>Node.js</td><td>22 ou mais novo</td><td>rodar o site</td></tr>
     <tr><td>pnpm</td><td>10</td><td>instalar o site (<code>npx pnpm@10</code> também serve)</td></tr>
     <tr><td>cloudflared</td><td>qualquer</td><td>só para o sensor simulado</td></tr>
@@ -376,17 +376,22 @@
 <pre>git clone https://github.com/paulomourz/aguas-do-capibaribe.git
 cd aguas-do-capibaribe
 git checkout develop</pre></li>
-    <li><strong>Banco de dados</strong>Crie um banco vazio e aplique o esquema. O banco oficial já existe e se chama <code>aguas</code>; faça isto só numa máquina nova.
+    <li><strong>Banco de dados</strong>Crie um banco vazio e aplique as migrações do Flyway (dentro de <code>backend/</code>). O banco oficial já existe e se chama <code>aguas</code>; faça isto só numa máquina nova.
 <pre>psql -U postgres -c "create database aguas"
-psql -U postgres -d aguas -v ON_ERROR_STOP=1 -f database/banco.sql</pre>
+cd backend
+$env:FLYWAY_URL = "jdbc:postgresql://localhost:5432/aguas"
+$env:FLYWAY_USER = "postgres"; $env:FLYWAY_PASSWORD = "SENHA-DO-POSTGRES"
+mvn flyway:migrate</pre>
 Depois crie o usuário da aplicação, <code>aguas_api</code>, que só lê, insere e atualiza. A senha escolhida aqui vai no <code>DB_PASSWORD</code>:
-<pre>psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='SENHA' -f database/seguranca-usuario-api.sql</pre>
-<strong>Já tem um banco de uma versão anterior?</strong> Não recrie: aplique, em ordem, os scripts de <code>database/migracoes/</code> que ainda não rodou, antes de subir a API nova (lista no <code>database/LEIA-ME.md</code>).</li>
+<pre>psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='SENHA' -f ../database/seguranca-usuario-api.sql</pre>
+<strong>Já tem um banco de antes do Flyway?</strong> Não recrie: na primeira subida da API nova, use <code>FLYWAY_BASELINE=true</code> uma vez (passo a passo no <code>database/LEIA-ME.md</code>). Depois disso, as migrações novas são aplicadas pela própria API ao subir.</li>
     <li><strong>Configuração da API</strong>Em <code>backend/</code>, copie <code>.env.example</code> para <code>.env</code> e preencha:
 <pre>DB_HOST=localhost        <span class="c"># endereço do PostgreSQL</span>
 DB_NAME=aguas
 DB_USER=aguas_api        <span class="c"># criado no passo do banco; nunca o postgres</span>
 DB_PASSWORD=...
+FLYWAY_USER=postgres     <span class="c"># dono do banco, só para as migrações</span>
+FLYWAY_PASSWORD=...
 JWT_SECRET=...           <span class="c"># 32+ caracteres aleatórios</span>
 ADMIN_SENHA=...          <span class="c"># só na 1ª vez: cria o capibaribe.admin</span>
 CORS_ORIGINS=http://localhost:8443</pre>
@@ -408,7 +413,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Modo simulado, só para demonstração.</strong> O site sempre usa a API. Para mostrar o sistema sem back-end, coloque <code>VITE_USAR_MOCK=true</code> no <code>.env.local</code>: os dados ficam em memória, nada é gravado e uma faixa amarela no topo avisa isso. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Não use em entregas.</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 41 testes de regras, segurança e validação. Os 16 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado e apagado na hora; o passo a passo está no <code>backend/README.md</code>. Em 29/10/2026, com JDK 25, os 57 testes passaram.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 41 testes de regras, segurança e validação. Os 18 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 59 testes passaram.</p>
 
   <h3>Documentação interativa da API</h3>
   <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 16 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
@@ -422,7 +427,9 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <tr><th style="width:34%">O que aparece</th><th style="width:30%">Causa provável</th><th>Como resolver</th></tr>
     <tr><td>API não sobe: <code>JWT_SECRET ausente ou curto</code></td><td>falta o segredo no <code>.env</code></td><td>Gere um segredo de 32+ caracteres e coloque em <code>JWT_SECRET</code>.</td></tr>
     <tr><td>API não sobe: administrador principal não existe</td><td>banco novo sem <code>ADMIN_SENHA</code></td><td>Defina <code>ADMIN_SENHA</code> (8 a 72 caracteres) e suba de novo.</td></tr>
-    <tr><td>API não sobe: erro de validação do esquema (ex.: <code>missing table [auditoria_usuario]</code>)</td><td>banco de uma versão anterior, sem as migrações novas</td><td>Aplique os scripts de <code>database/migracoes/</code> que faltam (lista no <code>database/LEIA-ME.md</code>). Banco novo: use o <code>database/banco.sql</code> num banco vazio.</td></tr>
+    <tr><td>API não sobe: erro de validação do esquema (ex.: <code>missing table [auditoria_usuario]</code>)</td><td>Flyway desligado (<code>FLYWAY_ATIVO=false</code>) e migrações novas sem aplicar</td><td>Rode <code>mvn flyway:migrate</code> em <code>backend/</code> com o dono do banco (ou ligue o Flyway e preencha <code>FLYWAY_USER</code>/<code>FLYWAY_PASSWORD</code>).</td></tr>
+    <tr><td>API não sobe: <code>Found non-empty schema(s) "public" but no schema history table</code></td><td>banco criado antes do Flyway, sem baseline</td><td>Suba uma vez com <code>FLYWAY_BASELINE=true</code> (detalhes no <code>database/LEIA-ME.md</code>).</td></tr>
+    <tr><td>API não sobe: <code>Validate failed: Migration checksum mismatch</code></td><td>alguém editou uma migração que já tinha sido aplicada</td><td>Desfaça a edição e crie uma migração nova (<code>V5__...</code>) com a correção.</td></tr>
     <tr><td>Site: “Não foi possível conectar ao servidor.”</td><td>API desligada, em outro endereço ou com o site fora do <code>CORS_ORIGINS</code></td><td>Suba a API (<code>mvn spring-boot:run</code> em <code>backend/</code>) e clique em <strong>Tentar novamente</strong>. Se ela estiver em outro endereço, ajuste <code>VITE_API_URL</code> no <code>.env.local</code>; confira também se o endereço exato do site (ex.: <code>http://localhost:8443</code>) está em <code>CORS_ORIGINS</code>.</td></tr>
     <tr><td>Login funciona no PC, mas não no celular</td><td>o celular abre o site por outro endereço (IP)</td><td>Inclua <code>http://IP-DO-PC:8443</code> em <code>CORS_ORIGINS</code> e reinicie a API.</td></tr>
     <tr><td><code>pnpm dev</code>: “Cannot find module … vite”</td><td>dependências incompletas</td><td>Rode <code>pnpm install</code> de novo.</td></tr>

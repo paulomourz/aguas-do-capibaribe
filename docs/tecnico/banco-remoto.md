@@ -6,11 +6,12 @@ Nenhuma credencial deve ser enviada por chat nem gravada no Git: os valores vão
 
 ## 1. Esquema
 
-- Aplique [`../../database/banco.sql`](../../database/banco.sql), um dump do PostgreSQL 18.6, num banco
-  vazio. Use o `psql` 18 ou mais recente, por causa dos comandos `\restrict` do dump:
-  `psql -h <host> -U postgres -d <banco> -v ON_ERROR_STOP=1 -f database/banco.sql`
-- A API **não cria nem altera** tabelas, triggers ou views. Se o esquema mudar, a API precisa ser
-  ajustada junto. Na inicialização, ela confere tabelas e colunas e não sobe se algo divergir.
+- O esquema vem das migrações Flyway (`backend/src/main/resources/db/migration/`). Num banco vazio,
+  aplique-as com o dono do banco (`mvn flyway:migrate`, passo a passo em
+  [`../../database/LEIA-ME.md`](../../database/LEIA-ME.md#banco-novo)); depois, a API aplica sozinha as
+  migrações novas ao subir, usando `FLYWAY_USER` / `FLYWAY_PASSWORD`.
+- Mudança de esquema é sempre uma migração nova, nunca um comando à mão no banco. Na inicialização, a
+  API confere tabelas e colunas e não sobe se algo divergir.
 
 ## 2. Dados a informar à equipe da API
 
@@ -83,8 +84,12 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
   seção 3). Conferido: login, processos, lotes, usuários, relatório e Swagger funcionam, e
   `DELETE FROM lote` é recusado. O `postgres` fica só para administrar o banco. A senha está em
   `docs/privado/acessos-e-senhas.md`, fora do Git.
-- **Migrações aplicadas no banco oficial:** `001-auditoria-usuario.sql` (27/10/2026). A tabela
-  `auditoria_usuario` já registra as ações do gestor sobre outros usuários.
+- **Migrações aplicadas no banco oficial:** `001-auditoria-usuario.sql` (27/10/2026, script manual,
+  hoje V4 do Flyway). A tabela `auditoria_usuario` já registra as ações do gestor sobre outros usuários.
+- **Flyway no banco oficial:** pendente. Na primeira subida da API com Flyway, use
+  `FLYWAY_BASELINE=true` uma vez (marca o `aguas` como já estando na V4, sem alterar nada) e configure
+  `FLYWAY_USER` / `FLYWAY_PASSWORD` no `backend/.env`. Ver
+  [`../../database/LEIA-ME.md`](../../database/LEIA-ME.md#banco-que-já-existia-antes-do-flyway-o-aguas).
 - **Servidor remoto:** a conexão com um PostgreSQL em outra máquina ainda não foi testada. Na
   primeira conexão, confirme que:
   1. a API inicia sem erro de validação do esquema (`Started AguasApiApplication` no log);
