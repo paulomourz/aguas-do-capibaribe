@@ -3,9 +3,6 @@
 Especificação técnica e ponto de verificação da issue #14. Serve para a equipe e o orientador decidirem
 se o projeto monta a bancada física ou entrega a simulação do Wokwi como resultado final do PI.
 
-**Versão para a banca:** [hardware-bancada.pdf](hardware-bancada.pdf), com fotos das peças e sem o ponto de verificação
-(seção 5), que fica só neste arquivo.
-
 > **Situação:** proposta ainda não montada. Os valores vêm das fichas técnicas e de contas, sem medição em
 > bancada. Confirme na ficha do modelo comprado e meça antes de ligar.
 
