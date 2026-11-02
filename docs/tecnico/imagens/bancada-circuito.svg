@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#1f2933">
+  <title>Circuito e montagem hidráulica da bancada com ESP32 e sensor YF-S201</title>
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1f6f8b"/>
+    </marker>
+  </defs>
+  <rect width="900" height="600" fill="#ffffff"/>
+
+  <text x="30" y="36" font-size="19" font-weight="bold">Ligação elétrica (com o divisor de tensão)</text>
+
+  <!-- Sensor -->
+  <rect x="30" y="65" width="170" height="250" rx="8" fill="#eef4f7" stroke="#1f2933" stroke-width="2"/>
+  <text x="115" y="92" text-anchor="middle" font-weight="bold">Sensor YF-S201</text>
+  <text x="190" y="115" text-anchor="end">Vermelho</text>
+  <text x="190" y="185" text-anchor="end">Amarelo</text>
+  <text x="190" y="300" text-anchor="end">Preto</text>
+
+  <!-- ESP32 -->
+  <rect x="680" y="65" width="190" height="250" rx="8" fill="#eef4f7" stroke="#1f2933" stroke-width="2"/>
+  <text x="775" y="92" text-anchor="middle" font-weight="bold">ESP32</text>
+  <text x="692" y="115">VIN (5 V)</text>
+  <text x="692" y="185">GPIO 27</text>
+  <text x="692" y="300">GND</text>
+
+  <!-- 5 V -->
+  <line x1="200" y1="110" x2="680" y2="110" stroke="#c0392b" stroke-width="3"/>
+  <text x="440" y="100" text-anchor="middle" fill="#c0392b" font-weight="bold">5 V</text>
+
+  <!-- Sinal -->
+  <line x1="200" y1="180" x2="320" y2="180" stroke="#a97c00" stroke-width="3"/>
+  <line x1="400" y1="180" x2="680" y2="180" stroke="#a97c00" stroke-width="3"/>
+  <text x="260" y="170" text-anchor="middle" fill="#a97c00" font-weight="bold">sinal até 5 V</text>
+  <text x="585" y="170" text-anchor="middle" fill="#a97c00" font-weight="bold">sinal até 3,3 V</text>
+  <rect x="320" y="165" width="80" height="30" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
+  <text x="360" y="186" text-anchor="middle">10 kΩ</text>
+  <text x="360" y="155" text-anchor="middle" font-weight="bold">R1</text>
+
+  <!-- R2 -->
+  <line x1="470" y1="180" x2="470" y2="212" stroke="#a97c00" stroke-width="3"/>
+  <rect x="440" y="212" width="60" height="50" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
+  <text x="470" y="242" text-anchor="middle">20 kΩ</text>
+  <text x="512" y="242" font-weight="bold">R2</text>
+  <line x1="470" y1="262" x2="470" y2="295" stroke="#222222" stroke-width="3"/>
+  <circle cx="470" cy="180" r="6" fill="#a97c00"/>
+  <circle cx="470" cy="295" r="6" fill="#222222"/>
+
+  <!-- GND -->
+  <line x1="200" y1="295" x2="680" y2="295" stroke="#222222" stroke-width="3"/>
+  <text x="590" y="285" text-anchor="middle" font-weight="bold">GND comum</text>
+
+  <text x="30" y="350" font-size="14">Antes de ligar no pino 27, meça o ponto entre R1 e R2 com o multímetro (seção 2): o máximo não pode passar de 3,3 V.</text>
+
+  <!-- Hidráulica -->
+  <line x1="30" y1="375" x2="870" y2="375" stroke="#cbd5db" stroke-width="1"/>
+  <text x="30" y="410" font-size="19" font-weight="bold">Caminho da água</text>
+
+  <rect x="30" y="440" width="170" height="70" rx="8" fill="#dff1f7" stroke="#1f6f8b" stroke-width="2"/>
+  <text x="115" y="481" text-anchor="middle">Reservatório</text>
+  <rect x="265" y="440" width="170" height="70" rx="8" fill="#dff1f7" stroke="#1f6f8b" stroke-width="2"/>
+  <text x="350" y="470" text-anchor="middle">Bomba</text>
+  <text x="350" y="491" text-anchor="middle" font-size="13">(fonte separada)</text>
+  <rect x="500" y="440" width="150" height="70" rx="8" fill="#eef4f7" stroke="#1f2933" stroke-width="2"/>
+  <text x="575" y="470" text-anchor="middle">YF-S201</text>
+  <text x="575" y="491" text-anchor="middle" font-size="12">seta na direção da água</text>
+  <rect x="715" y="440" width="155" height="70" rx="8" fill="#dff1f7" stroke="#1f6f8b" stroke-width="2"/>
+  <text x="792" y="470" text-anchor="middle">Recipiente</text>
+  <text x="792" y="491" text-anchor="middle" font-size="13">graduado</text>
+
+  <line x1="200" y1="475" x2="263" y2="475" stroke="#1f6f8b" stroke-width="3" marker-end="url(#seta)"/>
+  <line x1="435" y1="475" x2="498" y2="475" stroke="#1f6f8b" stroke-width="3" marker-end="url(#seta)"/>
+  <line x1="650" y1="475" x2="713" y2="475" stroke="#1f6f8b" stroke-width="3" marker-end="url(#seta)"/>
+  <path d="M792 510 V550 H115 V512" fill="none" stroke="#1f6f8b" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#seta)"/>
+  <text x="450" y="580" text-anchor="middle" font-size="14">Depois de medir, a água volta para o reservatório. Mantenha a eletrônica longe da água.</text>
+</svg>
