@@ -220,6 +220,7 @@ mvn test
 | `ProcessoControllerTest` | não (repositório simulado) | cadastro e edição de processos: meta zero ou negativa, campos faltando, nome repetido (US-02) |
 | `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável, que começa vazio: o Flyway aplica V1 a V4 na subida |
 | `IntegracaoPostgresLocalTest` | PostgreSQL local descartável | os mesmos testes, sem Docker |
+| `CicloCompletoLavanderiaE2ETest` | herdado pelas duas classes acima | aceitação: a jornada da lavanderia por HTTP, do login ao relatório do mês (issue #12) |
 
 Dois desses testes conferem o Flyway: `flywayAplicouTodasAsMigracoesEmOrdem` (banco vazio recebe V1 a
 V4, com os processos iniciais) e `reinicioValidaChecksumsENaoRecriaNada` (uma nova subida valida os
@@ -258,6 +259,6 @@ para as migrações em `TESTE_FLYWAY_USER` / `TESTE_FLYWAY_PASSWORD`.
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
 temporário também funciona (na segunda, o Flyway só valida). Resultado em 02/11/2026, com JDK 25:
-**59 testes, todos passando** (41 unitários e de web + 18 de integração), tanto como `postgres` quanto
-como `aguas_api`. Os 18 de `IntegracaoPostgresContainerTest` aparecem como *skipped* sem Docker: são
+**60 testes, todos passando** (41 unitários e de web + 19 de integração) como `postgres`; os 59
+anteriores ao teste do ciclo completo também passaram como `aguas_api`. Os 19 de `IntegracaoPostgresContainerTest` aparecem como *skipped* sem Docker: são
 os mesmos testes de integração, na versão com contêiner.

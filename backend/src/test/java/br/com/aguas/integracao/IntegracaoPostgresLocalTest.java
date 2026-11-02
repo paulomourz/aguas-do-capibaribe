@@ -13,7 +13,7 @@ import org.springframework.test.context.DynamicPropertySource;
  */
 @EnabledIfEnvironmentVariable(named = "TESTE_PG_URL",
         matches = "jdbc:postgresql://(localhost|127\\.0\\.0\\.1):\\d+/\\w+_teste(\\?.*)?")
-class IntegracaoPostgresLocalTest extends IntegracaoPostgresBase {
+class IntegracaoPostgresLocalTest extends CicloCompletoLavanderiaE2ETest {
 
     @DynamicPropertySource
     static void banco(DynamicPropertyRegistry r) {

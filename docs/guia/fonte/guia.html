@@ -413,7 +413,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Modo simulado, só para demonstração.</strong> O site sempre usa a API. Para mostrar o sistema sem back-end, coloque <code>VITE_USAR_MOCK=true</code> no <code>.env.local</code>: os dados ficam em memória, nada é gravado e uma faixa amarela no topo avisa isso. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Não use em entregas.</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 41 testes de regras, segurança e validação. Os 18 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 59 testes passaram.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 41 testes de regras, segurança e validação. Os 19 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 60 testes passaram.</p>
 
   <h3>Documentação interativa da API</h3>
   <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 16 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>

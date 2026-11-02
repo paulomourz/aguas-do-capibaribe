@@ -13,7 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Sem Docker disponível, a classe é ignorada (aparece como "skipped").
  */
 @Testcontainers(disabledWithoutDocker = true)
-class IntegracaoPostgresContainerTest extends IntegracaoPostgresBase {
+class IntegracaoPostgresContainerTest extends CicloCompletoLavanderiaE2ETest {
 
     @Container
     @ServiceConnection
