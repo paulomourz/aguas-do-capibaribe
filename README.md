@@ -190,14 +190,15 @@ mvn test
 | `SegurancaWebTest` | não | 401/403 por perfil, validações, formato de erro |
 | `ProcessoControllerTest` | não | meta zero ou negativa e nome repetido no cadastro de processos |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
+| `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 59 testes: 41 unitários e de web + 18 de integração com PostgreSQL 18 (o banco começa vazio e o
+São 60 testes: 41 unitários e de web + 19 de integração com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
-`develop`: `backend-test` (os 59 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
+`develop`: `backend-test` (os 60 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
 Não faça merge com check vermelho.
 
 ## 📌 Status

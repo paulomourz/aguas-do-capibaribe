@@ -25,6 +25,9 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Testes
 
+- **Teste de aceitação do ciclo completo** (issue #12): `CicloCompletoLavanderiaE2ETest` percorre por HTTP
+  a jornada da lavanderia: login, processo, operador, lotes, alerta aberto e resolvido, e relatório do mês
+  com os totais exatos. 60 testes (41 unitários e de web + 19 de integração).
 - **Cadastro de processos coberto por testes** (issue #17): `ProcessoControllerTest` confere que meta zero
   ou negativa, unidade ou meta faltando e nome repetido (ao criar e ao editar) voltam com o erro no campo
   certo (422 ou 409) e não gravam nada. 56 testes (40 unitários e de web + 16 de integração).
