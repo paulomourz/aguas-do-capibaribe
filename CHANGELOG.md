@@ -8,6 +8,9 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Funcionalidades
 
+- **Docker Compose** (issue #10): `docker compose up -d --build` sobe banco, API e site em
+  `http://localhost:3000`, com o Nginx encaminhando `/api`. As senhas são sorteadas na primeira subida,
+  fora do Git.
 - **Documentação interativa da API (Swagger UI)** em `/api/swagger-ui.html`, com as 16 rotas por grupo,
   exemplos, erros possíveis e login por token (botão Authorize). Desligável com `SWAGGER_ATIVO=false`.
 - **Auditoria das ações do gestor** (issue #16): redefinir senha, desativar e reativar outra pessoa

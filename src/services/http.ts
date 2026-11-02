@@ -32,7 +32,8 @@ const ROTA_LOGIN = '/auth/login'
 export const EVENTO_SESSAO_EXPIRADA = 'ac-sessao-expirada'
 
 export async function requisicao<T>(caminho: string, { corpo, query, headers, ...init }: Opcoes = {}): Promise<T> {
-  const url = new URL(API_URL.replace(/\/+$/, '') + caminho)
+  // A base só vale para endereço relativo (/api, no Docker, com o Nginx na mesma origem).
+  const url = new URL(API_URL.replace(/\/+$/, '') + caminho, window.location.origin)
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v))
 
   const token = obterToken()
