@@ -57,7 +57,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 UsuarioDTO  = { id, nome, usuario, perfil: 'gestor' | 'operador', ativo }
 ProcessoDTO = { id, nome, unidade: 'lote' | 'peca', meta }
 LoteDTO     = { id, processoId, pecas, litros, esperado, desvio, statusConformidade, data, usuarioId }  // desvio em %, 2 casas
-              // statusConformidade: 'DENTRO_DA_META' (≤ 0%) | 'ATENCAO' (≤ 8%) | 'CRITICO' (> 8%), limites provisórios
+              // statusConformidade: 'DENTRO_DA_META' (≤ 0%) | 'ATENCAO' (≤ 8%) | 'CRITICO' (> 8%)
 AlertaDTO   = { id, processoId, loteIds: number[], detectado, status }
 ResumoDTO   = { processoId, real, esperado, lotes }
 ```

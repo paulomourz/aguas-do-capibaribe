@@ -23,7 +23,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   `package.json`.
 - **Status do lote calculado pela API** (issue #3): cada lote sai com `statusConformidade`
   (`DENTRO_DA_META`, `ATENCAO` ou `CRITICO`) e o site usa essa faixa no Histórico, nos lotes do alerta
-  e no registro. Limites provisórios (0% e 8%). Totais e médias ainda são classificados no site.
+  e no registro. Limites de 0% e 8%. Totais e médias são classificados no site, com os mesmos limites.
   57 testes (41 unitários e de web + 16 de integração).
 
 ### Testes
@@ -57,7 +57,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 ### Documentação
 
 - **Bancada física** (issue #14): `docs/tecnico/hardware-bancada.md`, com peças, preços pesquisados, circuito,
-  calibração do YF-S201, mudanças no sketch e o modelo do ponto de verificação, a preencher com o orientador.
+  calibração do YF-S201 e mudanças no sketch.
 - Passo do `aguas_api` no "Como rodar" do README, no guia e no `database/LEIA-ME.md`.
 - README e guia: passo a passo para começar num PC novo (clonar e usar a `develop`).
 - README: como trabalhar numa issue (fechar à mão depois do merge na `develop`, migrações quando o

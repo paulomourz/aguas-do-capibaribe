@@ -200,8 +200,8 @@ Para inserir outro gestor sem passar pelo site:
 - **Relatório mensal:** o mês é definido no fuso `America/Recife`.
 - **Faixas ok / atenção / crítico:** cada lote sai da API com `statusConformidade`
   (`DENTRO_DA_META` se desvio ≤ 0%, `ATENCAO` se ≤ 8%, `CRITICO` acima), calculado por
-  `StatusConformidade.de`. Os limites são **provisórios** até a equipe fechar os oficiais. Totais e
-  médias (relatório, dashboard, média do alerta) ainda são classificados no front, com os mesmos limites.
+  `StatusConformidade.de`. Totais e
+  médias (relatório, dashboard, média do alerta) são classificados no front, com os mesmos limites.
 
 Endpoints: [`../docs/tecnico/api.md`](../docs/tecnico/api.md). Dados que o responsável pelo banco
 precisa fornecer: [`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md).

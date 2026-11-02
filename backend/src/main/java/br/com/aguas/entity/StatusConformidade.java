@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 /**
  * Faixa de conformidade do lote em relação à meta (verde / amarelo / vermelho nas telas).
- * Limites provisórios, iguais aos que o front usava; ajustar aqui quando a equipe fechar os oficiais.
+ * Os totais e médias do site usam os mesmos limites (FAIXAS_DE_STATUS em src/domain/regras.ts): mudar nos dois.
  */
 public enum StatusConformidade {
     DENTRO_DA_META,
