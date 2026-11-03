@@ -82,8 +82,8 @@ Todas as rotas ficam sob o prefixo `/api` (ex.: `http://localhost:8080/api/auth/
 ```bash
 cd backend
 mvn spring-boot:run            # desenvolvimento
-mvn clean package              # gera target/aguas-api-<versão>.jar (ex.: aguas-api-0.1.0-alpha.jar)
-java -jar target/aguas-api-0.1.0-alpha.jar
+mvn clean package              # gera target/aguas-api-<versão>.jar (ex.: aguas-api-1.0.0.jar)
+java -jar target/aguas-api-1.0.0.jar
 ```
 
 Com o `java -jar`, rode o comando dentro de `backend/` para o `.env` ser encontrado, ou defina as
