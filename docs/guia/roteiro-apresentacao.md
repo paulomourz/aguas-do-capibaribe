@@ -58,7 +58,7 @@ O Wokwi roda na internet e não enxerga o `localhost`, então o sensor precisa d
 
 ```bash
 docker compose --profile tunel up -d --build
-docker compose logs tunel
+docker compose --profile tunel logs tunel
 ```
 
 1. Nos logs, copie o endereço `https://...trycloudflare.com`.
@@ -73,7 +73,7 @@ docker compose logs tunel
 **Ao terminar, desligue o túnel:**
 
 ```bash
-docker compose stop tunel
+docker compose --profile tunel stop tunel
 ```
 
 Com o túnel ligado, o site e a API locais ficam acessíveis pela internet, e a senha passa sem criptografia até a

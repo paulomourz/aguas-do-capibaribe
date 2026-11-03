@@ -61,8 +61,8 @@ Se a conta já existir, nada muda. Se a senha se perder, o gestor a redefine em 
 ## Usar com a API do seu PC
 
 Com o Docker, o túnel já vem pronto: `docker compose --profile tunel up -d --build` liga tudo, e o endereço aparece em
-`docker compose logs tunel`. No projeto local, use esse endereço em `API_URL`, com `http://` e `/api` no final, e a
-senha que aparece em `docker compose logs segredos`. Ao terminar, desligue com `docker compose stop tunel`.
+`docker compose --profile tunel logs tunel`. No projeto local, use esse endereço em `API_URL`, com `http://` e `/api` no final, e a
+senha que aparece em `docker compose logs segredos`. Ao terminar, desligue com `docker compose --profile tunel stop tunel`.
 
 Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e defina `SENSOR_SENHA` no `backend/.env`.
 
