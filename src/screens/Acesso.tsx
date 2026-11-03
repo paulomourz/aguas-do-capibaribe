@@ -60,7 +60,7 @@ export function Login({ next }: { next?: string }) {
         setSenha("")
         return
       }
-      const destino = next && (u.perfil === 'gestor' || ['/registro', '/historico'].some((p) => next.startsWith(p))) ? next : homeDe(u.perfil)
+      const destino = next && (u.perfil !== 'operador' || ['/registro', '/historico'].some((p) => next.startsWith(p))) ? next : homeDe(u.perfil)
       navigate(destino, { replace: true })
     } catch (err) {
       setFalha(errosDaApi(err).mensagem)
@@ -109,7 +109,7 @@ export function Login({ next }: { next?: string }) {
               <Logo />
             </div>
             <h2 className="text-[34px] font-bold leading-tight tracking-tight text-ink">Acesse sua lavanderia</h2>
-            <p className="mt-2 text-[16px] text-ink-2">Use o usuário e a senha criados pelo gestor.</p>
+            <p className="mt-2 text-[16px] text-ink-2">Use o usuário e a senha criados pelo administrador.</p>
 
             <form onSubmit={enviar} noValidate className="mt-8 flex flex-col gap-5">
               {erro && <Banner tone="crit" title="Não foi possível entrar">Usuário ou senha incorretos. Confira os dados e tente novamente.</Banner>}
@@ -145,7 +145,7 @@ export function Login({ next }: { next?: string }) {
               </Button>
             </form>
 
-            <p className="mt-6 text-[14px] text-ink-2">Esqueceu a senha? Peça ao gestor para redefinir.</p>
+            <p className="mt-6 text-[14px] text-ink-2">Esqueceu a senha? Peça ao administrador para redefinir.</p>
           </div>
         </div>
       </section>
@@ -247,7 +247,7 @@ export function AcessoNegado() {
         <Aviso
           icon={<IconLock size={30} />}
           title="Acesso negado"
-          text="Seu perfil não tem permissão para abrir esta tela. Se precisar desse acesso, fale com o gestor da lavanderia."
+          text="Seu perfil não tem permissão para abrir esta tela. Se precisar desse acesso, fale com o administrador da lavanderia."
           action={
             <Button size="lg" full onClick={() => navigate(homeDe(usuario.perfil))}>
               Voltar para a tela inicial

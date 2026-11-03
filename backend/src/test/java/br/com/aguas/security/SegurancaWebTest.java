@@ -164,7 +164,7 @@ class SegurancaWebTest {
 
     @Test
     void loginDeUsuarioRespeitaCheckDoBanco() throws Exception {
-        String token = tokenDe(7, Perfil.gestor, true);
+        String token = tokenDe(7, Perfil.admin, true);
         mvc.perform(post("/usuarios").header(HttpHeaders.AUTHORIZATION, token).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nome\":\"Ana\",\"usuario\":\"ab\",\"perfil\":\"operador\",\"senha\":\"12345678\"}"))
                 .andExpect(status().isUnprocessableEntity())

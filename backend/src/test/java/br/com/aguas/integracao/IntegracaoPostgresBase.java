@@ -135,7 +135,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5");
+        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -150,7 +150,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(flyway.info().applied()).hasSize(5);
+        assertThat(flyway.info().applied()).hasSize(6);
     }
 
     @Test
@@ -283,7 +283,7 @@ abstract class IntegracaoPostgresBase {
 
     @Test
     void usuarioDesativadoPerdeAcessoNaProximaRequisicao() throws Exception {
-        Conta g = conta("gestor");
+        Conta g = conta("admin");
         Conta op = conta("operador");
         chamar(get("/processos"), op).andExpect(status().isOk());
         enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", false)).andExpect(status().isOk());
@@ -295,11 +295,11 @@ abstract class IntegracaoPostgresBase {
     @Test
     void administradorPrincipalCriadoNaInicializacaoENaoPodeSerDesativado() throws Exception {
         assertThat(jdbc.queryForObject("select perfil from usuario where login = 'capibaribe.admin'", String.class))
-                .isEqualTo("gestor");
+                .isEqualTo("admin");
         assertThat(entrar("capibaribe.admin", SENHA_ADMIN)).isNotBlank();
 
         Integer adminId = jdbc.queryForObject("select id from usuario where login = 'capibaribe.admin'", Integer.class);
-        Conta g = conta("gestor");
+        Conta g = conta("admin");
         enviar(patch("/usuarios/" + adminId + "/ativo"), g, Map.of("ativo", false))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("OPERACAO_NAO_PERMITIDA"));
@@ -307,7 +307,7 @@ abstract class IntegracaoPostgresBase {
 
     @Test
     void criarUsuarioEDuplicidade() throws Exception {
-        Conta g = conta("gestor");
+        Conta g = conta("admin");
         String login = "novo.t" + seq.incrementAndGet();
         var corpo = Map.of("nome", "Nova Pessoa", "usuario", login, "perfil", "operador", "senha", "senha-nova-123");
         enviar(post("/usuarios"), g, corpo).andExpect(status().isCreated())
@@ -338,8 +338,8 @@ abstract class IntegracaoPostgresBase {
     }
 
     @Test
-    void gestorRedefineSenhaDeOutraPessoa() throws Exception {
-        Conta g = conta("gestor");
+    void administradorRedefineSenhaDeOutraPessoa() throws Exception {
+        Conta g = conta("admin");
         Conta op = conta("operador");
         enviar(patch("/usuarios/" + op.id() + "/senha"), g, Map.of("senha", "curta"))
                 .andExpect(status().isUnprocessableEntity())
@@ -369,7 +369,7 @@ abstract class IntegracaoPostgresBase {
 
     @Test
     void desativarEReativarFicamNaAuditoriaQueNaoPodeSerAlteradaNemApagada() throws Exception {
-        Conta g = conta("gestor");
+        Conta g = conta("admin");
         Conta op = conta("operador");
         enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", false)).andExpect(status().isOk());
         enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", true)).andExpect(status().isOk());
@@ -389,8 +389,8 @@ abstract class IntegracaoPostgresBase {
     }
 
     @Test
-    void auditoriaListaAsAcoesDoGestorComFiltrosEPaginacao() throws Exception {
-        Conta g = conta("gestor");
+    void auditoriaListaAsAcoesComFiltrosEPaginacao() throws Exception {
+        Conta g = conta("admin");
         Conta op = conta("operador");
         String login = "auditado.t" + seq.incrementAndGet();
         int criado = ler(enviar(post("/usuarios"), g, Map.of("nome", "Pessoa Auditada", "usuario", login, "perfil", "operador", "senha", SENHA))
@@ -426,6 +426,44 @@ abstract class IntegracaoPostgresBase {
         return jdbc.queryForList(
                 "select acao || ' por ' || gestor_id from auditoria_usuario where usuario_afetado_id = ? order by id",
                 String.class, usuarioId);
+    }
+
+    @Test
+    void cadaPerfilAcessaSoOQueLheCabe() throws Exception {
+        Conta adm = conta("admin");
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        Conta s = conta("sensor");
+        var novo = Map.of("nome", "Nova Pessoa", "usuario", "nova.t" + seq.incrementAndGet(), "perfil", "operador", "senha", SENHA);
+
+        // Administrador: usuários e auditoria, além do que o gestor faz
+        chamar(get("/auditoria"), adm).andExpect(status().isOk());
+        chamar(get("/alertas"), adm).andExpect(status().isOk());
+        int processo = processo(adm, "lote", "800");
+
+        // Gestor: acompanha a operação e só lê a lista de usuários
+        chamar(get("/usuarios"), g).andExpect(status().isOk());
+        chamar(get("/alertas"), g).andExpect(status().isOk());
+        processo(g, "lote", "800");
+        chamar(get("/auditoria"), g).andExpect(status().isForbidden());
+        enviar(post("/usuarios"), g, novo).andExpect(status().isForbidden());
+        enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", false)).andExpect(status().isForbidden());
+        enviar(patch("/usuarios/" + op.id() + "/senha"), g, Map.of("senha", "redefinida-789")).andExpect(status().isForbidden());
+
+        // Operador: só o que já tinha
+        chamar(get("/lotes"), op).andExpect(status().isOk());
+        chamar(get("/auth/me"), op).andExpect(status().isOk());
+        chamar(get("/usuarios"), op).andExpect(status().isForbidden());
+        chamar(get("/auditoria"), op).andExpect(status().isForbidden());
+
+        // Sensor: consulta os processos e registra lotes, e mais nada
+        chamar(get("/processos"), s).andExpect(status().isOk());
+        assertThat(lote(s, processo, 100, "790").get("usuarioId").asInt()).isEqualTo(s.id());
+        chamar(get("/lotes"), s).andExpect(status().isForbidden());
+        chamar(get("/auth/me"), s).andExpect(status().isForbidden());
+        chamar(get("/alertas"), s).andExpect(status().isForbidden());
+        chamar(get("/usuarios"), s).andExpect(status().isForbidden());
+        enviar(patch("/usuarios/" + s.id()), s, Map.of("senha", "outra-senha-456", "senhaAtual", SENHA)).andExpect(status().isForbidden());
     }
 
     @Test

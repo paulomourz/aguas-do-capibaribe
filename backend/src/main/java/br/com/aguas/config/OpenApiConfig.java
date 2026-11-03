@@ -61,7 +61,7 @@ public class OpenApiConfig {
                         new Tag().name("Alertas").description("Sequências de lotes acima da meta (só gestor)"),
                         new Tag().name("Usuários").description("Acessos ao sistema"),
                         new Tag().name("Relatórios").description("Consolidado mensal (só gestor)"),
-                        new Tag().name("Auditoria").description("Ações de um gestor sobre outras contas (só gestor)")));
+                        new Tag().name("Auditoria").description("Ações sobre outras contas (só administrador)")));
     }
 
     /** Respostas de erro comuns a todas as rotas protegidas, no formato ErroApi. */

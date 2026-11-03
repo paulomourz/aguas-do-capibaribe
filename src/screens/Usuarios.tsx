@@ -27,7 +27,7 @@ function PerfilTag({ p }: { p: Perfil }) {
     <span
       className={cx(
         'inline-flex items-center rounded-md px-2.5 py-1 text-[13px] font-semibold',
-        p === 'gestor' ? 'bg-brand text-white' : 'bg-brand-soft text-brand',
+        p === 'operador' ? 'bg-brand-soft text-brand' : 'bg-brand text-white',
       )}
     >
       {perfilLabel[p]}
@@ -80,7 +80,7 @@ export function Usuarios({ destaque }: { destaque?: string }) {
       <StatePreview value={estado} onChange={setEstado} />
       <PageHeader
         title="Usuários"
-        description="Somente o gestor cria acessos. Não existe cadastro público."
+        description="Somente o administrador cria acessos. Não existe cadastro público."
         actions={
           <>
             <Button icon={<IconUserPlus size={20} />} onClick={() => navigate('/usuarios/novo')}>
@@ -352,7 +352,8 @@ export function UsuarioNovo() {
               onChange={(p) => { setPerfil(p); limpar('perfil') }}
               options={[
                 { value: 'operador', label: 'Operador', hint: 'Registra lotes e vê o próprio histórico' },
-                { value: 'gestor', label: 'Gestor', hint: 'Acesso completo, inclusive usuários e metas' },
+                { value: 'gestor', label: 'Gestor', hint: 'Acompanha consumo, alertas e relatórios, e define as metas' },
+                { value: 'admin', label: 'Administrador', hint: 'Acesso completo, inclusive usuários e auditoria' },
               ]}
             />
 
@@ -377,7 +378,7 @@ export function UsuarioNovo() {
             <div>
               <h2 className="text-[18px] font-semibold">Quem pode criar acessos?</h2>
               <p className="mt-2 text-[15px] text-ink-2">
-                Somente gestores cadastram usuários. Não há autocadastro: cada operador recebe o acesso diretamente do gestor.
+                Somente administradores cadastram usuários. Não há autocadastro: cada pessoa recebe o acesso diretamente do administrador.
               </p>
             </div>
           </div>

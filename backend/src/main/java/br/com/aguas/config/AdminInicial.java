@@ -38,7 +38,15 @@ public class AdminInicial implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         String login = props.loginOuPadrao();
-        if (usuarios.existsByLoginIgnoreCase(login)) return;
+        var existente = usuarios.findByLoginIgnoreCase(login);
+        if (existente.isPresent()) {
+            // Em bancos anteriores à V6, o administrador principal tinha o perfil de gestor.
+            if (existente.get().getPerfil() != Perfil.admin) {
+                existente.get().setPerfil(Perfil.admin);
+                log.info("Administrador principal '{}' passou para o perfil de administrador.", login);
+            }
+            return;
+        }
 
         String senha = props.senha();
         if (senha == null || senha.isBlank()) {
@@ -48,7 +56,7 @@ public class AdminInicial implements ApplicationRunner {
         if (senha.length() < 8 || senha.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new IllegalStateException("ADMIN_SENHA precisa ter de 8 a 72 bytes.");
         }
-        usuarios.save(new Usuario(props.nomeOuPadrao(), login, senhas.encode(senha), Perfil.gestor));
+        usuarios.save(new Usuario(props.nomeOuPadrao(), login, senhas.encode(senha), Perfil.admin));
         log.info("Administrador principal '{}' criado. Troque a senha pelo site no primeiro acesso.", login);
     }
 }

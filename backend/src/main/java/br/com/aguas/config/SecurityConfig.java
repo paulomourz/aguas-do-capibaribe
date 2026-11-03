@@ -42,14 +42,19 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 // Documentação (Swagger UI); desligável com SWAGGER_ATIVO=false
                 .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("GESTOR")
-                .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("GESTOR")
-                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/ativo").hasRole("GESTOR")
-                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/senha").hasRole("GESTOR")
-                .requestMatchers(HttpMethod.POST, "/processos").hasRole("GESTOR")
-                .requestMatchers(HttpMethod.PUT, "/processos/*").hasRole("GESTOR")
-                .requestMatchers("/alertas/**", "/relatorios/**", "/auditoria/**").hasRole("GESTOR")
-                .anyRequest().authenticated())
+                // O gestor só lê a lista: o histórico mostra quem registrou cada lote.
+                .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMIN", "GESTOR")
+                .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/ativo").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/senha").hasRole("ADMIN")
+                .requestMatchers("/auditoria/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/processos").hasAnyRole("ADMIN", "GESTOR")
+                .requestMatchers(HttpMethod.PUT, "/processos/*").hasAnyRole("ADMIN", "GESTOR")
+                .requestMatchers("/alertas/**", "/relatorios/**").hasAnyRole("ADMIN", "GESTOR")
+                // O sensor só faz o que o envio precisa: consultar os processos e registrar lotes.
+                .requestMatchers(HttpMethod.GET, "/processos").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
+                .requestMatchers(HttpMethod.POST, "/lotes").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
+                .anyRequest().hasAnyRole("ADMIN", "GESTOR", "OPERADOR"))
             .oauth2ResourceServer(o -> o
                 .jwt(j -> j.jwtAuthenticationConverter(conversor))
                 .authenticationEntryPoint(respostas))

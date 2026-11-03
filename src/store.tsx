@@ -53,7 +53,7 @@ export function useApp() {
   return c
 }
 
-export const homeDe = (p: Perfil) => (p === 'gestor' ? '/dashboard' : '/registro')
+export const homeDe = (p: Perfil) => (p === 'operador' ? '/registro' : '/dashboard')
 
 /* ---------- Conversões DTO → tipos das telas ---------- */
 
@@ -117,7 +117,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const carregarDados = useCallback(async (u: Usuario) => {
     const minha = ++carga.current
-    const gestor = u.perfil === 'gestor'
+    const gestor = u.perfil !== 'operador'
     setCarregando(true)
     setErroCarga(null)
     try {
@@ -202,6 +202,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     entrar: async (login, senha) => {
       try {
         const s = await api.login({ usuario: login.trim(), senha })
+        if (s.usuario.perfil === 'sensor') {
+          void api.logout()
+          throw new api.ApiError(403, { codigo: 'ACESSO_NEGADO', mensagem: 'A conta do sensor só envia dados e não entra no site.' })
+        }
         const u = deUsuario(s.usuario)
         setUsuario(u)
         void carregarDados(u)
@@ -244,7 +248,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const l = deLote(await api.registrarLote({ processoId: Number(processoId), pecas, litros }, Number(usuario?.id)))
       setLotes((ls) => [l, ...ls])
       // O servidor pode ter aberto ou atualizado um alerta com este lote.
-      if (usuario?.perfil === 'gestor') api.listarAlertas().then(setAlertasDTO, () => {})
+      if (usuario && usuario.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
       return l
     },
     alertas,

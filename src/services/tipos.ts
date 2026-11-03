@@ -1,7 +1,7 @@
 /* Tipos trocados com a API REST (Spring Boot). Datas em ISO 8601. */
 
 export type Id = number
-export type Perfil = 'gestor' | 'operador'
+export type Perfil = 'admin' | 'gestor' | 'operador' | 'sensor'
 export type Unidade = 'lote' | 'peca'
 export type StatusAlerta = 'aberto' | 'analise' | 'resolvido'
 /** Faixa do desvio do lote, calculada pelo servidor. */
