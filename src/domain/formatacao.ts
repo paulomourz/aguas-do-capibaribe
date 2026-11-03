@@ -15,7 +15,7 @@ export const fmtDataHora = (d: Date) => `${fmtData(d)} às ${fmtHora(d)}`
 
 export const unidadeLabel: Record<Unidade, string> = { lote: 'litros por lote', peca: 'litros por peça' }
 export const unidadeCurta: Record<Unidade, string> = { lote: 'L/lote', peca: 'L/peça' }
-export const perfilLabel: Record<Perfil, string> = { gestor: 'Gestor', operador: 'Operador' }
+export const perfilLabel: Record<Perfil, string> = { admin: 'Administrador', gestor: 'Gestor', operador: 'Operador', sensor: 'Sensor' }
 
 export const meses = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

@@ -24,14 +24,14 @@ export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'ale
 export type MenuGrupo = 'Acompanhamento' | 'Lotes' | 'Cadastros'
 
 export const menu: { id: MenuId; label: string; to: string; Icon: typeof IconDashboard; perfis: Perfil[]; grupo: MenuGrupo }[] = [
-  { id: 'dashboard', label: 'Dashboard', to: '/dashboard', Icon: IconDashboard, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'alertas', label: 'Alertas', to: '/alertas', Icon: IconBell, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'relatorios', label: 'Relatórios', to: '/relatorios', Icon: IconReport, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'auditoria', label: 'Auditoria', to: '/auditoria', Icon: IconSearchCheck, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'registro', label: 'Registro de lotes', to: '/registro', Icon: IconClipboard, perfis: ['gestor', 'operador'], grupo: 'Lotes' },
-  { id: 'historico', label: 'Histórico de lotes', to: '/historico', Icon: IconHistory, perfis: ['gestor', 'operador'], grupo: 'Lotes' },
-  { id: 'processos', label: 'Processos e metas', to: '/processos', Icon: IconTarget, perfis: ['gestor'], grupo: 'Cadastros' },
-  { id: 'usuarios', label: 'Usuários', to: '/usuarios', Icon: IconUsers, perfis: ['gestor'], grupo: 'Cadastros' },
+  { id: 'dashboard', label: 'Dashboard', to: '/dashboard', Icon: IconDashboard, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'alertas', label: 'Alertas', to: '/alertas', Icon: IconBell, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'relatorios', label: 'Relatórios', to: '/relatorios', Icon: IconReport, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'auditoria', label: 'Auditoria', to: '/auditoria', Icon: IconSearchCheck, perfis: ['admin'], grupo: 'Acompanhamento' },
+  { id: 'registro', label: 'Registro de lotes', to: '/registro', Icon: IconClipboard, perfis: ['admin', 'gestor', 'operador'], grupo: 'Lotes' },
+  { id: 'historico', label: 'Histórico de lotes', to: '/historico', Icon: IconHistory, perfis: ['admin', 'gestor', 'operador'], grupo: 'Lotes' },
+  { id: 'processos', label: 'Processos e metas', to: '/processos', Icon: IconTarget, perfis: ['admin', 'gestor'], grupo: 'Cadastros' },
+  { id: 'usuarios', label: 'Usuários', to: '/usuarios', Icon: IconUsers, perfis: ['admin'], grupo: 'Cadastros' },
 ]
 const grupos: MenuGrupo[] = ['Acompanhamento', 'Lotes', 'Cadastros']
 
@@ -275,7 +275,7 @@ function Avatar({ perfil }: { perfil: Perfil }) {
     <svg viewBox="0 0 40 40" className="block h-full w-full">
       <path d="M7 41 C7 31 13 26.5 20 26.5 C27 26.5 33 31 33 41 Z" fill="var(--color-areia)" />
       <circle cx="20" cy="17.5" r="6.5" fill="var(--color-areia)" />
-      {perfil === 'gestor' ? (
+      {perfil !== 'operador' ? (
         <>
           <path d="M15.5 27.4 L20 31.5 L24.5 27.4" fill="none" stroke="var(--color-brand)" strokeWidth="1.4" strokeLinejoin="round" />
           <path d="M20 31 L18.4 33.2 L20 39.5 L21.6 33.2 Z" fill="var(--color-terracota)" />

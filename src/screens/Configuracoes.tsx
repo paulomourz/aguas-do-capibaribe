@@ -112,7 +112,7 @@ export default function Configuracoes() {
       <Secao
         icon={<IconUsers size={22} />}
         title="Dados da conta"
-        description="O nome aparece no cabeçalho e nos registros de lote. Usuário e perfil são definidos pelo gestor."
+        description="O nome aparece no cabeçalho e nos registros de lote. Usuário e perfil são definidos pelo administrador."
       >
         <form onSubmit={salvarNome} noValidate className="flex flex-col gap-5">
           <Field id="cfg-nome" label="Nome completo" error={erroNome}>
@@ -129,10 +129,10 @@ export default function Configuracoes() {
             />
           </Field>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field id="cfg-usuario" label="Usuário" hint="Definido pelo gestor.">
+            <Field id="cfg-usuario" label="Usuário" hint="Definido pelo administrador.">
               <TextInput id="cfg-usuario" value={usuario.usuario} readOnly className="border-line! bg-page! text-ink-2! hover:border-line!" />
             </Field>
-            <Field id="cfg-perfil" label="Perfil" hint="Definido pelo gestor.">
+            <Field id="cfg-perfil" label="Perfil" hint="Definido pelo administrador.">
               <TextInput id="cfg-perfil" value={perfilLabel[usuario.perfil]} readOnly className="border-line! bg-page! text-ink-2! hover:border-line!" />
             </Field>
           </div>

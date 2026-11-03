@@ -25,7 +25,7 @@ const POR_PAGINA = 8
 /** O3 (operador: somente os próprios lotes) e G6 (gestor: todos os lotes, com "Registrado por"). */
 export default function Historico() {
   const { usuario, lotes, processos, nomeProcesso, nomeUsuario } = useApp()
-  const gestor = usuario?.perfil === 'gestor'
+  const gestor = usuario?.perfil !== 'operador'
   const [estado, setEstado] = useEstadoTela()
   const [processoId, setProcessoId] = useState('')
   const [pagina, setPagina] = useState(1)

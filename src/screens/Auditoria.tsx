@@ -38,7 +38,7 @@ const inicioDoDia = (dia: string) => (dia ? `${dia}T00:00:00-03:00` : undefined)
 const fimDoDia = (dia: string) =>
   dia ? `${dia}T23:59:59.999-03:00` : undefined
 
-/** G11: ações de um gestor sobre a conta de outra pessoa. Os registros não podem ser alterados nem apagados. */
+/** G11: ações de administradores e gestores sobre a conta de outra pessoa. Os registros não podem ser alterados nem apagados. */
 export default function Auditoria() {
   const [de, setDe] = useState("")
   const [ate, setAte] = useState("")
@@ -110,7 +110,7 @@ export default function Auditoria() {
     <div className="flex flex-col gap-6 lg:gap-8">
       <PageHeader
         title="Auditoria"
-        description="Ações dos gestores sobre as contas de outras pessoas. Estes registros não podem ser alterados nem apagados."
+        description="Ações sobre as contas de outras pessoas. Estes registros não podem ser alterados nem apagados."
       />
 
       <Card as="section" className="overflow-hidden">
@@ -182,7 +182,7 @@ export default function Auditoria() {
             description={
               filtrando
                 ? "Mude o período ou a ação, ou limpe os filtros."
-                : "As ações dos gestores sobre outras contas aparecerão aqui."
+                : "As ações sobre outras contas aparecerão aqui."
             }
           />
         ) : (
