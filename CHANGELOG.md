@@ -6,6 +6,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+## [1.0.0] - 2026-11-02
+
+Primeira versão completa, publicada na internet, com o sensor simulado enviando lotes por HTTPS.
+
 ### Funcionalidades
 
 - **ESP32 em HTTPS com endereço fixo** (issue #13): o sensor confere a impressão digital do certificado da API publicada, reaproveita
@@ -28,7 +32,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   `package.json`.
 - **Status do lote calculado pela API** (issue #3): cada lote sai com `statusConformidade`
   (`DENTRO_DA_META`, `ATENCAO` ou `CRITICO`) e o site usa essa faixa no Histórico, nos lotes do alerta
-  e no registro. Limites de 0% e 8%. Totais e médias são classificados no site, com os mesmos limites.
+  e no registro. Limites oficiais de 0% e 8%. Totais e médias são classificados no site, com os mesmos limites.
   57 testes (41 unitários e de web + 16 de integração).
 
 ### Testes
@@ -101,4 +105,5 @@ Primeira versão preliminar: baseline das semanas 1 a 3 do cronograma do TAP.
 
 - README, guia em PDF, Termo de Abertura v2.1 e Especificação de Requisitos de Software (IEEE 830).
 
+[1.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.0.0
 [0.1.0-alpha]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v0.1.0-alpha

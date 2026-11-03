@@ -21,6 +21,7 @@
 </p>
 
 <p align="center">
+  <a href="https://aguas-do-capibaribe.onrender.com"><strong>Abrir o site</strong></a> ·
   <a href="#-sobre-o-projeto">Sobre</a> ·
   <a href="#-funcionalidades">Funcionalidades</a> ·
   <a href="#-arquitetura">Arquitetura</a> ·
@@ -41,6 +42,15 @@ lote, a água gasta com a meta de cada processo e avisa quando o consumo foge do
 
 > Projeto Integrador do Senac. Os relatórios são gerenciais e não têm validade jurídica.
 
+| | Endereço |
+|---|---|
+| 🌐 **Site** | <https://aguas-do-capibaribe.onrender.com> |
+| ⚙️ **API** | <https://aguas-api-a0vq.onrender.com/api> |
+| 📚 **Swagger** | <https://aguas-api-a0vq.onrender.com/api/swagger-ui.html> |
+
+No plano grátis, a API dorme sem uso e leva cerca de 2 minutos para acordar. Se o login der erro de conexão,
+espere um pouco e tente de novo.
+
 📘 **Guia completo em PDF** (como o sistema funciona e como rodar):
 [`docs/guia/guia-aguas-do-capibaribe.pdf`](docs/guia/guia-aguas-do-capibaribe.pdf)
 
@@ -52,9 +62,9 @@ lote, a água gasta com a meta de cada processo e avisa quando o consumo foge do
 | 📝 | **Registro de lotes** | Digitado pelo operador ou enviado pelo sensor; o banco calcula o esperado |
 | 📊 | **Desvio automático** | Realizado × meta em %, com faixas dentro da meta, atenção e crítico |
 | 🚨 | **Alertas** | Abertos quando 3 lotes seguidos do mesmo processo passam da meta |
-| 📈 | **Dashboard e relatório mensal** | Meta × real por processo, com impressão do relatório |
+| 📈 | **Dashboard e relatório mensal** | Meta × real por processo, com download do relatório em PDF |
 | 👥 | **Perfis** | Gestor (configura e acompanha tudo) e operador (registra lotes) |
-| 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API |
+| 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API, em HTTPS |
 
 ## 🧱 Arquitetura
 
@@ -67,6 +77,8 @@ flowchart LR
 
 - O front-end **nunca** acessa o banco: tudo passa pela API.
 - O ESP32 simulado é só mais um cliente da API: faz login e envia o lote.
+- Publicado com site e API no [Render](https://render.com) e banco no [Neon](https://neon.com). Para rodar tudo
+  no próprio PC, use o Docker.
 - O esquema é versionado com Flyway: as migrações em
   [`backend/src/main/resources/db/migration/`](backend/src/main/resources/db/migration/) são aplicadas
   pela API ao subir ([`database/LEIA-ME.md`](database/LEIA-ME.md)).
@@ -85,10 +97,6 @@ flowchart LR
 | [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
 ## 🚀 Como rodar
-
-**Sistema publicado:** site em <https://aguas-do-capibaribe.onrender.com> e API em
-<https://aguas-api-a0vq.onrender.com/api>. No plano grátis, a API dorme sem uso e leva cerca de 2 minutos para
-acordar.
 
 > [!IMPORTANT]
 > **Num PC novo, comece pela `develop`.** O GitHub abre na `main`, que só recebe as versões entregues;
@@ -226,8 +234,7 @@ Não faça merge com check vermelho.
 
 ## 📌 Status
 
-Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está no
-[`CHANGELOG.md`](CHANGELOG.md). Comparado ao [Termo de Abertura v2.1](docs/gestao/TAP.pdf) (20/10/2026):
+Versão atual: **v1.0.0** (02/11/2026). O que entrou em cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
@@ -237,21 +244,27 @@ Versão atual: **v0.1.0-alpha** (27/10/2026). O que entrou em cada versão está
 - ✅ Registro de lote com desvio e histórico por perfil
 - ✅ Alertas (3 lotes seguidos acima da meta) com status
 - ✅ Dashboard e relatório mensal, com download direto em PDF
-- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes, encontrando o processo pelo nome
+- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS, encontrando o processo pelo nome e renovando o login sozinho
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
 - ✅ Versionamento do banco com migrações Flyway (V1 a V4), aplicadas ao subir a API
+- ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
+- ✅ Sistema publicado na internet, com endereço fixo e HTTPS
+- ✅ Docker Compose: banco, API e site com um comando
+- ✅ CI no GitHub Actions e 64 testes automatizados, incluindo o ciclo completo da lavanderia
 
-**Próximos passos**
+**Limitações conhecidas**
 
-O que falta fazer está nas [**Issues do GitHub**](https://github.com/paulomourz/aguas-do-capibaribe/issues),
-abertas pelo orientador, com prioridade e critérios de aceitação. Entre elas:
-
-- 🟡 Status verde/amarelo/vermelho: lotes já vêm classificados pela API; falta fechar os limites oficiais e levar totais e médias para o back-end
-- ⬜ Testes de aceitação
-- ⬜ Inativar processo
-- ⬜ API publicada num endereço fixo (semana 5)
+- **Senha do sensor:** fica no código do projeto do Wokwi, que é público. O simulador não tem armazenamento
+  protegido, e a conta do sensor é de operador.
+- **Certificado do sensor:** a impressão digital vale até 20/12/2026 e precisa ser atualizada quando o Render
+  renovar o certificado ([como fazer](iot/LEIA-ME.md#se-der-errado)).
+- **Limites do status:** estão na API e no site, para classificar totais e médias. Se mudarem, mude nos dois.
+- **Inativar processo:** ainda não existe.
+- **Plano grátis:** a API dorme sem uso, e o banco pode ser apagado depois de 90 dias parado.
+- **Bancada física:** não foi montada. A entrega usa a simulação; a especificação está em
+  [`docs/tecnico/hardware-bancada.md`](docs/tecnico/hardware-bancada.md).
 
 ## 🌿 Fluxo de trabalho (GitFlow)
 
