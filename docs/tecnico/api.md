@@ -4,7 +4,7 @@
 > Lá estão as 16 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
 > `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
 
-Base: `http://<host>:8080/api`. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
+Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://localhost:8080/api` no computador. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
 `2026-10-15T00:03:58.229Z`). Números decimais vão como números JSON.
 
 Autenticação: `Authorization: Bearer <token>`, com o token obtido em `POST /auth/login`. O token vale
