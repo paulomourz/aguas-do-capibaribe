@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import BarChart from '../components/BarChart'
 import {
   AlertBadge,
@@ -15,15 +16,19 @@ import {
   StatusBadge,
 } from '../components/ui'
 import { IconBell, IconChevron, IconDroplet, IconReport, IconTarget, IconTrend } from '../components/icons'
-import { desvioDe, desvioMedio, fmtDataHora, fmtL, fmtNum, fmtPct, meses, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, desvioMedio, fmtDataHora, fmtL, fmtNum, fmtPct, meses, type Resumo } from '../domain'
 import { statusDe } from '../domain'
 import { Link, navigate } from '../router'
-import { periodoAtual, useApp, useEstadoTela, useResumo } from '../store'
+import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
+
+// A biblioteca de gráficos só é carregada quando a tela precisa dela.
+const GraficoDiario = lazy(() => import('../components/GraficoDiario'))
 
 export default function Dashboard() {
   const { alertas, nomeProcesso } = useApp()
   const { mes, ano } = periodoAtual()
   const consulta = useResumo(mes, ano)
+  const lotesDoMes = useLotesDoMes(mes, ano)
   const [estado, setEstado] = useEstadoTela(consulta)
   const resumo = estado === 'vazio' ? [] : consulta.dados
   const real = resumo.reduce((s, r) => s + r.real, 0)
@@ -192,6 +197,32 @@ export default function Dashboard() {
               <EmptyState title="Sem dados para o gráfico" />
             ) : (
               <BarChart data={resumo.map((r) => ({ label: nomeProcesso(r.processoId), meta: r.esperado, real: r.real }))} />
+            )}
+          </div>
+        </Card>
+      </section>
+
+      {/* Consumo diário */}
+      <section aria-labelledby="diario-titulo">
+        <Card className="flex flex-col">
+          <CardHeader id="diario-titulo" title="Consumo por dia" subtitle={periodo} />
+          <div className="p-4 sm:p-6">
+            {estado === 'carregando' || lotesDoMes.carregando ? (
+              <Skeleton className="h-[260px] w-full" />
+            ) : estado === 'erro' || lotesDoMes.erro ? (
+              <ErrorState
+                title="Gráfico indisponível"
+                onRetry={() => {
+                  setEstado('dados')
+                  lotesDoMes.recarregar()
+                }}
+              />
+            ) : resumo.length === 0 ? (
+              <EmptyState title="Sem dados para o gráfico" />
+            ) : (
+              <Suspense fallback={<Skeleton className="h-[260px] w-full" />}>
+                <GraficoDiario dias={consumoPorDia(lotesDoMes.dados, mes, ano)} periodo={periodo} />
+              </Suspense>
             )}
           </div>
         </Card>
