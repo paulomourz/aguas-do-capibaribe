@@ -44,6 +44,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
+        // O teste sempre cria o esquema, mesmo com FLYWAY_ATIVO=false no backend/.env da máquina.
+        "spring.flyway.enabled=true",
         "app.jwt.segredo=segredo-de-teste-com-mais-de-32-caracteres",
         "app.cors-origens=http://localhost:8443",
         "app.admin.senha=" + IntegracaoPostgresBase.SENHA_ADMIN })

@@ -61,6 +61,7 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `SWAGGER_ATIVO` | não (true) | `false` desliga o Swagger UI e a especificação OpenAPI (ex.: em produção) |
 | `ADMIN_SENHA` | só na 1ª inicialização | Senha (8 a 72 bytes) do administrador principal, usada apenas para criá-lo |
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
+| `SENSOR_SENHA` | não | Senha (8 a 72 bytes) da conta `sensor.wokwi`, usada apenas para criá-la. Sem ela, a conta não é criada |
 
 **Banco oficial.** O banco em uso é o `aguas` (veja a situação atual em
 [`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md#6-situação-atual)). A API
@@ -259,6 +260,6 @@ para as migrações em `TESTE_FLYWAY_USER` / `TESTE_FLYWAY_PASSWORD`.
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
 temporário também funciona (na segunda, o Flyway só valida). Resultado em 02/11/2026, com JDK 25:
-**60 testes, todos passando** (41 unitários e de web + 19 de integração) como `postgres`; os 59
+**64 testes, todos passando** (45 unitários e de web + 19 de integração) como `postgres`; os 59
 anteriores ao teste do ciclo completo também passaram como `aguas_api`. Os 19 de `IntegracaoPostgresContainerTest` aparecem como *skipped* sem Docker: são
 os mesmos testes de integração, na versão com contêiner.

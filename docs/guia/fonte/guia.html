@@ -293,7 +293,7 @@
 
   <div class="fluxo">
     <span class="no" style="background:#f3ecdf;color:#8b5a2b">ESP32 no Wokwi</span><span class="seta">→</span>
-    <span class="no" style="background:#f3ecdf;color:#8b5a2b">Túnel cloudflared</span><span class="seta">→</span>
+    <span class="no" style="background:#f3ecdf;color:#8b5a2b">HTTPS</span><span class="seta">→</span>
     <span class="no" style="background:#12344d;color:#fff">API</span><span class="seta">→</span>
     <span class="no" style="background:#12344d;color:#fff">PostgreSQL</span>
   </div>
@@ -305,7 +305,7 @@
     <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 faz login na API, procura o processo pelo nome e envia peças e litros. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
   </ol>
 
-  <div class="nota"><p><strong>Projeto no Wokwi.</strong> Só duas abas: <code>sketch.ino</code> e <code>diagram.json</code>. No começo do <code>sketch.ino</code>, preencha <code>API_URL</code> com o endereço do túnel (com <code>http://</code> e <code>/api</code> no final) e <code>SENHA</code> com a senha do <code>sensor.wokwi</code>. Essas duas linhas preenchidas ficam só no Wokwi, nunca no repositório.</p></div>
+  <div class="nota"><p><strong>Projeto no Wokwi.</strong> Só duas abas: <code>sketch.ino</code> e <code>diagram.json</code>. No começo do <code>sketch.ino</code>, preencha <code>SENHA</code> com a senha do <code>sensor.wokwi</code>. O endereço da API já vem pronto, em HTTPS. A senha preenchida fica só no Wokwi, nunca no repositório.</p></div>
 
   <div class="nota"><p><strong>Qual processo o sensor mede?</strong> O que estiver em <code>PROCESSO_NOME</code>, no <code>sketch.ino</code>, escrito como aparece no site (por exemplo, <code>"Estonagem"</code>). O sensor descobre o id sozinho pela API, então não é preciso consultar o banco. Se o nome não existir, o monitor serial lista os processos cadastrados. O guia completo, com o circuito e os erros comuns, está em <code>iot/LEIA-ME.md</code>.</p></div>
 </section>
@@ -323,7 +323,7 @@
     <text x="90" y="70" text-anchor="middle" font-size="11" fill="#52606d">React no navegador</text>
     <rect x="10" y="140" width="160" height="70" rx="10" fill="#f3ecdf"/>
     <text x="90" y="170" text-anchor="middle" font-weight="700" font-size="14" fill="#12344d">Sensor ESP32</text>
-    <text x="90" y="190" text-anchor="middle" font-size="11" fill="#52606d">Wokwi + túnel</text>
+    <text x="90" y="190" text-anchor="middle" font-size="11" fill="#52606d">Wokwi + HTTPS</text>
     <rect x="230" y="60" width="170" height="110" rx="12" fill="#12344d"/>
     <text x="315" y="100" text-anchor="middle" font-weight="700" font-size="15" fill="#fff">API</text>
     <text x="315" y="120" text-anchor="middle" font-size="11" fill="#d9c7a3">Spring Boot · regras,</text>
@@ -368,7 +368,7 @@
     <tr><td>PostgreSQL</td><td>18</td><td>banco de dados</td></tr>
     <tr><td>Node.js</td><td>22 ou mais novo</td><td>rodar o site</td></tr>
     <tr><td>pnpm</td><td>10</td><td>instalar o site (<code>npx pnpm@10</code> também serve)</td></tr>
-    <tr><td>cloudflared</td><td>qualquer</td><td>só para o sensor simulado</td></tr>
+    <tr><td>cloudflared</td><td>qualquer</td><td>só para ligar o sensor simulado à API do seu PC</td></tr>
   </table>
 
   <ol class="passos">
@@ -407,13 +407,13 @@ VITE_NOME_LAVANDERIA=Nome da lavanderia</pre></li>
 <pre>pnpm install
 pnpm dev</pre>
 Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code>.</li>
-    <li><strong>Sensor (opcional)</strong>Abra o túnel com <code>cloudflared tunnel --url http://localhost:8080</code> e siga o <code>iot/LEIA-ME.md</code> para configurar o Wokwi.</li>
+    <li><strong>Sensor (opcional)</strong>Siga o <code>iot/LEIA-ME.md</code> para configurar o Wokwi. Para usar a API do seu PC, abra o túnel com <code>cloudflared tunnel --url http://localhost:8080</code>.</li>
   </ol>
 
   <div class="nota agua"><p><strong>Modo simulado, só para demonstração.</strong> O site sempre usa a API. Para mostrar o sistema sem back-end, coloque <code>VITE_USAR_MOCK=true</code> no <code>.env.local</code>: os dados ficam em memória, nada é gravado e uma faixa amarela no topo avisa isso. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Não use em entregas.</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 41 testes de regras, segurança e validação. Os 19 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 60 testes passaram.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 45 testes de regras, segurança e validação. Os 19 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 60 testes passaram.</p>
 
   <h3>Documentação interativa da API</h3>
   <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 16 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
