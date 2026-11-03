@@ -128,7 +128,6 @@ a calibração com um banco temporário, nunca com o banco oficial `aguas`.
 | Mensagem `Vazão: ...` no serial | Calcular a vazão pelos pulsos do último segundo | hoje ela usa `freqAtual`, que vem do gerador simulado |
 | `WIFI_SSID` e `WIFI_SENHA` | Usar a rede do local | o valor atual é a rede do simulador |
 | `WiFi.begin(WIFI_SSID, WIFI_SENHA, 6)` | Tirar o `6` | ele fixa o canal usado no Wokwi, e a rede real pode estar em outro |
-| `API_URL` | Usar o endereço da API publicada | a comunicação segura é tratada na issue #13 |
 | `PULSOS_POR_LITRO` | Usar o valor calibrado | seção 3 |
 | `PROCESSO_NOME` e `PECAS` | Usar um processo de bancada | ver abaixo |
 

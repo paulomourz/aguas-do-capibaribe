@@ -8,6 +8,11 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Funcionalidades
 
+- **ESP32 em HTTPS com endereço fixo** (issue #13): o sensor verifica o certificado da API publicada, reaproveita
+  a conexão, tenta de novo enquanto a API acorda e renova o login quando a sessão vence.
+- **Conta do sensor automática:** com `SENSOR_SENHA` definida, a API cria `sensor.wokwi` ao subir. O
+  `iot/criar-sensor.sql` foi removido.
+- **Sistema publicado:** site e API no Render, banco no Neon.
 - **Docker Compose** (issue #10): `docker compose up -d --build` sobe banco, API e site em
   `http://localhost:3000`, com o Nginx encaminhando `/api`. As senhas são sorteadas na primeira subida,
   fora do Git.

@@ -61,7 +61,7 @@ lote, a água gasta com a meta de cada processo e avisa quando o consumo foge do
 ```mermaid
 flowchart LR
     W["🖥️ Front-end<br/>React + Vite"] -- "REST / JSON" --> A["⚙️ API<br/>Spring Boot"]
-    S["📡 ESP32 (Wokwi)<br/>sensor de vazão"] -- "túnel cloudflared" --> A
+    S["📡 ESP32 (Wokwi)<br/>sensor de vazão"] -- "HTTPS" --> A
     A -- "JPA + Flyway" --> B[("🐘 PostgreSQL")]
 ```
 
@@ -85,6 +85,10 @@ flowchart LR
 | [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
 ## 🚀 Como rodar
+
+**Sistema publicado:** site em <https://aguas-do-capibaribe.onrender.com> e API em
+<https://aguas-api-a0vq.onrender.com/api>. No plano grátis, a API dorme sem uso e leva cerca de 2 minutos para
+acordar.
 
 > [!IMPORTANT]
 > **Num PC novo, comece pela `develop`.** O GitHub abre na `main`, que só recebe as versões entregues;
@@ -115,7 +119,7 @@ subida baixa as imagens e compila tudo, então precisa de internet e demora algu
 - **Banco próprio:** é separado do PostgreSQL instalado no PC e já vem com os processos iniciais.
 - **Senhas:** são sorteadas na primeira subida e ficam só em um volume do Docker, fora do Git.
 - **Parar:** `docker compose down` mantém os dados. Com `docker compose down -v`, os dados e as senhas são **apagados**.
-- **IoT simulado:** aponte o túnel para o site (`cloudflared tunnel --url http://localhost:3000`). O `/api` continua igual.
+- **Conta do sensor:** a senha também é sorteada e aparece no mesmo comando. Para usar o Wokwi com o Docker, veja [`iot/LEIA-ME.md`](iot/LEIA-ME.md#usar-com-a-api-do-seu-pc).
 
 Para rodar sem Docker, siga os passos abaixo.
 
@@ -128,7 +132,7 @@ Para rodar sem Docker, siga os passos abaixo.
 | PostgreSQL | 18 | banco |
 | Node.js | 22 ou mais novo | front-end |
 | pnpm | 10 | front-end (`npx pnpm@10` também serve) |
-| cloudflared | qualquer | só para o IoT simulado |
+| cloudflared | qualquer | só para ligar o IoT simulado à API do seu PC |
 
 ### 1. Banco de dados
 
@@ -194,7 +198,7 @@ Com a API desligada, o site avisa "Não foi possível conectar ao servidor." em 
 ### 4. IoT simulado (opcional)
 
 Um ESP32 no [Wokwi](https://wokwi.com) mede a vazão, conta os litros do lote e envia o lote para a API
-por um túnel do cloudflared. Guia completo: [`iot/LEIA-ME.md`](iot/LEIA-ME.md).
+por HTTPS. Guia completo: [`iot/LEIA-ME.md`](iot/LEIA-ME.md).
 
 ## 🧪 Testes
 
@@ -211,13 +215,13 @@ mvn test
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 60 testes: 41 unitários e de web + 19 de integração com PostgreSQL 18 (o banco começa vazio e o
+São 64 testes: 45 unitários e de web + 19 de integração com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
-`develop`: `backend-test` (os 60 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
+`develop`: `backend-test` (os 64 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
 Não faça merge com check vermelho.
 
 ## 📌 Status

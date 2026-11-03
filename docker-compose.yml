@@ -20,7 +20,8 @@ services:
         [ -f api ] || novo 32 > api
         [ -f jwt ] || novo 64 > jwt
         [ -f admin ] || novo 16 > admin
-        chmod 644 postgres api jwt admin
+        [ -f sensor ] || novo 16 > sensor
+        chmod 644 postgres api jwt admin sensor
         # Usuário restrito da API, antes do Flyway: as migrações dão a ele as permissões de cada tabela.
         cat > /db-init/01-usuario-api.sql <<FIM
         CREATE ROLE aguas_api LOGIN PASSWORD '$$(cat api)'
@@ -31,6 +32,8 @@ services:
         chmod 644 /db-init/01-usuario-api.sql
         echo "Administrador: capibaribe.admin"
         echo "Senha inicial: $$(cat admin)"
+        echo "Sensor: sensor.wokwi"
+        echo "Senha do sensor: $$(cat sensor)"
 
   db:
     image: postgres:18-alpine
@@ -76,6 +79,7 @@ services:
         export FLYWAY_PASSWORD="$$(cat /segredos/postgres)"
         export JWT_SECRET="$$(cat /segredos/jwt)"
         export ADMIN_SENHA="$$(cat /segredos/admin)"
+        export SENSOR_SENHA="$$(cat /segredos/sensor)"
         exec java -jar /app/app.jar
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8080"]
