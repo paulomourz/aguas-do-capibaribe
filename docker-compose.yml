@@ -69,6 +69,7 @@ services:
       DB_SSLMODE: disable
       FLYWAY_USER: postgres
       CORS_ORIGINS: http://localhost:3000
+      LIMITE_CABECALHO_IP: X-Real-IP
     volumes:
       - segredos:/segredos:ro
     entrypoint:
