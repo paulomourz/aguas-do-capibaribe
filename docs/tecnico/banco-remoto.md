@@ -71,8 +71,9 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
 
 ## 6. Situação atual
 
-- **Sistema publicado:** site e API no Render, banco `aguas` no Neon (PostgreSQL 18, Ohio). O banco da
-  hospedagem é separado do banco do PC. Os valores ficam em `docs/privado/hospedagem.md`, fora do Git.
+- **Sistema publicado:** site em <https://aguas-do-capibaribe.onrender.com> e API em
+  <https://aguas-api-a0vq.onrender.com/api>, no Render, com o banco `aguas` no Neon (PostgreSQL 18, Ohio). O banco da
+  hospedagem é separado do banco do PC e do banco do Docker. Os valores ficam em `docs/privado/hospedagem.md`, fora do Git.
 
 - **Banco oficial:** `aguas`, no PostgreSQL 18 da máquina de DevOps (`DB_HOST=localhost`). Desde
   20/10/2026 ele tem só os **dois usuários fixos**: `capibaribe.admin` (gestor, administrador do

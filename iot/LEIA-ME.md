@@ -7,6 +7,15 @@ como um dispositivo real faria (US-09, fase 1 do IoT).
 [Wokwi no navegador] → HTTPS → API publicada → banco
 ```
 
+Existem dois projetos no Wokwi, com o mesmo código e endereços diferentes:
+
+| Projeto | Fala com | Para quê |
+|---|---|---|
+| [`aguas-capibaribe-sensor`](https://wokwi.com/projects/479626230908397569) (público) | API publicada, em HTTPS | apresentar |
+| [`aguas-capibaribe-local`](https://wokwi.com/projects/479631012643004417) (local) | Docker no computador, em HTTP pelo túnel | testar antes de publicar e plano B |
+
+O passo a passo de cada um está no [roteiro de apresentação](../docs/guia/roteiro-apresentacao.md).
+
 | Arquivo | O que é |
 |---|---|
 | `sketch.ino` | código do ESP32. O endereço da API já vem preenchido; a senha fica em branco (`COLE-AQUI-...`) e é preenchida só no Wokwi |
@@ -51,9 +60,11 @@ Se a conta já existir, nada muda. Se a senha se perder, o gestor a redefine em 
 
 ## Usar com a API do seu PC
 
-Abra um túnel para a API (`cloudflared tunnel --url http://localhost:8080`, ou a porta `3000` com o Docker) e
-troque `API_URL` e `API_HOST` pelo endereço `...trycloudflare.com` e `IMPRESSAO_DIGITAL` pela impressão digital dele. A conta do sensor é criada se `SENSOR_SENHA`
-estiver definida no `backend/.env`; no Docker, a senha é sorteada e aparece em `docker compose logs segredos`.
+Com o Docker, o túnel já vem pronto: `docker compose --profile tunel up -d --build` liga tudo, e o endereço aparece em
+`docker compose logs tunel`. No projeto local, use esse endereço em `API_URL`, com `http://` e `/api` no final, e a
+senha que aparece em `docker compose logs segredos`. Ao terminar, desligue com `docker compose stop tunel`.
+
+Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e defina `SENSOR_SENHA` no `backend/.env`.
 
 ## Se der errado
 
@@ -67,7 +78,9 @@ estiver definida no `backend/.env`; no Docker, a senha é sorteada e aparece em 
 
 ## Observações
 
-- A conexão usa HTTPS e confere a impressão digital do certificado da API. O login é renovado sozinho quando a sessão de 8 horas vence.
+- No projeto público, a conexão usa HTTPS e confere a impressão digital do certificado da API. No local, usa HTTP até a Cloudflare, sem criptografia nesse trecho: use só dados de teste.
+- O gerador de pulsos para durante o envio porque deixa o TLS lento demais no simulador.
+- O login é renovado sozinho quando a sessão de 8 horas vence.
 - Os projetos do Wokwi são públicos por padrão: quem tiver o link vê a senha do sensor. Use uma senha só para
   isso. O simulador não tem armazenamento protegido; no dispositivo físico, guarde a senha fora do código.
 - No dispositivo físico: remova o fio entre os pinos 25 e 27, ligue o sinal do sensor de vazão no pino 27 e

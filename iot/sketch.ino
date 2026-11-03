@@ -16,7 +16,9 @@
 #include <WiFiClientSecure.h>
 
 // ===================== CONFIGURAÇÃO =====================
-// Endereço fixo da API publicada, em HTTPS, com /api no final.
+// Endereço da API, com /api no final.
+//   Projeto público: a API publicada, em https://, como abaixo.
+//   Projeto local (Docker): o endereço do túnel, em http://. Ele muda toda vez que o túnel é ligado.
 const char* API_URL = "https://aguas-api-a0vq.onrender.com/api";
 // Senha da conta sensor.wokwi. Preencha só no Wokwi: NUNCA faça commit com a senha real.
 const char* SENHA   = "COLE-AQUI-A-SENHA-DO-SENSOR";
@@ -63,6 +65,8 @@ uint32_t freqAtual = 0;
 
 // Uma só conexão segura para as requisições do lote: o TLS só é negociado uma vez.
 WiFiClientSecure cliente;
+WiFiClient clienteLocal;  // sem TLS, só para o projeto local
+const bool usaHttps = strncmp(API_URL, "https://", 8) == 0;
 HTTPClient http;
 String token;          // guardado entre os lotes; renovado quando a API responde 401
 int ultimoCodigo = 0;  // código HTTP da última requisição
@@ -105,7 +109,7 @@ void conectarWiFi() {
 
 // Abre a conexão segura e só a libera se o certificado for o esperado.
 bool conectarSeguro() {
-  if (cliente.connected()) return true;
+  if (!usaHttps || cliente.connected()) return true;
   if (!cliente.connect(API_HOST, 443, TEMPO_CONEXAO_MS)) {
     char erro[100] = "";
     cliente.lastError(erro, sizeof(erro));
@@ -121,7 +125,8 @@ bool conectarSeguro() {
 }
 
 void abrirConexao(const String& url) {
-  http.begin(cliente, url);
+  if (usaHttps) http.begin(cliente, url);
+  else http.begin(clienteLocal, url);
   http.setReuse(true);
   http.setConnectTimeout(TEMPO_CONEXAO_MS);
   http.setTimeout(TEMPO_RESPOSTA_MS);

@@ -2,7 +2,7 @@
 
 | Pasta | Para quem | Conteúdo |
 |---|---|---|
-| [`guia/`](guia/) | toda a equipe, banca e quem vai usar | **Guia do Águas do Capibaribe** em PDF: como o sistema funciona e como rodar |
+| [`guia/`](guia/) | toda a equipe, banca e quem vai usar | **Guia do Águas do Capibaribe** em PDF: como o sistema funciona e como rodar. [Roteiro de apresentação](guia/roteiro-apresentacao.md), com o plano A (site publicado) e o plano B (Docker) |
 | [`tecnico/`](tecnico/) | quem desenvolve | [endpoints da API](tecnico/api.md) (com a API no ar, também no Swagger: `/api/swagger-ui.html`), [banco de dados e servidor](tecnico/banco-remoto.md) e [bancada física com sensor](tecnico/hardware-bancada.md) |
 | [`gestao/`](gestao/LEIA-ME.md) | equipe e orientador | termo de abertura (TAP), especificação de requisitos (ERS, IEEE 830) e pitch |
 | `assets/` | READMEs | imagens usadas na documentação |
