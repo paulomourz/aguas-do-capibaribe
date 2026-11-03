@@ -8,7 +8,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Funcionalidades
 
-- **ESP32 em HTTPS com endereço fixo** (issue #13): o sensor verifica o certificado da API publicada, reaproveita
+- **ESP32 em HTTPS com endereço fixo** (issue #13): o sensor confere a impressão digital do certificado da API publicada, reaproveita
   a conexão, tenta de novo enquanto a API acorda e renova o login quando a sessão vence.
 - **Conta do sensor automática:** com `SENSOR_SENHA` definida, a API cria `sensor.wokwi` ao subir. O
   `iot/criar-sensor.sql` foi removido.

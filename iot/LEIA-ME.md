@@ -52,7 +52,7 @@ Se a conta já existir, nada muda. Se a senha se perder, o gestor a redefine em 
 ## Usar com a API do seu PC
 
 Abra um túnel para a API (`cloudflared tunnel --url http://localhost:8080`, ou a porta `3000` com o Docker) e
-troque o `API_URL` pelo endereço `https://...trycloudflare.com/api`. A conta do sensor é criada se `SENSOR_SENHA`
+troque `API_URL` e `API_HOST` pelo endereço `...trycloudflare.com` e `IMPRESSAO_DIGITAL` pela impressão digital dele. A conta do sensor é criada se `SENSOR_SENHA`
 estiver definida no `backend/.env`; no Docker, a senha é sorteada e aparece em `docker compose logs segredos`.
 
 ## Se der errado
@@ -61,13 +61,13 @@ estiver definida no `backend/.env`; no Docker, a senha é sorteada e aparece em 
 |---|---|
 | `undefined reference to setup` (ao compilar) | o código não foi colado na aba `sketch.ino` |
 | `Sem resposta da API` | a API está acordando (ele tenta de novo sozinho) ou o endereço está errado |
-| `Sem resposta da API` com erro de certificado | o site passou a usar uma autoridade que não está em `CERTIFICADOS_RAIZ` |
+| `certificado da API diferente do esperado` | o Render renovou o certificado (o atual vale até 20/12/2026): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
 | `Falha no login (HTTP 401)` | senha errada; confira a senha ou redefina em **Usuários** |
 | `Processo "..." não encontrado` | `PROCESSO_NOME` diferente dos nomes cadastrados no site (a lista aparece logo depois) |
 
 ## Observações
 
-- A conexão usa HTTPS e verifica o certificado da API. O login é renovado sozinho quando a sessão de 8 horas vence.
+- A conexão usa HTTPS e confere a impressão digital do certificado da API. O login é renovado sozinho quando a sessão de 8 horas vence.
 - Os projetos do Wokwi são públicos por padrão: quem tiver o link vê a senha do sensor. Use uma senha só para
   isso. O simulador não tem armazenamento protegido; no dispositivo físico, guarde a senha fora do código.
 - No dispositivo físico: remova o fio entre os pinos 25 e 27, ligue o sinal do sensor de vazão no pino 27 e
