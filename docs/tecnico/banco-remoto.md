@@ -6,11 +6,12 @@ Nenhuma credencial deve ser enviada por chat nem gravada no Git: os valores vão
 
 ## 1. Esquema
 
-- Aplique [`../../database/banco.sql`](../../database/banco.sql), um dump do PostgreSQL 18.6, num banco
-  vazio. Use o `psql` 18 ou mais recente, por causa dos comandos `\restrict` do dump:
-  `psql -h <host> -U postgres -d <banco> -v ON_ERROR_STOP=1 -f database/banco.sql`
-- A API **não cria nem altera** tabelas, triggers ou views. Se o esquema mudar, a API precisa ser
-  ajustada junto. Na inicialização, ela confere tabelas e colunas e não sobe se algo divergir.
+- O esquema vem das migrações Flyway (`backend/src/main/resources/db/migration/`). Num banco vazio,
+  aplique-as com o dono do banco (`mvn flyway:migrate`, passo a passo em
+  [`../../database/LEIA-ME.md`](../../database/LEIA-ME.md#banco-novo)); depois, a API aplica sozinha as
+  migrações novas ao subir, usando `FLYWAY_USER` / `FLYWAY_PASSWORD`.
+- Mudança de esquema é sempre uma migração nova, nunca um comando à mão no banco. Na inicialização, a
+  API confere tabelas e colunas e não sobe se algo divergir.
 
 ## 2. Dados a informar à equipe da API
 
@@ -23,30 +24,31 @@ Nenhuma credencial deve ser enviada por chat nem gravada no Git: os valores vão
 | Senha desse usuário | `DB_PASSWORD` | entregue por canal seguro |
 | Exigência de SSL | `DB_SSLMODE` | `require` ou `verify-full` se a conexão sair da rede local |
 
-## 3. Usuário da aplicação (sugestão de permissões mínimas)
+## 3. Usuário da aplicação (permissões mínimas)
 
-A API precisa ler e gravar dados, mas não alterar a estrutura. Execute como dono do banco, trocando os
-nomes:
+A API precisa ler e gravar dados, mas não alterar a estrutura. O script
+[`../../database/seguranca-usuario-api.sql`](../../database/seguranca-usuario-api.sql) cria o usuário
+`aguas_api` com essas permissões e, no fim, mostra uma tabela do que ele pode fazer em cada tabela.
+Execute como dono do banco (psql 18+). A senha entra pela linha de comando e não fica no arquivo:
 
-```sql
-CREATE ROLE aguas_api LOGIN PASSWORD '<defina uma senha forte>';
-GRANT CONNECT ON DATABASE <banco> TO aguas_api;
-GRANT USAGE ON SCHEMA public TO aguas_api;
-GRANT SELECT, INSERT, UPDATE ON usuario, processo, alerta TO aguas_api;
-GRANT SELECT, INSERT ON lote, alerta_lote TO aguas_api;
-GRANT SELECT ON v_alertas, v_historico_lotes TO aguas_api;
-GRANT USAGE, SELECT ON SEQUENCE usuario_id_seq, processo_id_seq, lote_id_seq, alerta_id_seq TO aguas_api;
+```powershell
+psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha forte>' -f database/seguranca-usuario-api.sql
 ```
+
+Depois, no `backend/.env`, troque `DB_USER=aguas_api` e `DB_PASSWORD=<a mesma senha>` e reinicie a API.
+O `application.yml` não muda: ele só lê `DB_USER` e `DB_PASSWORD`.
 
 Por que esses privilégios:
 
 - `UPDATE` em `processo` e `usuario` cobre a edição de metas, de nome e de senha e a
-  ativação/desativação de acesso.
+  ativação/desativação de acesso. Em `processo`, ele também é exigido pelo `SELECT ... FOR UPDATE`
+  que serializa os registros de lote.
 - Em `alerta`, o `UPDATE` serve para mudar o status.
 - `lote` só precisa de `INSERT`, porque o trigger já impede alterações.
 - A API não faz `DELETE` em nenhuma tabela.
 - Sem `DELETE`, `TRUNCATE` e `CREATE`, um erro ou invasão na API não consegue apagar dados nem alterar
-  o esquema.
+  o esquema. `DROP` e `ALTER` já são barrados porque as tabelas pertencem ao `postgres`: só o dono
+  altera a estrutura.
 
 ## 4. Rede
 
@@ -67,7 +69,10 @@ Não é preciso inserir ninguém à mão. Na primeira inicialização num banco 
 administrador principal (`capibaribe.admin`, perfil gestor) com a senha de `ADMIN_SENHA`, guardada só
 como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.md#administrador-principal).
 
-## 6. Situação atual (20/10/2026)
+## 6. Situação atual
+
+- **Sistema publicado:** site e API no Render, banco `aguas` no Neon (PostgreSQL 18, Ohio). O banco da
+  hospedagem é separado do banco do PC. Os valores ficam em `docs/privado/hospedagem.md`, fora do Git.
 
 - **Banco oficial:** `aguas`, no PostgreSQL 18 da máquina de DevOps (`DB_HOST=localhost`). Desde
   20/10/2026 ele tem só os **dois usuários fixos**: `capibaribe.admin` (gestor, administrador do
@@ -78,8 +83,16 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
 - **Não existe mais banco de teste permanente.** O antigo `aguas_teste` foi apagado. Os testes de
   integração usam um banco descartável criado só na hora e apagado ao final (ver
   [`../../backend/README.md`](../../backend/README.md#testes)). Nunca rode os testes no `aguas`.
-- **Pendente:** a API ainda se conecta como `postgres` (superusuário). Antes de publicar, crie o
-  usuário `aguas_api` da seção 3 e troque `DB_USER`/`DB_PASSWORD` no `backend/.env`.
+- **Usuário da API:** desde 27/10/2026 a API da máquina de DevOps conecta como `aguas_api` (script da
+  seção 3). Conferido: login, processos, lotes, usuários, relatório e Swagger funcionam, e
+  `DELETE FROM lote` é recusado. O `postgres` fica só para administrar o banco. A senha está em
+  `docs/privado/acessos-e-senhas.md`, fora do Git.
+- **Migrações aplicadas no banco oficial:** `001-auditoria-usuario.sql` (27/10/2026, script manual,
+  hoje V4 do Flyway). A tabela `auditoria_usuario` já registra as ações do gestor sobre outros usuários.
+- **Flyway no banco oficial:** pendente. Na primeira subida da API com Flyway, use
+  `FLYWAY_BASELINE=true` uma vez (marca o `aguas` como já estando na V4, sem alterar nada) e configure
+  `FLYWAY_USER` / `FLYWAY_PASSWORD` no `backend/.env`. Ver
+  [`../../database/LEIA-ME.md`](../../database/LEIA-ME.md#banco-que-já-existia-antes-do-flyway-o-aguas).
 - **Servidor remoto:** a conexão com um PostgreSQL em outra máquina ainda não foi testada. Na
   primeira conexão, confirme que:
   1. a API inicia sem erro de validação do esquema (`Started AguasApiApplication` no log);

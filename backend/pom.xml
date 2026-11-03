@@ -13,7 +13,7 @@
 
     <groupId>br.com.aguas</groupId>
     <artifactId>aguas-api</artifactId>
-    <version>0.1.0-alpha</version>
+    <version>1.0.0</version>
     <name>aguas-api</name>
     <description>API REST do sistema Águas do Capibaribe (gestão de consumo de água)</description>
 
@@ -44,10 +44,25 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
+        <!-- Documentação interativa (Swagger UI) em /api/swagger-ui.html; linha 2.8 = Spring Boot 3.x -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.17</version>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <!-- Migrações do esquema (src/main/resources/db/migration), aplicadas ao subir a API -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
         <dependency>
@@ -82,6 +97,33 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Migrações sem subir a API: mvn flyway:info / flyway:migrate (conexão em FLYWAY_URL,
+                 FLYWAY_USER e FLYWAY_PASSWORD; ver database/LEIA-ME.md). Versão do Spring Boot. -->
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${flyway.version}</version>
+                <configuration>
+                    <locations>
+                        <location>filesystem:src/main/resources/db/migration</location>
+                    </locations>
+                    <baselineVersion>4</baselineVersion>
+                    <baselineDescription>esquema do banco.sql com auditoria</baselineDescription>
+                    <cleanDisabled>true</cleanDisabled>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-database-postgresql</artifactId>
+                        <version>${flyway.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <!-- Usado só para a ferramenta de geração de hash BCrypt (ver README) -->
             <plugin>

@@ -17,7 +17,7 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconClipboard, IconClock, IconDroplet, IconHistory, IconPlus } from '../components/icons'
-import { esperadoDe, fmtDataHora, fmtL, fmtNum, fmtPct, statusDe, unidadeCurta, unidadeLabel, type Lote } from '../domain'
+import { esperadoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
 import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 
@@ -292,7 +292,7 @@ const mensagens = {
 
 export function ResultadoCard({ lote, refEl, onNovo }: { lote: Lote; refEl?: RefObject<HTMLDivElement | null>; onNovo: () => void }) {
   const { nomeProcesso } = useApp()
-  const st = statusDe(lote.desvio)
+  const st = lote.status
   const m = statusMeta[st]
   const max = Math.max(lote.esperado, lote.litros)
   const dif = lote.litros - lote.esperado

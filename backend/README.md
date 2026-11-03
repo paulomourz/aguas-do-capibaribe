@@ -1,17 +1,18 @@
 # Águas do Capibaribe: API (back-end)
 
-API REST em Java 25 (LTS) + Spring Boot 3.5 + Maven. Ela atende o front-end React deste repositório e usa o
-PostgreSQL definido em [`../database/banco.sql`](../database/banco.sql).
+API REST em Java 25 (LTS) + Spring Boot 3.5 + Maven. Ela atende o front-end React deste repositório e usa
+um PostgreSQL cujo esquema é versionado com Flyway ([`../database/LEIA-ME.md`](../database/LEIA-ME.md)).
 
-> O banco **não é criado nem alterado** pela API. O Hibernate roda com `ddl-auto=validate`: na
-> inicialização ele só confere se tabelas e colunas batem com as entidades e, se não baterem, a API
-> não sobe.
+> Na inicialização, o **Flyway** aplica as migrações pendentes de `src/main/resources/db/migration/`
+> (e confere o checksum das já aplicadas). Depois, o Hibernate roda com `ddl-auto=validate`: só confere
+> se tabelas e colunas batem com as entidades e, se não baterem, a API não sobe. O Hibernate nunca
+> cria nem altera tabelas.
 
 ## Requisitos
 
 - JDK 25 (LTS)
 - Maven 3.9 ou superior
-- Acesso de rede ao PostgreSQL 18 com o esquema de `database/banco.sql` já aplicado
+- Acesso de rede a um PostgreSQL 18 (o esquema vem das migrações Flyway)
 - Opcional, para os testes de integração: Docker **ou** um PostgreSQL local descartável (ver [Testes](#testes))
 
 ## Estrutura
@@ -28,11 +29,12 @@ backend/
     │   ├── controller/           Auth, Usuario, Processo, Lote, Alerta, Relatorio
     │   ├── service/              regras de negócio; RegraDeAlerta é a regra pura dos 3 lotes
     │   ├── repository/           Spring Data JPA
-    │   ├── entity/               mapeamento 1:1 das tabelas do banco.sql
+    │   ├── entity/               mapeamento 1:1 das tabelas criadas pelas migrações
     │   ├── dto/                  contratos JSON (mesmos nomes de src/services/tipos.ts do front)
     │   ├── exception/            erros no formato {codigo, mensagem, campos}
     │   └── ferramentas/          GerarHashSenha (hash BCrypt para o primeiro gestor)
     ├── main/resources/application.yml
+    ├── main/resources/db/migration/  migrações Flyway (V1__..., V2__...), aplicadas em ordem
     └── test/java/br/com/aguas/   testes unitários, web (MockMvc) e de integração (PostgreSQL)
 ```
 
@@ -49,16 +51,24 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `DB_USER` / `DB_PASSWORD` | sim | Usuário e senha da API no banco |
 | `DB_SSLMODE` | não (`prefer`) | `disable`, `prefer`, `require` ou `verify-full` |
 | `DB_POOL_MAX` | não (10) | Máximo de conexões simultâneas |
+| `FLYWAY_USER` / `FLYWAY_PASSWORD` | sim, com `DB_USER=aguas_api` | Dono do banco, usado só para as migrações. Sem elas, o Flyway usa `DB_USER`, que não pode criar tabelas |
+| `FLYWAY_ATIVO` | não (true) | `false`: a API não aplica migrações (rode `mvn flyway:migrate` à mão) |
+| `FLYWAY_BASELINE` | não (false) | `true` **uma vez**, no banco que já existia antes do Flyway ([detalhes](../database/LEIA-ME.md#banco-que-já-existia-antes-do-flyway-o-aguas)) |
 | `JWT_SECRET` | sim | Pelo menos 32 caracteres aleatórios. Gere com `openssl rand -base64 48`. Sem ele, a API não sobe |
 | `JWT_EXPIRACAO` | não (`8h`) | Validade do login, sem renovação automática |
 | `CORS_ORIGINS` | sim, para o navegador | Origens do front, separadas por vírgula. `*` é recusado |
 | `SERVER_PORT` | não (8080) | Porta HTTP da API |
+| `SWAGGER_ATIVO` | não (true) | `false` desliga o Swagger UI e a especificação OpenAPI (ex.: em produção) |
 | `ADMIN_SENHA` | só na 1ª inicialização | Senha (8 a 72 bytes) do administrador principal, usada apenas para criá-lo |
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
+| `SENSOR_SENHA` | não | Senha (8 a 72 bytes) da conta `sensor.wokwi`, usada apenas para criá-la. Sem ela, a conta não é criada |
 
 **Banco oficial.** O banco em uso é o `aguas` (veja a situação atual em
-[`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md#6-situação-atual-20102026)). Prefira
-um usuário próprio da aplicação (`aguas_api`, sem `DELETE`) em vez do superusuário `postgres`.
+[`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md#6-situação-atual)). A API
+conecta com o usuário próprio `aguas_api` (sem `DELETE`, `TRUNCATE`, `DROP` nem `ALTER`), criado por
+[`../database/seguranca-usuario-api.sql`](../database/seguranca-usuario-api.sql), e não com o
+superusuário `postgres` (no banco oficial desde 27/10/2026). Os 15 testes de integração também passam
+conectados como `aguas_api` (`TESTE_PG_USER=aguas_api`).
 
 **CORS em desenvolvimento.** O Vite deste projeto roda fixo na porta **8443** (`vite.config.ts`,
 `strictPort`). A origem local é, portanto, `http://localhost:8443`. Se você abrir o front por
@@ -72,25 +82,37 @@ Todas as rotas ficam sob o prefixo `/api` (ex.: `http://localhost:8080/api/auth/
 ```bash
 cd backend
 mvn spring-boot:run            # desenvolvimento
-mvn clean package              # gera target/aguas-api-1.0.0.jar
+mvn clean package              # gera target/aguas-api-<versão>.jar (ex.: aguas-api-1.0.0.jar)
 java -jar target/aguas-api-1.0.0.jar
 ```
 
 Com o `java -jar`, rode o comando dentro de `backend/` para o `.env` ser encontrado, ou defina as
 variáveis no sistema.
 
+### Documentação interativa (Swagger)
+
+Com a API no ar, abra **http://localhost:8080/api/swagger-ui.html**. A página lista as 16 rotas por
+grupo (Auth, Processos, Lotes, Alertas, Usuários e Relatórios), com o formato de cada pedido e
+resposta, e permite testá-las:
+
+1. Em **POST /auth/login**, clique em *Try it out*, informe usuário e senha e clique em *Execute*.
+2. Copie o `token` da resposta, clique em **Authorize** (cadeado no topo), cole o token e confirme.
+3. As outras rotas passam a ser chamadas com `Authorization: Bearer <token>`.
+
+A especificação OpenAPI em JSON fica em `/api/v3/api-docs` (dá para importar no Postman ou Insomnia).
+Para desligar as duas páginas, use `SWAGGER_ATIVO=false`. A versão exibida vem do `pom.xml`.
+
 ### Front-end apontando para a API
 
-Na raiz do repositório, crie `.env.local` a partir de `.env.example`:
+O front usa a API por padrão, em `http://localhost:8080/api`. Para outro endereço, crie o `.env.local`
+na raiz a partir do `.env.example` (UTF-8 sem BOM):
 
 ```
-VITE_USAR_MOCK=false
 VITE_API_URL=http://localhost:8080/api
 ```
 
-Depois rode `pnpm install` e `pnpm dev` (Node 22, conforme `.mise.toml`). Sem `VITE_USAR_MOCK=false`,
-o front continua no modo simulado e não chama a API. Salve o arquivo em UTF-8 **sem BOM**: com BOM, a
-primeira linha é ignorada e o site cai no modo simulado.
+Depois rode `pnpm install` e `pnpm dev` (Node 22, conforme `.mise.toml`). O modo simulado, sem API,
+só liga com `VITE_USAR_MOCK=true` e mostra uma faixa de aviso no topo.
 
 ## Administrador principal
 
@@ -102,7 +124,7 @@ O sistema sempre tem um administrador principal (perfil gestor), por padrão com
   (de 8 a 72 bytes). Sem o administrador e sem `ADMIN_SENHA`, a API não sobe.
 - Se ele já existe, a API não altera nada: a senha trocada pelo site continua valendo. Depois da
   primeira inicialização, `ADMIN_SENHA` pode ser removida do ambiente.
-- A senha nunca fica no código nem no `banco.sql`; vem só do `backend/.env` ou das variáveis do
+- A senha nunca fica no código nem nas migrações; vem só do `backend/.env` ou das variáveis do
   servidor. Troque-a pelo site no primeiro acesso.
 - O administrador principal não pode ser desativado. Login e nome podem ser mudados com
   `ADMIN_LOGIN` e `ADMIN_NOME`.
@@ -169,11 +191,18 @@ Para inserir outro gestor sem passar pelo site:
   bytes, armazenadas só como hash BCrypt. Para trocar a própria senha é preciso informar a senha
   atual. Cada pessoa só altera a própria conta; o gestor pode redefinir a senha de outra pessoa
   (`PATCH /usuarios/{id}/senha`), exceto a do administrador principal, e não pode desativar a si mesmo.
+- **Auditoria:** redefinir a senha, desativar ou reativar outra pessoa grava em `auditoria_usuario`
+  quem fez (`gestor_id`), em quem (`usuario_afetado_id`), a ação e a hora, na mesma transação da
+  mudança (se uma falhar, as duas são desfeitas). Ações recusadas não geram registro. A tabela não
+  tem coluna de senha, e o banco bloqueia UPDATE e DELETE nela (`trg_auditoria_imutavel`); a API
+  também escreve uma linha `Auditoria: ...` no log, só com ids.
 - **Sessão:** JWT HS256 válido por 8 horas. A cada requisição autenticada, a API consulta o usuário
   no banco: se ele foi desativado, recebe 401 na hora, e o perfil considerado é sempre o do banco.
 - **Relatório mensal:** o mês é definido no fuso `America/Recife`.
-- **Faixas ok / atenção / crítico:** continuam só no front (`src/domain/regras.ts`) e são
-  **ilustrativas**. A API não classifica lotes.
+- **Faixas ok / atenção / crítico:** cada lote sai da API com `statusConformidade`
+  (`DENTRO_DA_META` se desvio ≤ 0%, `ATENCAO` se ≤ 8%, `CRITICO` acima), calculado por
+  `StatusConformidade.de`. Totais e
+  médias (relatório, dashboard, média do alerta) são classificados no front, com os mesmos limites.
 
 Endpoints: [`../docs/tecnico/api.md`](../docs/tecnico/api.md). Dados que o responsável pelo banco
 precisa fornecer: [`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md).
@@ -187,10 +216,16 @@ mvn test
 
 | Conjunto | Precisa de banco? | O que cobre |
 |---|---|---|
-| `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, fórmula do desvio, CORS, JWT |
+| `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, fórmula do desvio, faixas de conformidade, CORS, JWT |
 | `SegurancaWebTest` | não (serviços simulados) | 401/403 por perfil, usuário desativado, validações (422), formato de erro, CORS |
-| `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável criado com `banco.sql` |
+| `ProcessoControllerTest` | não (repositório simulado) | cadastro e edição de processos: meta zero ou negativa, campos faltando, nome repetido (US-02) |
+| `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável, que começa vazio: o Flyway aplica V1 a V4 na subida |
 | `IntegracaoPostgresLocalTest` | PostgreSQL local descartável | os mesmos testes, sem Docker |
+| `CicloCompletoLavanderiaE2ETest` | herdado pelas duas classes acima | aceitação: a jornada da lavanderia por HTTP, do login ao relatório do mês (issue #12) |
+
+Dois desses testes conferem o Flyway: `flywayAplicouTodasAsMigracoesEmOrdem` (banco vazio recebe V1 a
+V4, com os processos iniciais) e `reinicioValidaChecksumsENaoRecriaNada` (uma nova subida valida os
+checksums e não executa nada).
 
 Os testes de integração **nunca usam o banco real**. Sem Docker, a classe de contêiner aparece como
 *skipped*. Antes de desistir, o Testcontainers procura o Docker por cerca de 3 minutos.
@@ -200,8 +235,7 @@ Sem Docker, com um PostgreSQL 18 instalado localmente, dá para criar um cluster
 ```bash
 initdb -D /tmp/pg-teste -U postgres --auth=trust -E UTF8 --locale=C
 pg_ctl -D /tmp/pg-teste -o "-p 55432 -c listen_addresses=localhost" -l /tmp/pg-teste.log start
-psql -h localhost -p 55432 -U postgres -c "create database aguas_teste"
-psql -h localhost -p 55432 -U postgres -d aguas_teste -v ON_ERROR_STOP=1 -f ../database/banco.sql
+psql -h localhost -p 55432 -U postgres -c "create database aguas_teste"   # vazio: o Flyway cria o esquema
 TESTE_PG_URL=jdbc:postgresql://localhost:55432/aguas_teste mvn test
 pg_ctl -D /tmp/pg-teste stop                # depois, apague a pasta /tmp/pg-teste
 ```
@@ -215,13 +249,17 @@ No mesmo PostgreSQL da máquina, sem cluster separado (PowerShell, dentro de `ba
 
 ```powershell
 psql -U postgres -c "create database aguas_verificacao_teste"
-psql -U postgres -d aguas_verificacao_teste -v ON_ERROR_STOP=1 -f ../database/banco.sql
 $env:TESTE_PG_URL = "jdbc:postgresql://localhost:5432/aguas_verificacao_teste"
 $env:TESTE_PG_PASSWORD = "<senha do postgres>"
 mvn test
 psql -U postgres -c "drop database aguas_verificacao_teste"
 ```
 
+Para testar conectado como `aguas_api`, use `TESTE_PG_USER=aguas_api` e informe o dono do esquema
+para as migrações em `TESTE_FLYWAY_USER` / `TESTE_FLYWAY_PASSWORD`.
+
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
-temporário também funciona. Resultado em 20/10/2026: **40 testes, todos passando** (25 unitários e de
-web + 15 de integração).
+temporário também funciona (na segunda, o Flyway só valida). Resultado em 02/11/2026, com JDK 25:
+**64 testes, todos passando** (45 unitários e de web + 19 de integração) como `postgres`; os 59
+anteriores ao teste do ciclo completo também passaram como `aguas_api`. Os 19 de `IntegracaoPostgresContainerTest` aparecem como *skipped* sem Docker: são
+os mesmos testes de integração, na versão com contêiner.

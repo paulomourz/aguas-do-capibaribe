@@ -1,4 +1,5 @@
 import { MOSTRAR_SELETOR_DE_ESTADOS } from '../config'
+import { USAR_MOCK } from '../services/http'
 import {
   useEffect,
   useId,
@@ -736,6 +737,17 @@ export function ErrorState({
           Tentar novamente
         </Button>
       )}
+    </div>
+  )
+}
+
+/** Faixa visível só no modo simulado (VITE_USAR_MOCK=true), para ninguém confundir com dados reais. */
+export function AvisoModoSimulado() {
+  if (!USAR_MOCK) return null
+  return (
+    <div role="status" className="flex items-center justify-center gap-2 bg-warn-bg px-4 py-1.5 text-center text-[13px] font-semibold text-warn">
+      <IconAlertTriangle size={16} strokeWidth={2.2} className="shrink-0" />
+      Modo simulado: dados de exemplo, nada é gravado no banco. Não use em entregas.
     </div>
   )
 }

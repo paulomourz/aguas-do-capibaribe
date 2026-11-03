@@ -73,6 +73,16 @@ class SegurancaWebTest {
     }
 
     @Test
+    void documentacaoSwaggerNaoPedeToken() throws Exception {
+        // Aqui o springdoc não é carregado (teste fatiado): só se confere que a segurança libera as rotas.
+        for (String rota : List.of("/v3/api-docs", "/swagger-ui.html", "/swagger-ui/index.html")) {
+            mvc.perform(get(rota)).andExpect(r -> org.junit.jupiter.api.Assertions.assertNotEquals(401, r.getResponse().getStatus(), rota));
+        }
+        // Escrever na documentação continua bloqueado.
+        mvc.perform(post("/v3/api-docs")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void tokenAdulteradoRetorna401() throws Exception {
         String token = tokenDe(1, Perfil.gestor, true);
         mvc.perform(get("/processos").header(HttpHeaders.AUTHORIZATION, token + "x"))

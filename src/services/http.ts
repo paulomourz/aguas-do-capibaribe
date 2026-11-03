@@ -1,7 +1,8 @@
 import type { ErroApiDTO } from './tipos'
 
-export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'
-export const USAR_MOCK = (import.meta.env.VITE_USAR_MOCK ?? 'true') !== 'false'
+export const API_URL: string = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api'
+/** Padrão: API real. O modo simulado (dados em memória) só liga com VITE_USAR_MOCK=true. */
+export const USAR_MOCK = import.meta.env.VITE_USAR_MOCK?.trim().toLowerCase() === 'true'
 
 export const CHAVE_TOKEN = 'ac-token'
 export const obterToken = () => sessionStorage.getItem(CHAVE_TOKEN)
@@ -31,7 +32,8 @@ const ROTA_LOGIN = '/auth/login'
 export const EVENTO_SESSAO_EXPIRADA = 'ac-sessao-expirada'
 
 export async function requisicao<T>(caminho: string, { corpo, query, headers, ...init }: Opcoes = {}): Promise<T> {
-  const url = new URL(API_URL.replace(/\/+$/, '') + caminho)
+  // A base só vale para endereço relativo (/api, no Docker, com o Nginx na mesma origem).
+  const url = new URL(API_URL.replace(/\/+$/, '') + caminho, window.location.origin)
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v))
 
   const token = obterToken()

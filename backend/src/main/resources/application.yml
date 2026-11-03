@@ -12,8 +12,24 @@ spring:
     hikari:
       maximum-pool-size: ${DB_POOL_MAX:10}
       connection-timeout: 10000
+  # O esquema é criado e evoluído pelo Flyway (src/main/resources/db/migration), antes do Hibernate.
+  flyway:
+    # FLYWAY_ATIVO=false: a API não aplica migrações (quem administra o banco roda mvn flyway:migrate).
+    enabled: ${FLYWAY_ATIVO:true}
+    locations: classpath:db/migration
+    # Usuário com permissão de criar tabelas (dono do esquema). O aguas_api não tem; sem FLYWAY_USER,
+    # o Flyway usa o mesmo usuário da API.
+    user: ${FLYWAY_USER:${DB_USER}}
+    password: ${FLYWAY_PASSWORD:${DB_PASSWORD}}
+    # Só para o banco que já existia antes do Flyway (criado pelo antigo banco.sql): FLYWAY_BASELINE=true
+    # na primeira subida marca o esquema como já estando na V4 e não recria nada.
+    baseline-on-migrate: ${FLYWAY_BASELINE:false}
+    baseline-version: 4
+    baseline-description: esquema do banco.sql com auditoria
+    # Nunca apagar o banco por comando do Flyway.
+    clean-disabled: true
   jpa:
-    # O esquema é do banco (banco.sql). O Hibernate apenas confere; nunca cria nem altera tabelas.
+    # O Hibernate apenas confere o esquema criado pelo Flyway; nunca cria nem altera tabelas.
     hibernate:
       ddl-auto: validate
     open-in-view: false
@@ -45,5 +61,22 @@ app:
     login: ${ADMIN_LOGIN:capibaribe.admin}
     nome: ${ADMIN_NOME:Administrador Capibaribe}
     senha: ${ADMIN_SENHA:}
+  # Conta do sensor (sensor.wokwi). Criada na inicialização se SENSOR_SENHA estiver definida.
+  sensor:
+    senha: ${SENSOR_SENHA:}
   # Fuso usado para definir o mês dos relatórios.
   fuso-relatorios: America/Recife
+  # Versão do pom.xml (preenchida no build); aparece no Swagger.
+  versao: '@project.version@'
+
+# Swagger UI em /api/swagger-ui.html e especificação em /api/v3/api-docs.
+# SWAGGER_ATIVO=false desliga os dois (por exemplo, em produção).
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ATIVO:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ATIVO:true}
+    persist-authorization: true
+    operations-sorter: method
+    display-request-duration: true
+  default-produces-media-type: application/json

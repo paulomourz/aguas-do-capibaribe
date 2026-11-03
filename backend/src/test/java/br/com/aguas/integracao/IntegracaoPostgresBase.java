@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
 
+import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationState;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,7 +36,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Testes de integração contra um PostgreSQL criado a partir de database/banco.sql.
+ * Testes de integração contra um PostgreSQL com o esquema criado pelas migrações do Flyway.
  * Nunca usam o banco real: as subclasses só aceitam um contêiner descartável
  * (IntegracaoPostgresContainerTest) ou um banco local cujo nome termina em "_teste"
  * (IntegracaoPostgresLocalTest).
@@ -42,6 +44,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
+        // O teste sempre cria o esquema, mesmo com FLYWAY_ATIVO=false no backend/.env da máquina.
+        "spring.flyway.enabled=true",
         "app.jwt.segredo=segredo-de-teste-com-mais-de-32-caracteres",
         "app.cors-origens=http://localhost:8443",
         "app.admin.senha=" + IntegracaoPostgresBase.SENHA_ADMIN })
@@ -52,13 +56,14 @@ abstract class IntegracaoPostgresBase {
     private static final String SENHA = "senha-de-teste-123";
 
     /** Começa num valor da hora atual: logins e nomes não se repetem entre rodadas no mesmo banco de teste. */
-    private static final AtomicInteger seq = new AtomicInteger((int) (System.currentTimeMillis() / 1000 % 1_000_000) * 1000);
+    static final AtomicInteger seq = new AtomicInteger((int) (System.currentTimeMillis() / 1000 % 1_000_000) * 1000);
 
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder encoder;
     @Autowired ObjectMapper json;
     @Autowired DataSource dataSource;
+    @Autowired Flyway flyway;
 
     record Conta(int id, String login, String token) {}
 
@@ -72,7 +77,7 @@ abstract class IntegracaoPostgresBase {
         return new Conta(id, login, entrar(login, SENHA));
     }
 
-    private String entrar(String login, String senha) throws Exception {
+    String entrar(String login, String senha) throws Exception {
         String corpo = mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("usuario", login, "senha", senha))))
                 .andExpect(status().isOk())
@@ -80,15 +85,15 @@ abstract class IntegracaoPostgresBase {
         return json.readTree(corpo).get("token").asText();
     }
 
-    private ResultActions chamar(MockHttpServletRequestBuilder req, Conta c) throws Exception {
+    ResultActions chamar(MockHttpServletRequestBuilder req, Conta c) throws Exception {
         return mvc.perform(req.header(HttpHeaders.AUTHORIZATION, "Bearer " + c.token()));
     }
 
-    private ResultActions enviar(MockHttpServletRequestBuilder req, Conta c, Object corpo) throws Exception {
+    ResultActions enviar(MockHttpServletRequestBuilder req, Conta c, Object corpo) throws Exception {
         return chamar(req.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpo)), c);
     }
 
-    private JsonNode ler(ResultActions r) throws Exception {
+    JsonNode ler(ResultActions r) throws Exception {
         return json.readTree(r.andReturn().getResponse().getContentAsString());
     }
 
@@ -102,14 +107,14 @@ abstract class IntegracaoPostgresBase {
         return ler(enviar(post("/lotes"), quem, corpo).andExpect(status().isCreated()));
     }
 
-    private List<JsonNode> alertasDo(Conta gestor, int processoId) throws Exception {
+    List<JsonNode> alertasDo(Conta gestor, int processoId) throws Exception {
         List<JsonNode> r = new ArrayList<>();
         ler(chamar(get("/alertas"), gestor).andExpect(status().isOk()))
                 .forEach(a -> { if (a.get("processoId").asInt() == processoId) r.add(a); });
         return r;
     }
 
-    private static List<Integer> ids(JsonNode arr) {
+    static List<Integer> ids(JsonNode arr) {
         List<Integer> r = new ArrayList<>();
         arr.forEach(n -> r.add(n.asInt()));
         return r;
@@ -122,6 +127,28 @@ abstract class IntegracaoPostgresBase {
         try (var c = dataSource.getConnection()) {
             assertThat(c.getMetaData().getURL()).containsPattern("//(localhost|127\\.0\\.0\\.1):\\d+/\\w+_teste");
         }
+    }
+
+    @Test
+    void flywayAplicouTodasAsMigracoesEmOrdem() {
+        // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
+        var aplicadas = flyway.info().applied();
+        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4");
+        assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
+        assertThat(flyway.info().pending()).isEmpty();
+
+        List<String> iniciais = jdbc.queryForList(
+                "select nome from processo where nome in ('Amaciamento', 'Estonagem', 'Tingimento', 'Alvejamento')",
+                String.class);
+        assertThat(iniciais).containsExactlyInAnyOrder("Amaciamento", "Estonagem", "Tingimento", "Alvejamento");
+    }
+
+    @Test
+    void reinicioValidaChecksumsENaoRecriaNada() {
+        // Mesmo efeito de a API subir de novo num banco já migrado.
+        flyway.validate();
+        assertThat(flyway.migrate().migrationsExecuted).isZero();
+        assertThat(flyway.info().applied()).hasSize(4);
     }
 
     @Test
@@ -152,6 +179,10 @@ abstract class IntegracaoPostgresBase {
         JsonNode l2 = lote(g, porLote, 140, "760");
         assertThat(l2.get("esperado").decimalValue()).isEqualByComparingTo("800");
         assertThat(l2.get("desvio").decimalValue()).isEqualByComparingTo("-5.00");
+
+        assertThat(l1.get("statusConformidade").asText()).isEqualTo("ATENCAO");
+        assertThat(l2.get("statusConformidade").asText()).isEqualTo("DENTRO_DA_META");
+        assertThat(lote(g, porLote, 140, "900").get("statusConformidade").asText()).isEqualTo("CRITICO");
 
         BigDecimal desvioView = jdbc.queryForObject("select desvio_percentual from v_historico_lotes where lote_id = ?",
                 BigDecimal.class, l1.get("id").asInt());
@@ -325,6 +356,41 @@ abstract class IntegracaoPostgresBase {
         // operador não redefine senha de ninguém
         enviar(patch("/usuarios/" + g.id() + "/senha"), op, Map.of("senha", "redefinida-789"))
                 .andExpect(status().isForbidden());
+
+        // Auditoria (issue #16): só a redefinição que deu certo fica registrada, com gestor, afetado e hora.
+        assertThat(auditoriaDe(op.id())).containsExactly("REDEFINICAO_SENHA por " + g.id());
+        assertThat(auditoriaDe(g.id())).isEmpty();
+        assertThat(jdbc.queryForObject(
+                "select data_hora > now() - interval '1 minute' from auditoria_usuario where usuario_afetado_id = ?",
+                Boolean.class, op.id())).isTrue();
+    }
+
+    @Test
+    void desativarEReativarFicamNaAuditoriaQueNaoPodeSerAlteradaNemApagada() throws Exception {
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", false)).andExpect(status().isOk());
+        enviar(patch("/usuarios/" + op.id() + "/ativo"), g, Map.of("ativo", true)).andExpect(status().isOk());
+        assertThat(auditoriaDe(op.id()))
+                .containsExactly("DESATIVACAO_USUARIO por " + g.id(), "REATIVACAO_USUARIO por " + g.id());
+
+        // A tabela não tem nenhuma coluna para senha ou hash.
+        assertThat(jdbc.queryForList(
+                "select column_name from information_schema.columns where table_name = 'auditoria_usuario'", String.class))
+                .containsExactlyInAnyOrder("id", "gestor_id", "usuario_afetado_id", "acao", "data_hora");
+
+        Integer id = jdbc.queryForObject("select max(id) from auditoria_usuario where usuario_afetado_id = ?", Integer.class, op.id());
+        assertThatThrownBy(() -> jdbc.update("update auditoria_usuario set acao = 'REDEFINICAO_SENHA' where id = ?", id))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update("delete from auditoria_usuario where id = ?", id))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    /** Ações registradas sobre um usuário, em ordem, no formato "ACAO por gestorId". */
+    private List<String> auditoriaDe(int usuarioId) {
+        return jdbc.queryForList(
+                "select acao || ' por ' || gestor_id from auditoria_usuario where usuario_afetado_id = ? order by id",
+                String.class, usuarioId);
     }
 
     @Test
@@ -364,7 +430,7 @@ abstract class IntegracaoPostgresBase {
         assertThat(setembro.get("real").decimalValue()).isEqualByComparingTo("130");
     }
 
-    private static JsonNode filtrar(JsonNode lista, int processoId) {
+    static JsonNode filtrar(JsonNode lista, int processoId) {
         for (JsonNode n : lista) if (n.get("processoId").asInt() == processoId) return n;
         throw new AssertionError("Processo " + processoId + " ausente no resumo: " + lista);
     }

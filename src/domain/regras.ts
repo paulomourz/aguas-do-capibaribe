@@ -1,6 +1,7 @@
-/* Regras de exibição usadas pelas telas (prévia do esperado, desvio, classificação ilustrativa). */
+/* Regras de exibição usadas pelas telas (prévia do esperado, desvio, classificação). */
 
 import type { Status } from '../components/ui'
+import type { StatusConformidade } from '../services/tipos'
 import type { Alerta, Processo } from './tipos'
 
 export function esperadoDe(p: Processo, pecas: number) {
@@ -11,8 +12,12 @@ export function desvioDe(real: number, esperado: number) {
   return ((real - esperado) / esperado) * 100
 }
 
+/** Status de cada lote vem da API (StatusConformidade no backend); aqui só traduzimos para as cores. */
+export const statusDaApi: Record<StatusConformidade, Status> = { DENTRO_DA_META: 'ok', ATENCAO: 'warn', CRITICO: 'crit' }
+
 /*
- * Faixas ilustrativas. Os limites oficiais serão definidos pela equipe e calculados pelo backend.
+ * Mesmos limites de StatusConformidade no backend: mudar nos dois. Usadas só para totais e médias
+ * (relatório, dashboard, média do alerta) e para o modo simulado; lotes usam o status da API.
  * Configuração única de faixas (desvio em %, limite superior inclusivo). Nunca exibir na interface.
  */
 const FAIXAS_DE_STATUS: { ate: number; status: Status }[] = [
@@ -20,7 +25,7 @@ const FAIXAS_DE_STATUS: { ate: number; status: Status }[] = [
   { ate: 8, status: 'warn' },
 ]
 
-/** Função única de classificação de status do lote. */
+/** Classificação de um desvio agregado (soma ou média de lotes). */
 export function statusDe(desvio: number): Status {
   return FAIXAS_DE_STATUS.find((f) => desvio <= f.ate)?.status ?? 'crit'
 }

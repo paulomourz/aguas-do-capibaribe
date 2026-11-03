@@ -3,6 +3,8 @@ package br.com.aguas.service;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,13 +15,18 @@ import br.com.aguas.config.AdminProperties;
 import br.com.aguas.dto.UsuarioDTOs.AtualizarUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
+import br.com.aguas.entity.AcaoAuditoria;
+import br.com.aguas.entity.AuditoriaUsuario;
 import br.com.aguas.entity.Usuario;
 import br.com.aguas.exception.ApiException;
+import br.com.aguas.repository.AuditoriaUsuarioRepository;
 import br.com.aguas.repository.UsuarioRepository;
 import br.com.aguas.security.UsuarioAutenticado;
 
 @Service
 public class UsuarioService {
+
+    private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
     /** Limite do BCrypt: bytes além de 72 seriam ignorados. */
     private static final int MAX_BYTES_SENHA = 72;
@@ -27,11 +34,14 @@ public class UsuarioService {
     private final UsuarioRepository usuarios;
     private final PasswordEncoder senhas;
     private final AdminProperties admin;
+    private final AuditoriaUsuarioRepository auditoria;
 
-    public UsuarioService(UsuarioRepository usuarios, PasswordEncoder senhas, AdminProperties admin) {
+    public UsuarioService(UsuarioRepository usuarios, PasswordEncoder senhas, AdminProperties admin,
+                          AuditoriaUsuarioRepository auditoria) {
         this.usuarios = usuarios;
         this.senhas = senhas;
         this.admin = admin;
+        this.auditoria = auditoria;
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +114,7 @@ public class UsuarioService {
         checarBytes("senha", novaSenha);
         u.setSenhaHash(senhas.encode(novaSenha));
         usuarios.flush();
+        auditar(quem, u, AcaoAuditoria.REDEFINICAO_SENHA);
         return UsuarioDTO.de(u);
     }
 
@@ -120,7 +131,17 @@ public class UsuarioService {
         }
         u.setAtivo(ativo);
         usuarios.flush();
+        auditar(quem, u, ativo ? AcaoAuditoria.REATIVACAO_USUARIO : AcaoAuditoria.DESATIVACAO_USUARIO);
         return UsuarioDTO.de(u);
+    }
+
+    /**
+     * Registra a ação do gestor na mesma transação da mudança: se uma falhar, as duas são desfeitas.
+     * Só ids e o tipo da ação; senha e hash nunca entram na auditoria nem no log.
+     */
+    private void auditar(UsuarioAutenticado quem, Usuario afetado, AcaoAuditoria acao) {
+        auditoria.saveAndFlush(new AuditoriaUsuario(quem.id(), afetado.getId(), acao));
+        log.info("Auditoria: {} por gestor id={} no usuario id={}", acao, quem.id(), afetado.getId());
     }
 
     private static void checarBytes(String campo, String senha) {

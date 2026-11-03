@@ -1,0 +1,106 @@
+# Sobe banco, API e site com um comando: docker compose up -d --build
+# Site em http://localhost:3000. Senha inicial do administrador: docker compose logs segredos
+name: aguas-do-capibaribe
+
+services:
+  # Na primeira subida, sorteia as senhas e o segredo do JWT e guarda num volume. Nenhuma senha fica no Git.
+  segredos:
+    image: postgres:18-alpine
+    volumes:
+      - segredos:/segredos
+      - db-init:/db-init
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        novo() { tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "$$1"; }
+        cd /segredos
+        [ -f postgres ] || novo 32 > postgres
+        [ -f api ] || novo 32 > api
+        [ -f jwt ] || novo 64 > jwt
+        [ -f admin ] || novo 16 > admin
+        [ -f sensor ] || novo 16 > sensor
+        chmod 644 postgres api jwt admin sensor
+        # Usuário restrito da API, antes do Flyway: as migrações dão a ele as permissões de cada tabela.
+        cat > /db-init/01-usuario-api.sql <<FIM
+        CREATE ROLE aguas_api LOGIN PASSWORD '$$(cat api)'
+          NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+        GRANT CONNECT ON DATABASE aguas TO aguas_api;
+        GRANT USAGE ON SCHEMA public TO aguas_api;
+        FIM
+        chmod 644 /db-init/01-usuario-api.sql
+        echo "Administrador: capibaribe.admin"
+        echo "Senha inicial: $$(cat admin)"
+        echo "Sensor: sensor.wokwi"
+        echo "Senha do sensor: $$(cat sensor)"
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    depends_on:
+      segredos:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DB: aguas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /segredos/postgres
+    volumes:
+      - db-dados:/var/lib/postgresql
+      - segredos:/segredos:ro
+      - db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Por TCP: durante a criação inicial, o PostgreSQL só aceita conexões locais pelo socket.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "aguas"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: aguas
+      DB_USER: aguas_api
+      DB_SSLMODE: disable
+      FLYWAY_USER: postgres
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - segredos:/segredos:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        export DB_PASSWORD="$$(cat /segredos/api)"
+        export FLYWAY_PASSWORD="$$(cat /segredos/postgres)"
+        export JWT_SECRET="$$(cat /segredos/jwt)"
+        export ADMIN_SENHA="$$(cat /segredos/admin)"
+        export SENSOR_SENHA="$$(cat /segredos/sensor)"
+        exec java -jar /app/app.jar
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  segredos:
+  db-init:
+  db-dados:

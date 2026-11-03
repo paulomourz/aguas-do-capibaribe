@@ -16,7 +16,7 @@ import {
   type Col,
 } from '../components/ui'
 import { IconHistory, IconPlus } from '../components/icons'
-import { fmtData, fmtHora, fmtL, fmtNum, fmtPct, statusDe, type Lote } from '../domain'
+import { fmtData, fmtHora, fmtL, fmtNum, fmtPct, type Lote } from '../domain'
 import { navigate } from '../router'
 import { useApp, useEstadoTela } from '../store'
 
@@ -60,7 +60,7 @@ export default function Historico() {
     { key: 'litros', header: 'Real (L)', num: true, render: (l) => fmtNum(l.litros) },
     { key: 'esperado', header: 'Esperado (L)', num: true, render: (l) => fmtNum(l.esperado) },
     { key: 'desvio', header: 'Desvio', num: true, mobile: 'value', render: (l) => <span className="font-semibold">{fmtPct(l.desvio)}</span> },
-    { key: 'status', header: 'Status', mobile: 'badge', render: (l) => <StatusBadge status={statusDe(l.desvio)} size="sm" /> },
+    { key: 'status', header: 'Status', mobile: 'badge', render: (l) => <StatusBadge status={l.status} size="sm" /> },
   ]
   if (gestor) cols.push({ key: 'por', header: 'Registrado por', render: (l) => nomeUsuario(l.usuarioId) })
 

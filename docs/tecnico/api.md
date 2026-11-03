@@ -1,5 +1,9 @@
 # API REST: endpoints
 
+> **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
+> Lá estão as 16 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
+
 Base: `http://<host>:8080/api`. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
 `2026-10-15T00:03:58.229Z`). Números decimais vão como números JSON.
 
@@ -35,8 +39,8 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /usuarios` | gestor | — | `UsuarioDTO[]` |
 | `POST /usuarios` | gestor | `{nome, usuario, perfil, senha}` | `201 UsuarioDTO` |
 | `PATCH /usuarios/{id}` | a própria pessoa | `{nome?, senha?, senhaAtual?}` (`senhaAtual` é obrigatória quando há `senha`) | `UsuarioDTO` |
-| `PATCH /usuarios/{id}/senha` | gestor (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO` |
-| `PATCH /usuarios/{id}/ativo` | gestor (não em si mesmo) | `{ativo}` | `UsuarioDTO` |
+| `PATCH /usuarios/{id}/senha` | gestor (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO`; registra `REDEFINICAO_SENHA` na auditoria |
+| `PATCH /usuarios/{id}/ativo` | gestor (não em si mesmo) | `{ativo}` | `UsuarioDTO`; registra `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO` na auditoria |
 | `GET /processos` | autenticado | — | `ProcessoDTO[]` |
 | `POST /processos` | gestor | `{nome, unidade, meta}` | `201 ProcessoDTO` |
 | `PUT /processos/{id}` | gestor | `{nome, unidade, meta}` | `ProcessoDTO` |
@@ -52,14 +56,15 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 ```ts
 UsuarioDTO  = { id, nome, usuario, perfil: 'gestor' | 'operador', ativo }
 ProcessoDTO = { id, nome, unidade: 'lote' | 'peca', meta }
-LoteDTO     = { id, processoId, pecas, litros, esperado, desvio, data, usuarioId }  // desvio em %, 2 casas
+LoteDTO     = { id, processoId, pecas, litros, esperado, desvio, statusConformidade, data, usuarioId }  // desvio em %, 2 casas
+              // statusConformidade: 'DENTRO_DA_META' (≤ 0%) | 'ATENCAO' (≤ 8%) | 'CRITICO' (> 8%)
 AlertaDTO   = { id, processoId, loteIds: number[], detectado, status }
 ResumoDTO   = { processoId, real, esperado, lotes }
 ```
 
 ## Validações
 
-Os limites vêm das colunas e restrições do `banco.sql`:
+Os limites vêm das colunas e restrições criadas pelas migrações (`V1__cria_tabelas_principais.sql`):
 
 | Campo | Regra |
 |---|---|
