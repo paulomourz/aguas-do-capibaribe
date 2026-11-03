@@ -56,14 +56,16 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioDTO criar(NovoUsuarioDTO dados) {
+    public UsuarioDTO criar(UsuarioAutenticado quem, NovoUsuarioDTO dados) {
         String login = dados.usuario().trim().toLowerCase();
         if (usuarios.existsByLoginIgnoreCase(login)) {
             throw ApiException.conflito("USUARIO_DUPLICADO", "Este usuário já existe. Escolha outro.", "usuario");
         }
         checarBytes("senha", dados.senha());
         Usuario u = new Usuario(dados.nome().trim(), login, senhas.encode(dados.senha()), dados.perfil());
-        return UsuarioDTO.de(usuarios.save(u));
+        Usuario criado = usuarios.save(u);
+        auditar(quem, criado, AcaoAuditoria.CRIACAO_USUARIO);
+        return UsuarioDTO.de(criado);
     }
 
     /** Cada pessoa altera apenas a própria conta (tela Configurações). */

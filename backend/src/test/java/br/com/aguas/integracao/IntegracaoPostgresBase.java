@@ -135,7 +135,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4");
+        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -150,7 +150,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(flyway.info().applied()).hasSize(4);
+        assertThat(flyway.info().applied()).hasSize(5);
     }
 
     @Test
@@ -386,6 +386,39 @@ abstract class IntegracaoPostgresBase {
                 .isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> jdbc.update("delete from auditoria_usuario where id = ?", id))
                 .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void auditoriaListaAsAcoesDoGestorComFiltrosEPaginacao() throws Exception {
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        String login = "auditado.t" + seq.incrementAndGet();
+        int criado = ler(enviar(post("/usuarios"), g, Map.of("nome", "Pessoa Auditada", "usuario", login, "perfil", "operador", "senha", SENHA))
+                .andExpect(status().isCreated())).get("id").asInt();
+        enviar(patch("/usuarios/" + criado + "/ativo"), g, Map.of("ativo", false)).andExpect(status().isOk());
+        assertThat(auditoriaDe(criado)).containsExactly("CRIACAO_USUARIO por " + g.id(), "DESATIVACAO_USUARIO por " + g.id());
+
+        JsonNode pagina = ler(chamar(get("/auditoria").param("tamanho", "100"), g).andExpect(status().isOk()));
+        List<JsonNode> doCriado = new ArrayList<>();
+        pagina.get("itens").forEach(r -> { if (r.get("usuarioAfetado").get("id").asInt() == criado) doCriado.add(r); });
+        assertThat(doCriado).extracting(r -> r.get("acao").asText()).containsExactly("DESATIVACAO_USUARIO", "CRIACAO_USUARIO");
+        assertThat(doCriado.getFirst().get("gestor").get("usuario").asText()).isEqualTo(g.login());
+        assertThat(doCriado.getFirst().get("usuarioAfetado").get("usuario").asText()).isEqualTo(login);
+        assertThat(doCriado.getFirst().toString()).doesNotContain("senha", "hash");
+
+        JsonNode porAcao = ler(chamar(get("/auditoria").param("acao", "CRIACAO_USUARIO").param("tamanho", "100"), g).andExpect(status().isOk()));
+        porAcao.get("itens").forEach(r -> assertThat(r.get("acao").asText()).isEqualTo("CRIACAO_USUARIO"));
+
+        JsonNode umPorPagina = ler(chamar(get("/auditoria").param("tamanho", "1"), g).andExpect(status().isOk()));
+        assertThat(umPorPagina.get("itens")).hasSize(1);
+        assertThat(umPorPagina.get("total").asLong()).isGreaterThanOrEqualTo(2);
+
+        JsonNode noFuturo = ler(chamar(get("/auditoria").param("inicio", "2999-01-01T00:00:00-03:00"), g).andExpect(status().isOk()));
+        assertThat(noFuturo.get("total").asLong()).isZero();
+
+        chamar(get("/auditoria"), op).andExpect(status().isForbidden());
+        chamar(get("/auditoria").param("tamanho", "101"), g).andExpect(status().isUnprocessableEntity());
+        mvc.perform(get("/auditoria")).andExpect(status().isUnauthorized());
     }
 
     /** Ações registradas sobre um usuário, em ordem, no formato "ACAO por gestorId". */

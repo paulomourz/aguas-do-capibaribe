@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/usuarios/*/senha").hasRole("GESTOR")
                 .requestMatchers(HttpMethod.POST, "/processos").hasRole("GESTOR")
                 .requestMatchers(HttpMethod.PUT, "/processos/*").hasRole("GESTOR")
-                .requestMatchers("/alertas/**", "/relatorios/**").hasRole("GESTOR")
+                .requestMatchers("/alertas/**", "/relatorios/**", "/auditoria/**").hasRole("GESTOR")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(o -> o
                 .jwt(j -> j.jwtAuthenticationConverter(conversor))
