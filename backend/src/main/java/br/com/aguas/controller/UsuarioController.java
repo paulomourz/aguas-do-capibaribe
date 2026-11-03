@@ -52,8 +52,8 @@ public class UsuarioController {
     @RespostasDoc.SoGestor
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
-    public UsuarioDTO criar(@Valid @RequestBody NovoUsuarioDTO dados) {
-        return usuarios.criar(dados);
+    public UsuarioDTO criar(@AuthenticationPrincipal UsuarioAutenticado quem, @Valid @RequestBody NovoUsuarioDTO dados) {
+        return usuarios.criar(quem, dados);
     }
 
     @PatchMapping("/{id}")

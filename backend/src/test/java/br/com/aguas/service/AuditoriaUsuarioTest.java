@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import br.com.aguas.config.AdminProperties;
+import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
 import br.com.aguas.entity.AcaoAuditoria;
 import br.com.aguas.entity.AuditoriaUsuario;
 import br.com.aguas.entity.Perfil;
@@ -75,6 +76,23 @@ class AuditoriaUsuarioTest {
         assertThatThrownBy(() -> servico.definirAtivo(gestor, ADMIN, false)).isInstanceOf(ApiException.class);
         assertThatThrownBy(() -> servico.redefinirSenha(gestor, OPERADOR, "x".repeat(80))).isInstanceOf(ApiException.class);
         verify(auditoria, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void criarUsuarioFicaNaAuditoria() {
+        when(usuarios.save(any())).thenAnswer(i -> {
+            Usuario u = i.getArgument(0);
+            ReflectionTestUtils.setField(u, "id", 9);
+            return u;
+        });
+
+        servico.criar(gestor, new NovoUsuarioDTO("Nova Pessoa", "nova", Perfil.operador, "senha-forte-123"));
+
+        ArgumentCaptor<AuditoriaUsuario> c = ArgumentCaptor.forClass(AuditoriaUsuario.class);
+        verify(auditoria).saveAndFlush(c.capture());
+        assertThat(c.getValue().getAcao()).isEqualTo(AcaoAuditoria.CRIACAO_USUARIO);
+        assertThat(c.getValue().getGestorId()).isEqualTo(GESTOR);
+        assertThat(c.getValue().getUsuarioAfetadoId()).isEqualTo(9);
     }
 
     @Test
