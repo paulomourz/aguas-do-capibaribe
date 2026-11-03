@@ -99,7 +99,7 @@ public class UsuarioService {
     }
 
     /**
-     * O gestor redefine a senha de outra pessoa que a esqueceu. A própria senha se troca em
+     * O administrador redefine a senha de outra pessoa que a esqueceu. A própria senha se troca em
      * Configurações (com a senha atual), e a do administrador principal só ele mesmo troca.
      */
     @Transactional
@@ -138,12 +138,12 @@ public class UsuarioService {
     }
 
     /**
-     * Registra a ação do gestor na mesma transação da mudança: se uma falhar, as duas são desfeitas.
+     * Registra a ação na mesma transação da mudança: se uma falhar, as duas são desfeitas.
      * Só ids e o tipo da ação; senha e hash nunca entram na auditoria nem no log.
      */
     private void auditar(UsuarioAutenticado quem, Usuario afetado, AcaoAuditoria acao) {
         auditoria.saveAndFlush(new AuditoriaUsuario(quem.id(), afetado.getId(), acao));
-        log.info("Auditoria: {} por gestor id={} no usuario id={}", acao, quem.id(), afetado.getId());
+        log.info("Auditoria: {} por usuario id={} no usuario id={}", acao, quem.id(), afetado.getId());
     }
 
     private static void checarBytes(String campo, String senha) {

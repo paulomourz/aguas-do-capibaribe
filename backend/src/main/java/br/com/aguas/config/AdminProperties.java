@@ -3,7 +3,7 @@ package br.com.aguas.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Propriedades "app.admin.*": o administrador principal (gestor) que sempre existe no sistema.
+ * Propriedades "app.admin.*": o administrador principal que sempre existe no sistema.
  * A senha vem só de variável de ambiente (ADMIN_SENHA) e é usada apenas para criá-lo.
  */
 @ConfigurationProperties("app.admin")

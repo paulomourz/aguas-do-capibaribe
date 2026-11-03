@@ -32,10 +32,10 @@ public class AuditoriaController {
     /** inicio/fim em ISO 8601 com fuso (ex.: 2026-09-01T00:00:00-03:00). */
     @GetMapping
     @Operation(summary = "Registros de auditoria",
-            description = "Só gestor. Ações de um gestor sobre a conta de outra pessoa, do mais recente ao mais antigo. "
+            description = "Só administrador. Ações de um administrador ou gestor sobre a conta de outra pessoa, do mais recente ao mais antigo. "
                     + "Os registros não podem ser alterados nem apagados, e não guardam senha.")
     @RespostasDoc.Ok
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.Validacao
     public PaginaAuditoriaDTO listar(
             @Parameter(description = "Data e hora inicial, ISO 8601 com fuso", example = "2026-09-01T00:00:00-03:00")

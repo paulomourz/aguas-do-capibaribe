@@ -26,7 +26,7 @@ class SensorInicialTest {
     }
 
     @Test
-    void criaAContaDeOperadorQuandoNaoExiste() {
+    void criaAContaDeSensorQuandoNaoExiste() {
         when(senhas.encode("senha-do-sensor")).thenReturn("hash");
 
         rodar("senha-do-sensor");
@@ -34,7 +34,7 @@ class SensorInicialTest {
         ArgumentCaptor<Usuario> salvo = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarios).save(salvo.capture());
         assertThat(salvo.getValue().getLogin()).isEqualTo("sensor.wokwi");
-        assertThat(salvo.getValue().getPerfil()).isEqualTo(Perfil.operador);
+        assertThat(salvo.getValue().getPerfil()).isEqualTo(Perfil.sensor);
         assertThat(salvo.getValue().getSenhaHash()).isEqualTo("hash");
     }
 

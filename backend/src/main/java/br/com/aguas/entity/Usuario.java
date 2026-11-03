@@ -61,5 +61,7 @@ public class Usuario {
     public Perfil getPerfil() { return perfil; }
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
+
+    public void setPerfil(Perfil perfil) { this.perfil = perfil; }
     public OffsetDateTime getCriadoEm() { return criadoEm; }
 }

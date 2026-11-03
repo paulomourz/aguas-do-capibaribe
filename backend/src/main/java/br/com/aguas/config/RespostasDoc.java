@@ -37,12 +37,19 @@ public final class RespostasDoc {
             content = @Content(mediaType = "application/json", schema = @Schema(ref = OpenApiConfig.ERRO)))
     public @interface LimiteExcedido {}
 
-    /** 403: rota exclusiva do perfil gestor. */
+    /** 403: rota exclusiva de administrador e gestor. */
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
-    @ApiResponse(responseCode = "403", description = "Só o perfil gestor pode usar esta rota.",
+    @ApiResponse(responseCode = "403", description = "Só administrador ou gestor podem usar esta rota.",
             content = @Content(mediaType = "application/json", schema = @Schema(ref = OpenApiConfig.ERRO)))
     public @interface SoGestor {}
+
+    /** 403: rota exclusiva do administrador. */
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ApiResponse(responseCode = "403", description = "Só o administrador pode usar esta rota.",
+            content = @Content(mediaType = "application/json", schema = @Schema(ref = OpenApiConfig.ERRO)))
+    public @interface SoAdmin {}
 
     /** 409: a operação fere uma regra de negócio (ex.: desativar a própria conta). */
     @Target(ElementType.METHOD)
