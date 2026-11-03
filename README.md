@@ -269,6 +269,8 @@ Versão atual: **v1.0.0** (02/11/2026). O que entrou em cada versão está no [`
 - **Bancada física:** não foi montada. A entrega usa a simulação; a especificação está em
   [`docs/tecnico/hardware-bancada.md`](docs/tecnico/hardware-bancada.md).
 
+O que ainda falta alinhar com o orientador está em [`docs/gestao/TAP-atualizacao-2026-11-02.md`](docs/gestao/TAP-atualizacao-2026-11-02.md).
+
 ## 🌿 Fluxo de trabalho (GitFlow)
 
 ```mermaid

@@ -16,6 +16,8 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 ### Documentação
 
 - **Roteiro de apresentação** em `docs/guia/roteiro-apresentacao.md`, com o plano A (site publicado) e o plano B (Docker).
+- **ERS v1.1** e **atualização do TAP** em `docs/gestao/`, com o que mudou até a versão 1.0.0 e o que falta formalizar.
+- `docs/tecnico/banco-remoto.md` e `docs/tecnico/api.md` com o banco e a API publicados.
 - Guia, README e `iot/LEIA-ME.md` com o site publicado, o Docker e os dois projetos do Wokwi.
 
 ## [1.0.0] - 2026-11-02

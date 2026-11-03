@@ -250,7 +250,7 @@
     <li>O login dura <strong>8 horas</strong>. Depois disso, o sistema pede para entrar de novo.</li>
     <li>Quem é desativado perde o acesso <strong>na hora</strong>, mesmo com a tela aberta.</li>
     <li>O administrador principal, <code>capibaribe.admin</code>, não pode ser desativado.</li>
-    <li>Hoje o banco oficial tem só <strong>dois usuários fixos</strong>: <code>capibaribe.admin</code> (gestor, administrador do site) e <code>sensor.wokwi</code> (operador, usado pelo sensor), e nenhum processo ou lote. As senhas ficam em <code>docs/privado/acessos-e-senhas.md</code>, fora do Git.</li>
+    <li>A API cria sozinha os <strong>dois usuários fixos</strong> em um banco novo: <code>capibaribe.admin</code> (gestor, administrador do site) e, se <code>SENSOR_SENHA</code> estiver definida, <code>sensor.wokwi</code> (operador, usado pelo sensor). Os processos iniciais vêm das migrações. As senhas ficam fora do Git, em <code>docs/privado/</code>, e no Docker aparecem em <code>docker compose logs segredos</code>.</li>
     <li>Quem esquecer a senha pede ao gestor, que usa <strong>Redefinir senha</strong> na tela Usuários e entrega a nova senha à pessoa. A antiga deixa de valer na hora.</li>
     <li>A própria senha se troca em <strong>Configurações</strong>, informando a senha atual. A senha do administrador principal só ele mesmo troca.</li>
     <li>Toda redefinição de senha, desativação ou reativação feita por um gestor fica registrada na <strong>auditoria</strong> (quem fez, em quem e quando). O registro não guarda senha nenhuma e não pode ser alterado nem apagado.</li>
