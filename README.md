@@ -54,6 +54,8 @@ espere um pouco e tente de novo.
 📘 **Guia completo em PDF** (como o sistema funciona e como rodar):
 [`docs/guia/guia-aguas-do-capibaribe.pdf`](docs/guia/guia-aguas-do-capibaribe.pdf)
 
+🎤 **Para apresentar ou testar:** [roteiro com os planos A e B](docs/guia/roteiro-apresentacao.md)
+
 ## ✨ Funcionalidades
 
 | | Funcionalidade | Como funciona |
@@ -64,7 +66,7 @@ espere um pouco e tente de novo.
 | 🚨 | **Alertas** | Abertos quando 3 lotes seguidos do mesmo processo passam da meta |
 | 📈 | **Dashboard e relatório mensal** | Meta × real por processo, com download do relatório em PDF |
 | 👥 | **Perfis** | Gestor (configura e acompanha tudo) e operador (registra lotes) |
-| 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API, em HTTPS |
+| 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API. Há um projeto público, em HTTPS, e um local, para o Docker |
 
 ## 🧱 Arquitetura
 
@@ -127,7 +129,8 @@ subida baixa as imagens e compila tudo, então precisa de internet e demora algu
 - **Banco próprio:** é separado do PostgreSQL instalado no PC e já vem com os processos iniciais.
 - **Senhas:** são sorteadas na primeira subida e ficam só em um volume do Docker, fora do Git.
 - **Parar:** `docker compose down` mantém os dados. Com `docker compose down -v`, os dados e as senhas são **apagados**.
-- **Conta do sensor:** a senha também é sorteada e aparece no mesmo comando. Para usar o Wokwi com o Docker, veja [`iot/LEIA-ME.md`](iot/LEIA-ME.md#usar-com-a-api-do-seu-pc).
+- **Conta do sensor:** a senha também é sorteada e aparece no mesmo comando.
+- **Wokwi com o Docker:** `docker compose --profile tunel up -d --build` liga também o túnel, e `docker compose stop tunel` desliga. Veja o [roteiro de apresentação](docs/guia/roteiro-apresentacao.md).
 
 Para rodar sem Docker, siga os passos abaixo.
 
@@ -140,7 +143,7 @@ Para rodar sem Docker, siga os passos abaixo.
 | PostgreSQL | 18 | banco |
 | Node.js | 22 ou mais novo | front-end |
 | pnpm | 10 | front-end (`npx pnpm@10` também serve) |
-| cloudflared | qualquer | só para ligar o IoT simulado à API do seu PC |
+| cloudflared | qualquer | só para ligar o IoT simulado à API do seu PC, sem Docker |
 
 ### 1. Banco de dados
 

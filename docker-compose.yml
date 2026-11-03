@@ -100,6 +100,15 @@ services:
     ports:
       - "3000:80"
 
+  # Opcional: liga o site local à internet, para o projeto local do Wokwi. Só sobe com --profile tunel.
+  # Enquanto estiver ligado, o site e a API locais ficam acessíveis pelo endereço que aparece nos logs.
+  tunel:
+    image: cloudflare/cloudflared:2026.10.1
+    profiles: ["tunel"]
+    depends_on:
+      - frontend
+    command: tunnel --no-autoupdate --url http://frontend:80
+
 volumes:
   segredos:
   db-init:

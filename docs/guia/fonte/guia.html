@@ -305,7 +305,7 @@
     <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 faz login na API, procura o processo pelo nome e envia peças e litros. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
   </ol>
 
-  <div class="nota"><p><strong>Projeto no Wokwi.</strong> Só duas abas: <code>sketch.ino</code> e <code>diagram.json</code>. No começo do <code>sketch.ino</code>, preencha <code>SENHA</code> com a senha do <code>sensor.wokwi</code>. O endereço da API já vem pronto, em HTTPS. A senha preenchida fica só no Wokwi, nunca no repositório.</p></div>
+  <div class="nota"><p><strong>Dois projetos no Wokwi.</strong> O <code>aguas-capibaribe-sensor</code> (público) fala com a API publicada, em HTTPS. O <code>aguas-capibaribe-local</code> fala com o Docker, em HTTP, pelo túnel. O código é o mesmo: mudam o <code>API_URL</code> e a <code>SENHA</code> do <code>sensor.wokwi</code>. A senha preenchida fica só no Wokwi, nunca no repositório.</p></div>
 
   <div class="nota"><p><strong>Qual processo o sensor mede?</strong> O que estiver em <code>PROCESSO_NOME</code>, no <code>sketch.ino</code>, escrito como aparece no site (por exemplo, <code>"Estonagem"</code>). O sensor descobre o id sozinho pela API, então não é preciso consultar o banco. Se o nome não existir, o monitor serial lista os processos cadastrados. O guia completo, com o circuito e os erros comuns, está em <code>iot/LEIA-ME.md</code>.</p></div>
 </section>
@@ -360,6 +360,14 @@
   <h2>Como rodar o sistema</h2>
   <p class="abertura">O passo a passo abaixo coloca o sistema inteiro para rodar num computador com Windows. Os comandos funcionam no PowerShell.</p>
 
+  <h3>O jeito mais simples</h3>
+  <table>
+    <tr><th style="width:24%">Quer</th><th style="width:38%">Use</th><th>Precisa de</th></tr>
+    <tr><td>Só usar o sistema</td><td><code>aguas-do-capibaribe.onrender.com</code></td><td>um navegador; a API leva cerca de 2 minutos para acordar</td></tr>
+    <tr><td>Rodar no computador</td><td><code>docker compose up -d --build</code> e abrir <code>localhost:3000</code></td><td>Docker Desktop; as senhas aparecem em <code>docker compose logs segredos</code></td></tr>
+  </table>
+  <p>O passo a passo para apresentar está em <code>docs/guia/roteiro-apresentacao.md</code>. Os passos abaixo são para rodar cada parte separada, sem Docker.</p>
+
   <h3>Requisitos</h3>
   <table>
     <tr><th style="width:24%">Ferramenta</th><th style="width:20%">Versão</th><th>Para quê</th></tr>
@@ -368,7 +376,7 @@
     <tr><td>PostgreSQL</td><td>18</td><td>banco de dados</td></tr>
     <tr><td>Node.js</td><td>22 ou mais novo</td><td>rodar o site</td></tr>
     <tr><td>pnpm</td><td>10</td><td>instalar o site (<code>npx pnpm@10</code> também serve)</td></tr>
-    <tr><td>cloudflared</td><td>qualquer</td><td>só para ligar o sensor simulado à API do seu PC</td></tr>
+    <tr><td>cloudflared</td><td>qualquer</td><td>só para ligar o sensor simulado à API do seu PC, sem Docker</td></tr>
   </table>
 
   <ol class="passos">
@@ -451,7 +459,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <div class="cartao"><h4>Banco oficial é sagrado</h4><p>O <code>aguas</code> guarda só dados reais desde 20/10/2026. Nunca rode testes nele: os testes usam bancos temporários <code>*_teste</code>.</p></div>
     <div class="cartao"><h4>Usuário próprio no banco</h4><p>A API conecta como <code>aguas_api</code>, que só lê, insere e atualiza: não apaga dados nem muda tabelas. Ele é criado por <code>database/seguranca-usuario-api.sql</code>.</p></div>
     <div class="cartao"><h4>Senhas fortes e pessoais</h4><p>Cada pessoa tem o próprio acesso. Senhas têm pelo menos 8 caracteres e são guardadas só como hash.</p></div>
-    <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o cloudflared aberto, a API fica acessível pela internet. Feche o túnel ao terminar de usar o sensor.</p></div>
+    <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o túnel ligado, a API local fica acessível pela internet. Desligue com <code>docker compose stop tunel</code> ao terminar de usar o sensor local.</p></div>
     <div class="cartao"><h4>Fluxo de trabalho</h4><p>Nada de commit direto na <code>main</code>: crie uma <code>feature/</code> a partir da <code>develop</code> e abra um pull request.</p></div>
   </div>
 </section>

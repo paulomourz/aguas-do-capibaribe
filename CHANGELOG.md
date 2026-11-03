@@ -6,6 +6,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Funcionalidades
+
+- **Sensor local no Wokwi:** o `iot/sketch.ino` aceita `http://` além de `https://`, e o projeto
+  `aguas-capibaribe-local` fala com o Docker. O projeto público continua em HTTPS.
+- **Túnel no Docker Compose:** `docker compose --profile tunel up -d --build` liga o túnel sem instalar o cloudflared.
+  Ele fica desligado por padrão.
+
+### Documentação
+
+- **Roteiro de apresentação** em `docs/guia/roteiro-apresentacao.md`, com o plano A (site publicado) e o plano B (Docker).
+- Guia, README e `iot/LEIA-ME.md` com o site publicado, o Docker e os dois projetos do Wokwi.
+
 ## [1.0.0] - 2026-11-02
 
 Primeira versão completa, publicada na internet, com o sensor simulado enviando lotes por HTTPS.
