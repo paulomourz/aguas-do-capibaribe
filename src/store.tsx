@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from 'react'
 import type { ToastData, ViewState } from './components/ui'
-import { statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
+import { limitesDoMes, statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
 import { ANO_ATUAL, MES_ATUAL } from './mock'
 import * as api from './services'
 
@@ -291,6 +291,24 @@ export function useResumo(mes: number, ano: number) {
     setR((x) => ({ ...x, carregando: true, erro: false }))
     api.resumoDoMes(mes, ano).then(
       (dados) => vivo && setR({ dados: dados.map(deResumo), carregando: false, erro: false }),
+      () => vivo && setR({ dados: [], carregando: false, erro: true }),
+    )
+    return () => {
+      vivo = false
+    }
+  }, [mes, ano, versao])
+  return { ...r, recarregar: () => setVersao((v) => v + 1) }
+}
+
+/** Lotes do mês em America/Recife, para os gráficos por dia. */
+export function useLotesDoMes(mes: number, ano: number) {
+  const [r, setR] = useState<{ dados: Lote[]; carregando: boolean; erro: boolean }>({ dados: [], carregando: true, erro: false })
+  const [versao, setVersao] = useState(0)
+  useEffect(() => {
+    let vivo = true
+    setR((x) => ({ ...x, carregando: true, erro: false }))
+    api.listarLotes(limitesDoMes(mes, ano)).then(
+      (dados) => vivo && setR({ dados: dados.map(deLote), carregando: false, erro: false }),
       () => vivo && setR({ dados: [], carregando: false, erro: true }),
     )
     return () => {

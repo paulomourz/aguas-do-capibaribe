@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   Banner,
   Button,
@@ -12,15 +12,20 @@ import {
   LoadingBlock,
   LogoMark,
   PageHeader,
+  Skeleton,
   StatePreview,
   Select,
   StatusBadge,
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
-import { desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
-import { periodoAtual, useApp, useEstadoTela, useResumo } from '../store'
+import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
+
+// A biblioteca de gráficos só é carregada quando a tela precisa dela.
+const GraficoMetaReal = lazy(() => import('../components/GraficoMetaReal'))
+const GraficoDiario = lazy(() => import('../components/GraficoDiario'))
 
 /** Gera o PDF de verdade e baixa. A biblioteca só é carregada no primeiro uso. */
 function useBaixarPdf() {
@@ -54,6 +59,8 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
   const [mes, setMes] = useState(mesInicial ?? atual.mes)
   const [ano, setAno] = useState(anoInicial ?? atual.ano)
   const consulta = useResumo(mes, ano)
+  const lotesDoMes = useLotesDoMes(mes, ano)
+  const [processoGrafico, setProcessoGrafico] = useState('')
   const [estado, setEstado] = useEstadoTela(consulta)
   const { baixar, gerando, falha: falhaPdf } = useBaixarPdf()
 
@@ -67,6 +74,10 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
   const semLotes = carregado && dados.length === 0
 
   const totalDesvio = esperado ? desvioDe(real, esperado) : 0
+  // O processo escolhido pode não ter lotes no mês novo: nesse caso, volta para todos.
+  const filtro = dados.some((r) => r.processoId === processoGrafico) ? processoGrafico : ''
+  const noGrafico = filtro ? dados.filter((r) => r.processoId === filtro) : dados
+  const lotesNoGrafico = filtro ? lotesDoMes.dados.filter((l) => l.processoId === filtro) : lotesDoMes.dados
   const tdF = 'border-t-2 border-line-strong bg-page px-4 py-4 font-semibold text-ink first:pl-6 last:pr-6'
 
   return (
@@ -140,6 +151,50 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
           </div>
         )}
       </Card>
+
+      {podeExportar && (
+        <section aria-labelledby="graficos-titulo">
+          <Card className="flex flex-col">
+            <CardHeader
+              id="graficos-titulo"
+              title="Gráficos do período"
+              subtitle={periodo}
+              action={
+                <Field id="processo-grafico" label="Processo">
+                  <Select id="processo-grafico" value={filtro} onChange={(e) => setProcessoGrafico(e.target.value)}>
+                    <option value="">Todos os processos</option>
+                    {dados.map((r) => (
+                      <option key={r.processoId} value={r.processoId}>
+                        {nomeProcesso(r.processoId)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              }
+            />
+            <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
+              <div className="min-w-0">
+                <h3 className="mb-3 font-display text-[16px] font-semibold text-ink">Real x esperado</h3>
+                <Suspense fallback={<Skeleton className="h-[280px] w-full" />}>
+                  <GraficoMetaReal dados={noGrafico.map((r) => ({ nome: nomeProcesso(r.processoId), real: r.real, esperado: r.esperado }))} />
+                </Suspense>
+              </div>
+              <div className="min-w-0">
+                <h3 className="mb-3 font-display text-[16px] font-semibold text-ink">Consumo por dia</h3>
+                {lotesDoMes.carregando ? (
+                  <Skeleton className="h-[260px] w-full" />
+                ) : lotesDoMes.erro ? (
+                  <ErrorState title="Gráfico indisponível" onRetry={lotesDoMes.recarregar} />
+                ) : (
+                  <Suspense fallback={<Skeleton className="h-[260px] w-full" />}>
+                    <GraficoDiario dias={consumoPorDia(lotesNoGrafico, mes, ano)} periodo={periodo} />
+                  </Suspense>
+                )}
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       <Card as="section" className="overflow-hidden">
         <CardHeader

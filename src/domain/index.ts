@@ -2,3 +2,4 @@
 export type * from './tipos'
 export * from './formatacao'
 export * from './regras'
+export * from './graficos'

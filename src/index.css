@@ -40,6 +40,8 @@
   --color-glass-edge: #6d9db8;
   --color-glass-shine: #ffffff;
   --color-crit-line: #f2c2be;
+  /* Linha do consumo real nos gráficos (validada com a terracota da linha do esperado) */
+  --color-grafico-real: #1673b0;
   --color-skeleton: #efebe3;
   --color-skeleton-hi: #f8f6f1;
 
