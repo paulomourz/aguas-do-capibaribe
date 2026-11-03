@@ -56,7 +56,7 @@ app:
     expiracao: ${JWT_EXPIRACAO:8h}
   # Origens autorizadas no CORS, separadas por vírgula (ex.: http://localhost:8443). Vazio = nenhuma.
   cors-origens: ${CORS_ORIGINS:}
-  # Administrador principal (gestor). Criado na inicialização se não existir; a senha só é usada nessa hora.
+  # Administrador principal. Criado na inicialização se não existir; a senha só é usada nessa hora.
   admin:
     login: ${ADMIN_LOGIN:capibaribe.admin}
     nome: ${ADMIN_NOME:Administrador Capibaribe}
@@ -68,6 +68,9 @@ app:
     login-por-minuto: ${LIMITE_LOGIN_POR_MINUTO:5}
     lotes-por-minuto: ${LIMITE_LOTES_POR_MINUTO:60}
     cabecalho-ip: ${LIMITE_CABECALHO_IP:}
+  # Conta do gestor (capibaribe.gestor). Criada na inicialização se GESTOR_SENHA estiver definida.
+  gestor:
+    senha: ${GESTOR_SENHA:}
   # Conta do sensor (sensor.wokwi). Criada na inicialização se SENSOR_SENHA estiver definida.
   sensor:
     senha: ${SENSOR_SENHA:}
