@@ -46,6 +46,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @TestPropertySource(properties = {
         // O teste sempre cria o esquema, mesmo com FLYWAY_ATIVO=false no backend/.env da máquina.
         "spring.flyway.enabled=true",
+        "app.limite.login-por-minuto=100000",
+        "app.limite.lotes-por-minuto=100000",
         "app.jwt.segredo=segredo-de-teste-com-mais-de-32-caracteres",
         "app.cors-origens=http://localhost:8443",
         "app.admin.senha=" + IntegracaoPostgresBase.SENHA_ADMIN })

@@ -69,6 +69,7 @@ public class LoteController {
                     + "Se for o 3º lote seguido acima da meta, abre um alerta.")
     @ApiResponse(responseCode = "201", description = "Lote registrado.")
     @RespostasDoc.Validacao
+    @RespostasDoc.LimiteExcedido
     public LoteDTO registrar(@AuthenticationPrincipal UsuarioAutenticado quem, @Valid @RequestBody NovoLoteDTO dados) {
         return lotes.registrar(quem, dados);
     }
