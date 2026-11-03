@@ -11,7 +11,7 @@ import {
   IconHistory,
   IconLogout,
   IconSettings,
-  IconReport,
+  IconReport, IconSearchCheck,
   IconTarget,
   IconUsers,
 } from '../components/icons'
@@ -19,7 +19,7 @@ import { Link, navigate } from '../router'
 import { homeDe, periodoAtual, useApp } from '../store'
 import { meses, perfilLabel, type Perfil } from '../domain'
 
-export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'alertas' | 'relatorios' | 'usuarios'
+export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'alertas' | 'relatorios' | 'auditoria' | 'usuarios'
 
 export type MenuGrupo = 'Acompanhamento' | 'Lotes' | 'Cadastros'
 
@@ -27,6 +27,7 @@ export const menu: { id: MenuId; label: string; to: string; Icon: typeof IconDas
   { id: 'dashboard', label: 'Dashboard', to: '/dashboard', Icon: IconDashboard, perfis: ['gestor'], grupo: 'Acompanhamento' },
   { id: 'alertas', label: 'Alertas', to: '/alertas', Icon: IconBell, perfis: ['gestor'], grupo: 'Acompanhamento' },
   { id: 'relatorios', label: 'Relatórios', to: '/relatorios', Icon: IconReport, perfis: ['gestor'], grupo: 'Acompanhamento' },
+  { id: 'auditoria', label: 'Auditoria', to: '/auditoria', Icon: IconSearchCheck, perfis: ['gestor'], grupo: 'Acompanhamento' },
   { id: 'registro', label: 'Registro de lotes', to: '/registro', Icon: IconClipboard, perfis: ['gestor', 'operador'], grupo: 'Lotes' },
   { id: 'historico', label: 'Histórico de lotes', to: '/historico', Icon: IconHistory, perfis: ['gestor', 'operador'], grupo: 'Lotes' },
   { id: 'processos', label: 'Processos e metas', to: '/processos', Icon: IconTarget, perfis: ['gestor'], grupo: 'Cadastros' },

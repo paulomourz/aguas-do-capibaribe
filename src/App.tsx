@@ -13,6 +13,7 @@ import { AlertaDetalhe, Alertas } from './screens/Alertas'
 import { RelatorioPdf, Relatorios } from './screens/Relatorios'
 import { UsuarioNovo, Usuarios } from './screens/Usuarios'
 import Configuracoes from './screens/Configuracoes'
+import Auditoria from './screens/Auditoria'
 
 type Rota = { titulo: string; perfis: Perfil[]; menu?: MenuId; el: ReactNode }
 
@@ -53,6 +54,7 @@ function resolver(path: string, q: URLSearchParams, perfil?: Perfil): Rota | nul
   if (path === '/usuarios')
     return { titulo: 'G9 Usuários', perfis: GESTOR, menu: 'usuarios', el: <Usuarios destaque={q.get('novo') ?? undefined} /> }
   if (path === '/usuarios/novo') return { titulo: 'G10 Novo usuário', perfis: GESTOR, menu: 'usuarios', el: <UsuarioNovo /> }
+  if (path === '/auditoria') return { titulo: 'G11 Auditoria', perfis: GESTOR, menu: 'auditoria', el: <Auditoria /> }
   if (path === '/configuracoes') return { titulo: 'C1 Configurações da conta', perfis: TODOS, el: <Configuracoes /> }
   return null
 }
