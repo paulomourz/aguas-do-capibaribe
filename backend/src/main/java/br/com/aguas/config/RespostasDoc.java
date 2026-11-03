@@ -30,6 +30,13 @@ public final class RespostasDoc {
             content = @Content(mediaType = "application/json", schema = @Schema(ref = OpenApiConfig.ERRO)))
     public @interface Validacao {}
 
+    /** 429: passou do limite de requisições por minuto. */
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ApiResponse(responseCode = "429", description = "Muitas requisições; o cabeçalho `Retry-After` diz quantos segundos esperar.",
+            content = @Content(mediaType = "application/json", schema = @Schema(ref = OpenApiConfig.ERRO)))
+    public @interface LimiteExcedido {}
+
     /** 403: rota exclusiva do perfil gestor. */
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)

@@ -61,6 +61,8 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `SWAGGER_ATIVO` | não (true) | `false` desliga o Swagger UI e a especificação OpenAPI (ex.: em produção) |
 | `ADMIN_SENHA` | só na 1ª inicialização | Senha (8 a 72 bytes) do administrador principal, usada apenas para criá-lo |
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
+| `LIMITE_LOGIN_POR_MINUTO` / `LIMITE_LOTES_POR_MINUTO` | não (5 / 60) | Tentativas de login por IP e lotes por usuário, por minuto. Acima disso, a API responde 429 |
+| `LIMITE_CABECALHO_IP` | atrás de proxy | Cabeçalho com o IP real, que o proxy sempre sobrescreve: `X-Real-IP` no Docker, `CF-Connecting-IP` no Render. Sem ele, todos os usuários dividem o mesmo limite de login |
 | `SENSOR_SENHA` | não | Senha (8 a 72 bytes) da conta `sensor.wokwi`, usada apenas para criá-la. Sem ela, a conta não é criada |
 
 **Banco oficial.** O banco em uso é o `aguas` (veja a situação atual em

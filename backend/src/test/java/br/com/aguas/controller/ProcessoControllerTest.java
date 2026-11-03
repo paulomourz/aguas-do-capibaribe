@@ -46,6 +46,8 @@ import br.com.aguas.service.ProcessoService;
 @WebMvcTest(controllers = ProcessoController.class)
 @Import({ ProcessoService.class, SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class })
 @TestPropertySource(properties = {
+        "app.limite.login-por-minuto=100000",
+        "app.limite.lotes-por-minuto=100000",
         "app.jwt.segredo=segredo-de-teste-com-mais-de-32-caracteres",
         "app.jwt.expiracao=8h",
         "app.cors-origens=http://localhost:8443" })

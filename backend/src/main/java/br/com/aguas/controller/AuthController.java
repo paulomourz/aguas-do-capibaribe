@@ -43,6 +43,7 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "Usuário ou senha incorretos, ou acesso desativado (mesma mensagem nos três casos).",
             content = @Content(mediaType = "application/json", schema = @Schema(ref = "ErroApi")))
     @RespostasDoc.Validacao
+    @RespostasDoc.LimiteExcedido
     public SessaoDTO login(@Valid @RequestBody LoginDTO dados) {
         return auth.login(dados);
     }
