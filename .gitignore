@@ -23,3 +23,8 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+# Testes do site
+test-results/
+playwright-report/
+dev-dist/

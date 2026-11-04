@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
@@ -135,7 +136,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-        assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -150,7 +151,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(flyway.info().applied()).hasSize(6);
+           assertThat(flyway.info().applied()).hasSize(7);
     }
 
     @Test
@@ -474,6 +475,65 @@ abstract class IntegracaoPostgresBase {
         enviar(post("/processos"), g, Map.of("nome", nome.toUpperCase(), "unidade", "lote", "meta", 1500))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("PROCESSO_DUPLICADO"));
+    }
+
+    @Test
+    void reenvioComAMesmaChaveNaoDuplicaOLote() throws Exception {
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        int p = processo(g, "lote", "100");
+        String chave = UUID.randomUUID().toString();
+        var corpo = Map.of("processoId", p, "pecas", 10, "litros", new BigDecimal("150"));
+
+        // 1º envio grava; o 2º e o 3º simulam a resposta perdida na Wi-Fi e o site tentando de novo.
+        JsonNode primeiro = ler(enviar(post("/lotes").header("Idempotency-Key", chave), op, corpo).andExpect(status().isCreated()));
+        JsonNode segundo = ler(enviar(post("/lotes").header("Idempotency-Key", chave), op, corpo).andExpect(status().isOk()));
+        enviar(post("/lotes").header("Idempotency-Key", chave), op, corpo).andExpect(status().isOk());
+
+        assertThat(segundo.get("id").asInt()).isEqualTo(primeiro.get("id").asInt());
+        assertThat(segundo.get("data").asText()).isEqualTo(primeiro.get("data").asText());
+        assertThat(jdbc.queryForObject("select count(*) from lote where chave_envio = ?::uuid", Integer.class, chave)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from lote where processo_id = ?", Integer.class, p)).isEqualTo(1);
+
+        // O reenvio não conta como novo lote acima da meta: 1 lote real não abre alerta.
+        assertThat(alertasDo(g, p)).isEmpty();
+
+        // Sem chave (sensor ESP32), cada envio continua sendo um lote novo.
+        lote(op, p, 10, "150");
+        lote(op, p, 10, "150");
+        assertThat(jdbc.queryForObject("select count(*) from lote where processo_id = ?", Integer.class, p)).isEqualTo(3);
+    }
+
+    @Test
+    void chaveDeEnvioReaproveitadaComOutrosDadosOuOutroUsuarioRetorna409() throws Exception {
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        Conta outro = conta("operador");
+        int p = processo(g, "lote", "100");
+        String chave = UUID.randomUUID().toString();
+        enviar(post("/lotes").header("Idempotency-Key", chave), op, Map.of("processoId", p, "pecas", 1, "litros", 90))
+                .andExpect(status().isCreated());
+
+        enviar(post("/lotes").header("Idempotency-Key", chave), op, Map.of("processoId", p, "pecas", 1, "litros", 91))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("CHAVE_DE_ENVIO_REPETIDA"));
+        enviar(post("/lotes").header("Idempotency-Key", chave), outro, Map.of("processoId", p, "pecas", 1, "litros", 90))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("CHAVE_DE_ENVIO_REPETIDA"));
+        enviar(post("/lotes").header("Idempotency-Key", "nao-e-uuid"), op, Map.of("processoId", p, "pecas", 1, "litros", 90))
+                .andExpect(status().isBadRequest());
+
+        assertThat(jdbc.queryForObject("select count(*) from lote where processo_id = ?", Integer.class, p)).isEqualTo(1);
+    }
+
+    @Test
+    void bancoRecusaChaveDeEnvioDuplicadaMesmoSemPassarPelaApi() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "100");
+        String chave = UUID.randomUUID().toString();
+        String sql = "insert into lote (processo_id, usuario_id, pecas, litros, chave_envio) values (?, ?, 1, 10, ?::uuid)";
+        jdbc.update(sql, p, g.id(), chave);
+        assertThatThrownBy(() -> jdbc.update(sql, p, g.id(), chave)).isInstanceOf(DataAccessException.class);
     }
 
     @Test

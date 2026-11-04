@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AvisoModoSimulado, cx } from '../components/ui'
+import { AvisoOffline, IndicadorConexao } from '../components/FilaOffline'
 import logoUrl from '../assets/logo.png'
 import pacote from '../../package.json'
 import {
@@ -68,7 +69,8 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
               <span className="hidden text-[13px] text-areia sm:block">Gestão de água por lote</span>
             </span>
           </Link>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <IndicadorConexao />
             <div className="hidden items-center gap-5 md:flex">
               <div className="flex items-center gap-2.5 leading-tight">
                 <IconCalendar size={18} className="text-areia" />
@@ -168,6 +170,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
 
         <div className="flex min-w-0 flex-1 flex-col">
           <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-[1176px] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+            <AvisoOffline />
             {children}
           </main>
           <div className="lg:hidden">

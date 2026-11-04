@@ -1,6 +1,7 @@
 import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 import siteConfiguration from './.figma/make/site.json'
@@ -24,6 +25,7 @@ react(),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),
       figmaMakeKitPlugin({ storiesGlob: '/src/**/*.stories.{ts,tsx,js,jsx}' }),
+      pwaAguas(),
     ],
     resolve: {
       alias: {
@@ -46,6 +48,49 @@ react(),
     },
   }
 })
+
+/**
+ * PWA: o service worker guarda a casca do site (HTML, JS, CSS, ícones) para ele abrir mesmo com a Wi-Fi
+ * da lavanderia fora. Os DADOS não passam pelo cache do service worker: a API é sempre rede
+ * (navigateFallbackDenylist + nenhum runtimeCaching) e os lotes sem conexão vão para o IndexedDB
+ * (src/services/filaOffline.ts), que o próprio site reenvia quando a conexão volta.
+ *
+ * registerType 'prompt' + registro em src/main.tsx sem chamar updateSW: uma versão nova só assume
+ * quando todas as abas do site forem fechadas, para nunca recarregar a página no meio de um registro.
+ * Desligado no `vite dev` (devOptions) para não atrapalhar o hot reload.
+ */
+function pwaAguas() {
+  return VitePWA({
+    registerType: 'prompt',
+    injectRegister: false,
+    includeAssets: ['favicon.png', 'apple-touch-icon.png'],
+    manifest: {
+      name: 'Águas do Capibaribe',
+      short_name: 'Águas',
+      description: 'Registro e acompanhamento do consumo de água por lote na lavanderia.',
+      lang: 'pt-BR',
+      start_url: '.',
+      scope: '.',
+      display: 'standalone',
+      background_color: '#f7f4ee',
+      theme_color: '#12344d',
+      icons: [
+        { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+        { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+        { src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      ],
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
+      // O jsPDF (relatórios) passa do limite padrão de 2 MiB.
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      navigateFallback: 'index.html',
+      navigateFallbackDenylist: [/^\/api\//],
+      cleanupOutdatedCaches: true,
+    },
+    devOptions: { enabled: false },
+  })
+}
 
 type FigmaSiteConfiguration = {
   title?: string

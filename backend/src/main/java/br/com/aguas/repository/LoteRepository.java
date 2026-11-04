@@ -3,6 +3,8 @@ package br.com.aguas.repository;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +16,9 @@ import br.com.aguas.entity.Lote;
 import jakarta.persistence.criteria.Predicate;
 
 public interface LoteRepository extends JpaRepository<Lote, Integer>, JpaSpecificationExecutor<Lote> {
+
+    /** Lote já gravado com esta chave de envio (reenvio do site depois de a resposta se perder). */
+    Optional<Lote> findByChaveEnvio(UUID chaveEnvio);
 
     /** Os dois lotes anteriores a um lote, no mesmo processo, do mais recente ao mais antigo. */
     List<Lote> findTop2ByProcessoIdAndIdNotOrderByRegistradoEmDescIdDesc(Integer processoId, Integer id);

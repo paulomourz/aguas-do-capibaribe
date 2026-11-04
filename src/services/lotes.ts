@@ -28,8 +28,27 @@ export async function listarLotes(f: FiltroLotes = {}): Promise<LoteDTO[]> {
   )
 }
 
-export async function registrarLote(dados: NovoLoteDTO, usuarioId: Id): Promise<LoteDTO> {
-  if (!USAR_MOCK) return requisicao('/lotes', { method: 'POST', corpo: dados })
+/** Tempo máximo de espera do POST de lote antes de considerar "sem conexão" e deixar na fila. */
+export const TEMPO_LIMITE_ENVIO_MS = 15_000
+
+// Modo simulado: lembra as chaves já recebidas, como o índice ux_lote_chave_envio da API.
+const porChave = new Map<string, LoteDTO>()
+
+/**
+ * Registra um lote. Com `chave` (UUID do aparelho), reenviar a mesma chave devolve o lote já gravado,
+ * em vez de criar outro: é o que permite reenviar sem duplicar quando a resposta se perde na Wi-Fi.
+ */
+export async function registrarLote(dados: NovoLoteDTO, usuarioId: Id, chave?: string): Promise<LoteDTO> {
+  if (!USAR_MOCK) {
+    return requisicao('/lotes', {
+      method: 'POST',
+      corpo: dados,
+      headers: chave ? { 'Idempotency-Key': chave } : undefined,
+      timeoutMs: TEMPO_LIMITE_ENVIO_MS,
+    })
+  }
+  const repetido = chave ? porChave.get(chave) : undefined
+  if (repetido) return atraso(repetido)
   const p = processosIniciais.find((x) => x.id === idTexto(dados.processoId))
   if (!p) throw new ApiError(422, { codigo: 'VALIDACAO', mensagem: 'Processo inválido.', campos: { processoId: 'Selecione um processo.' } })
   const esperado = esperadoDe(p, dados.pecas)
@@ -39,5 +58,6 @@ export async function registrarLote(dados: NovoLoteDTO, usuarioId: Id): Promise<
     ...dados, esperado, desvio, statusConformidade: conformidade[statusDe(desvio)], data: new Date().toISOString(), usuarioId,
   }
   base = [novo, ...base]
+  if (chave) porChave.set(chave, novo)
   return atraso(novo)
 }
