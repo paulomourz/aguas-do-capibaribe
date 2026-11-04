@@ -17,7 +17,7 @@ export const statusDaApi: Record<StatusConformidade, Status> = { DENTRO_DA_META:
 
 /*
  * Mesmos limites de StatusConformidade no backend: mudar nos dois. Usadas só para totais e médias
- * (relatório, dashboard, média do alerta) e para o modo simulado; lotes usam o status da API.
+ * (relatório, dashboard, média do alerta); lotes usam o status da API.
  * Configuração única de faixas (desvio em %, limite superior inclusivo). Nunca exibir na interface.
  */
 const FAIXAS_DE_STATUS: { ate: number; status: Status }[] = [

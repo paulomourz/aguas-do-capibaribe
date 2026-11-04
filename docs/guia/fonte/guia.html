@@ -418,7 +418,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <li><strong>Sensor (opcional)</strong>Siga o <code>iot/LEIA-ME.md</code> para configurar o Wokwi. Para usar a API do seu PC, abra o túnel com <code>cloudflared tunnel --url http://localhost:8080</code>.</li>
   </ol>
 
-  <div class="nota agua"><p><strong>Modo simulado, só para demonstração.</strong> O site sempre usa a API. Para mostrar o sistema sem back-end, coloque <code>VITE_USAR_MOCK=true</code> no <code>.env.local</code>: os dados ficam em memória, nada é gravado e uma faixa amarela no topo avisa isso. Entre com <code>gestor.demo</code> ou <code>operador01</code>, senha <code>capibaribe</code>. Não use em entregas.</p></div>
+  <div class="nota agua"><p><strong>Sem modo simulado.</strong> O site sempre usa a API. Para mostrar o sistema sem internet, suba tudo no computador com o Docker (plano B do roteiro de apresentação).</p></div>
 
   <h3>Testes automáticos</h3>
   <p>Em <code>backend/</code>, <code>mvn test</code> roda os 45 testes de regras, segurança e validação. Os 19 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 60 testes passaram.</p>
@@ -444,7 +444,6 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <tr><td><code>pnpm dev</code>: porta 8443 em uso</td><td>outro site já está rodando</td><td>Feche o outro terminal; a porta é fixa para combinar com o CORS.</td></tr>
     <tr><td><code>psql</code>: erro em <code>\restrict</code></td><td><code>psql</code> antigo</td><td>Use o <code>psql</code> do PostgreSQL 18.</td></tr>
     <tr><td>Sensor: “Processo … não encontrado”</td><td><code>PROCESSO_NOME</code> diferente dos nomes do site</td><td>Copie o nome de um processo da lista que aparece no monitor serial.</td></tr>
-    <tr><td>Faixa amarela “Modo simulado” no topo</td><td><code>VITE_USAR_MOCK=true</code> no <code>.env.local</code></td><td>Apague essa linha (ou troque por <code>false</code>) e reinicie o <code>pnpm dev</code>.</td></tr>
     <tr><td>Alguém esqueceu a senha</td><td>—</td><td>O gestor usa <strong>Redefinir senha</strong> na tela Usuários.</td></tr>
     <tr><td>Testes de integração “skipped”</td><td>sem Docker e sem banco temporário</td><td>Normal. Para rodá-los, siga a seção Testes do <code>backend/README.md</code>.</td></tr>
   </table>

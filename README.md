@@ -220,9 +220,8 @@ No build de produção (`pnpm build`, Docker, Render) o site instala um service 
 - No `pnpm dev` o service worker fica desligado; a fila em IndexedDB funciona igual.
 - Uma versão nova do site só assume quando todas as abas forem fechadas, para nunca recarregar no meio de um registro.
 
-> **Modo simulado (só para demonstração sem back-end):** com `VITE_USAR_MOCK=true` no `.env.local`, o
-> site usa dados de exemplo em memória, nada é gravado, e uma faixa amarela no topo avisa isso. Logins:
-> `gestor.demo` ou `operador01`, senha `capibaribe`. Não use em entregas.
+> **Sem modo simulado:** o site sempre usa a API. Para mostrar o sistema sem internet, suba tudo no computador com o
+> Docker (plano B do [roteiro de apresentação](docs/guia/roteiro-apresentacao.md#plano-b-docker-no-computador)).
 
 ### 4. IoT simulado (opcional)
 

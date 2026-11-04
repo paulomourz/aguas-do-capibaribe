@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Removido
+
+- **Modo simulado do site** (item #21 do parecer): saem `src/mock/`, `src/services/mockUtil.ts`, a variável
+  `VITE_USAR_MOCK` e a faixa amarela de aviso. Os serviços em `src/services/` passam a chamar só a API. Os dados e a
+  senha de demonstração (`gestor.demo`, `operador01`) deixam de ir no bundle de produção, e o arquivo principal
+  diminui de 337,7 kB para 331,2 kB (97,9 kB para 95,6 kB com gzip). Para demonstrar sem internet, use o Docker
+  (plano B do roteiro de apresentação).
+
 ### Funcionalidades
 
 - **Registro de lotes com a Wi-Fi oscilando (PWA):** o site vira PWA (`vite-plugin-pwa`) e abre sem conexão. Lote

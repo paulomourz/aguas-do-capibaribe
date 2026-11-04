@@ -44,7 +44,7 @@ export type ResultadoSincronizacao = {
 
 type Enviar = (p: LotePendente) => Promise<LoteDTO>
 
-const enviarPelaApi: Enviar = (p) => registrarLote({ processoId: p.processoId, pecas: p.pecas, litros: p.litros }, p.usuarioId, p.chave)
+const enviarPelaApi: Enviar = (p) => registrarLote({ processoId: p.processoId, pecas: p.pecas, litros: p.litros }, p.chave)
 
 async function executar(usuarioId: Id, enviar: Enviar): Promise<ResultadoSincronizacao> {
   const r: ResultadoSincronizacao = { enviados: [], recusados: [], restantes: 0 }

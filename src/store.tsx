@@ -1,12 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from 'react'
 import type { ToastData, ViewState } from './components/ui'
 import { limitesDoMes, statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
-import { ANO_ATUAL, MES_ATUAL } from './mock'
 import * as api from './services'
 
 /*
- * Estado global da aplicação. Todos os dados passam por src/services:
- * por padrão vão para a API REST; só com VITE_USAR_MOCK=true usam a simulação em memória.
+ * Estado global da aplicação. Todos os dados passam por src/services, que chama a API REST.
  * Os DTOs da API (ids numéricos, datas ISO) são convertidos para os tipos usados pelas telas.
  */
 
@@ -493,7 +491,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const guardado = (await semFalhar(async () => (await api.guardarPendente(pendente), true))) ?? false
       if (!guardado) {
         // Sem IndexedDB (janela anônima antiga): envia direto, como antes, ainda com a chave.
-        const l = deLote(await api.registrarLote({ processoId: pendente.processoId, pecas, litros }, pendente.usuarioId, pendente.chave))
+        const l = deLote(await api.registrarLote({ processoId: pendente.processoId, pecas, litros }, pendente.chave))
         juntarLotes([l])
         if (u.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
         return { tipo: 'enviado', lote: l }
@@ -607,9 +605,8 @@ export function useLotesDoMes(mes: number, ano: number) {
   return { ...r, recarregar: () => setVersao((v) => v + 1) }
 }
 
-/** Mês corrente: no modo simulado, o mês dos dados de exemplo; com a API, o mês atual em America/Recife. */
+/** Mês corrente em America/Recife. */
 export function periodoAtual(): { mes: number; ano: number } {
-  if (api.USAR_MOCK) return { mes: MES_ATUAL, ano: ANO_ATUAL }
   const partes = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Recife', year: 'numeric', month: 'numeric' }).formatToParts(new Date())
   const valor = (t: string) => Number(partes.find((p) => p.type === t)?.value)
   return { mes: valor('month'), ano: valor('year') }

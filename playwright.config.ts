@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: {
     command: `pnpm build && pnpm exec vite preview --port ${PORTA} --strictPort --host 127.0.0.1`,
     url: `http://localhost:${PORTA}`,
-    env: { VITE_API_URL: '/api', VITE_USAR_MOCK: 'false' },
+    env: { VITE_API_URL: '/api' },
     reuseExistingServer: false,
     timeout: 120_000,
   },

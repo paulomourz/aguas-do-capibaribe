@@ -1,5 +1,4 @@
-import { USAR_MOCK, requisicao } from "./http"
-import { atraso } from "./mockUtil"
+import { requisicao } from "./http"
 import type { AcaoAuditoria, PaginaAuditoriaDTO } from "./tipos"
 
 export type FiltroAuditoria = {
@@ -13,7 +12,5 @@ export type FiltroAuditoria = {
 export async function listarAuditoria(
   f: FiltroAuditoria,
 ): Promise<PaginaAuditoriaDTO> {
-  if (!USAR_MOCK) return requisicao("/auditoria", { query: f })
-  // Modo simulado: sem registros de exemplo.
-  return atraso({ itens: [], total: 0, pagina: f.pagina, tamanho: f.tamanho })
+  return requisicao("/auditoria", { query: f })
 }
