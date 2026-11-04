@@ -25,13 +25,18 @@ export class ApiError extends Error {
   }
 }
 
-type Opcoes = Omit<RequestInit, 'body'> & { corpo?: unknown; query?: Record<string, string | number | undefined> }
+type Opcoes = Omit<RequestInit, 'body'> & {
+  corpo?: unknown
+  query?: Record<string, string | number | undefined>
+  /** Desiste depois deste tempo (ms) e trata como sem conexão. Na Wi-Fi instável, um fetch pode ficar pendurado por minutos. */
+  timeoutMs?: number
+}
 
 const ROTA_LOGIN = '/auth/login'
 /** Disparado quando o servidor recusa o token (expirado ou usuário desativado); o store limpa a sessão. */
 export const EVENTO_SESSAO_EXPIRADA = 'ac-sessao-expirada'
 
-export async function requisicao<T>(caminho: string, { corpo, query, headers, ...init }: Opcoes = {}): Promise<T> {
+export async function requisicao<T>(caminho: string, { corpo, query, headers, timeoutMs, ...init }: Opcoes = {}): Promise<T> {
   // A base só vale para endereço relativo (/api, no Docker, com o Nginx na mesma origem).
   const url = new URL(API_URL.replace(/\/+$/, '') + caminho, window.location.origin)
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v))
@@ -42,9 +47,10 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ..
   if (corpo !== undefined) h.set('Content-Type', 'application/json')
   if (token) h.set('Authorization', `Bearer ${token}`)
 
+  const sinal = timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
   let resp: Response
   try {
-    resp = await fetch(url, { ...init, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) })
+    resp = await fetch(url, { ...init, signal: init.signal ?? sinal, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) })
   } catch {
     throw new ApiError(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' })
   }

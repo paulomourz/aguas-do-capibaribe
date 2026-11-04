@@ -33,7 +33,26 @@ type Ctx = {
   processos: Processo[]
   salvarProcesso: (p: { id?: string; nome: string; unidade: Unidade; meta: number }) => Promise<Processo>
   lotes: Lote[]
-  registrarLote: (l: { processoId: string; pecas: number; litros: number }) => Promise<Lote>
+  /**
+   * Guarda o lote no aparelho (IndexedDB) e tenta enviar. Sem conexão, devolve `pendente` e o lote é
+   * enviado sozinho quando a conexão voltar. Se a API recusar o lote, lança o erro (como antes).
+   */
+  registrarLote: (l: { processoId: string; pecas: number; litros: number }) => Promise<ResultadoRegistro>
+  /** Lotes deste usuário guardados no aparelho, do mais antigo ao mais novo. */
+  pendentes: api.LotePendente[]
+  /** Lotes de outras pessoas guardados neste aparelho (enviados quando elas entrarem). */
+  pendentesDeOutros: number
+  /** Enviando a fila agora. */
+  sincronizando: boolean
+  /** O último contato com a API funcionou (e o navegador diz que está online). */
+  conectado: boolean
+  /** Entrou sem conexão, com a sessão e os dados guardados da última vez. */
+  modoOffline: boolean
+  /** Lotes que estavam na fila e já chegaram à API nesta sessão (chave → lote). */
+  enviadosAgora: Record<string, Lote>
+  enviarPendentes: () => Promise<void>
+  tentarDeNovo: (chave: string) => Promise<void>
+  descartarPendente: (chave: string) => Promise<void>
   alertas: Alerta[]
   mudarStatusAlerta: (id: string, s: AlertaStatus) => Promise<void>
   toast: ToastData | null
@@ -51,6 +70,24 @@ export function useApp() {
   const c = useContext(AppCtx)
   if (!c) throw new Error('useApp fora do provider')
   return c
+}
+
+export type ResultadoRegistro = { tipo: 'enviado'; lote: Lote } | { tipo: 'pendente'; pendente: api.LotePendente }
+
+/** De quanto em quanto tempo tenta de novo enquanto houver lote na fila ou sessão offline. */
+export const INTERVALO_REENVIO_MS = 20_000
+
+/** Avisa as outras abas que a fila mudou. */
+const canalFila = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('aguas-fila') : null
+const avisarAbas = () => canalFila?.postMessage('mudou')
+
+/** Erros de armazenamento local nunca podem impedir o uso do site com conexão. */
+const semFalhar = async <T,>(f: () => Promise<T>): Promise<T | undefined> => {
+  try {
+    return await f()
+  } catch {
+    return undefined
+  }
 }
 
 export const homeDe = (p: Perfil) => (p === 'gestor' ? '/dashboard' : '/registro')
@@ -94,8 +131,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [lotes, setLotes] = useState<Lote[]>([])
   const [alertasDTO, setAlertasDTO] = useState<api.AlertaDTO[]>([])
   const [toast, setToast] = useState<ToastData | null>(null)
+  const [pendentes, setPendentes] = useState<api.LotePendente[]>([])
+  const [pendentesDeOutros, setPendentesDeOutros] = useState(0)
+  const [sincronizando, setSincronizando] = useState(false)
+  const [conectado, setConectado] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
+  const [modoOffline, setModoOffline] = useState(false)
+  const [enviadosAgora, setEnviadosAgora] = useState<Record<string, Lote>>({})
   const timer = useRef<number | undefined>(undefined)
   const carga = useRef(0)
+  const usuarioRef = useRef<Usuario | null>(null)
+  usuarioRef.current = usuario
+  const modoOfflineRef = useRef(modoOffline)
+  modoOfflineRef.current = modoOffline
+  const temFilaRef = useRef(false)
+  temFilaRef.current = pendentes.some((p) => p.estado === 'pendente')
 
   const notificar = useCallback((message: string, tone: ToastData['tone'] = 'sucesso') => {
     const t = { id: Date.now(), message, tone }
@@ -113,31 +162,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAlertasDTO([])
     setErroCarga(null)
     setCarregando(false)
+    setPendentes([])
+    setPendentesDeOutros(0)
+    setModoOffline(false)
+    setEnviadosAgora({})
   }, [])
 
-  const carregarDados = useCallback(async (u: Usuario) => {
-    const minha = ++carga.current
-    const gestor = u.perfil === 'gestor'
-    setCarregando(true)
-    setErroCarga(null)
-    try {
-      const [ps, ls, as, us] = await Promise.all([
-        api.listarProcessos(),
-        api.listarLotes(),
-        gestor ? api.listarAlertas() : Promise.resolve([]),
-        gestor ? api.listarUsuarios() : Promise.resolve(null),
-      ])
-      if (minha !== carga.current) return
-      setProcessos(ps.map(deProcesso))
-      setLotes(ls.map(deLote))
-      setAlertasDTO(as)
-      setUsuarios(us ? us.map(deUsuario) : [u])
-    } catch (e) {
-      if (minha === carga.current) setErroCarga(errosDaApi(e).mensagem)
-    } finally {
-      if (minha === carga.current) setCarregando(false)
-    }
+  /** Junta lotes novos à lista sem repetir (um reenvio devolve o mesmo id). */
+  const juntarLotes = useCallback((novos: Lote[]) => {
+    if (!novos.length) return
+    setLotes((ls) => {
+      const ids = new Set(novos.map((l) => l.id))
+      return [...novos, ...ls.filter((l) => !ids.has(l.id))].sort((a, b) => b.data.getTime() - a.data.getTime())
+    })
   }, [])
+
+  /** Guarda sessão (só o hash do token), processos e lotes para abrir o site sem conexão. */
+  const salvarParaOffline = useCallback(async (u: api.UsuarioDTO, ps: api.ProcessoDTO[], ls: api.LoteDTO[]) => {
+    const token = api.obterToken()
+    const hashToken = token ? await api.hashDoToken(token) : null
+    if (!hashToken) return
+    await api.salvarCache('sessao', { hashToken, usuario: u })
+    await api.salvarCache('processos', ps)
+    await api.salvarCache('lotes', ls)
+  }, [])
+
+  /** Usa os dados guardados se a sessão guardada for a mesma do token atual. */
+  const entrarComCache = useCallback(async (): Promise<Usuario | null> => {
+    const token = api.obterToken()
+    if (!token) return null
+    const [hash, sessao, ps, ls] = await Promise.all([
+      api.hashDoToken(token),
+      api.lerCache('sessao'),
+      api.lerCache('processos'),
+      api.lerCache('lotes'),
+    ])
+    if (!hash || !sessao || sessao.hashToken !== hash) return null
+    const u = deUsuario(sessao.usuario)
+    setUsuario(u)
+    setProcessos((ps ?? []).map(deProcesso))
+    setLotes((ls ?? []).map(deLote))
+    setUsuarios([u])
+    setModoOffline(true)
+    setConectado(false)
+    return u
+  }, [])
+
+  const carregarDados = useCallback(
+    async (u: Usuario) => {
+      const minha = ++carga.current
+      const gestor = u.perfil === 'gestor'
+      setCarregando(true)
+      setErroCarga(null)
+      try {
+        const [ps, ls, as, us] = await Promise.all([
+          api.listarProcessos(),
+          api.listarLotes(),
+          gestor ? api.listarAlertas() : Promise.resolve([]),
+          gestor ? api.listarUsuarios() : Promise.resolve(null),
+        ])
+        if (minha !== carga.current) return
+        setProcessos(ps.map(deProcesso))
+        setLotes(ls.map(deLote))
+        setAlertasDTO(as)
+        setUsuarios(us ? us.map(deUsuario) : [u])
+        setModoOffline(false)
+        setConectado(true)
+        const dto = { id: Number(u.id), nome: u.nome, usuario: u.usuario, perfil: u.perfil, ativo: u.ativo }
+        void semFalhar(() => salvarParaOffline(dto, ps, ls))
+      } catch (e) {
+        if (minha !== carga.current) return
+        // A Wi-Fi caiu entre o login e a carga: segue com os dados guardados, se houver.
+        if (e instanceof api.ApiError && e.status === 0) {
+          setConectado(false)
+          const [ps, ls] = await Promise.all([semFalhar(() => api.lerCache('processos')), semFalhar(() => api.lerCache('lotes'))])
+          if (minha === carga.current && ps?.length) {
+            setProcessos(ps.map(deProcesso))
+            setLotes((ls ?? []).map(deLote))
+            setUsuarios([u])
+            setModoOffline(true)
+            return
+          }
+        }
+        setErroCarga(errosDaApi(e).mensagem)
+      } finally {
+        if (minha === carga.current) setCarregando(false)
+      }
+    },
+    [salvarParaOffline],
+  )
 
   // Recupera a sessão salva ao abrir a página. Token recusado (401) = sessão expirada;
   // servidor fora do ar = mantém o token e mostra "sem conexão", para tentar de novo.
@@ -154,15 +267,130 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setUsuario(u)
           void carregarDados(u)
         })
-        .catch((e) => {
+        .catch(async (e) => {
           if (!vivo()) return
-          if (e instanceof api.ApiError && e.status === 401) api.limparSessao()
-          else setSemConexao(true)
+          if (e instanceof api.ApiError && e.status === 401) {
+            api.limparSessao()
+            return
+          }
+          // Sem conexão: abre com a sessão e os dados guardados, para registrar lotes mesmo assim.
+          const u = await semFalhar(entrarComCache)
+          if (vivo() && !u) setSemConexao(true)
         })
         .finally(() => vivo() && setRestaurando(false))
     },
-    [carregarDados],
+    [carregarDados, entrarComCache],
   )
+
+  /* ---------- Fila de lotes sem conexão ---------- */
+
+  const atualizarPendentes = useCallback(async () => {
+    const u = usuarioRef.current
+    if (!u) return
+    const [lista, outros] = await Promise.all([
+      semFalhar(() => api.listarPendentes(Number(u.id))),
+      semFalhar(() => api.contarPendentesDeOutros(Number(u.id))),
+    ])
+    if (usuarioRef.current?.id !== u.id) return
+    setPendentes(lista ?? [])
+    setPendentesDeOutros(outros ?? 0)
+  }, [])
+
+  /** Saiu do modo offline? Confere a sessão na API e recarrega os dados de verdade. */
+  const reconectar = useCallback(async () => {
+    const u = usuarioRef.current
+    if (!u) return
+    try {
+      const dto = await api.me()
+      const novo = deUsuario(dto)
+      setUsuario(novo)
+      setConectado(true)
+      await carregarDados(novo)
+    } catch (e) {
+      // 401: o http.ts já limpou a sessão e foi para "sessão expirada". Os lotes continuam guardados.
+      if (e instanceof api.ApiError && e.status === 0) setConectado(false)
+    }
+  }, [carregarDados])
+
+  /**
+   * Envia a fila. `chaveSilenciosa`: o lote que o operador acabou de registrar (a tela já mostra o resultado,
+   * não precisa de aviso).
+   */
+  const sincronizar = useCallback(
+    async (chaveSilenciosa?: string): Promise<api.ResultadoSincronizacao | null> => {
+      const u = usuarioRef.current
+      if (!u) return null
+      setSincronizando(true)
+      try {
+        const r = await api.sincronizarPendentes(Number(u.id))
+        if (usuarioRef.current?.id !== u.id) return r
+        if (r.enviados.length) {
+          const novos = r.enviados.map((e) => deLote(e.lote))
+          juntarLotes(novos)
+          setEnviadosAgora((x) => ({ ...x, ...Object.fromEntries(r.enviados.map((e, i) => [e.chave, novos[i]])) }))
+          setConectado(true)
+          if (u.perfil === 'gestor') api.listarAlertas().then(setAlertasDTO, () => {})
+          const avisar = r.enviados.filter((e) => e.chave !== chaveSilenciosa).length
+          if (avisar) notificar(avisar === 1 ? 'Conexão de volta: 1 lote guardado foi enviado.' : `Conexão de volta: ${avisar} lotes guardados foram enviados.`)
+        }
+        if (r.parouPor === 'semConexao') setConectado(false)
+        const recusados = r.recusados.filter((x) => x.pendente.chave !== chaveSilenciosa).length
+        if (recusados) notificar(`${recusados === 1 ? '1 lote guardado foi recusado' : `${recusados} lotes guardados foram recusados`} pelo servidor. Veja em Registro de lotes.`, 'erro')
+        if (r.enviados.length || r.recusados.length) avisarAbas()
+        return r
+      } catch {
+        return null
+      } finally {
+        setSincronizando(false)
+        await atualizarPendentes()
+      }
+    },
+    [atualizarPendentes, juntarLotes, notificar],
+  )
+
+  /** Uma tentativa completa: se estava offline, reconecta primeiro; depois envia a fila. */
+  const tentarAgora = useCallback(async () => {
+    if (!usuarioRef.current) return
+    await sincronizar()
+    if (modoOfflineRef.current) await reconectar()
+  }, [sincronizar, reconectar])
+
+  // Ao entrar (ou trocar de usuário): mostra e tenta enviar o que ficou guardado.
+  useEffect(() => {
+    if (!usuario) return
+    void atualizarPendentes().then(() => {
+      if (temFilaRef.current) void sincronizar()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario?.id])
+
+  // A conexão voltou, a aba voltou para a frente, ou a cada intervalo enquanto houver fila.
+  useEffect(() => {
+    if (!usuario) return
+    const online = () => {
+      setConectado(true)
+      void tentarAgora()
+    }
+    const offline = () => setConectado(false)
+    const visivel = () => {
+      if (document.visibilityState === 'visible' && (temFilaRef.current || modoOfflineRef.current)) void tentarAgora()
+    }
+    const intervalo = window.setInterval(() => {
+      if (temFilaRef.current || modoOfflineRef.current) void tentarAgora()
+    }, INTERVALO_REENVIO_MS)
+    const outraAba = () => void atualizarPendentes()
+    window.addEventListener('online', online)
+    window.addEventListener('offline', offline)
+    document.addEventListener('visibilitychange', visivel)
+    canalFila?.addEventListener('message', outraAba)
+    return () => {
+      window.removeEventListener('online', online)
+      window.removeEventListener('offline', offline)
+      document.removeEventListener('visibilitychange', visivel)
+      canalFila?.removeEventListener('message', outraAba)
+      window.clearInterval(intervalo)
+    }
+  }, [usuario, tentarAgora, atualizarPendentes])
 
   useEffect(() => {
     let vivo = true
@@ -213,6 +441,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     sair: () => {
       void api.logout()
+      // Apaga os dados guardados para abrir offline (computador compartilhado). Os lotes pendentes ficam:
+      // são enviados quando a mesma pessoa entrar de novo.
+      void semFalhar(api.limparCache)
       limpar()
     },
     usuarios,
@@ -241,11 +472,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     lotes,
     registrarLote: async ({ processoId, pecas, litros }) => {
-      const l = deLote(await api.registrarLote({ processoId: Number(processoId), pecas, litros }, Number(usuario?.id)))
-      setLotes((ls) => [l, ...ls])
-      // O servidor pode ter aberto ou atualizado um alerta com este lote.
-      if (usuario?.perfil === 'gestor') api.listarAlertas().then(setAlertasDTO, () => {})
-      return l
+      const u = usuarioRef.current
+      if (!u) throw new api.ApiError(401, { codigo: 'NAO_AUTENTICADO', mensagem: 'Sessão expirada.' })
+      const pendente: api.LotePendente = {
+        chave: api.novaChave(),
+        usuarioId: Number(u.id),
+        processoId: Number(processoId),
+        pecas,
+        litros,
+        criadoEm: new Date().toISOString(),
+        estado: 'pendente',
+        tentativas: 0,
+      }
+
+      // 1) Caixa de saída: grava no aparelho antes de qualquer envio.
+      const guardado = (await semFalhar(async () => (await api.guardarPendente(pendente), true))) ?? false
+      if (!guardado) {
+        // Sem IndexedDB (janela anônima antiga): envia direto, como antes, ainda com a chave.
+        const l = deLote(await api.registrarLote({ processoId: pendente.processoId, pecas, litros }, pendente.usuarioId, pendente.chave))
+        juntarLotes([l])
+        if (u.perfil === 'gestor') api.listarAlertas().then(setAlertasDTO, () => {})
+        return { tipo: 'enviado', lote: l }
+      }
+      avisarAbas()
+
+      // 2) Envia pela mesma fila (na ordem, depois dos que já estavam esperando).
+      const r = await sincronizar(pendente.chave)
+      const enviado = r?.enviados.find((e) => e.chave === pendente.chave)
+      if (enviado) return { tipo: 'enviado', lote: deLote(enviado.lote) }
+
+      // 3) Recusado pela API (ex.: processo inválido): sai da fila e o formulário mostra o erro.
+      const recusado = r?.recusados.find((x) => x.pendente.chave === pendente.chave)
+      if (recusado) {
+        await semFalhar(() => api.removerPendente(pendente.chave))
+        await atualizarPendentes()
+        avisarAbas()
+        throw recusado.erro
+      }
+
+      // 4) Sem conexão (ou fila parada antes dele): fica guardado e vai sozinho depois.
+      const atual = (await semFalhar(() => api.listarPendentes(pendente.usuarioId)))?.find((p) => p.chave === pendente.chave)
+      return { tipo: 'pendente', pendente: atual ?? pendente }
+    },
+    pendentes,
+    pendentesDeOutros,
+    sincronizando,
+    conectado,
+    modoOffline,
+    enviadosAgora,
+    enviarPendentes: tentarAgora,
+    tentarDeNovo: async (chave) => {
+      await semFalhar(() => api.atualizarPendente(chave, { estado: 'pendente', ultimoErro: undefined }))
+      avisarAbas()
+      await atualizarPendentes()
+      await sincronizar()
+    },
+    descartarPendente: async (chave) => {
+      await semFalhar(() => api.removerPendente(chave))
+      avisarAbas()
+      await atualizarPendentes()
     },
     alertas,
     mudarStatusAlerta: async (id, s) => {

@@ -20,13 +20,15 @@ import { IconArrowLeft, IconClipboard, IconClock, IconDroplet, IconHistory, Icon
 import { esperadoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
 import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
+import { PainelPendentes, ResultadoPendenteCard } from '../components/FilaOffline'
+import type { LotePendente } from '../services'
 
 type Erros = Partial<Record<'processo' | 'pecas' | 'litros', string>>
 
 /* ---------- O1 Registro de lote (com O2 embutido após o envio) ---------- */
 
 export default function RegistroLote() {
-  const { processos, registrarLote } = useApp()
+  const { processos, registrarLote, conectado, modoOffline, enviadosAgora } = useApp()
   const [estado, setEstado] = useEstadoTela()
   const [processoId, setProcessoId] = useState('')
   const [pecas, setPecas] = useState('')
@@ -36,6 +38,10 @@ export default function RegistroLote() {
   const [enviando, setEnviando] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
   const [resultado, setResultado] = useState<Lote | null>(null)
+  /** Lote que ficou guardado no aparelho; quando a fila o enviar, vira `enviadosAgora[chave]`. */
+  const [guardado, setGuardado] = useState<LotePendente | null>(null)
+  const loteDoGuardado = guardado ? enviadosAgora[guardado.chave] : undefined
+  const temResultado = !!resultado || !!guardado
   const resultadoRef = useRef<HTMLDivElement>(null)
 
   const processo = processos.find((p) => p.id === processoId)
@@ -65,8 +71,14 @@ export default function RegistroLote() {
     setEnviando(true)
     try {
       // O esperado e o desvio vêm do servidor (calculados pelo banco).
-      const l = await registrarLote({ processoId: processo!.id, pecas: nPecas, litros: Math.round(nLitros) })
-      setResultado(l)
+      const r = await registrarLote({ processoId: processo!.id, pecas: nPecas, litros: Math.round(nLitros) })
+      if (r.tipo === 'enviado') {
+        setResultado(r.lote)
+        setGuardado(null)
+      } else {
+        setResultado(null)
+        setGuardado(r.pendente)
+      }
       setPecas('')
       setLitros('')
       requestAnimationFrame(() => {
@@ -85,6 +97,7 @@ export default function RegistroLote() {
 
   function novoLote() {
     setResultado(null)
+    setGuardado(null)
     requestAnimationFrame(() => document.getElementById('processo')?.focus())
   }
 
@@ -98,7 +111,7 @@ export default function RegistroLote() {
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Formulário: no mobile/tablet some enquanto o resultado é exibido */}
-        <Card as="section" className={cx('p-4 sm:p-8 lg:col-span-5', resultado && 'hidden lg:block')}>
+        <Card as="section" className={cx('p-4 sm:p-8 lg:col-span-5', temResultado && 'hidden lg:block')}>
           {estado === 'carregando' ? (
             <div role="status" className="flex flex-col gap-6">
               <span className="sr-only">Carregando formulário…</span>
@@ -224,8 +237,12 @@ export default function RegistroLote() {
         </Card>
 
         <section aria-label="Resultado do registro" className="lg:col-span-7">
-          {resultado ? (
-            <ResultadoCard lote={resultado} refEl={resultadoRef} onNovo={novoLote} />
+          {resultado || loteDoGuardado ? (
+            <ResultadoCard lote={(resultado ?? loteDoGuardado)!} refEl={resultadoRef} onNovo={novoLote} />
+          ) : guardado ? (
+            <div ref={resultadoRef} tabIndex={-1} className="h-full outline-none">
+              <ResultadoPendenteCard pendente={guardado} onNovo={novoLote} />
+            </div>
           ) : (
             <Card className="hidden h-full min-h-[360px] flex-col p-6 sm:p-8 lg:flex">
               <div className="flex items-center gap-3">
@@ -243,12 +260,18 @@ export default function RegistroLote() {
         </section>
       </div>
 
+      <PainelPendentes />
+
       <Modal
         open={confirmar}
         onClose={() => !enviando && setConfirmar(false)}
         size="sm"
         title="Confirmar registro do lote"
-        description="Depois de registrado, o lote não pode ser editado."
+        description={
+          !conectado || modoOffline
+            ? 'Depois de registrado, o lote não pode ser editado. Sem conexão agora: o lote fica guardado neste aparelho e é enviado sozinho quando a conexão voltar.'
+            : 'Depois de registrado, o lote não pode ser editado.'
+        }
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirmar(false)} disabled={enviando}>

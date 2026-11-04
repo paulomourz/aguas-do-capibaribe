@@ -63,7 +63,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
+      - run: pnpm test
       - run: pnpm build
+
+      # Modo offline: Wi-Fi caindo e voltando no site de produção (service worker + IndexedDB)
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
 
   docker-compose:
     name: docker-compose

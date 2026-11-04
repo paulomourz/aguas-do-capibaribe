@@ -8,10 +8,23 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Funcionalidades
 
+- **Registro de lotes com a Wi-Fi oscilando (PWA):** o site vira PWA (`vite-plugin-pwa`) e abre sem conexão. Lote
+  registrado sem conexão fica guardado no aparelho (IndexedDB) e é enviado sozinho quando a conexão volta, na ordem
+  em que foi feito. O operador vê o que falta enviar no cabeçalho e em **Registro de lotes → Guardados neste
+  aparelho**, com **Enviar agora**, **Tentar de novo** e **Descartar** (para lote recusado pela API).
+- **`POST /lotes` aceita `Idempotency-Key`:** reenviar a mesma chave devolve o lote já gravado (`200`), sem duplicar
+  nem reaplicar a regra de alerta. Migração `V5` cria `lote.chave_envio` com índice único. O sensor continua igual.
+
 - **Sensor local no Wokwi:** o `iot/sketch.ino` aceita `http://` além de `https://`, e o projeto
   `aguas-capibaribe-local` fala com o Docker. O projeto público continua em HTTPS.
 - **Túnel no Docker Compose:** `docker compose --profile tunel up -d --build` liga o túnel sem instalar o cloudflared.
   Ele fica desligado por padrão.
+
+### Testes
+
+- **Modo offline do site:** `pnpm test` (Vitest, 20 testes da fila e da sincronização) e `pnpm test:e2e`
+  (Playwright, 3 testes com a conexão caindo e voltando no site de produção). 3 testes de integração novos na API
+  para a `Idempotency-Key`.
 
 ### Documentação
 

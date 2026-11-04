@@ -66,6 +66,7 @@ espere um pouco e tente de novo.
 | 🚨 | **Alertas** | Abertos quando 3 lotes seguidos do mesmo processo passam da meta |
 | 📈 | **Dashboard e relatório mensal** | Meta × real por processo, com download do relatório em PDF |
 | 👥 | **Perfis** | Gestor (configura e acompanha tudo) e operador (registra lotes) |
+| 📶 | **Funciona com a Wi-Fi oscilando** | O site é um PWA: abre sem conexão, guarda os lotes no aparelho (IndexedDB) e envia sozinho quando a conexão volta, sem duplicar |
 | 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API. Há um projeto público, em HTTPS, e um local, para o Docker |
 
 ## 🧱 Arquitetura
@@ -202,6 +203,23 @@ VITE_NOME_LAVANDERIA=Nome da lavanderia
 
 Com a API desligada, o site avisa "Não foi possível conectar ao servidor." em vez de quebrar.
 
+#### Sem conexão (PWA)
+
+No build de produção (`pnpm build`, Docker, Render) o site instala um service worker
+([`vite-plugin-pwa`](https://vite-pwa-org.netlify.app/)) e passa a abrir mesmo com a Wi-Fi da lavanderia fora:
+
+- **Lote registrado sem conexão** fica guardado no aparelho (IndexedDB, `src/services/filaOffline.ts`) e aparece em
+  **Registro de lotes → Guardados neste aparelho** e no aviso amarelo do cabeçalho.
+- **A conexão voltou?** O site envia sozinho (evento `online`, a cada 20 s e ao voltar para a aba), do mais antigo
+  ao mais novo, ou na hora pelo botão **Enviar agora** (`src/services/sincronizacao.ts`).
+- **Sem duplicar:** cada lote leva uma chave (UUID) no cabeçalho `Idempotency-Key`; se a resposta se perder e o site
+  reenviar, a API devolve o lote já gravado. Ver [`docs/tecnico/api.md`](docs/tecnico/api.md#reenvio-sem-duplicar-idempotency-key).
+- **Página recarregada sem conexão:** abre com a sessão, os processos e os lotes da última carga. Ao sair, esses dados
+  são apagados do aparelho; os lotes ainda não enviados ficam e vão quando a mesma pessoa entrar de novo.
+- **Lote recusado** pela API (ex.: processo inválido) fica marcado em vermelho para o operador tentar de novo ou descartar.
+- No `pnpm dev` o service worker fica desligado; a fila em IndexedDB funciona igual.
+- Uma versão nova do site só assume quando todas as abas forem fechadas, para nunca recarregar no meio de um registro.
+
 > **Modo simulado (só para demonstração sem back-end):** com `VITE_USAR_MOCK=true` no `.env.local`, o
 > site usa dados de exemplo em memória, nada é gravado, e uma faixa amarela no topo avisa isso. Logins:
 > `gestor.demo` ou `operador01`, senha `capibaribe`. Não use em entregas.
@@ -226,13 +244,25 @@ mvn test
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 64 testes: 45 unitários e de web + 19 de integração com PostgreSQL 18 (o banco começa vazio e o
+São 67 testes: 45 unitários e de web + 22 de integração com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
+**Site (modo offline):**
+
+```bash
+pnpm test        # Vitest: fila em IndexedDB e sincronização (queda no meio, resposta perdida, concorrência, 401, 422)
+pnpm test:e2e    # Playwright: site de produção com service worker, Wi-Fi caindo e voltando
+```
+
+O teste ponta a ponta (`e2e/offline.spec.ts`) derruba a conexão do navegador, registra lotes, recarrega a página
+ainda sem conexão, devolve a conexão e confere que a API recebeu cada lote uma vez só, na ordem. Também simula a
+resposta perdida (a API grava, o site não recebe) e confere que o reenvio não duplica. Na primeira vez, rode
+`pnpm exec playwright install chromium`.
+
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
-`develop`: `backend-test` (os 64 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
+`develop`: `backend-test` (no Java 25) e `frontend-build` (`tsc --noEmit`, `pnpm test`, `pnpm build` e `pnpm test:e2e`).
 Não faça merge com check vermelho.
 
 ## 📌 Status
@@ -255,7 +285,7 @@ Versão atual: **v1.0.0** (02/11/2026). O que entrou em cada versão está no [`
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
 - ✅ Sistema publicado na internet, com endereço fixo e HTTPS
 - ✅ Docker Compose: banco, API e site com um comando
-- ✅ CI no GitHub Actions e 64 testes automatizados, incluindo o ciclo completo da lavanderia
+- ✅ CI no GitHub Actions com testes automatizados da API (incluindo o ciclo completo da lavanderia) e do modo offline do site
 
 **Limitações conhecidas**
 

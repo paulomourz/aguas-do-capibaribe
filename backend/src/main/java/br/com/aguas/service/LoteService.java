@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -65,11 +67,26 @@ public class LoteService {
                 .orElseThrow(() -> ApiException.naoEncontrado("Lote não encontrado."));
     }
 
-    /** Registra o lote (esperado é calculado pelo trigger do banco) e aplica a regra de alerta na mesma transação. */
+    /** Resultado do registro: {@code repetido} = a chave de envio já existia e nada novo foi gravado. */
+    public record Registro(LoteDTO lote, boolean repetido) {}
+
+    /**
+     * Registra o lote (esperado é calculado pelo trigger do banco) e aplica a regra de alerta na mesma transação.
+     *
+     * <p>Com {@code chaveEnvio} (cabeçalho Idempotency-Key do site), um reenvio da mesma chave devolve o lote já
+     * gravado, sem criar outro nem reaplicar a regra de alerta. A busca pela chave acontece depois do bloqueio do
+     * processo: dois envios simultâneos da mesma chave (mesmo processo) passam um de cada vez, e o segundo já
+     * encontra o primeiro. O índice único ux_lote_chave_envio é a última garantia.
+     */
     @Transactional
-    public LoteDTO registrar(UsuarioAutenticado quem, NovoLoteDTO dados) {
+    public Registro registrar(UsuarioAutenticado quem, NovoLoteDTO dados, UUID chaveEnvio) {
         Processo p = processos.buscarComBloqueio(dados.processoId())
                 .orElseThrow(() -> ApiException.validacao("processoId", "Selecione um processo válido."));
+
+        if (chaveEnvio != null) {
+            Optional<Lote> existente = lotes.findByChaveEnvio(chaveEnvio);
+            if (existente.isPresent()) return new Registro(LoteDTO.de(conferirReenvio(existente.get(), quem, dados)), true);
+        }
 
         BigDecimal esperadoPrevisto = p.getUnidade() == Unidade.peca
                 ? p.getMeta().multiply(BigDecimal.valueOf(dados.pecas()))
@@ -78,9 +95,21 @@ public class LoteService {
             throw ApiException.validacao("pecas", "Quantidade de peças grande demais para a meta deste processo.");
         }
 
-        Lote novo = lotes.saveAndFlush(new Lote(p.getId(), quem.id(), dados.pecas(), dados.litros()));
+        Lote novo = lotes.saveAndFlush(new Lote(p.getId(), quem.id(), dados.pecas(), dados.litros(), chaveEnvio));
         aplicarRegraDeAlerta(novo);
-        return LoteDTO.de(novo);
+        return new Registro(LoteDTO.de(novo), false);
+    }
+
+    /** A chave só vale para o mesmo usuário e os mesmos dados; outra coisa é erro do cliente, não reenvio. */
+    private static Lote conferirReenvio(Lote l, UsuarioAutenticado quem, NovoLoteDTO dados) {
+        boolean mesmoUsuario = l.getUsuarioId().equals(quem.id());
+        boolean mesmosDados = l.getProcessoId().equals(dados.processoId()) && l.getPecas().equals(dados.pecas())
+                && l.getLitros().compareTo(dados.litros()) == 0;
+        if (!mesmoUsuario || !mesmosDados) {
+            throw ApiException.conflito("CHAVE_DE_ENVIO_REPETIDA",
+                    "Esta chave de envio já foi usada em outro lote. Gere uma nova chave para registrar um lote diferente.", null);
+        }
+        return l;
     }
 
     private void aplicarRegraDeAlerta(Lote novo) {

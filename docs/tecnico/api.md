@@ -46,10 +46,17 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `PUT /processos/{id}` | gestor | `{nome, unidade, meta}` | `ProcessoDTO` |
 | `GET /lotes?processoId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais (`inicio`/`fim` em ISO 8601 com fuso) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
-| `POST /lotes` | autenticado | `{processoId, pecas, litros}` (o usuário vem do token) | `201 LoteDTO` |
+| `POST /lotes` | autenticado | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
+
+### Reenvio sem duplicar (`Idempotency-Key`)
+
+O site gera um UUID para cada lote e o manda no cabeçalho `Idempotency-Key`. Se a Wi-Fi cair depois que a API
+gravou, mas antes da resposta chegar, o site reenvia o mesmo lote com a mesma chave e recebe `200` com o lote
+original: nada é gravado de novo e a regra de alerta não roda outra vez. A chave fica em `lote.chave_envio`
+(migração `V5`, índice único). Sem o cabeçalho (o sensor ESP32), cada `POST` continua sendo um lote novo.
 
 ## Tipos
 

@@ -123,13 +123,14 @@ class LimiteDeRequisicoesTest {
     void lotesTemLimitePorUsuarioESemAfetarConsultas() throws Exception {
         String sensor = tokenDe(50);
         String outro = tokenDe(51);
+        when(loteService.registrar(any(), any(), any())).thenReturn(new LoteService.Registro(null, false));
 
         registrar(sensor).andExpect(status().isCreated());
         registrar(sensor).andExpect(status().isCreated());
         registrar(sensor)
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().exists(HttpHeaders.RETRY_AFTER));
-        verify(loteService, times(2)).registrar(any(), any());
+        verify(loteService, times(2)).registrar(any(), any(), any());
 
         registrar(outro).andExpect(status().isCreated());
         mvc.perform(get("/lotes").header(HttpHeaders.AUTHORIZATION, sensor)).andExpect(status().isOk());

@@ -2,17 +2,19 @@ package br.com.aguas.controller;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.aguas.config.RespostasDoc;
@@ -20,6 +22,7 @@ import br.com.aguas.dto.LoteDTOs.LoteDTO;
 import br.com.aguas.dto.LoteDTOs.NovoLoteDTO;
 import br.com.aguas.security.UsuarioAutenticado;
 import br.com.aguas.service.LoteService;
+import br.com.aguas.service.LoteService.Registro;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -62,15 +65,22 @@ public class LoteController {
 
     /** O usuário do lote é sempre o do token, nunca um campo do corpo. */
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registrar lote",
             description = "O banco calcula o esperado pela meta do processo e a API calcula o desvio. "
                     + "O lote fica no nome de quem está logado e não pode ser alterado depois. "
-                    + "Se for o 3º lote seguido acima da meta, abre um alerta.")
+                    + "Se for o 3º lote seguido acima da meta, abre um alerta. "
+                    + "Com o cabeçalho `Idempotency-Key` (UUID), reenviar a mesma chave devolve o lote já gravado "
+                    + "(200) em vez de criar outro; o site usa isso para reenviar lotes guardados sem conexão.")
     @ApiResponse(responseCode = "201", description = "Lote registrado.")
+    @ApiResponse(responseCode = "200", description = "Reenvio: a chave já existia e o lote devolvido é o que já estava gravado.")
     @RespostasDoc.Validacao
+    @RespostasDoc.Conflito
     @RespostasDoc.LimiteExcedido
-    public LoteDTO registrar(@AuthenticationPrincipal UsuarioAutenticado quem, @Valid @RequestBody NovoLoteDTO dados) {
-        return lotes.registrar(quem, dados);
+    public ResponseEntity<LoteDTO> registrar(@AuthenticationPrincipal UsuarioAutenticado quem,
+                                             @Parameter(description = "UUID gerado pelo cliente para este lote; repita-o em cada nova tentativa")
+                                             @RequestHeader(name = "Idempotency-Key", required = false) UUID chaveEnvio,
+                                             @Valid @RequestBody NovoLoteDTO dados) {
+        Registro r = lotes.registrar(quem, dados, chaveEnvio);
+        return ResponseEntity.status(r.repetido() ? HttpStatus.OK : HttpStatus.CREATED).body(r.lote());
     }
 }
