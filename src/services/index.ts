@@ -6,9 +6,6 @@ export * from './processos'
 export * from './lotes'
 export * from './alertas'
 export * from './relatorios'
-<<<<<<< HEAD
+export * from './auditoria'
 export * from './filaOffline'
 export * from './sincronizacao'
-=======
-export * from './auditoria'
->>>>>>> origin/develop

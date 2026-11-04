@@ -72,7 +72,6 @@ export function useApp() {
   return c
 }
 
-<<<<<<< HEAD
 export type ResultadoRegistro = { tipo: 'enviado'; lote: Lote } | { tipo: 'pendente'; pendente: api.LotePendente }
 
 /** De quanto em quanto tempo tenta de novo enquanto houver lote na fila ou sessão offline. */
@@ -91,10 +90,7 @@ const semFalhar = async <T,>(f: () => Promise<T>): Promise<T | undefined> => {
   }
 }
 
-export const homeDe = (p: Perfil) => (p === 'gestor' ? '/dashboard' : '/registro')
-=======
 export const homeDe = (p: Perfil) => (p === 'operador' ? '/registro' : '/dashboard')
->>>>>>> origin/develop
 
 /* ---------- Conversões DTO → tipos das telas ---------- */
 
@@ -172,7 +168,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setEnviadosAgora({})
   }, [])
 
-<<<<<<< HEAD
   /** Junta lotes novos à lista sem repetir (um reenvio devolve o mesmo id). */
   const juntarLotes = useCallback((novos: Lote[]) => {
     if (!novos.length) return
@@ -180,30 +175,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const ids = new Set(novos.map((l) => l.id))
       return [...novos, ...ls.filter((l) => !ids.has(l.id))].sort((a, b) => b.data.getTime() - a.data.getTime())
     })
-=======
-  const carregarDados = useCallback(async (u: Usuario) => {
-    const minha = ++carga.current
-    const gestor = u.perfil !== 'operador'
-    setCarregando(true)
-    setErroCarga(null)
-    try {
-      const [ps, ls, as, us] = await Promise.all([
-        api.listarProcessos(),
-        api.listarLotes(),
-        gestor ? api.listarAlertas() : Promise.resolve([]),
-        gestor ? api.listarUsuarios() : Promise.resolve(null),
-      ])
-      if (minha !== carga.current) return
-      setProcessos(ps.map(deProcesso))
-      setLotes(ls.map(deLote))
-      setAlertasDTO(as)
-      setUsuarios(us ? us.map(deUsuario) : [u])
-    } catch (e) {
-      if (minha === carga.current) setErroCarga(errosDaApi(e).mensagem)
-    } finally {
-      if (minha === carga.current) setCarregando(false)
-    }
->>>>>>> origin/develop
   }, [])
 
   /** Guarda sessão (só o hash do token), processos e lotes para abrir o site sem conexão. */
@@ -240,7 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const carregarDados = useCallback(
     async (u: Usuario) => {
       const minha = ++carga.current
-      const gestor = u.perfil === 'gestor'
+      const gestor = u.perfil !== 'operador'
       setCarregando(true)
       setErroCarga(null)
       try {
@@ -358,7 +329,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           juntarLotes(novos)
           setEnviadosAgora((x) => ({ ...x, ...Object.fromEntries(r.enviados.map((e, i) => [e.chave, novos[i]])) }))
           setConectado(true)
-          if (u.perfil === 'gestor') api.listarAlertas().then(setAlertasDTO, () => {})
+          if (u.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
           const avisar = r.enviados.filter((e) => e.chave !== chaveSilenciosa).length
           if (avisar) notificar(avisar === 1 ? 'Conexão de volta: 1 lote guardado foi enviado.' : `Conexão de volta: ${avisar} lotes guardados foram enviados.`)
         }
@@ -505,7 +476,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     lotes,
     registrarLote: async ({ processoId, pecas, litros }) => {
-<<<<<<< HEAD
       const u = usuarioRef.current
       if (!u) throw new api.ApiError(401, { codigo: 'NAO_AUTENTICADO', mensagem: 'Sessão expirada.' })
       const pendente: api.LotePendente = {
@@ -525,7 +495,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Sem IndexedDB (janela anônima antiga): envia direto, como antes, ainda com a chave.
         const l = deLote(await api.registrarLote({ processoId: pendente.processoId, pecas, litros }, pendente.usuarioId, pendente.chave))
         juntarLotes([l])
-        if (u.perfil === 'gestor') api.listarAlertas().then(setAlertasDTO, () => {})
+        if (u.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
         return { tipo: 'enviado', lote: l }
       }
       avisarAbas()
@@ -565,13 +535,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await semFalhar(() => api.removerPendente(chave))
       avisarAbas()
       await atualizarPendentes()
-=======
-      const l = deLote(await api.registrarLote({ processoId: Number(processoId), pecas, litros }, Number(usuario?.id)))
-      setLotes((ls) => [l, ...ls])
-      // O servidor pode ter aberto ou atualizado um alerta com este lote.
-      if (usuario && usuario.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
-      return l
->>>>>>> origin/develop
     },
     alertas,
     mudarStatusAlerta: async (id, s) => {
