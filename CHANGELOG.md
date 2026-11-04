@@ -28,6 +28,9 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Documentação
 
+- **Validação de usabilidade com operador** em `docs/validacao/` (item #22 do parecer): roteiro com 6 tarefas,
+  questionário SUS em português, ficha do observador, kit em PDF para imprimir e modelo de resultado. Ainda não
+  aplicado.
 - **Roteiro de apresentação** em `docs/guia/roteiro-apresentacao.md`, com o plano A (site publicado) e o plano B (Docker).
 - **ERS v1.1** e **atualização do TAP** em `docs/gestao/`, com o que mudou até a versão 1.0.0 e o que falta formalizar.
 - `docs/tecnico/banco-remoto.md` e `docs/tecnico/api.md` com o banco e a API publicados.

@@ -38,6 +38,7 @@ esse arquivo ou gerar a nova versão, estas mudanças devem entrar nele.
 
 - **SemVer:** o parecer orienta não declarar 1.0.0 antes de concluir a homologação, e a validação com um operador real
   (item #22 do parecer) ainda não foi feita. A versão 1.0.0 precisa ser alinhada com o orientador.
-- **Validação com persona (seção 8):** ainda não feita.
+- **Validação com persona (seção 8):** roteiro, questionário SUS e kit prontos em [`../validacao/`](../validacao/LEIA-ME.md);
+  falta aplicar com um operador de Toritama e alinhar com o orientador o critério de decisão proposto no roteiro.
 - **Data final de entrega (seção 10):** ainda a confirmar.
 - **Itens #18 a #27 do parecer:** não implementados; falta definir quais são obrigatórios.

@@ -1,0 +1,274 @@
+<!doctype html>
+<!--
+  Fonte do "Kit de validação de usabilidade" (termo, cartões de tarefa, questionário SUS e ficha do observador).
+  Para gerar o PDF de novo depois de editar: rode gerar-pdf.ps1 (nesta pasta).
+  Se mudar uma tarefa aqui, mude também ../roteiro-teste-usabilidade.md.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Kit de validação de usabilidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --marinho: #12344d; --agua: #7dc8ed; --areia: #d9c7a3; --sertao: #f3ecdf; --sertao-2: #faf6ee;
+    --couro: #8b5a2b; --tinta: #1f2933; --tinta-2: #52606d; --linha: #d8d1c3;
+  }
+  @page {
+    size: A4;
+    margin: 16mm 16mm 18mm 16mm;
+    @bottom-left { content: "Águas do Capibaribe · Validação de usabilidade"; font: 500 8pt Inter, sans-serif; color: #8a7a5c; }
+    @bottom-right { content: counter(page); font: 600 8.5pt Inter, sans-serif; color: #12344d; }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 400 10.5pt/1.5 Inter, sans-serif; color: var(--tinta); background: #fff; }
+  h1, h2, h3 { font-family: 'Bricolage Grotesque', Inter, sans-serif; color: var(--marinho); margin: 0; letter-spacing: -0.01em; }
+  h1 { font-size: 20pt; line-height: 1.15; margin-bottom: 1.5mm; }
+  h2 { font-size: 13pt; margin: 6mm 0 2.5mm; }
+  p { margin: 0 0 2.5mm; }
+  .rotulo { font: 600 8.5pt Inter, sans-serif; color: var(--couro); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2mm; }
+  .sub { color: var(--tinta-2); margin-bottom: 5mm; }
+  .pagina { break-after: page; }
+  .pagina:last-child { break-after: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  th { text-align: left; font-weight: 600; color: var(--tinta-2); background: var(--sertao); padding: 1.8mm 2.2mm; border: 1px solid var(--linha); }
+  td { padding: 1.8mm 2.2mm; border: 1px solid var(--linha); vertical-align: top; height: 8mm; }
+  .linha-assinatura { display: flex; gap: 10mm; margin-top: 12mm; }
+  .linha-assinatura div { flex: 1; border-top: 1px solid var(--tinta); padding-top: 1.5mm; font-size: 9pt; color: var(--tinta-2); }
+  .caixa { display: inline-block; width: 4mm; height: 4mm; border: 1.3px solid var(--tinta); border-radius: 0.8mm; vertical-align: -0.6mm; margin-right: 2mm; }
+  ul.termo { padding-left: 5mm; margin: 0 0 3mm; }
+  ul.termo li { margin-bottom: 1.6mm; }
+  .opcoes p { margin-bottom: 2mm; }
+
+  /* Cartões de tarefa: 2 por página, para recortar */
+  .cartao { height: 122mm; border: 1.5px dashed var(--areia); border-radius: 4mm; padding: 9mm 10mm; display: flex; flex-direction: column; background: var(--sertao-2); }
+  .cartao + .cartao { margin-top: 8mm; }
+  .cartao .num { font: 700 11pt 'Bricolage Grotesque', Inter, sans-serif; color: var(--couro); letter-spacing: 0.06em; }
+  .cartao .texto { font: 500 17pt/1.45 Inter, sans-serif; color: var(--tinta); margin-top: 6mm; }
+  .cartao .texto strong { font-weight: 700; color: var(--marinho); }
+  .cartao .dados { margin-top: auto; display: flex; gap: 5mm; }
+  .cartao .dado { flex: 1; background: #fff; border: 1px solid var(--linha); border-radius: 3mm; padding: 3mm 4mm; }
+  .cartao .dado span { display: block; font: 500 9pt Inter, sans-serif; color: var(--tinta-2); }
+  .cartao .dado b { font: 700 20pt 'Bricolage Grotesque', Inter, sans-serif; color: var(--marinho); }
+  .cartao .login { margin-top: auto; font: 500 15pt Inter, sans-serif; }
+  .cartao .login div { border-bottom: 1.3px solid var(--tinta-2); padding: 6mm 0 1.5mm; }
+  .cartao .nota { font-size: 9pt; color: var(--tinta-2); margin-top: 4mm; }
+
+  /* SUS */
+  .sus { font-size: 11pt; }
+  .sus th, .sus td { vertical-align: middle; }
+  .sus td { height: 15mm; }
+  .sus td.n { width: 8mm; font-weight: 700; color: var(--marinho); text-align: center; }
+  .sus td.op { width: 12mm; text-align: center; }
+  .sus th.op { text-align: center; padding: 1.5mm 0; }
+  .sus .circ { display: inline-block; width: 8.5mm; height: 8.5mm; line-height: 8.2mm; border: 1.3px solid var(--tinta-2); border-radius: 50%; font-weight: 600; color: var(--tinta-2); }
+  .escala { display: flex; justify-content: space-between; background: var(--sertao); border-radius: 2mm; padding: 2.5mm 4mm; margin-bottom: 4mm; font-weight: 600; color: var(--marinho); }
+
+  .ficha td { height: 11mm; }
+  .ficha td.curto { width: 17mm; }
+  .grade td { text-align: center; height: 9mm; }
+  .grade th { text-align: center; }
+  .grade th:first-child, .grade td:first-child { text-align: left; }
+  .bloco-texto { border: 1px solid var(--linha); border-radius: 2mm; min-height: 15mm; padding: 2mm 3mm; margin-bottom: 2.5mm; font-size: 9pt; color: var(--tinta-2); }
+  .legenda { font-size: 8.5pt; color: var(--tinta-2); margin-top: 1.5mm; }
+</style>
+</head>
+<body>
+
+<!-- ===================== 1. TERMO ===================== -->
+<section class="pagina">
+  <div class="rotulo">1 · Termo de consentimento</div>
+  <h1>Participação no teste do sistema Águas do Capibaribe</h1>
+  <p class="sub">Projeto Integrador do curso de Análise e Desenvolvimento de Sistemas, Senac Pernambuco. Orientador:
+    Prof. Fabio Cesar Figueiredo de Medeiros Chicout.</p>
+
+  <h2>O que é</h2>
+  <p>Estudantes estão desenvolvendo um sistema para registrar a água usada em cada lote de lavagem de jeans e
+    comparar com uma meta. Queremos ver se o sistema é fácil de usar por quem trabalha na máquina.</p>
+
+  <h2>O que você vai fazer</h2>
+  <ul class="termo">
+    <li>Fazer algumas tarefas no sistema, pelo celular, falando em voz alta o que está pensando.</li>
+    <li>Responder um questionário curto, de 10 perguntas, e conversar uns minutos sobre o que achou.</li>
+    <li>Tudo leva cerca de 30 minutos.</li>
+  </ul>
+
+  <h2>Seus direitos</h2>
+  <ul class="termo">
+    <li><strong>Quem está sendo avaliado é o sistema, não você.</strong> Não existe resposta certa ou errada.</li>
+    <li>A participação é voluntária e sem pagamento. Você pode parar a qualquer momento, sem dar explicação.</li>
+    <li>Seu nome não aparece em nenhum documento do projeto. Você será citado apenas como "Operador" e um número,
+      com sua função e tempo de experiência.</li>
+    <li>Os lotes registrados no teste são fictícios e servem só para o teste.</li>
+    <li>As anotações serão usadas apenas neste trabalho acadêmico, seguindo a Lei Geral de Proteção de Dados (LGPD).</li>
+  </ul>
+
+  <h2>Autorizações (marque o que aceitar)</h2>
+  <div class="opcoes">
+    <p><span class="caixa"></span>Aceito participar do teste e responder ao questionário.</p>
+    <p><span class="caixa"></span>Aceito que a <strong>voz</strong> ou a <strong>tela do celular</strong> sejam gravadas, só para a equipe rever (não serão publicadas).</p>
+    <p><span class="caixa"></span>Aceito que o nome da lavanderia seja citado no trabalho.</p>
+  </div>
+
+  <div class="linha-assinatura">
+    <div>Assinatura do participante</div>
+    <div>Assinatura do responsável pela equipe</div>
+  </div>
+  <div class="linha-assinatura" style="margin-top:9mm">
+    <div>Local e data</div>
+    <div>Contato da equipe (e-mail ou telefone do projeto)</div>
+  </div>
+  <p class="legenda" style="margin-top:6mm">Este termo fica com a equipe, fora do repositório do projeto. Se o
+    participante quiser, entregue uma cópia.</p>
+</section>
+
+<!-- ===================== 2. CARTÕES ===================== -->
+<section class="pagina">
+  <div class="cartao">
+    <div class="num">TAREFA 1</div>
+    <div class="texto">Você chegou para o turno. <strong>Entre no sistema</strong> com o usuário e a senha deste cartão.</div>
+    <div class="login">
+      <div>Usuário:</div>
+      <div>Senha:</div>
+    </div>
+    <div class="nota">Preencha à mão no dia. Não anote a senha em nenhum outro lugar.</div>
+  </div>
+  <div class="cartao">
+    <div class="num">TAREFA 2</div>
+    <div class="texto">Você acabou de tirar um lote de <strong>Estonagem</strong> da máquina. <strong>Registre esse lote.</strong></div>
+    <div class="dados">
+      <div class="dado"><span>Processo</span><b>Estonagem</b></div>
+      <div class="dado"><span>Peças</span><b>50</b></div>
+      <div class="dado"><span>Litros usados</span><b>570</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="pagina">
+  <div class="cartao">
+    <div class="num">TAREFA 3</div>
+    <div class="texto">Agora foi um lote de <strong>Tingimento</strong>. Registre o lote e <strong>diga em voz alta como foi esse lote</strong>.</div>
+    <div class="dados">
+      <div class="dado"><span>Processo</span><b>Tingimento</b></div>
+      <div class="dado"><span>Peças</span><b>30</b></div>
+      <div class="dado"><span>Litros usados</span><b>1.590</b></div>
+    </div>
+  </div>
+  <div class="cartao">
+    <div class="num">TAREFA 4</div>
+    <div class="texto">Lote de <strong>Amaciamento</strong>. Você anotou 40 peças, mas, na hora de confirmar, lembra que eram <strong>45</strong>. Registre com o número certo. Depois diga: <strong>o que você faria agora?</strong></div>
+    <div class="dados">
+      <div class="dado"><span>Processo</span><b>Amaciamento</b></div>
+      <div class="dado"><span>Peças anotadas</span><b>40 → 45</b></div>
+      <div class="dado"><span>Litros usados</span><b>920</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="pagina">
+  <div class="cartao">
+    <div class="num">TAREFA 5</div>
+    <div class="texto">O gestor perguntou como ficou o lote de <strong>Tingimento</strong> que você registrou hoje. <strong>Encontre esse lote</strong> no sistema e diga se ficou dentro da meta.</div>
+  </div>
+  <div class="cartao">
+    <div class="num">TAREFA 6 · OPCIONAL</div>
+    <div class="texto">A internet da lavanderia caiu. Registre um lote de <strong>Estonagem</strong>. Quando a internet voltar, <strong>confira se o lote chegou</strong>.</div>
+    <div class="dados">
+      <div class="dado"><span>Processo</span><b>Estonagem</b></div>
+      <div class="dado"><span>Peças</span><b>20</b></div>
+      <div class="dado"><span>Litros usados</span><b>250</b></div>
+    </div>
+    <div class="nota">Facilitador: ligue o modo avião antes de entregar o cartão e desligue depois do registro.</div>
+  </div>
+</section>
+
+<!-- ===================== 3. SUS ===================== -->
+<section class="pagina">
+  <div class="rotulo">3 · Questionário</div>
+  <h1>O que você achou do sistema?</h1>
+  <p class="sub">Para cada frase, circule um número. Responda pela primeira impressão e não deixe nenhuma em branco.
+    Se não souber, circule o 3.</p>
+  <div class="escala"><span>1 = Discordo totalmente</span><span>5 = Concordo totalmente</span></div>
+  <table class="sus">
+    <thead><tr><th></th><th>Frase</th><th class="op">1</th><th class="op">2</th><th class="op">3</th><th class="op">4</th><th class="op">5</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>Eu acho que gostaria de usar esse sistema frequentemente.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">2</td><td>Eu achei esse sistema desnecessariamente complexo.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">3</td><td>Eu achei esse sistema fácil de usar.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">4</td><td>Eu achei que precisaria de ajuda de uma pessoa técnica para ser capaz de usar esse sistema.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">5</td><td>Eu achei que as várias funções desse sistema foram bem integradas.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">6</td><td>Eu acho que o sistema apresenta muita inconsistência.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">7</td><td>Eu imagino que a maioria das pessoas pode aprender a usar esse sistema rapidamente.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">8</td><td>Eu achei esse sistema muito pesado para usar.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">9</td><td>Eu me senti muito seguro usando o sistema.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+      <tr><td class="n">10</td><td>Eu precisei aprender muitas coisas antes que pudesse utilizar esse sistema.</td><td class="op"><span class="circ">1</span></td><td class="op"><span class="circ">2</span></td><td class="op"><span class="circ">3</span></td><td class="op"><span class="circ">4</span></td><td class="op"><span class="circ">5</span></td></tr>
+    </tbody>
+  </table>
+  <p class="legenda" style="margin-top:4mm">System Usability Scale (Brooke, 1996), versão em português do Brasil de Lourenço, Carmona e Lopes (2022).
+    Participante: Operador ____ · Data: ___/___/______ · Itens lidos pelo facilitador? ( ) sim ( ) não</p>
+</section>
+
+<!-- ===================== 4. FICHA ===================== -->
+<section class="pagina">
+  <div class="rotulo">4 · Ficha do observador</div>
+  <h1>Sessão com o Operador ____</h1>
+  <table style="margin:3mm 0 4mm">
+    <tr><th style="width:32%">Data e horário</th><td></td><th style="width:22%">Aparelho / navegador</th><td></td></tr>
+    <tr><th>Facilitador / observador</th><td></td><th>Conexão</th><td></td></tr>
+    <tr><th>Função do participante</th><td></td><th>Tempo em lavanderia</th><td></td></tr>
+    <tr><th>Como registra o consumo hoje</th><td></td><th>Uso de celular</th><td>pouco · médio · muito</td></tr>
+  </table>
+
+  <h2>Tarefas</h2>
+  <table class="ficha">
+    <thead><tr><th>Tarefa</th><th class="curto">S / A / N</th><th class="curto">Tempo</th><th class="curto">Erros</th><th class="curto">Ajuda</th><th>O que disse ou fez</th></tr></thead>
+    <tbody>
+      <tr><td>T1 Entrar</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>T2 Estonagem<br><small>esperado 600 L · −5,0% · verde</small></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>T3 Tingimento<br><small>esperado 1.500 L · +6,0% · amarelo</small></td><td></td><td></td><td></td><td></td><td>Interpretou?</td></tr>
+      <tr><td>T4 Amaciamento, 45 peças<br><small>esperado 800 L · +15,0% · vermelho</small></td><td></td><td></td><td></td><td></td><td>Voltar e corrigir? O que faria?</td></tr>
+      <tr><td>T5 Achar no histórico</td><td></td><td></td><td></td><td></td><td>Usou o filtro?</td></tr>
+      <tr><td>T6 Sem internet (opc.)<br><small>esperado 240 L · +4,2% · amarelo</small></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="legenda">S = sozinho · A = com ajuda · N = não concluiu. Dica só depois de 2 minutos travado. Tempo do fim da
+    leitura do cartão até ele dizer que terminou.</p>
+
+  <h2>SUS</h2>
+  <table class="grade">
+    <thead><tr><th>Item</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>Soma</th><th>× 2,5</th></tr></thead>
+    <tbody>
+      <tr><td>Resposta</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td style="background:var(--sertao)"></td><td style="background:var(--sertao)"></td></tr>
+      <tr><td>Valor</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="legenda">Valor: itens ímpares = resposta − 1 · itens pares = 5 − resposta. Média de referência: 68.</p>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">4 · Ficha do observador (continuação)</div>
+  <h2 style="margin-top:2mm">Problemas observados</h2>
+  <table class="ficha">
+    <thead><tr><th style="width:8mm">Nº</th><th style="width:30mm">Tela</th><th>O que aconteceu</th><th class="curto">Tarefa</th><th class="curto">Gravidade</th></tr></thead>
+    <tbody>
+      <tr><td>P1</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>P2</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>P3</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>P4</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>P5</td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="legenda">Gravidade: 0 não é problema · 1 cosmético · 2 pequeno (resolve sozinho) · 3 grave (precisou de ajuda ou errou dado) · 4 impede a tarefa.</p>
+
+  <h2>Conversa final</h2>
+  <div class="bloco-texto">1. O que foi mais fácil? O que foi mais difícil?</div>
+  <div class="bloco-texto">2. Teve alguma palavra ou tela que você não entendeu?</div>
+  <div class="bloco-texto">3. Você usaria isso perto da máquina, no dia a dia? O que te impediria?</div>
+  <div class="bloco-texto">4. Hoje, como a água de cada lote é controlada aí na lavanderia?</div>
+  <div class="bloco-texto">5. O que você mudaria?</div>
+</section>
+
+</body>
+</html>
