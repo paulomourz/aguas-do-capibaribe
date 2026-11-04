@@ -56,14 +56,16 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioDTO criar(NovoUsuarioDTO dados) {
+    public UsuarioDTO criar(UsuarioAutenticado quem, NovoUsuarioDTO dados) {
         String login = dados.usuario().trim().toLowerCase();
         if (usuarios.existsByLoginIgnoreCase(login)) {
             throw ApiException.conflito("USUARIO_DUPLICADO", "Este usuário já existe. Escolha outro.", "usuario");
         }
         checarBytes("senha", dados.senha());
         Usuario u = new Usuario(dados.nome().trim(), login, senhas.encode(dados.senha()), dados.perfil());
-        return UsuarioDTO.de(usuarios.save(u));
+        Usuario criado = usuarios.save(u);
+        auditar(quem, criado, AcaoAuditoria.CRIACAO_USUARIO);
+        return UsuarioDTO.de(criado);
     }
 
     /** Cada pessoa altera apenas a própria conta (tela Configurações). */
@@ -97,7 +99,7 @@ public class UsuarioService {
     }
 
     /**
-     * O gestor redefine a senha de outra pessoa que a esqueceu. A própria senha se troca em
+     * O administrador redefine a senha de outra pessoa que a esqueceu. A própria senha se troca em
      * Configurações (com a senha atual), e a do administrador principal só ele mesmo troca.
      */
     @Transactional
@@ -136,12 +138,12 @@ public class UsuarioService {
     }
 
     /**
-     * Registra a ação do gestor na mesma transação da mudança: se uma falhar, as duas são desfeitas.
+     * Registra a ação na mesma transação da mudança: se uma falhar, as duas são desfeitas.
      * Só ids e o tipo da ação; senha e hash nunca entram na auditoria nem no log.
      */
     private void auditar(UsuarioAutenticado quem, Usuario afetado, AcaoAuditoria acao) {
         auditoria.saveAndFlush(new AuditoriaUsuario(quem.id(), afetado.getId(), acao));
-        log.info("Auditoria: {} por gestor id={} no usuario id={}", acao, quem.id(), afetado.getId());
+        log.info("Auditoria: {} por usuario id={} no usuario id={}", acao, quem.id(), afetado.getId());
     }
 
     private static void checarBytes(String campo, String senha) {

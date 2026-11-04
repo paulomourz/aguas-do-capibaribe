@@ -72,6 +72,7 @@ export function useApp() {
   return c
 }
 
+<<<<<<< HEAD
 export type ResultadoRegistro = { tipo: 'enviado'; lote: Lote } | { tipo: 'pendente'; pendente: api.LotePendente }
 
 /** De quanto em quanto tempo tenta de novo enquanto houver lote na fila ou sessão offline. */
@@ -91,6 +92,9 @@ const semFalhar = async <T,>(f: () => Promise<T>): Promise<T | undefined> => {
 }
 
 export const homeDe = (p: Perfil) => (p === 'gestor' ? '/dashboard' : '/registro')
+=======
+export const homeDe = (p: Perfil) => (p === 'operador' ? '/registro' : '/dashboard')
+>>>>>>> origin/develop
 
 /* ---------- Conversões DTO → tipos das telas ---------- */
 
@@ -168,6 +172,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setEnviadosAgora({})
   }, [])
 
+<<<<<<< HEAD
   /** Junta lotes novos à lista sem repetir (um reenvio devolve o mesmo id). */
   const juntarLotes = useCallback((novos: Lote[]) => {
     if (!novos.length) return
@@ -175,6 +180,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const ids = new Set(novos.map((l) => l.id))
       return [...novos, ...ls.filter((l) => !ids.has(l.id))].sort((a, b) => b.data.getTime() - a.data.getTime())
     })
+=======
+  const carregarDados = useCallback(async (u: Usuario) => {
+    const minha = ++carga.current
+    const gestor = u.perfil !== 'operador'
+    setCarregando(true)
+    setErroCarga(null)
+    try {
+      const [ps, ls, as, us] = await Promise.all([
+        api.listarProcessos(),
+        api.listarLotes(),
+        gestor ? api.listarAlertas() : Promise.resolve([]),
+        gestor ? api.listarUsuarios() : Promise.resolve(null),
+      ])
+      if (minha !== carga.current) return
+      setProcessos(ps.map(deProcesso))
+      setLotes(ls.map(deLote))
+      setAlertasDTO(as)
+      setUsuarios(us ? us.map(deUsuario) : [u])
+    } catch (e) {
+      if (minha === carga.current) setErroCarga(errosDaApi(e).mensagem)
+    } finally {
+      if (minha === carga.current) setCarregando(false)
+    }
+>>>>>>> origin/develop
   }, [])
 
   /** Guarda sessão (só o hash do token), processos e lotes para abrir o site sem conexão. */
@@ -430,6 +459,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     entrar: async (login, senha) => {
       try {
         const s = await api.login({ usuario: login.trim(), senha })
+        if (s.usuario.perfil === 'sensor') {
+          void api.logout()
+          throw new api.ApiError(403, { codigo: 'ACESSO_NEGADO', mensagem: 'A conta do sensor só envia dados e não entra no site.' })
+        }
         const u = deUsuario(s.usuario)
         setUsuario(u)
         void carregarDados(u)
@@ -472,6 +505,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     lotes,
     registrarLote: async ({ processoId, pecas, litros }) => {
+<<<<<<< HEAD
       const u = usuarioRef.current
       if (!u) throw new api.ApiError(401, { codigo: 'NAO_AUTENTICADO', mensagem: 'Sessão expirada.' })
       const pendente: api.LotePendente = {
@@ -531,6 +565,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await semFalhar(() => api.removerPendente(chave))
       avisarAbas()
       await atualizarPendentes()
+=======
+      const l = deLote(await api.registrarLote({ processoId: Number(processoId), pecas, litros }, Number(usuario?.id)))
+      setLotes((ls) => [l, ...ls])
+      // O servidor pode ter aberto ou atualizado um alerta com este lote.
+      if (usuario && usuario.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
+      return l
+>>>>>>> origin/develop
     },
     alertas,
     mudarStatusAlerta: async (id, s) => {

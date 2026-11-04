@@ -131,7 +131,7 @@ subida baixa as imagens e compila tudo, então precisa de internet e demora algu
 - **Senhas:** são sorteadas na primeira subida e ficam só em um volume do Docker, fora do Git.
 - **Parar:** `docker compose down` mantém os dados. Com `docker compose down -v`, os dados e as senhas são **apagados**.
 - **Conta do sensor:** a senha também é sorteada e aparece no mesmo comando.
-- **Wokwi com o Docker:** `docker compose --profile tunel up -d --build` liga também o túnel, e `docker compose stop tunel` desliga. Veja o [roteiro de apresentação](docs/guia/roteiro-apresentacao.md).
+- **Wokwi com o Docker:** `docker compose --profile tunel up -d --build` liga também o túnel, e `docker compose --profile tunel stop tunel` desliga. Veja o [roteiro de apresentação](docs/guia/roteiro-apresentacao.md).
 
 Para rodar sem Docker, siga os passos abaixo.
 

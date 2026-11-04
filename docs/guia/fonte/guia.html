@@ -459,7 +459,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <div class="cartao"><h4>Banco oficial é sagrado</h4><p>O <code>aguas</code> guarda só dados reais desde 20/10/2026. Nunca rode testes nele: os testes usam bancos temporários <code>*_teste</code>.</p></div>
     <div class="cartao"><h4>Usuário próprio no banco</h4><p>A API conecta como <code>aguas_api</code>, que só lê, insere e atualiza: não apaga dados nem muda tabelas. Ele é criado por <code>database/seguranca-usuario-api.sql</code>.</p></div>
     <div class="cartao"><h4>Senhas fortes e pessoais</h4><p>Cada pessoa tem o próprio acesso. Senhas têm pelo menos 8 caracteres e são guardadas só como hash.</p></div>
-    <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o túnel ligado, a API local fica acessível pela internet. Desligue com <code>docker compose stop tunel</code> ao terminar de usar o sensor local.</p></div>
+    <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o túnel ligado, a API local fica acessível pela internet. Desligue com <code>docker compose --profile tunel stop tunel</code> ao terminar de usar o sensor local.</p></div>
     <div class="cartao"><h4>Fluxo de trabalho</h4><p>Nada de commit direto na <code>main</code>: crie uma <code>feature/</code> a partir da <code>develop</code> e abra um pull request.</p></div>
   </div>
 </section>

@@ -47,7 +47,7 @@ public class SensorInicial implements ApplicationRunner {
         if (senha.length() < 8 || senha.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new IllegalStateException("SENSOR_SENHA precisa ter de 8 a 72 bytes.");
         }
-        usuarios.save(new Usuario(NOME, LOGIN, senhas.encode(senha), Perfil.operador));
+        usuarios.save(new Usuario(NOME, LOGIN, senhas.encode(senha), Perfil.sensor));
         log.info("Conta do sensor '{}' criada.", LOGIN);
     }
 }

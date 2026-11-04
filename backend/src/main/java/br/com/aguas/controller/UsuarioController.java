@@ -38,7 +38,7 @@ public class UsuarioController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar usuários", description = "Só gestor.")
+    @Operation(summary = "Listar usuários", description = "Administrador e gestor.")
     @RespostasDoc.Ok
     @RespostasDoc.SoGestor
     public List<UsuarioDTO> listar() {
@@ -47,13 +47,13 @@ public class UsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Criar usuário", description = "Só gestor. Não existe autocadastro.")
+    @Operation(summary = "Criar usuário", description = "Só administrador. Não existe autocadastro.")
     @ApiResponse(responseCode = "201", description = "Usuário criado.")
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
-    public UsuarioDTO criar(@Valid @RequestBody NovoUsuarioDTO dados) {
-        return usuarios.criar(dados);
+    public UsuarioDTO criar(@AuthenticationPrincipal UsuarioAutenticado quem, @Valid @RequestBody NovoUsuarioDTO dados) {
+        return usuarios.criar(quem, dados);
     }
 
     @PatchMapping("/{id}")
@@ -72,10 +72,10 @@ public class UsuarioController {
 
     @PatchMapping("/{id}/senha")
     @Operation(summary = "Redefinir a senha de outra pessoa",
-            description = "Só gestor, para quem esqueceu a senha. A senha antiga deixa de valer na hora. "
+            description = "Só administrador, para quem esqueceu a senha. A senha antiga deixa de valer na hora. "
                     + "Não vale para a própria senha nem para a do administrador principal.")
     @RespostasDoc.Ok
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.NaoEncontrado
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
@@ -86,10 +86,10 @@ public class UsuarioController {
 
     @PatchMapping("/{id}/ativo")
     @Operation(summary = "Desativar ou reativar acesso",
-            description = "Só gestor. Quem é desativado perde o acesso na hora; os lotes dele continuam no histórico. "
+            description = "Só administrador. Quem é desativado perde o acesso na hora; os lotes dele continuam no histórico. "
                     + "Não vale para a própria conta nem para o administrador principal.")
     @RespostasDoc.Ok
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.NaoEncontrado
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
