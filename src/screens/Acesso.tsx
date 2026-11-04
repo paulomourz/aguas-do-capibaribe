@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
-import { AvisoModoSimulado, Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
+import { Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
 import { IconCloudOff, IconCompass, IconLock, IconRefresh } from '../components/icons'
 import { navigate } from '../router'
 import { errosDaApi, homeDe, useApp } from '../store'
@@ -70,8 +70,6 @@ export function Login({ next }: { next?: string }) {
   }
 
   return (
-    <>
-    <AvisoModoSimulado />
     <div className="flex min-h-screen flex-col bg-page lg:flex-row">
       {/* Painel de marca */}
       <section className="on-dark relative hidden overflow-hidden bg-brand text-white lg:flex lg:w-[46%] lg:flex-col">
@@ -150,7 +148,6 @@ export function Login({ next }: { next?: string }) {
         </div>
       </section>
     </div>
-    </>
   )
 }
 

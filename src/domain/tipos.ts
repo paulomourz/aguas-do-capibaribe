@@ -7,8 +7,8 @@ import type { Perfil, StatusAlerta, Unidade } from '../services/tipos'
 export type { Perfil, Unidade }
 export type AlertaStatus = StatusAlerta
 
-/** senha só existe nos dados simulados (src/mock); a API nunca devolve senha. */
-export type Usuario = { id: string; nome: string; usuario: string; perfil: Perfil; senha?: string; ativo: boolean }
+/** A API nunca devolve senha. */
+export type Usuario = { id: string; nome: string; usuario: string; perfil: Perfil; ativo: boolean }
 export type Processo = { id: string; nome: string; unidade: Unidade; meta: number }
 
 export type Lote = {

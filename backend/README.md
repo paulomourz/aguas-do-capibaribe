@@ -113,8 +113,8 @@ na raiz a partir do `.env.example` (UTF-8 sem BOM):
 VITE_API_URL=http://localhost:8080/api
 ```
 
-Depois rode `pnpm install` e `pnpm dev` (Node 22, conforme `.mise.toml`). O modo simulado, sem API,
-só liga com `VITE_USAR_MOCK=true` e mostra uma faixa de aviso no topo.
+Depois rode `pnpm install` e `pnpm dev` (Node 22, conforme `.mise.toml`). O site precisa da API no ar: não há mais
+modo simulado.
 
 ## Administrador principal
 
