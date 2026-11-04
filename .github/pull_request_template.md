@@ -14,3 +14,10 @@ Refs #
 - [ ] A base do PR é a `develop`.
 - [ ] O CI passou.
 - [ ] Se tem migração nova, usei o próximo número livre da `develop`.
+- [ ] O Paulo revisou este PR.
+
+## Depois do merge
+
+Se o PR mexeu em código ou no banco:
+
+- [ ] O Paulo testou no site publicado: login, registro de lote e a tela alterada.
