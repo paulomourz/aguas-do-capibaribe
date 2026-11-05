@@ -1,4 +1,4 @@
-<p align="center"><img src="../assets/logo-referencia.png" width="120" alt="Logo do Águas do Capibaribe"></p>
+<p align="center"><img src="../../assets/logo-referencia.png" width="120" alt="Logo do Águas do Capibaribe"></p>
 
 # Águas do Capibaribe — Termo de Abertura do Projeto
 
@@ -6,7 +6,7 @@
 
 Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.0**, atualizada em 5 de
 novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026) e 2.1 (20/10/2026, em
-[`TAP-v2.1.pdf`](TAP-v2.1.pdf)).
+[`historico/TAP-v2.1.pdf`](../historico/TAP-v2.1.pdf)).
 
 > **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
 

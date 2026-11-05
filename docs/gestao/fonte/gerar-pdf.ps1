@@ -1,9 +1,10 @@
-﻿# Gera TAP.pdf e ERS.pdf a partir de TAP.md e ERS.md (nesta pasta), usando o marked e o Chrome (ou o Edge).
+﻿# Gera docs/gestao/TAP.pdf e ERS.pdf a partir de TAP.md e ERS.md (nesta pasta), usando o marked e o Chrome (ou o Edge).
 # Uso, a partir desta pasta:  powershell -ExecutionPolicy Bypass -File .\gerar-pdf.ps1
 # Precisa do Node.js (npx baixa o marked na primeira vez). O comentário <!-- sumario --> vira o sumário.
 
 $ErrorActionPreference = 'Stop'
 $aqui = Split-Path -Parent $MyInvocation.MyCommand.Path
+$destino = Split-Path -Parent $aqui
 
 $navegadores = @(
   "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
@@ -68,7 +69,7 @@ foreach ($d in $documentos) {
     $estilo.Replace('RODAPE', $d.Rodape) + "</style></head><body>$corpo</body></html>"
   $temp = Join-Path $aqui ".$($d.Nome).gerado.html"
   [IO.File]::WriteAllText($temp, $html, (New-Object Text.UTF8Encoding $false))
-  $pdf = Join-Path $aqui "$($d.Nome).pdf"
+  $pdf = Join-Path $destino "$($d.Nome).pdf"
   $url = 'file:///' + ($temp -replace '\\', '/')
   & $nav --headless=new --disable-gpu --no-pdf-header-footer --virtual-time-budget=5000 "--print-to-pdf=$pdf" $url | Out-Null
   Remove-Item $temp
