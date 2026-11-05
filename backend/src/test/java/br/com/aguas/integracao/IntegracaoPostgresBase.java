@@ -28,6 +28,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -55,6 +57,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 abstract class IntegracaoPostgresBase {
 
     static final String SENHA_ADMIN = "admin-de-teste-123";
+
+    @DynamicPropertySource
+    static void telegramFalso(DynamicPropertyRegistry r) {
+        r.add("app.telegram.url", TelegramFalso::url);
+        r.add("app.telegram.token", () -> TelegramFalso.TOKEN);
+        r.add("app.telegram.chat-id", () -> "123");
+    }
 
     private static final String SENHA = "senha-de-teste-123";
 
@@ -520,6 +529,50 @@ abstract class IntegracaoPostgresBase {
         chamar(get("/alertas"), s).andExpect(status().isForbidden());
         chamar(get("/usuarios"), s).andExpect(status().isForbidden());
         enviar(patch("/usuarios/" + s.id()), s, Map.of("senha", "outra-senha-456", "senhaAtual", SENHA)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void alertaAbertoAvisaNoTelegramDepoisDeGravar() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "800");
+        String nome = jdbc.queryForObject("select nome from processo where id = ?", String.class, p);
+        lote(g, p, 10, "900");
+        lote(g, p, 10, "900");
+        lote(g, p, 10, "900");
+        int alerta = alertasDo(g, p).getFirst().get("id").asInt();
+
+        TelegramFalso.Pedido aviso = esperarAviso(nome);
+        assertThat(aviso.caminho()).isEqualTo("/bot" + TelegramFalso.TOKEN + "/sendMessage");
+        assertThat(aviso.corpo()).contains("\"chat_id\":\"123\"", "Alerta #" + alerta);
+    }
+
+    @Test
+    void telegramForaDoArNaoAtrapalhaORegistroDoLote() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "800");
+        String nome = jdbc.queryForObject("select nome from processo where id = ?", String.class, p);
+        TelegramFalso.status = 500;
+        try {
+            lote(g, p, 10, "900");
+            lote(g, p, 10, "900");
+            lote(g, p, 10, "900");
+            esperarAviso(nome);
+        } finally {
+            TelegramFalso.status = 200;
+        }
+        assertThat(alertasDo(g, p)).hasSize(1);
+        assertThat(jdbc.queryForObject("select count(*) from lote where processo_id = ?", Integer.class, p)).isEqualTo(3);
+    }
+
+    /** O aviso sai em outra thread, depois do commit: espera até 5 s pela mensagem do processo. */
+    private static TelegramFalso.Pedido esperarAviso(String processo) throws InterruptedException {
+        for (int i = 0; i < 50; i++) {
+            for (TelegramFalso.Pedido pedido : TelegramFalso.pedidos) {
+                if (pedido.corpo().contains(processo)) return pedido;
+            }
+            Thread.sleep(100);
+        }
+        throw new AssertionError("O Telegram não recebeu o aviso do processo " + processo);
     }
 
     @Test
