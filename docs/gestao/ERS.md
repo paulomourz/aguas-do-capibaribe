@@ -1,4 +1,4 @@
-<p align="center"><img src="../../assets/logo-referencia.png" width="120" alt="Logo do Águas do Capibaribe"></p>
+<p align="center"><img src="../assets/logo-referencia.png" width="120" alt="Logo do Águas do Capibaribe"></p>
 
 # Águas do Capibaribe — Especificação de Requisitos de Software (ERS)
 
