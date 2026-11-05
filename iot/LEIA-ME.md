@@ -23,8 +23,9 @@ O passo a passo de cada um está no [roteiro de apresentação](../docs/guia/rot
 
 ## 1. Conta do sensor
 
-A API cria a conta `sensor.wokwi` (operador) sozinha ao subir, com a senha da variável `SENSOR_SENHA`.
-Se a conta já existir, nada muda. Se a senha se perder, o gestor a redefine em **Usuários → Redefinir senha**.
+A API cria a conta `sensor.wokwi` sozinha ao subir, com a senha da variável `SENSOR_SENHA`. Ela tem o perfil
+**sensor**, que só consulta os processos e registra lotes, e não entra no site. Se a conta já existir, nada muda. Se
+a senha se perder, um administrador a redefine em **Usuários → Redefinir senha**.
 
 ## 2. Rodar no Wokwi
 
@@ -35,8 +36,8 @@ Se a conta já existir, nada muda. Se a senha se perder, o gestor a redefine em 
    ```cpp
    const char* SENHA = "a senha do sensor.wokwi";
    ```
-   Salve no Wokwi (Ctrl+S). A senha preenchida fica **só no Wokwi**: no repositório a linha continua com
-   `COLE-AQUI-...`.
+   **Não salve** o projeto com a senha preenchida: os projetos do Wokwi são públicos. Cole a senha só na hora de
+   usar. No repositório, a linha continua com `COLE-AQUI-...`.
 5. Em `PROCESSO_NOME`, escreva o nome do processo como aparece no site (maiúsculas não importam). O sensor
    consulta a API e descobre o id sozinho.
 6. Clique em ▶. **Abra o site antes**: a API do plano grátis dorme sem uso e leva cerca de 2 minutos para acordar.
@@ -81,7 +82,8 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e
 - No projeto público, a conexão usa HTTPS e confere a impressão digital do certificado da API. No local, usa HTTP até a Cloudflare, sem criptografia nesse trecho: use só dados de teste.
 - O gerador de pulsos para durante o envio porque deixa o TLS lento demais no simulador.
 - O login é renovado sozinho quando a sessão de 8 horas vence.
-- Os projetos do Wokwi são públicos por padrão: quem tiver o link vê a senha do sensor. Use uma senha só para
-  isso. O simulador não tem armazenamento protegido; no dispositivo físico, guarde a senha fora do código.
+- Os projetos do Wokwi são públicos: quem tiver o link vê o que estiver salvo. Por isso a senha do sensor não fica
+  salva lá, e a conta tem o perfil sensor, que só registra lotes. O simulador não tem armazenamento protegido; no
+  dispositivo físico, guarde a senha fora do código.
 - No dispositivo físico: remova o fio entre os pinos 25 e 27, ligue o sinal do sensor de vazão no pino 27 e
   calibre `PULSOS_POR_LITRO`.
