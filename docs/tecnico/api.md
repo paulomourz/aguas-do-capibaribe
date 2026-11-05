@@ -1,7 +1,7 @@
 # API REST: endpoints
 
 > **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
-> Lá estão as 16 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> Lá estão as 19 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
 > `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
 
 Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://localhost:8080/api` no computador. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
@@ -9,6 +9,10 @@ Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://l
 
 Autenticação: `Authorization: Bearer <token>`, com o token obtido em `POST /auth/login`. O token vale
 8 horas e não é renovado automaticamente.
+
+**Perfis:** `admin` (tudo, mais usuários e auditoria), `gestor` (operação; só lê a lista de usuários), `operador`
+(registra lotes e vê os próprios) e `sensor` (só `GET /processos` e `POST /lotes`). Na tabela, "gestor" quer dizer
+gestor ou admin.
 
 ## Erros
 
@@ -25,8 +29,10 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | 401 | `NAO_AUTENTICADO` | sem token, token inválido ou expirado, ou usuário desativado depois do login |
 | 403 | `ACESSO_NEGADO` | perfil sem permissão, ou tentativa de alterar a conta de outra pessoa |
 | 404 | `NAO_ENCONTRADO` | recurso inexistente; o operador também recebe 404 para lote de outra pessoa |
-| 409 | `USUARIO_DUPLICADO`, `PROCESSO_DUPLICADO`, `TRANSICAO_INVALIDA`, `OPERACAO_NAO_PERMITIDA`, `CONFLITO` | conflitos de regra ou de unicidade |
+| 405 | `METODO_NAO_PERMITIDO` | método HTTP que a rota não aceita |
+| 409 | `USUARIO_DUPLICADO`, `PROCESSO_DUPLICADO`, `TRANSICAO_INVALIDA`, `OPERACAO_NAO_PERMITIDA`, `CHAVE_DE_ENVIO_REPETIDA`, `CONFLITO` | conflitos de regra ou de unicidade |
 | 422 | `VALIDACAO` | campos inválidos (detalhes em `campos`) |
+| 429 | `LIMITE_EXCEDIDO` | mais de 5 logins por minuto do mesmo IP, ou mais de 60 lotes por minuto do mesmo usuário; o cabeçalho `Retry-After` diz quantos segundos esperar |
 | 503 | `BANCO_INDISPONIVEL` | sem conexão com o PostgreSQL |
 | 500 | `ERRO_INTERNO` | erro inesperado (o detalhe fica só no log) |
 
@@ -37,19 +43,20 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `POST /auth/login` | público | `{usuario, senha}` | `200 {token, usuario: UsuarioDTO}` |
 | `GET /auth/me` | autenticado | — | `UsuarioDTO` |
 | `GET /usuarios` | gestor | — | `UsuarioDTO[]` |
-| `POST /usuarios` | gestor | `{nome, usuario, perfil, senha}` | `201 UsuarioDTO` |
+| `POST /usuarios` | admin | `{nome, usuario, perfil, senha}` (`perfil`: `admin`, `gestor`, `operador` ou `sensor`) | `201 UsuarioDTO`; registra `CRIACAO_USUARIO` na auditoria |
 | `PATCH /usuarios/{id}` | a própria pessoa | `{nome?, senha?, senhaAtual?}` (`senhaAtual` é obrigatória quando há `senha`) | `UsuarioDTO` |
-| `PATCH /usuarios/{id}/senha` | gestor (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO`; registra `REDEFINICAO_SENHA` na auditoria |
-| `PATCH /usuarios/{id}/ativo` | gestor (não em si mesmo) | `{ativo}` | `UsuarioDTO`; registra `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO` na auditoria |
-| `GET /processos` | autenticado | — | `ProcessoDTO[]` |
+| `PATCH /usuarios/{id}/senha` | admin (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO`; registra `REDEFINICAO_SENHA` na auditoria |
+| `PATCH /usuarios/{id}/ativo` | admin (não em si mesmo nem no administrador principal) | `{ativo}` | `UsuarioDTO`; registra `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO` na auditoria |
+| `GET /processos` | autenticado, inclusive o sensor | — | `ProcessoDTO[]` (lista guardada em cache, atualizada a cada cadastro ou edição) |
 | `POST /processos` | gestor | `{nome, unidade, meta}` | `201 ProcessoDTO` |
 | `PUT /processos/{id}` | gestor | `{nome, unidade, meta}` | `ProcessoDTO` |
 | `GET /lotes?processoId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais (`inicio`/`fim` em ISO 8601 com fuso) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
-| `POST /lotes` | autenticado | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
+| `POST /lotes` | autenticado, inclusive o sensor | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
+| `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; sem senha nem hash |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |

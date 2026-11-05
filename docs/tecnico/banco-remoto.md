@@ -76,8 +76,8 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
   hospedagem é separado do banco do PC e do banco do Docker. Os valores ficam em `docs/privado/hospedagem.md`, fora do Git.
 
 - **Banco da máquina de DevOps:** `aguas`, no PostgreSQL 18 (`DB_HOST=localhost`). Não é o banco do site publicado.
-  Desde 20/10/2026 ele tem só os **dois usuários fixos**: `capibaribe.admin` (gestor, administrador do
-  site) e `sensor.wokwi` (operador, usado pelo sensor no Wokwi). As senhas estão em
+  Ele tem os usuários fixos `capibaribe.admin` (perfil admin) e `sensor.wokwi` (perfil sensor, usado pelo sensor
+  no Wokwi). As senhas estão em
   `docs/privado/acessos-e-senhas.md`, fora do Git. Não há processos, lotes nem alertas: os testes
   foram apagados (com a trava `trg_lote_imutavel` desligada só durante a limpeza). Os processos reais
   são cadastrados pela tela **Processos e metas**.
@@ -88,12 +88,16 @@ como hash BCrypt. Detalhes em [`../../backend/README.md`](../../backend/README.m
   seção 3). Conferido: login, processos, lotes, usuários, relatório e Swagger funcionam, e
   `DELETE FROM lote` é recusado. O `postgres` fica só para administrar o banco. A senha está em
   `docs/privado/acessos-e-senhas.md`, fora do Git.
-- **Migrações aplicadas no banco oficial:** `001-auditoria-usuario.sql` (27/10/2026, script manual,
-  hoje V4 do Flyway). A tabela `auditoria_usuario` já registra as ações do gestor sobre outros usuários.
+- **Migrações aplicadas no banco da máquina de DevOps:** baseline na V4 (02/11/2026) e, depois, V5 a V8, à mão. A
+  tabela `auditoria_usuario` registra as ações sobre outros usuários.
 - **Flyway no banco da máquina de DevOps:** baseline feita em 02/11/2026, na versão 4. O `backend/.env` dessa máquina usa
   `FLYWAY_ATIVO=false`, para a senha do `postgres` não ficar no arquivo. Uma migração nova roda à mão, com
   `mvn flyway:migrate`, como `postgres`.
 - **Banco publicado:** a API no Render conecta ao Neon como `aguas_api`, com `DB_SSLMODE=require`, e o Flyway usa o dono do
-  banco. Testado em 02/11/2026: a API sobe, o login funciona e os lotes do sensor gravam o `esperado` e aparecem no histórico.
+  banco, aplicando as migrações novas sozinho a cada publicação. Contas: `capibaribe.admin`, `capibaribe.gestor` e
+  `sensor.wokwi`. O Render só publica depois do CI e confere a saúde da API em `/api/actuator/health`. O aviso de
+  alerta no Telegram usa as variáveis `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID` e `SITE_URL` do Render.
+- **Backup:** `database/backup.sh` faz o backup de qualquer um dos bancos e confere se ele restaura
+  ([`../../database/LEIA-ME.md`](../../database/LEIA-ME.md#backup-e-restore)).
 - **Banco do Docker:** separado dos outros dois, é criado na primeira subida. As senhas são sorteadas e aparecem em
   `docker compose logs segredos`.
