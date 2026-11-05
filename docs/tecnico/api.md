@@ -50,6 +50,36 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
+| `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
+| `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
+| `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |
+
+### Monitoramento (Actuator)
+
+Issue #51. O Spring Boot Actuator expõe só `health` e `metrics`. Os outros endpoints (`env`, `beans`, `heapdump`,
+`loggers` etc.) mostrariam senhas e a memória da API: eles nem são ligados e, se fossem, a segurança responde `403`.
+
+- **Saúde:** `GET /api/actuator/health` responde `UP` quando a API e o banco estão no ar e `503 DOWN` se o banco
+  cair. É aberto para o Render e serviços de monitoramento (como o UptimeRobot) consultarem sem token. Sem token, só
+  diz o status.
+- **Métricas (só admin):**
+
+| Métrica | O que mostra |
+|---|---|
+| `http.server.requests?tag=uri:/lotes` | chamadas (`COUNT`), tempo total (`TOTAL_TIME`) e maior tempo (`MAX`) de uma rota; o tempo médio é `TOTAL_TIME / COUNT` |
+| `http.server.requests?tag=status:500` | quantas respostas com erro |
+| `jvm.memory.used?tag=area:heap` | memória em uso pela API, em bytes |
+| `hikaricp.connections.active` | conexões com o banco em uso |
+
+```bash
+curl https://aguas-api-a0vq.onrender.com/api/actuator/health
+curl -H "Authorization: Bearer <token do admin>" \
+  "https://aguas-api-a0vq.onrender.com/api/actuator/metrics/http.server.requests?tag=uri:/lotes"
+```
+
+**Memória:** medida num contêiner limitado a 512 MB, como no plano grátis do Render (05/11/2026). Sem o Actuator, a
+API usava 287,7 MiB depois de 1.000 requisições; com ele, 291,5 MiB. A diferença fica dentro da variação entre uma
+execução e outra.
 
 ### Reenvio sem duplicar (`Idempotency-Key`)
 

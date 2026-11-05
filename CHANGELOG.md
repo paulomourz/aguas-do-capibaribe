@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Monitoramento
+
+- **Saúde e métricas da API com Spring Boot Actuator** (issue #51, item #23 do parecer). `GET /api/actuator/health`
+  é aberto e, sem token, só diz `UP` ou `DOWN`; o admin vê o estado do banco. `GET /api/actuator/metrics` é só do
+  admin e mostra o tempo de resposta por rota, a memória e as conexões com o banco. Nenhum outro endpoint do Actuator
+  é exposto. Com 512 MB, como no Render, a memória ficou igual: 287,7 MiB sem o Actuator e 291,5 MiB com ele, depois
+  de 1.000 requisições. Uso em `docs/tecnico/api.md#monitoramento-actuator`.
+
 ### Banco de dados
 
 - **Backup e restore do PostgreSQL** (issue #53, item #25 do parecer): `database/backup.sh` faz o backup com

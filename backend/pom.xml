@@ -44,6 +44,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
+        <!-- Saúde e métricas da API em /api/actuator/health e /api/actuator/metrics (issue #51) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!-- Limite de requisições no login e no registro de lotes (issue #60) -->
         <dependency>
             <groupId>com.bucket4j</groupId>
