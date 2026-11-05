@@ -15,16 +15,17 @@ import {
   StatusBadge,
   type Col,
 } from '../components/ui'
-import { IconHistory, IconPlus } from '../components/icons'
+import { IconDownload, IconHistory, IconPlus } from '../components/icons'
 import { fmtData, fmtHora, fmtL, fmtNum, fmtPct, type Lote } from '../domain'
 import { navigate } from '../router'
+import { baixarCsvLotes } from '../services/historicoCsv'
 import { useApp, useEstadoTela } from '../store'
 
 const POR_PAGINA = 8
 
 /** O3 (operador: somente os próprios lotes) e G6 (gestor: todos os lotes, com "Registrado por"). */
 export default function Historico() {
-  const { usuario, lotes, processos, nomeProcesso, nomeUsuario } = useApp()
+  const { usuario, lotes, processos, nomeProcesso, nomeUsuario, notificar } = useApp()
   const gestor = usuario?.perfil !== 'operador'
   const [estado, setEstado] = useEstadoTela()
   const [processoId, setProcessoId] = useState('')
@@ -34,6 +35,23 @@ export default function Historico() {
   const filtrados = base.filter((l) => !processoId || l.processoId === processoId)
   const pagina_ = Math.min(pagina, Math.max(1, Math.ceil(filtrados.length / POR_PAGINA)))
   const visiveis = filtrados.slice((pagina_ - 1) * POR_PAGINA, pagina_ * POR_PAGINA)
+  const podeExportar = estado === 'dados' && filtrados.length > 0
+
+  /** Exporta todos os lotes do filtro atual (não só a página visível) para auditoria externa. */
+  function exportarCsv() {
+    try {
+      const nome = baixarCsvLotes(filtrados, {
+        nomeProcesso,
+        // O operador não carrega a lista de usuários; os lotes dele são todos dele.
+        nomeUsuario: (id) => (id === usuario?.id ? usuario.nome : nomeUsuario(id)),
+        processo: processoId ? nomeProcesso(processoId) : undefined,
+      })
+      notificar(`${nome} baixado.`)
+    } catch (e) {
+      console.error(e)
+      notificar('Não foi possível gerar o CSV. Tente de novo.', 'erro')
+    }
+  }
 
   const cols: Col<Lote>[] = [
     {
@@ -70,6 +88,18 @@ export default function Historico() {
       <PageHeader
         title="Histórico de lotes"
         description={gestor ? 'Todos os lotes registrados na lavanderia.' : 'Somente os lotes que você registrou.'}
+        actions={
+          <Button
+            variant="secondary"
+            icon={<IconDownload size={20} />}
+            onClick={exportarCsv}
+            disabled={!podeExportar}
+            title={podeExportar ? `Exporta ${filtrados.length} ${filtrados.length === 1 ? 'lote' : 'lotes'} do filtro atual` : undefined}
+            className="w-full sm:w-auto"
+          >
+            Exportar CSV
+          </Button>
+        }
       />
 
       <Card as="section" className="overflow-hidden">
