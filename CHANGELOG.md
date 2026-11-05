@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Avisos
+
+- **Aviso no Telegram quando um alerta é aberto** (issue #52, item #24 do parecer). A mensagem traz o processo, os
+  3 lotes e o número do alerta, e o link dele quando `SITE_URL` está definido. O envio acontece depois que o lote foi
+  gravado e em outra thread: o registro não espera o Telegram, e uma falha no envio só fica no log, sem o token. Usa
+  HTTPS (porta 443), porque o plano grátis do Render bloqueia as portas de e-mail. Desligado sem `TELEGRAM_TOKEN` e
+  `TELEGRAM_CHAT_ID`, que ficam só nas variáveis de ambiente.
+
 ### Monitoramento
 
 - **Saúde e métricas da API com Spring Boot Actuator** (issue #51, item #23 do parecer). `GET /api/actuator/health`

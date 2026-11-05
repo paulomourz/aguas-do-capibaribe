@@ -63,6 +63,8 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
 | `LIMITE_LOGIN_POR_MINUTO` / `LIMITE_LOTES_POR_MINUTO` | não (5 / 60) | Tentativas de login por IP e lotes por usuário, por minuto. Acima disso, a API responde 429 |
 | `LIMITE_CABECALHO_IP` | atrás de proxy | Cabeçalho com o IP real, que o proxy sempre sobrescreve: `X-Real-IP` no Docker, `CF-Connecting-IP` no Render. Sem ele, todos os usuários dividem o mesmo limite de login |
+| `TELEGRAM_TOKEN` / `TELEGRAM_CHAT_ID` | não | Token do bot e id da conversa que recebe o aviso de alerta aberto. Sem os dois, o aviso fica desligado |
+| `SITE_URL` | não | Endereço do site; com ele, o aviso do Telegram leva o link do alerta |
 | `SENSOR_SENHA` | não | Senha (8 a 72 bytes) da conta `sensor.wokwi`, usada apenas para criá-la. Sem ela, a conta não é criada |
 
 **Banco oficial.** O banco em uso é o `aguas` (veja a situação atual em
