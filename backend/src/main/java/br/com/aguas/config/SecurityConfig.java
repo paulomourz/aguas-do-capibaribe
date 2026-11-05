@@ -42,6 +42,11 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 // Documentação (Swagger UI); desligável com SWAGGER_ATIVO=false
                 .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
+                // Monitoramento (issue #51): a saúde é aberta e, sem token, só diz UP ou DOWN;
+                // as métricas mostram o uso da API e ficam só com o admin.
+                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/metrics", "/actuator/metrics/*").hasRole("ADMIN")
+                .requestMatchers("/actuator/**").denyAll()
                 // O gestor só lê a lista: o histórico mostra quem registrou cada lote.
                 .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMIN", "GESTOR")
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")

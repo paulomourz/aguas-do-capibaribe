@@ -79,6 +79,27 @@ app:
   # Versão do pom.xml (preenchida no build); aparece no Swagger.
   versao: '@project.version@'
 
+# Monitoramento (issue #51), na mesma porta e com o mesmo prefixo /api:
+# - /api/actuator/health: aberto, para o Render e serviços de monitoramento. Sem token, só {"status":"UP"};
+#   os detalhes (banco, disco) só aparecem para o admin.
+# - /api/actuator/metrics: só admin. Inclui http.server.requests (tempo de resposta por rota),
+#   memória (jvm.memory.used) e conexões com o banco (hikaricp.connections).
+# Nenhum outro endpoint do Actuator é exposto (env, beans, heapdump etc. mostrariam segredos).
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      access: read-only
+      show-details: when-authorized
+      roles: ADMIN
+    metrics:
+      access: read-only
+
 # Swagger UI em /api/swagger-ui.html e especificação em /api/v3/api-docs.
 # SWAGGER_ATIVO=false desliga os dois (por exemplo, em produção).
 springdoc:

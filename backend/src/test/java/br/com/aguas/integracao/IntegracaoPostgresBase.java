@@ -165,6 +165,50 @@ abstract class IntegracaoPostgresBase {
                 .doesNotContain("ix_lote_processo");
     }
 
+    // ---------- monitoramento (issue #51) ----------
+
+    @Test
+    void saudeAbertaMostraSoOStatusSemToken() throws Exception {
+        mvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components").doesNotExist());
+        // Operador e gestor também não veem os detalhes; o admin vê o banco.
+        chamar(get("/actuator/health"), conta("gestor")).andExpect(jsonPath("$.components").doesNotExist());
+        chamar(get("/actuator/health"), conta("admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.db.status").value("UP"));
+    }
+
+    @Test
+    void metricasSoParaOAdmin() throws Exception {
+        mvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());
+        for (String perfil : List.of("operador", "gestor", "sensor")) {
+            chamar(get("/actuator/metrics"), conta(perfil)).andExpect(status().isForbidden());
+        }
+        Conta adm = conta("admin");
+        chamar(get("/processos"), adm).andExpect(status().isOk());
+        chamar(get("/actuator/metrics"), adm)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.names").value(org.hamcrest.Matchers.hasItems(
+                        "http.server.requests", "jvm.memory.used", "hikaricp.connections.active")));
+        // Tempo de resposta de uma rota: quantas chamadas e o tempo total.
+        chamar(get("/actuator/metrics/http.server.requests").param("tag", "uri:/processos"), adm)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.measurements[?(@.statistic == 'COUNT')].value").isNotEmpty())
+                .andExpect(jsonPath("$.measurements[?(@.statistic == 'TOTAL_TIME')].value").isNotEmpty());
+    }
+
+    @Test
+    void outrosEndpointsDoActuatorFicamFechados() throws Exception {
+        Conta adm = conta("admin");
+        // env, beans, heapdump e afins mostrariam senhas e a memória da API: nem o admin acessa.
+        for (String rota : List.of("/actuator", "/actuator/env", "/actuator/beans", "/actuator/heapdump",
+                "/actuator/configprops", "/actuator/loggers", "/actuator/health/db")) {
+            chamar(get(rota), adm).andExpect(status().isForbidden());
+        }
+    }
+
     @Test
     void loginMeESenhaErrada() throws Exception {
         Conta g = conta("gestor");
