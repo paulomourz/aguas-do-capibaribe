@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Desempenho
+
+- **Índices da regra de alerta e dos lotes de um alerta** (issue #59): migração `V8` cria `ix_lote_processo_data`
+  (substitui `ix_lote_processo`) e `ix_alerta_lote_alerta`. Com 200.000 lotes, a busca da regra de alerta num processo
+  pouco usado cai de 73,5 ms para 0,19 ms, e a dos lotes de um alerta de 9,8 ms para 0,40 ms. Medição e scripts em
+  `docs/tecnico/desempenho-indices.md` e `database/desempenho/`.
+
 ### Removido
 
 - **Modo simulado do site** (item #21 do parecer): saem `src/mock/`, `src/services/mockUtil.ts`, a variável
