@@ -84,9 +84,71 @@ tentar recriá-las.
    inclua a tabela em `seguranca-usuario-api.sql`.
 4. Rode `mvn test`: os testes de integração começam de um banco vazio e aplicam todas as migrações.
 
+## Backup e restore
+
+`backup.sh` faz o backup com `pg_dump`, confere se ele restaura e guarda os últimos 7 dias. `restore.sh` restaura.
+Rodam no Git Bash (Windows) ou em qualquer Linux. Sem `pg_dump` instalado, usam o Docker.
+
+**1. Configure a conexão uma vez.** Copie [`env.backup.example`](env.backup.example) para `database/.env.backup` e
+preencha com o **dono do banco** (o `aguas_api` não lê todas as tabelas). O arquivo é ignorado pelo Git. O exemplo
+tem os três bancos: Docker, PC e Neon. Para guardar mais de um, crie um arquivo para cada e escolha com `BACKUP_ENV`.
+
+**2. Faça o backup.**
+
+```bash
+bash database/backup.sh
+BACKUP_ENV=database/.env.backup.neon bash database/backup.sh   # outro banco
+```
+
+O backup fica em `database/backups/` (ignorada pelo Git), com três arquivos:
+
+| Arquivo | O que é |
+|---|---|
+| `<prefixo>_<data>.dump` | o backup, no formato do `pg_dump` já compactado |
+| `.dump.sha256` | o código que confere se o arquivo não foi corrompido ou alterado |
+| `.dump.contagens` | quantas linhas cada tabela tinha no início e no fim do backup |
+
+O script para com erro, sem apagar nenhum backup antigo, se qualquer passo falhar. Os passos são:
+
+1. Conta as linhas.
+2. Roda o `pg_dump`.
+3. Conta as linhas de novo.
+4. Confere se o arquivo abre no `pg_restore`.
+5. Restaura num PostgreSQL temporário (um contêiner apagado no fim) e confere se cada tabela voltou com as linhas
+   esperadas.
+6. Só então apaga os backups do mesmo prefixo com mais de 7 dias.
+
+A API nunca apaga linhas, então as linhas de cada tabela no backup ficam entre a contagem do início e a do fim, mesmo
+com lotes chegando durante o backup. `BACKUP_VERIFICAR=0` pula o passo 5. `BACKUP_RETENCAO_DIAS` muda os 7 dias.
+
+**3. Para restaurar:**
+
+```bash
+bash database/restore.sh --verificar database/backups/<arquivo>.dump   # só testa, num banco temporário
+bash database/restore.sh database/backups/<arquivo>.dump               # restaura no banco do .env.backup
+```
+
+O restore de verdade só aceita um banco **vazio**: crie um banco novo, aponte o `.env.backup` para ele e rode. Ele
+nunca sobrescreve dados, e roda numa transação: se der erro, o banco continua vazio. Dono e permissões não vão junto,
+porque o dono do Neon não existe no PC, por exemplo. Depois do restore, rode `seguranca-usuario-api.sql`, como em
+[Banco novo](#banco-novo). O histórico do Flyway vem no backup, então a API reconhece as migrações já aplicadas.
+
+**4. Automatize** (uma vez por dia, às 3h):
+
+- **Windows:** no Agendador de Tarefas, crie uma tarefa diária com o programa `C:\Program Files\Git\bin\bash.exe`, o
+  argumento `database/backup.sh` e "Iniciar em" na pasta do projeto. O Docker Desktop precisa estar aberto se o
+  `pg_dump` não estiver instalado.
+- **Linux:** no `crontab -e`, adicione
+  `0 3 * * * cd /caminho/do/projeto && bash database/backup.sh >> database/backups/backup.log 2>&1`.
+
+Guarde uma cópia dos backups fora do computador (por exemplo, num drive da equipe com acesso restrito). Eles têm os
+dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para o chat.
+
 | Arquivo | Para quê |
 |---|---|
 | `seguranca-usuario-api.sql` | cria o usuário `aguas_api`, que a API usa, só com ler, inserir e atualizar (sem apagar nem mudar a estrutura) |
+| `backup.sh` / `restore.sh` | backup com verificação e retenção de 7 dias, e restore só em banco vazio (veja acima) |
+| `env.backup.example` | modelo da conexão do backup, para copiar para `.env.backup` |
 
 Os testes automáticos usam bancos temporários terminados em `_teste`, criados e apagados na hora;
 nunca rode os testes no `aguas`.

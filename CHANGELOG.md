@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Banco de dados
+
+- **Backup e restore do PostgreSQL** (issue #53, item #25 do parecer): `database/backup.sh` faz o backup com
+  `pg_dump` compactado e o restaura num banco temporário para conferir as linhas de cada tabela. Ele guarda 7 dias de
+  backups e só apaga os antigos depois de um backup bom. `database/restore.sh` restaura só em banco vazio, nunca por
+  cima de dados. Funciona com o banco do Docker, do PC e do Neon. Sem `pg_dump` instalado, usa o Docker. Uso em
+  `database/LEIA-ME.md#backup-e-restore`.
+
 ### Desempenho
 
 - **Índices da regra de alerta e dos lotes de um alerta** (issue #59): migração `V8` cria `ix_lote_processo_data`
