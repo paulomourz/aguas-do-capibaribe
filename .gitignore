@@ -28,3 +28,6 @@ logs/
 test-results/
 playwright-report/
 dev-dist/
+
+# Backups do banco (database/backup.sh): têm dados reais
+database/backups/
