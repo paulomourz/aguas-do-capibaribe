@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import br.com.aguas.entity.Lote;
 import br.com.aguas.entity.Processo;
 import br.com.aguas.entity.Unidade;
 import br.com.aguas.exception.ApiException;
+import br.com.aguas.notificacao.AlertaAberto;
 import br.com.aguas.repository.AlertaLoteRepository;
 import br.com.aguas.repository.AlertaRepository;
 import br.com.aguas.repository.LoteRepository;
@@ -42,13 +44,15 @@ public class LoteService {
     private final ProcessoRepository processos;
     private final AlertaRepository alertas;
     private final AlertaLoteRepository vinculos;
+    private final ApplicationEventPublisher eventos;
 
     public LoteService(LoteRepository lotes, ProcessoRepository processos, AlertaRepository alertas,
-                       AlertaLoteRepository vinculos) {
+                       AlertaLoteRepository vinculos, ApplicationEventPublisher eventos) {
         this.lotes = lotes;
         this.processos = processos;
         this.alertas = alertas;
         this.vinculos = vinculos;
+        this.eventos = eventos;
     }
 
     /** Gestor vê todos os lotes; operador, apenas os próprios. */
@@ -96,7 +100,7 @@ public class LoteService {
         }
 
         Lote novo = lotes.saveAndFlush(new Lote(p.getId(), quem.id(), dados.pecas(), dados.litros(), chaveEnvio));
-        aplicarRegraDeAlerta(novo);
+        aplicarRegraDeAlerta(novo, p);
         return new Registro(LoteDTO.de(novo), false);
     }
 
@@ -112,7 +116,7 @@ public class LoteService {
         return l;
     }
 
-    private void aplicarRegraDeAlerta(Lote novo) {
+    private void aplicarRegraDeAlerta(Lote novo, Processo p) {
         if (!novo.acimaDoEsperado()) return;
 
         List<Lote> recentes = new ArrayList<>();
@@ -135,6 +139,8 @@ public class LoteService {
             case Criar c -> {
                 Alerta alerta = alertas.saveAndFlush(new Alerta(novo.getProcessoId()));
                 c.loteIds().forEach(id -> vinculos.save(new AlertaLote(id, alerta.getId())));
+                // O aviso no Telegram só sai depois do commit (AvisoDeAlerta).
+                eventos.publishEvent(new AlertaAberto(alerta.getId(), p.getNome(), c.loteIds()));
             }
             case RegraDeAlerta.Nenhuma n -> { }
         }

@@ -74,6 +74,12 @@ app:
   # Conta do sensor (sensor.wokwi). Criada na inicialização se SENSOR_SENHA estiver definida.
   sensor:
     senha: ${SENSOR_SENHA:}
+  # Aviso no Telegram quando um alerta é aberto (issue #52). Desligado sem TELEGRAM_TOKEN e TELEGRAM_CHAT_ID.
+  # SITE_URL (opcional) põe o link do alerta na mensagem. Nunca versione o token.
+  telegram:
+    token: ${TELEGRAM_TOKEN:}
+    chat-id: ${TELEGRAM_CHAT_ID:}
+    site-url: ${SITE_URL:}
   # Fuso usado para definir o mês dos relatórios.
   fuso-relatorios: America/Recife
   # Versão do pom.xml (preenchida no build); aparece no Swagger.
