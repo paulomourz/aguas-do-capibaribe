@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Documentação
+
+- **TAP v3.0 e ERS v1.2** em `docs/gestao/`, em Markdown com PDF gerado: escopo, perfis, histórias US-10 a US-15,
+  requisitos RF27 a RF31 e RNF19 a RNF26, riscos e pendências a confirmar com o orientador.
+- **Guia 2.0** e READMEs atualizados com perfis, auditoria, modo offline, exportação em CSV, aviso no Telegram,
+  monitoramento, backup, testes e o fluxo de pull request para a `develop`.
+
 ### Avisos
 
 - **Aviso no Telegram quando um alerta é aberto** (issue #52, item #24 do parecer). A mensagem traz o processo, os

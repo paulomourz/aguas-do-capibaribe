@@ -116,7 +116,7 @@
   <h1>Guia do Águas do Capibaribe</h1>
   <p class="chamada">Como o sistema funciona no dia a dia da lavanderia e como colocá-lo para rodar, do banco de dados ao sensor.</p>
   <div class="rodape">
-    <span><strong>Versão 1.0</strong> · 20 de outubro de 2026</span>
+    <span><strong>Versão 2.0</strong> · 5 de novembro de 2026</span>
     <span>Toritama · Caruaru · Santa Cruz do Capibaribe</span>
   </div>
 </section>
@@ -129,7 +129,7 @@
     <li><span class="t">O que é o Águas do Capibaribe</span><span class="d">o problema e quem usa</span></li>
     <li><span class="t">Processos, metas e lotes</span><span class="d">esperado, desvio e status</span></li>
     <li><span class="t">Alertas</span><span class="d">a regra dos 3 lotes seguidos</span></li>
-    <li><span class="t">Perfis e telas</span><span class="d">o que o gestor e o operador veem</span></li>
+    <li><span class="t">Perfis e telas</span><span class="d">o que cada perfil vê</span></li>
     <li><span class="t">O sistema no dia a dia</span><span class="d">primeiro acesso, registro de lote e acompanhamento</span></li>
     <li><span class="t">O sensor de vazão</span><span class="d">o lote que chega sozinho</span></li>
     <li><span class="t">Como as peças se conectam</span><span class="d">front-end, API, banco e sensor</span></li>
@@ -151,15 +151,16 @@
     <div class="cartao"><h4>Define metas</h4><p>Cada processo de lavagem (estonagem, tingimento, amaciamento…) ganha uma meta de litros por lote ou por peça.</p></div>
     <div class="cartao"><h4>Registra o consumo real</h4><p>A cada lote, o operador informa as peças e os litros usados. Um sensor também pode enviar o lote sozinho.</p></div>
     <div class="cartao"><h4>Compara com a meta</h4><p>O sistema calcula o esperado e o desvio em porcentagem assim que o lote é registrado.</p></div>
-    <div class="cartao"><h4>Avisa quando foge do controle</h4><p>Três lotes seguidos acima da meta no mesmo processo geram um alerta para o gestor.</p></div>
+    <div class="cartao"><h4>Avisa quando foge do controle</h4><p>Três lotes seguidos acima da meta no mesmo processo geram um alerta, e o aviso chega no grupo do Telegram da lavanderia.</p></div>
   </div>
 
   <h3>Quem usa</h3>
   <table>
     <tr><th style="width:28%">Quem</th><th>O que faz no sistema</th></tr>
-    <tr><td><strong>Gestor</strong></td><td>Cadastra processos, metas e usuários; acompanha dashboard, alertas e relatórios; vê todos os lotes.</td></tr>
-    <tr><td><strong>Operador</strong></td><td>Registra os lotes no chão de fábrica e consulta o histórico dos próprios lotes.</td></tr>
-    <tr><td><strong>Sensor de vazão</strong></td><td>Um ESP32 (hoje simulado no Wokwi) que entra no sistema como operador e envia os lotes medidos.</td></tr>
+    <tr><td><strong>Administrador</strong></td><td>Tudo o que o gestor faz, mais criar e desativar acessos, redefinir senhas e consultar a auditoria.</td></tr>
+    <tr><td><strong>Gestor</strong></td><td>Cadastra processos e metas; acompanha dashboard, alertas e relatórios; vê todos os lotes.</td></tr>
+    <tr><td><strong>Operador</strong></td><td>Registra os lotes no chão de fábrica, mesmo com a Wi-Fi oscilando, e consulta o histórico dos próprios lotes.</td></tr>
+    <tr><td><strong>Sensor de vazão</strong></td><td>Um ESP32 (hoje simulado no Wokwi) com perfil próprio: só consulta os processos e envia os lotes medidos.</td></tr>
   </table>
 
   <div class="nota"><p><strong>Projeto acadêmico.</strong> Os relatórios são gerenciais e não têm validade jurídica.</p></div>
@@ -224,6 +225,7 @@
     <li>No <strong>Dashboard</strong>, os alertas ativos aparecem no topo, com o desvio médio de cada um.</li>
     <li>No menu, o item <strong>Alertas</strong> mostra quantos estão abertos ou em análise.</li>
     <li>No detalhe do alerta, a tabela mostra a sequência de lotes que o gerou, do mais antigo ao mais recente.</li>
+    <li>Se o aviso estiver configurado, uma mensagem chega no grupo do Telegram com o processo, os lotes e o link do alerta. Se o Telegram falhar, o lote e o alerta continuam gravados.</li>
   </ul>
 </section>
 
@@ -231,17 +233,18 @@
 <section class="secao">
   <div class="rotulo">4 · Perfis e telas</div>
   <h2>O que cada pessoa vê</h2>
-  <p class="abertura">Não existe cadastro público: quem cria os acessos é o gestor. Cada pessoa entra com o usuário e a senha que recebeu e vê só as telas do seu perfil.</p>
+  <p class="abertura">Não existe cadastro público: quem cria os acessos é o administrador. Cada pessoa entra com o usuário e a senha que recebeu e vê só as telas do seu perfil. O gestor vê tudo o que está como "gestor" abaixo; o administrador vê tudo.</p>
 
   <table>
     <tr><th style="width:26%">Tela</th><th>Para que serve</th><th style="width:13%">Gestor</th><th style="width:13%">Operador</th></tr>
-    <tr><td><strong>Dashboard</strong></td><td>Consumo do mês, meta, desvio geral, alertas ativos e gráfico meta x real por processo</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Dashboard</strong></td><td>Consumo do mês, meta, desvio geral, alertas ativos e gráficos de meta e consumo por processo e por dia</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Alertas</strong></td><td>Alertas abertos, em análise e resolvidos; mudança de status</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido; impressão ou PDF</td><td>sim</td><td>—</td></tr>
-    <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado e desvio</td><td>sim</td><td>sim</td></tr>
-    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtro por processo</td><td>todos</td><td>os próprios</td></tr>
+    <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado e desvio. Sem conexão, o lote fica guardado no aparelho</td><td>sim</td><td>sim</td></tr>
+    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtro por processo e exportação em CSV</td><td>todos</td><td>os próprios</td></tr>
     <tr><td><strong>Processos e metas</strong></td><td>Cadastrar processos e ajustar metas</td><td>sim</td><td>—</td></tr>
-    <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas</td><td>só o administrador</td><td>—</td></tr>
+    <tr><td><strong>Auditoria</strong></td><td>Quem criou, desativou, reativou ou redefiniu a senha de cada conta, e quando</td><td>só o administrador</td><td>—</td></tr>
     <tr><td><strong>Configurações</strong></td><td>Trocar o próprio nome e a própria senha</td><td>sim</td><td>sim</td></tr>
   </table>
 
@@ -250,10 +253,11 @@
     <li>O login dura <strong>8 horas</strong>. Depois disso, o sistema pede para entrar de novo.</li>
     <li>Quem é desativado perde o acesso <strong>na hora</strong>, mesmo com a tela aberta.</li>
     <li>O administrador principal, <code>capibaribe.admin</code>, não pode ser desativado.</li>
-    <li>A API cria sozinha os <strong>dois usuários fixos</strong> em um banco novo: <code>capibaribe.admin</code> (gestor, administrador do site) e, se <code>SENSOR_SENHA</code> estiver definida, <code>sensor.wokwi</code> (operador, usado pelo sensor). Os processos iniciais vêm das migrações. As senhas ficam fora do Git, em <code>docs/privado/</code>, e no Docker aparecem em <code>docker compose logs segredos</code>.</li>
-    <li>Quem esquecer a senha pede ao gestor, que usa <strong>Redefinir senha</strong> na tela Usuários e entrega a nova senha à pessoa. A antiga deixa de valer na hora.</li>
+    <li>O login também tem limite: depois de 5 tentativas em um minuto, é preciso esperar um pouco.</li>
+    <li>A API cria sozinha as <strong>contas fixas</strong> em um banco novo: <code>capibaribe.admin</code> (administrador) e, se as senhas estiverem definidas, <code>capibaribe.gestor</code> (gestor) e <code>sensor.wokwi</code> (sensor). Os processos iniciais vêm das migrações. As senhas ficam fora do Git, em <code>docs/privado/</code>, e no Docker aparecem em <code>docker compose logs segredos</code>.</li>
+    <li>Quem esquecer a senha pede ao administrador, que usa <strong>Redefinir senha</strong> na tela Usuários e entrega a nova senha à pessoa. A antiga deixa de valer na hora.</li>
     <li>A própria senha se troca em <strong>Configurações</strong>, informando a senha atual. A senha do administrador principal só ele mesmo troca.</li>
-    <li>Toda redefinição de senha, desativação ou reativação feita por um gestor fica registrada na <strong>auditoria</strong> (quem fez, em quem e quando). O registro não guarda senha nenhuma e não pode ser alterado nem apagado.</li>
+    <li>Toda criação de conta, redefinição de senha, desativação ou reativação fica registrada na <strong>auditoria</strong> (quem fez, em quem e quando), que o administrador consulta na tela Auditoria. O registro não guarda senha nenhuma e não pode ser alterado nem apagado.</li>
   </ul>
 </section>
 
@@ -267,7 +271,7 @@
     <li><strong>Entre como administrador</strong>Use o login <code>capibaribe.admin</code> e a senha definida na instalação (variável <code>ADMIN_SENHA</code>).</li>
     <li><strong>Troque a senha</strong>Em <strong>Configurações</strong>, informe a senha atual e uma nova, com pelo menos 8 caracteres.</li>
     <li><strong>Cadastre os processos</strong>Em <strong>Processos e metas</strong> → <strong>Novo processo</strong>: nome, unidade da meta (por lote ou por peça) e o valor.</li>
-    <li><strong>Crie os acessos</strong>Em <strong>Usuários</strong>, crie um acesso para cada operador (e outros gestores, se houver) e entregue o usuário e a senha à pessoa. Na mesma tela dá para redefinir a senha de quem esqueceu.</li>
+    <li><strong>Crie os acessos</strong>Em <strong>Usuários</strong>, crie um acesso para cada operador (e gestores, se houver) e entregue o usuário e a senha à pessoa. Na mesma tela dá para redefinir a senha de quem esqueceu.</li>
   </ol>
 
   <h3>Registrando um lote (operador)</h3>
@@ -276,11 +280,13 @@
     <li><strong>Preencha os três campos</strong>Escolha o processo executado na máquina, informe a quantidade de peças e os litros usados.</li>
     <li><strong>Registre e confira</strong>O resultado aparece na hora: esperado, real, desvio e status. O lote fica no histórico.</li>
   </ol>
+  <div class="nota agua"><p><strong>A Wi-Fi caiu?</strong> Registre normalmente. O lote fica guardado no aparelho, aparece como pendente no topo da tela e é enviado sozinho quando a conexão volta, sem duplicar. O site também pode ser instalado como aplicativo.</p></div>
 
   <h3>Acompanhando o mês (gestor)</h3>
   <ul>
     <li>O <strong>Dashboard</strong> mostra o mês de referência, que também aparece no topo da tela.</li>
-    <li>No gráfico <strong>Meta x real</strong>, cada processo tem dois copos: o claro é a meta e o escuro é o consumo real.</li>
+    <li>Os gráficos mostram a meta e o consumo de cada processo no mês e o consumo de cada dia.</li>
+    <li>No <strong>Histórico de lotes</strong>, <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa.</li>
     <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. Mês sem lotes não gera relatório.</li>
   </ul>
 </section>
@@ -289,7 +295,7 @@
 <section class="secao">
   <div class="rotulo">6 · IoT</div>
   <h2>O sensor de vazão</h2>
-  <p class="abertura">Na fase 1 do IoT, um ESP32 simulado no Wokwi faz o papel de um medidor instalado na máquina. Para o sistema, ele é só mais um operador: entra com usuário e senha e registra lotes.</p>
+  <p class="abertura">Na fase 1 do IoT, um ESP32 simulado no Wokwi faz o papel de um medidor instalado na máquina. Para o sistema, ele é mais um cliente da API: entra com usuário e senha, com o perfil sensor, e registra lotes.</p>
 
   <div class="fluxo">
     <span class="no" style="background:#f3ecdf;color:#8b5a2b">ESP32 no Wokwi</span><span class="seta">→</span>
@@ -305,7 +311,7 @@
     <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 faz login na API, procura o processo pelo nome e envia peças e litros. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
   </ol>
 
-  <div class="nota"><p><strong>Dois projetos no Wokwi.</strong> O <code>aguas-capibaribe-sensor</code> (público) fala com a API publicada, em HTTPS. O <code>aguas-capibaribe-local</code> fala com o Docker, em HTTP, pelo túnel. O código é o mesmo: mudam o <code>API_URL</code> e a <code>SENHA</code> do <code>sensor.wokwi</code>. A senha preenchida fica só no Wokwi, nunca no repositório.</p></div>
+  <div class="nota"><p><strong>Dois projetos no Wokwi.</strong> O <code>aguas-capibaribe-sensor</code> (público) fala com a API publicada, em HTTPS. O <code>aguas-capibaribe-local</code> fala com o Docker, em HTTP, pelo túnel. O código é o mesmo: mudam o <code>API_URL</code> e a <code>SENHA</code> do <code>sensor.wokwi</code>. Os projetos do Wokwi são públicos, então a senha é colada só na hora de usar e o projeto não é salvo com ela.</p></div>
 
   <div class="nota"><p><strong>Qual processo o sensor mede?</strong> O que estiver em <code>PROCESSO_NOME</code>, no <code>sketch.ino</code>, escrito como aparece no site (por exemplo, <code>"Estonagem"</code>). O sensor descobre o id sozinho pela API, então não é preciso consultar o banco. Se o nome não existir, o monitor serial lista os processos cadastrados. O guia completo, com o circuito e os erros comuns, está em <code>iot/LEIA-ME.md</code>.</p></div>
 </section>
@@ -328,6 +334,7 @@
     <text x="315" y="100" text-anchor="middle" font-weight="700" font-size="15" fill="#fff">API</text>
     <text x="315" y="120" text-anchor="middle" font-size="11" fill="#d9c7a3">Spring Boot · regras,</text>
     <text x="315" y="136" text-anchor="middle" font-size="11" fill="#d9c7a3">login, perfis, alertas</text>
+    <text x="315" y="152" text-anchor="middle" font-size="10" fill="#d9c7a3">aviso no Telegram</text>
     <rect x="460" y="70" width="130" height="90" rx="12" fill="#1b4965"/>
     <text x="525" y="108" text-anchor="middle" font-weight="700" font-size="14" fill="#fff">PostgreSQL</text>
     <text x="525" y="128" text-anchor="middle" font-size="11" fill="#c9d9e5">banco aguas</text>
@@ -351,6 +358,7 @@
     <li><strong>O banco guarda as regras críticas.</strong> O cálculo do esperado e a proibição de alterar lotes ficam em triggers do PostgreSQL. O esquema é versionado com Flyway: ao subir, a API aplica as migrações pendentes e o Hibernate só confere se o esquema bate.</li>
     <li><strong>O dono do lote vem do login.</strong> A API nunca aceita que alguém informe “quem registrou”: usa sempre a pessoa do token.</li>
     <li><strong>Cada requisição confere o usuário no banco.</strong> Assim, desativar alguém tem efeito imediato.</li>
+    <li><strong>Só publica o que passou nos testes.</strong> A cada mudança, o GitHub Actions roda os testes; o Render só publica o site e a API depois disso.</li>
   </ul>
 </section>
 
@@ -380,10 +388,9 @@
   </table>
 
   <ol class="passos">
-    <li><strong>Baixar o projeto</strong>Clone o repositório e mude para a branch <code>develop</code>, onde está o trabalho do dia a dia (a <code>main</code> só recebe as versões entregues).
+    <li><strong>Baixar o projeto</strong>Clone o repositório. Ele já vem na branch <code>develop</code>, onde está o trabalho do dia a dia (a <code>main</code> só recebe as versões entregues).
 <pre>git clone https://github.com/paulomourz/aguas-do-capibaribe.git
-cd aguas-do-capibaribe
-git checkout develop</pre></li>
+cd aguas-do-capibaribe</pre></li>
     <li><strong>Banco de dados</strong>Crie um banco vazio e aplique as migrações do Flyway (dentro de <code>backend/</code>). O banco oficial já existe e se chama <code>aguas</code>; faça isto só numa máquina nova.
 <pre>psql -U postgres -c "create database aguas"
 cd backend
@@ -402,6 +409,7 @@ FLYWAY_USER=postgres     <span class="c"># dono do banco, só para as migraçõe
 FLYWAY_PASSWORD=...
 JWT_SECRET=...           <span class="c"># 32+ caracteres aleatórios</span>
 ADMIN_SENHA=...          <span class="c"># só na 1ª vez: cria o capibaribe.admin</span>
+GESTOR_SENHA=...         <span class="c"># opcional: cria o capibaribe.gestor</span>
 CORS_ORIGINS=http://localhost:8443</pre>
 Para gerar o <code>JWT_SECRET</code> no PowerShell:
 <pre>[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])</pre></li>
@@ -421,10 +429,10 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Sem modo simulado.</strong> O site sempre usa a API. Para mostrar o sistema sem internet, suba tudo no computador com o Docker (plano B do roteiro de apresentação).</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 45 testes de regras, segurança e validação. Os 19 testes de integração precisam de um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora (o Flyway cria o esquema); o passo a passo está no <code>backend/README.md</code>. Em 02/11/2026, com JDK 25, os 60 testes passaram.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 98 testes da API: 68 de regras, segurança e validação, e 30 de integração, que usam o Docker (ou um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora). Na raiz, <code>pnpm test</code> roda os 27 testes do site e <code>pnpm test:e2e</code>, os 3 de ponta a ponta do modo offline. Em 05/11/2026, todos passaram. O passo a passo está no <code>backend/README.md</code>.</p>
 
   <h3>Documentação interativa da API</h3>
-  <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 16 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
+  <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 19 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
 </section>
 
 <!-- ============ 9 ============ -->
@@ -437,14 +445,16 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <tr><td>API não sobe: administrador principal não existe</td><td>banco novo sem <code>ADMIN_SENHA</code></td><td>Defina <code>ADMIN_SENHA</code> (8 a 72 caracteres) e suba de novo.</td></tr>
     <tr><td>API não sobe: erro de validação do esquema (ex.: <code>missing table [auditoria_usuario]</code>)</td><td>Flyway desligado (<code>FLYWAY_ATIVO=false</code>) e migrações novas sem aplicar</td><td>Rode <code>mvn flyway:migrate</code> em <code>backend/</code> com o dono do banco (ou ligue o Flyway e preencha <code>FLYWAY_USER</code>/<code>FLYWAY_PASSWORD</code>).</td></tr>
     <tr><td>API não sobe: <code>Found non-empty schema(s) "public" but no schema history table</code></td><td>banco criado antes do Flyway, sem baseline</td><td>Suba uma vez com <code>FLYWAY_BASELINE=true</code> (detalhes no <code>database/LEIA-ME.md</code>).</td></tr>
-    <tr><td>API não sobe: <code>Validate failed: Migration checksum mismatch</code></td><td>alguém editou uma migração que já tinha sido aplicada</td><td>Desfaça a edição e crie uma migração nova (<code>V5__...</code>) com a correção.</td></tr>
+    <tr><td>API não sobe: <code>Validate failed: Migration checksum mismatch</code></td><td>alguém editou uma migração que já tinha sido aplicada</td><td>Desfaça a edição e crie uma migração nova (<code>V9__...</code>, o próximo número) com a correção.</td></tr>
     <tr><td>Site: “Não foi possível conectar ao servidor.”</td><td>API desligada, em outro endereço ou com o site fora do <code>CORS_ORIGINS</code></td><td>Suba a API (<code>mvn spring-boot:run</code> em <code>backend/</code>) e clique em <strong>Tentar novamente</strong>. Se ela estiver em outro endereço, ajuste <code>VITE_API_URL</code> no <code>.env.local</code>; confira também se o endereço exato do site (ex.: <code>http://localhost:8443</code>) está em <code>CORS_ORIGINS</code>.</td></tr>
     <tr><td>Login funciona no PC, mas não no celular</td><td>o celular abre o site por outro endereço (IP)</td><td>Inclua <code>http://IP-DO-PC:8443</code> em <code>CORS_ORIGINS</code> e reinicie a API.</td></tr>
     <tr><td><code>pnpm dev</code>: “Cannot find module … vite”</td><td>dependências incompletas</td><td>Rode <code>pnpm install</code> de novo.</td></tr>
     <tr><td><code>pnpm dev</code>: porta 8443 em uso</td><td>outro site já está rodando</td><td>Feche o outro terminal; a porta é fixa para combinar com o CORS.</td></tr>
     <tr><td><code>psql</code>: erro em <code>\restrict</code></td><td><code>psql</code> antigo</td><td>Use o <code>psql</code> do PostgreSQL 18.</td></tr>
     <tr><td>Sensor: “Processo … não encontrado”</td><td><code>PROCESSO_NOME</code> diferente dos nomes do site</td><td>Copie o nome de um processo da lista que aparece no monitor serial.</td></tr>
-    <tr><td>Alguém esqueceu a senha</td><td>—</td><td>O gestor usa <strong>Redefinir senha</strong> na tela Usuários.</td></tr>
+    <tr><td>Login: “Muitas tentativas”</td><td>mais de 5 tentativas em um minuto</td><td>Espere um minuto e tente de novo.</td></tr>
+    <tr><td>O aviso do alerta não chegou no Telegram</td><td>variáveis do Telegram faltando ou bot fora do grupo</td><td>Confira <code>TELEGRAM_TOKEN</code> e <code>TELEGRAM_CHAT_ID</code> no Render e se o bot está no grupo; o log da API mostra <code>Aviso do alerta</code>.</td></tr>
+    <tr><td>Alguém esqueceu a senha</td><td>—</td><td>O administrador usa <strong>Redefinir senha</strong> na tela Usuários.</td></tr>
     <tr><td>Testes de integração “skipped”</td><td>sem Docker e sem banco temporário</td><td>Normal. Para rodá-los, siga a seção Testes do <code>backend/README.md</code>.</td></tr>
   </table>
 </section>
@@ -454,12 +464,12 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="rotulo">10 · Segurança</div>
   <h2>Cuidados e boas práticas</h2>
   <div class="grade">
-    <div class="cartao"><h4>Senhas fora do Git</h4><p><code>backend/.env</code>, <code>.env.local</code> e a senha do sensor (preenchida só no Wokwi) nunca vão para o repositório. Acessos da equipe ficam em <code>docs/privado/</code>, também fora do Git.</p></div>
-    <div class="cartao"><h4>Banco oficial é sagrado</h4><p>O <code>aguas</code> guarda só dados reais desde 20/10/2026. Nunca rode testes nele: os testes usam bancos temporários <code>*_teste</code>.</p></div>
+    <div class="cartao"><h4>Senhas fora do Git</h4><p><code>backend/.env</code>, <code>.env.local</code>, o token do Telegram e a senha do sensor (colada no Wokwi sem salvar) nunca vão para o repositório. Acessos da equipe ficam em <code>docs/privado/</code>, também fora do Git.</p></div>
+    <div class="cartao"><h4>Banco oficial é sagrado</h4><p>Nunca rode testes no banco publicado nem no <code>aguas</code>: os testes usam o Docker ou bancos temporários <code>*_teste</code>. Faça backup com <code>database/backup.sh</code>.</p></div>
     <div class="cartao"><h4>Usuário próprio no banco</h4><p>A API conecta como <code>aguas_api</code>, que só lê, insere e atualiza: não apaga dados nem muda tabelas. Ele é criado por <code>database/seguranca-usuario-api.sql</code>.</p></div>
     <div class="cartao"><h4>Senhas fortes e pessoais</h4><p>Cada pessoa tem o próprio acesso. Senhas têm pelo menos 8 caracteres e são guardadas só como hash.</p></div>
     <div class="cartao"><h4>Túnel só quando precisar</h4><p>Com o túnel ligado, a API local fica acessível pela internet. Desligue com <code>docker compose --profile tunel stop tunel</code> ao terminar de usar o sensor local.</p></div>
-    <div class="cartao"><h4>Fluxo de trabalho</h4><p>Nada de commit direto na <code>main</code>: crie uma <code>feature/</code> a partir da <code>develop</code> e abra um pull request.</p></div>
+    <div class="cartao"><h4>Fluxo de trabalho</h4><p>Nada de commit direto na <code>main</code>: crie uma <code>feature/</code> a partir da <code>develop</code>, abra um pull request para a <code>develop</code> e só faça merge com o CI verde.</p></div>
   </div>
 </section>
 
@@ -475,6 +485,8 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <tr><td><code>docs/tecnico/api.md</code></td><td>todos os endpoints da API, erros e validações</td></tr>
     <tr><td><code>docs/tecnico/banco-remoto.md</code></td><td>servidor de banco, permissões e situação atual</td></tr>
     <tr><td><code>iot/LEIA-ME.md</code></td><td>sensor simulado no Wokwi, passo a passo</td></tr>
+    <tr><td><code>docs/gestao/</code></td><td>Termo de Abertura do Projeto (TAP) e Especificação de Requisitos (ERS)</td></tr>
+    <tr><td><code>docs/validacao/</code></td><td>roteiro do teste com operador e questionário SUS</td></tr>
     <tr><td><code>docs/guia/fonte/</code></td><td>fonte deste guia; rode <code>gerar-pdf.ps1</code> para gerar o PDF de novo</td></tr>
   </table>
 

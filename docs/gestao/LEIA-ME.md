@@ -1,20 +1,16 @@
 # Documentos de gestão do projeto
 
-Documentos do projeto que não são código.
+| Documento | Versão | PDF | Texto |
+|---|---|---|---|
+| **TAP** — Termo de Abertura do Projeto e backlog de histórias | 3.0, 05/11/2026 | [`TAP.pdf`](TAP.pdf) | [`TAP.md`](TAP.md) |
+| **ERS** — Especificação de Requisitos de Software (IEEE 830) | 1.2, 05/11/2026 | [`ERS.pdf`](ERS.pdf) | [`ERS.md`](ERS.md) |
 
-| Pasta ou arquivo | Conteúdo | Situação |
-|---|---|---|
-| [`TAP.pdf`](TAP.pdf) | Termo de Abertura do Projeto e backlog de histórias (v2.1, 20/10/2026) | ✅ |
-| [`TAP-atualizacao-2026-11-02.md`](TAP-atualizacao-2026-11-02.md) | O que mudou desde a v2.1 e o que falta formalizar com o orientador | a formalizar |
-| [`ERS.pdf`](ERS.pdf) | Especificação de Requisitos de Software, norma IEEE 830 (v1.1, 02/11/2026) | ✅ |
-| [`ERS.docx`](ERS.docx) | A mesma especificação, editável no Word (gere o PDF de novo depois de editar) | ✅ |
-| `pitch/` | Roteiro e slides do pitch (vídeos: só o link, num arquivo `.md`) | a adicionar |
+O PDF é gerado a partir do `.md`. Para mudar um documento, edite o `.md` e rode, nesta pasta:
 
-O guia geral do sistema (como funciona e como rodar) fica em [`../guia/`](../guia/).
+```powershell
+powershell -ExecutionPolicy Bypass -File .\gerar-pdf.ps1
+```
 
-Cuidados:
+Precisa do Node.js e do Chrome ou do Edge. Faça o commit do `.md` e do `.pdf` juntos.
 
-- Nada de dados pessoais (CPF, telefone, endereço) nem senhas. Senhas ficam em `docs/privado/`, que
-  não vai para o Git.
-- Prefira PDF para documentos finais e Markdown (`.md`) para o que ainda está sendo editado.
-- Arquivos pesados (vídeos, imagens grandes) ficam fora do Git: guarde num drive e coloque o link aqui.
+Nada de dados pessoais nem senhas nestes documentos: senhas ficam em `docs/privado/`, fora do Git.

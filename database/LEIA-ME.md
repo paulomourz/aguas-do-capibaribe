@@ -29,6 +29,9 @@ Regras que moram no próprio banco:
 | V2 | `V2__cria_triggers_esperado_e_bloqueio.sql` | funções PL/pgSQL e triggers do esperado e da imutabilidade do lote |
 | V3 | `V3__cria_processos_iniciais.sql` | processos iniciais com metas de referência (Amaciamento, Estonagem, Tingimento, Alvejamento) |
 | V4 | `V4__cria_auditoria_usuario.sql` | `auditoria_usuario` e seu trigger de imutabilidade (issue #16) |
+| V5 | `V5__auditoria_registra_criacao_usuario.sql` | a auditoria passa a aceitar a criação de usuário (issue #57) |
+| V6 | `V6__perfis_admin_e_sensor.sql` | perfis `admin` e `sensor`; a conta `sensor.wokwi` passa para o perfil sensor (issue #66) |
+| V7 | `V7__cria_chave_envio_do_lote.sql` | coluna `chave_envio` do lote, única, para reenvio sem duplicar (issue #54) |
 | V8 | `V8__cria_indices_performance.sql` | índices da regra de alerta e dos lotes de um alerta (issue #59, ver [`desempenho/`](desempenho/)) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
@@ -45,7 +48,7 @@ $env:FLYWAY_URL = "jdbc:postgresql://localhost:5432/aguas"
 $env:FLYWAY_USER = "postgres"
 $env:FLYWAY_PASSWORD = "<senha do postgres>"
 mvn flyway:migrate
-mvn flyway:info          # confere: V1 a V4 com State = Success
+mvn flyway:info          # confere: todas as migrações com State = Success
 psql -U postgres -d aguas -v ON_ERROR_STOP=1 -v papel=aguas_api -v banco=aguas -v senha='<senha forte>' -f ../database/seguranca-usuario-api.sql
 ```
 
@@ -77,7 +80,8 @@ tentar recriá-las.
 
 ## Mudou o banco? Crie uma migração nova
 
-1. Crie `V5__descricao_curta.sql` (o próximo número livre, dois sublinhados) na pasta de migrações.
+1. Crie `V9__descricao_curta.sql` (o próximo número livre, dois sublinhados) na pasta de migrações. Confira a
+   `develop` antes: se outra pessoa usar o mesmo número primeiro, troque o seu para o próximo.
 2. **Nunca edite uma migração que já foi para a `develop`.** O Flyway guarda o checksum de cada uma e a
    API não sobe se o arquivo mudar. Para corrigir, crie outra migração.
 3. Se a migração criar uma tabela, dê as permissões do `aguas_api` nela (veja o bloco `DO $$` da V4) e
