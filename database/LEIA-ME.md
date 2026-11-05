@@ -29,6 +29,7 @@ Regras que moram no próprio banco:
 | V2 | `V2__cria_triggers_esperado_e_bloqueio.sql` | funções PL/pgSQL e triggers do esperado e da imutabilidade do lote |
 | V3 | `V3__cria_processos_iniciais.sql` | processos iniciais com metas de referência (Amaciamento, Estonagem, Tingimento, Alvejamento) |
 | V4 | `V4__cria_auditoria_usuario.sql` | `auditoria_usuario` e seu trigger de imutabilidade (issue #16) |
+| V8 | `V8__cria_indices_performance.sql` | índices da regra de alerta e dos lotes de um alerta (issue #59, ver [`desempenho/`](desempenho/)) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.

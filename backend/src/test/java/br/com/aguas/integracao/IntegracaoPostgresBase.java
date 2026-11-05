@@ -136,7 +136,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -151,7 +151,18 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(7);
+           assertThat(flyway.info().applied()).hasSize(8);
+    }
+
+    @Test
+    void v8CriaIndicesDaRegraDeAlertaEDosLotesDoAlerta() {
+        // Issue #59: medição em docs/tecnico/desempenho-indices.md.
+        List<String> indices = jdbc.queryForList(
+                "select indexname from pg_indexes where schemaname = 'public' and tablename in ('lote', 'alerta_lote')",
+                String.class);
+        assertThat(indices).contains("ix_lote_processo_data", "ix_alerta_lote_alerta", "ix_lote_data", "ix_lote_usuario")
+                // substituído pelo ix_lote_processo_data, que começa pela mesma coluna
+                .doesNotContain("ix_lote_processo");
     }
 
     @Test
