@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cx } from '../components/ui'
 import { AvisoOffline, IndicadorConexao } from '../components/FilaOffline'
+import SeletorTema from '../components/SeletorTema'
 import logoUrl from '../assets/logo.png'
 import pacote from '../../package.json'
 import {
@@ -51,7 +52,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
           e.preventDefault()
           document.getElementById('conteudo')?.focus()
         }}
-        className="sr-only z-[70] rounded-md bg-white px-4 py-3 font-semibold text-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        className="sr-only z-[70] rounded-md bg-surface px-4 py-3 font-semibold text-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
       >
         Pular para o conteúdo
       </a>
@@ -60,7 +61,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
         <NuvensDoTopo />
         <div className="relative flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">
           <Link to={homeDe(usuario.perfil)} className="flex items-center gap-3 rounded-lg" aria-label="Águas do Capibaribe, ir para a tela inicial">
-            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-sertao ring-2 ring-areia/60">
+            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-logo-bg ring-2 ring-areia/60">
               <img src={logoUrl} alt="" className="h-[44px] w-[44px] object-contain" />
             </span>
             <span className="leading-tight">
@@ -82,6 +83,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
               </div>
               <span aria-hidden="true" className="h-8 w-px bg-white/15" />
             </div>
+            <SeletorTema sobreFundoEscuro />
             <UserMenu nome={usuario.nome} perfil={perfilLabel[usuario.perfil]} perfilId={usuario.perfil} onSair={() => { sair(); navigate('/login') }} />
           </div>
         </div>
@@ -97,7 +99,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
                     aria-current={sel ? 'page' : undefined}
                     className={cx(
                       'flex min-h-11 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-[15px] font-medium transition-colors',
-                      sel ? 'bg-white text-brand' : 'text-on-dark hover:bg-brand-hover hover:text-white',
+                      sel ? 'bg-surface text-brand' : 'text-on-dark hover:bg-brand-hover hover:text-white',
                     )}
                   >
                     <Icon size={18} />
@@ -135,7 +137,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
                               aria-current={sel ? 'page' : undefined}
                               className={cx(
                                 'flex min-h-11 w-full items-center rounded-lg pr-3 text-[15px] font-medium transition-colors',
-                                sel ? 'font-semibold' : 'text-ink-2 hover:bg-white/70 hover:text-ink',
+                                sel ? 'font-semibold' : 'text-ink-2 hover:bg-surface/70 hover:text-ink',
                               )}
                             >
                               <span
@@ -330,7 +332,7 @@ function UserMenu({ nome, perfil, perfilId, onSair }: { nome: string; perfil: st
         <IconChevronDown size={18} />
       </button>
       {aberto && (
-        <div role="menu" className="rise absolute right-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-[8px] border border-line bg-white text-ink shadow-xl">
+        <div role="menu" className="rise absolute right-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-[8px] border border-line bg-surface text-ink shadow-xl">
           <div className="border-b border-line px-4 py-3">
             <p className="text-[15px] font-semibold">{nome}</p>
             <p className="text-[13px] text-ink-2">Perfil: {perfil}</p>

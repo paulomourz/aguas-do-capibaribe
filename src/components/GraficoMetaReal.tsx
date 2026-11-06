@@ -69,7 +69,7 @@ function Dica({ active, payload }: { active?: boolean; payload?: readonly { payl
   const d = payload?.[0]?.payload
   if (!active || !d) return null
   return (
-    <div className="rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink shadow-card">
+    <div className="rounded-md border border-line bg-surface px-3 py-2 text-[13px] text-ink shadow-card">
       <p className="mb-1 font-semibold">{d.nome}</p>
       <p className="tabular-nums">Real: {fmtL(d.real)}</p>
       <p className="tabular-nums">Esperado: {fmtL(d.esperado)}</p>

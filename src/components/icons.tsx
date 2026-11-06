@@ -286,3 +286,24 @@ export const IconUserOff = (p: P) => (
     <path d="m17 8 5 5M22 8l-5 5" />
   </Base>
 )
+
+export const IconSun = (p: P) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+  </Base>
+)
+
+export const IconMoon = (p: P) => (
+  <Base {...p}>
+    <path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.8 6.8 0 0 0 9.7 9.7Z" />
+  </Base>
+)
+
+/** Tela de computador: representa o tema automático, que segue o aparelho. */
+export const IconMonitor = (p: P) => (
+  <Base {...p}>
+    <rect x="3" y="4" width="18" height="12" rx="2" />
+    <path d="M8 20h8M12 16v4" />
+  </Base>
+)
