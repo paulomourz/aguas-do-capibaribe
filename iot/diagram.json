@@ -20,7 +20,17 @@
       "left": -130,
       "rotate": 90,
       "attrs": { "value": "220" }
-    }
+    },
+    { "type": "wokwi-led", "id": "ledAlerta", "top": -110, "left": -180, "attrs": { "color": "red", "label": "Lote crítico" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": -20,
+      "left": -200,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    },
+    { "type": "wokwi-buzzer", "id": "buzzer", "top": 150, "left": -150, "attrs": { "volume": "0.3" } }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
@@ -33,6 +43,11 @@
     [ "esp:25", "esp:27", "orange", [] ],
     [ "esp:2", "r1:2", "violet", [] ],
     [ "r1:1", "ledLote:A", "violet", [] ],
-    [ "ledLote:C", "esp:GND.1", "black", [] ]
+    [ "ledLote:C", "esp:GND.1", "black", [] ],
+    [ "esp:19", "r2:2", "red", [] ],
+    [ "r2:1", "ledAlerta:A", "red", [] ],
+    [ "ledAlerta:C", "esp:GND.1", "black", [] ],
+    [ "esp:26", "buzzer:2", "gold", [] ],
+    [ "buzzer:1", "esp:GND.2", "black", [] ]
   ]
 }
