@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
+import SeletorTema from '../components/SeletorTema'
 import { Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
 import { IconCloudOff, IconCompass, IconLock, IconRefresh } from '../components/icons'
 import { navigate } from '../router'
@@ -76,7 +77,7 @@ export function Login({ next }: { next?: string }) {
         <WavePattern />
         <div className="relative flex flex-1 flex-col justify-between px-14 pt-14 pb-20">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-sertao ring-2 ring-areia/60">
+            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-logo-bg ring-2 ring-areia/60">
               <img src={logoUrl} alt="" className="h-[44px] w-[44px] object-contain" />
             </span>
             <span className="leading-tight">
@@ -101,6 +102,9 @@ export function Login({ next }: { next?: string }) {
 
       {/* Formulário */}
       <section className="relative flex flex-1 flex-col overflow-hidden bg-sertao">
+        <div className="absolute right-3 top-3 z-10">
+          <SeletorTema />
+        </div>
         <div className="relative flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
           <div className="w-full max-w-[400px]">
             <div className="mb-10 lg:hidden">

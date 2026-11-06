@@ -330,7 +330,7 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
         <div className="mx-auto" style={{ width: A4_W * escala, height: A4_H * escala }}>
           <article
             aria-label={`Relatório de consumo de água, ${periodo}`}
-            className="origin-top-left bg-white text-ink shadow-xl"
+            className="tema-claro origin-top-left bg-white text-ink shadow-xl"
             style={{ width: A4_W, height: A4_H, transform: `scale(${escala})` }}
           >
             <div className="h-1 bg-terracota" />
