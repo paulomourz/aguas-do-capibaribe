@@ -87,7 +87,8 @@ Para provocar um lote crítico: abra bem o potenciômetro e deixe o lote correr 
 esperado do processo (meta × peças). Por exemplo, com meta de 12 L/peça e 50 peças, o esperado é 600 L, e
 acima de 648 L o lote é crítico. Isso leva uns 22 minutos com a vazão no máximo (30 L/min). Para mostrar
 o aviso numa apresentação, use `PECAS = 1` no sketch: o esperado cai para 12 L, e passar de 12,96 L leva cerca
-de 30 segundos com a vazão no máximo. O som do buzzer só toca com o áudio do navegador ligado.
+de 30 segundos com a vazão no máximo e a simulação perto de 100% (a velocidade aparece no canto de cima do
+Wokwi). O som do buzzer só toca com o áudio do navegador ligado.
 
 ## Usar com a API do seu PC
 
@@ -103,6 +104,7 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e
 |---|---|
 | `undefined reference to setup` (ao compilar) | o código não foi colado na aba `sketch.ino` |
 | `Sem resposta da API` | a API está acordando (ele tenta de novo sozinho) ou o endereço está errado |
+| `SSL - The connection indicated an EOF` em todas as tentativas | a simulação está lenta (bem abaixo de 100% no canto de cima), e a API desiste da conexão segura: feche programas pesados no PC e reinicie a simulação |
 | `certificado da API diferente do esperado` | o Render renovou o certificado (o atual vale até 20/12/2026): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
 | `Falha no login (HTTP 401)` | senha errada; confira a senha ou redefina em **Usuários** |
 | `Processo "..." não encontrado` | `PROCESSO_NOME` diferente dos nomes cadastrados no site (a lista aparece logo depois) |
