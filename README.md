@@ -273,6 +273,16 @@ A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push 
 `docker-compose` (sobe o Docker e testa login, processos e registro de lote pelo Nginx). O Render só publica depois
 que esses checks passam. **Não faça merge com check vermelho.**
 
+### Se uma publicação der problema (voltar versão)
+
+1. **Na hora, no Render:** abra o serviço (`aguas-api` ou o site), vá em **Events**, escolha o último deploy que
+   funcionava e clique em **Rollback**. A versão anterior volta ao ar em poucos minutos.
+2. **Depois, no Git:** desfaça o merge com problema por um PR de `git revert` na `develop` (no GitHub, botão
+   **Revert** do PR). Sem isso, o próximo merge publica o erro de novo, e o Render pode desligar o Auto-Deploy
+   depois de um rollback: confira em **Settings > Auto-Deploy** que continua em **After CI Checks Pass**.
+3. **Banco:** o rollback não desfaz migração do Flyway. Se o problema veio de uma migração, corrija com uma
+   migração nova (próximo número livre), nunca editando a que já rodou.
+
 [Teste de carga](docs/tecnico/teste-carga.md) (k6, 50 sensores ao mesmo tempo) e [análise de índices](docs/tecnico/desempenho-indices.md)
 (EXPLAIN ANALYZE) ficam fora da CI e são rodados à mão.
 
