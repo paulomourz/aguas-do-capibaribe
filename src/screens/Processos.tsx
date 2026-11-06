@@ -15,8 +15,7 @@ import {
   TextInput,
 } from '../components/ui'
 import { IconEdit, IconPlus, IconTarget } from '../components/icons'
-import DicaGlossario from '../components/DicaGlossario'
-import { fmtNum, nomeSugerido, unidadeCurta, unidadeLabel, type Processo, type Unidade } from '../domain'
+import { fmtNum, unidadeCurta, unidadeLabel, type Processo, type Unidade } from '../domain'
 import { navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 
@@ -34,7 +33,7 @@ export default function Processos({ modal, editarId, destaque }: { modal?: 'novo
       <StatePreview value={estado} onChange={setEstado} />
       <PageHeader
         title="Processos e metas"
-        description="A meta de cada processo é a referência para calcular o desvio dos lotes. Use o ícone de informação para ver o que cada processo faz."
+        description="A meta de cada processo é a referência para calcular o desvio dos lotes."
         actions={
           <>
             <Button icon={<IconPlus size={20} />} onClick={() => navigate('/processos/novo')}>
@@ -68,13 +67,7 @@ export default function Processos({ modal, editarId, destaque }: { modal?: 'novo
             minWidth={600}
             highlight={(p) => p.id === destaque || p.id === editarId}
             cols={[
-              { key: 'n', header: 'Processo', mobile: 'title', render: (p) => (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="font-semibold">{p.nome}</span>
-                    <DicaGlossario processo={p.nome} />
-                  </span>
-                ),
-              },
+              { key: 'n', header: 'Processo', mobile: 'title', render: (p) => <span className="font-semibold">{p.nome}</span> },
               {
                 key: 'm',
                 header: 'Valor da meta',
@@ -150,7 +143,6 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
   }
 
   const temErro = Object.keys(erros).length > 0
-  const sugerido = nomeSugerido(nome)
 
   return (
     <Modal
@@ -172,23 +164,7 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
     >
       <form id="form-processo" onSubmit={salvar} noValidate className="flex flex-col gap-6">
         {temErro && <Banner tone="crit">Corrija os campos destacados para salvar.</Banner>}
-        <Field
-          id="p-nome"
-          label="Nome do processo"
-          error={erros.nome}
-          hint={
-            sugerido ? (
-              <>
-                Nome padrão do glossário: <strong className="font-semibold text-ink">{sugerido}</strong>.{' '}
-                <button type="button" className="font-semibold text-link underline underline-offset-2" onClick={() => setNome(sugerido)}>
-                  Usar {sugerido}
-                </button>
-              </>
-            ) : (
-              'Use o nome padrão: Estonagem, Amaciamento, Alvejamento ou Tingimento.'
-            )
-          }
-        >
+        <Field id="p-nome" label="Nome do processo" error={erros.nome}>
           <TextInput
             id="p-nome"
             value={nome}
