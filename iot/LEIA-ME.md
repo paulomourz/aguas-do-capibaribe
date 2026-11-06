@@ -19,7 +19,18 @@ O passo a passo de cada um está no [roteiro de apresentação](../docs/guia/rot
 | Arquivo | O que é |
 |---|---|
 | `sketch.ino` | código do ESP32. O endereço da API já vem preenchido; a senha fica em branco (`COLE-AQUI-...`) e é preenchida só no Wokwi |
-| `diagram.json` | circuito: ESP32, potenciômetro (vazão), botão (iniciar/encerrar lote) e LED |
+| `diagram.json` | circuito: ESP32, potenciômetro (vazão), botão (iniciar/encerrar lote), LED azul (lote em andamento), LED vermelho e buzzer (lote crítico) |
+
+### Pinos
+
+| Peça | Pino do ESP32 | Função |
+|---|---|---|
+| Potenciômetro | 34 | vazão de 0 a 30 L/min |
+| Gerador de pulsos → entrada | 25 → 27 | simula o sensor YF-S201 |
+| Botão verde | 4 | inicia e encerra o lote |
+| LED azul (220 Ω) | 2 | lote em andamento |
+| LED vermelho (220 Ω) | 33 | lote crítico |
+| Buzzer | 26 | apito do lote crítico |
 
 ## 1. Conta do sensor
 
@@ -57,7 +68,26 @@ a senha se perder, um administrador a redefine em **Usuários → Redefinir senh
      -> HTTP 201
    Lote registrado na API: {...}
    ```
-4. No site, o lote aparece no **Histórico**, registrado por "Sensor de vazão (Wokwi)".
+4. Logo depois, o monitor mostra o status que a API deu ao lote, como `Status do lote: ATENCAO (desvio de 3.10%)`.
+5. No site, o lote aparece no **Histórico**, registrado por "Sensor de vazão (Wokwi)".
+
+### Aviso de lote crítico (som e luz)
+
+Quando a API classifica o lote como **crítico** (desvio acima de 8%), o sensor avisa na hora:
+
+- o buzzer apita 3 vezes;
+- o LED vermelho pisca junto e **fica aceso** até o próximo lote começar;
+- o monitor mostra `!!! LOTE CRITICO: desvio acima de 8%. Confira o processo. !!!`.
+
+Quem decide é a API, pelo campo `statusConformidade` da resposta do `POST /lotes`. Assim o sensor usa a mesma
+regra do site, e mudar a faixa no backend já muda o aviso. Com 8% exatos o lote fica em atenção, sem apito. Se
+o lote não for registrado, não há status, e o sensor não avisa.
+
+Para provocar um lote crítico: abra bem o potenciômetro e deixe o lote correr até os litros passarem 8% do
+esperado do processo (meta × peças). Por exemplo, com meta de 12 L/peça e 50 peças, o esperado é 600 L, e
+acima de 648 L o lote é crítico. Isso leva uns 22 minutos com a vazão no máximo (30 L/min). Para mostrar
+o aviso numa apresentação, use `PECAS = 1` no sketch: o esperado cai para 12 L, e passar de 12,96 L leva cerca
+de 30 segundos com a vazão no máximo. O som do buzzer só toca com o áudio do navegador ligado.
 
 ## Usar com a API do seu PC
 
@@ -76,11 +106,15 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e
 | `certificado da API diferente do esperado` | o Render renovou o certificado (o atual vale até 20/12/2026): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
 | `Falha no login (HTTP 401)` | senha errada; confira a senha ou redefina em **Usuários** |
 | `Processo "..." não encontrado` | `PROCESSO_NOME` diferente dos nomes cadastrados no site (a lista aparece logo depois) |
+| Lote crítico sem som | o áudio da aba do Wokwi está mudo, ou o `diagram.json` antigo ainda está colado (sem buzzer no pino 26) |
 
 ## Observações
 
 - No projeto público, a conexão usa HTTPS e confere a impressão digital do certificado da API. No local, usa HTTP até a Cloudflare, sem criptografia nesse trecho: use só dados de teste.
 - O gerador de pulsos para durante o envio porque deixa o TLS lento demais no simulador.
+- O apito é gerado no próprio código, sem o PWM (LEDC), porque o gerador de pulsos já usa o LEDC e dois canais
+  no mesmo timer disputam a frequência. Ele toca enquanto o gerador está parado, logo depois do envio, e leva
+  cerca de 1,5 s.
 - O login é renovado sozinho quando a sessão de 8 horas vence.
 - Os projetos do Wokwi são públicos: quem tiver o link vê o que estiver salvo. Por isso a senha do sensor não fica
   salva lá, e a conta tem o perfil sensor, que só registra lotes. O simulador não tem armazenamento protegido; no
