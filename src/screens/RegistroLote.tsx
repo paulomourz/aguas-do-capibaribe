@@ -17,10 +17,11 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconClipboard, IconClock, IconDroplet, IconHistory, IconPlus } from '../components/icons'
-import { esperadoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
+import { esperadoDe, termoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
 import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 import { PainelPendentes, ResultadoPendenteCard } from '../components/FilaOffline'
+import DicaGlossario from '../components/DicaGlossario'
 import type { LotePendente } from '../services'
 
 type Erros = Partial<Record<'processo' | 'pecas' | 'litros', string>>
@@ -186,6 +187,12 @@ export default function RegistroLote() {
                     ))}
                   </Select>
                 </Field>
+                {processo && termoDe(processo.nome) && (
+                  <p className="-mt-3 flex items-start gap-1 text-[13px] leading-snug text-ink-2">
+                    <DicaGlossario processo={processo.nome} className="-ml-1.5 -mt-1.5 shrink-0" />
+                    <span>{termoDe(processo.nome)!.definicao}</span>
+                  </p>
+                )}
 
                 <div className="grid grid-cols-2 items-start gap-4 sm:gap-6">
                   <Field id="pecas" label="Peças" error={erros.pecas} hint="Quantidade total de peças do lote.">
