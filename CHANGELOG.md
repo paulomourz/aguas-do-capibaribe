@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Interface
+
+- **Glossário têxtil e nomes padronizados dos processos** (issue #55, item #27 do parecer). Dica acessível por
+  teclado ao lado do processo em **Processos e metas** e no **Registro de lote**, com o que a etapa faz e por que
+  gasta água. O cadastro de processo sugere o nome padrão (Estonagem, Amaciamento, Alvejamento, Tingimento) quando
+  alguém digita um sinônimo como "stone wash" ou "branqueamento". Termos e fontes em
+  `docs/tecnico/glossario-textil.md`.
+
 ### Documentação
 
 - **TAP v3.0 e ERS v1.2** em `docs/gestao/`, em Markdown com PDF gerado: escopo, perfis, histórias US-10 a US-15,
