@@ -57,7 +57,8 @@ gravidade de um reservatório mais alto ou use uma bomba maior.
 | Amarelo (sinal) | R1 de 10 kΩ, depois GPIO 27 | R2 de 20 kΩ vai do GPIO 27 ao GND |
 
 O pino 27 é o que o [`iot/sketch.ino`](../../iot/sketch.ino) já usa para contar os pulsos. Botão e LED
-continuam nos pinos 4 e 2. R2 pode ser feito com dois resistores de 10 kΩ em série. A bomba fica ligada só
+continuam nos pinos 4 e 2. O aviso de lote crítico usa um LED vermelho com resistor de 220 Ω no pino 33 e um
+buzzer passivo no pino 26, como no Wokwi; eles não estão na lista de compras acima (cerca de R$ 3 a 6, estimado). R2 pode ser feito com dois resistores de 10 kΩ em série. A bomba fica ligada só
 na fonte de 12 V, sem nenhum fio em comum com o ESP32.
 
 ### Por que o divisor de tensão
