@@ -7,6 +7,11 @@
 //     exatamente como seria com o sensor físico ligado no pino 27.
 //   - Botão verde: 1º clique inicia o lote, 2º clique encerra e envia à API.
 //   - LED azul aceso = lote em andamento.
+//   - Depois do envio, o status do lote volta da API e vira sinal (issue #83):
+//       CRITICO        -> LED vermelho aceso e buzzer tocando por alguns segundos;
+//       ATENCAO        -> LED vermelho piscando;
+//       DENTRO_DA_META -> nada acende.
+//     Se o envio falhar, nenhum sinal é dado.
 //
 // No dispositivo físico: remova o fio 25 -> 27, ligue o sinal do sensor no 27
 // e calibre PULSOS_POR_LITRO.
@@ -57,7 +62,17 @@ const int PINO_POT    = 34;  // potenciômetro (vazão)
 const int PINO_GERADOR = 25;  // simula o sinal do sensor
 const int PINO_SENSOR  = 27;  // entrada de pulsos
 const int PINO_BOTAO   = 4;
-const int PINO_LED     = 2;
+const int PINO_LED     = 2;   // azul: lote em andamento
+const int PINO_LED_ALERTA = 19;  // vermelho: status do lote enviado
+const int PINO_BUZZER     = 26;
+const uint8_t CANAL_GERADOR = 0;  // canal PWM (LEDC) do gerador: timer 0
+const uint8_t CANAL_BUZZER  = 4;  // canal PWM do buzzer: timer 2
+
+// Sinal do status do lote. O LED de CRITICO fica aceso até o próximo lote começar.
+const uint32_t BUZZER_CRITICO_MS = 3000;
+const uint32_t BUZZER_FREQ_HZ    = 2000;
+const uint32_t PISCA_ATENCAO_MS  = 5000;
+const uint32_t PISCA_PERIODO_MS  = 250;
 
 volatile uint32_t pulsos = 0;
 bool loteAtivo = false;
@@ -70,6 +85,10 @@ const bool usaHttps = strncmp(API_URL, "https://", 8) == 0;
 HTTPClient http;
 String token;          // guardado entre os lotes; renovado quando a API responde 401
 int ultimoCodigo = 0;  // código HTTP da última requisição
+
+enum Sinal { SINAL_NENHUM, SINAL_ATENCAO, SINAL_CRITICO };
+Sinal sinal = SINAL_NENHUM;
+uint32_t sinalInicio = 0;
 
 void IRAM_ATTR contarPulso() {
   pulsos++;
@@ -207,14 +226,64 @@ String fazerLogin() {
   return resposta.substring(ini, resposta.indexOf('"', ini));
 }
 
-void enviarLote(float litros) {
+// Lê "statusConformidade" da resposta do POST /lotes. Vazio se não vier.
+String statusDaResposta(const String& resposta) {
+  const String chave = "\"statusConformidade\":\"";
+  int ini = resposta.indexOf(chave);
+  if (ini < 0) return "";
+  ini += chave.length();
+  return resposta.substring(ini, resposta.indexOf('"', ini));
+}
+
+// Desliga o LED vermelho e o buzzer.
+void apagarSinal() {
+  sinal = SINAL_NENHUM;
+  digitalWrite(PINO_LED_ALERTA, LOW);
+  ledcWriteTone(PINO_BUZZER, 0);
+}
+
+// Começa o sinal do status do lote. O resto acontece em atualizarSinal(), sem travar o botão.
+void sinalizar(const String& status) {
+  apagarSinal();
+  sinalInicio = millis();
+  if (status == "CRITICO") {
+    sinal = SINAL_CRITICO;
+    digitalWrite(PINO_LED_ALERTA, HIGH);
+    ledcWriteTone(PINO_BUZZER, BUZZER_FREQ_HZ);
+    Serial.println("Status do lote: CRITICO (mais de 8% acima da meta) -> LED vermelho aceso e buzzer.");
+  } else if (status == "ATENCAO") {
+    sinal = SINAL_ATENCAO;
+    Serial.println("Status do lote: ATENCAO (até 8% acima da meta) -> LED vermelho piscando.");
+  } else if (status == "DENTRO_DA_META") {
+    Serial.println("Status do lote: DENTRO_DA_META -> sem alerta.");
+  } else {
+    Serial.println("Status do lote não veio na resposta: sem alerta.");
+  }
+}
+
+// Chamada a cada volta do loop: desliga o buzzer do CRITICO e faz o LED piscar no ATENCAO.
+void atualizarSinal(uint32_t agora) {
+  uint32_t passou = agora - sinalInicio;
+  if (sinal == SINAL_CRITICO) {
+    if (passou >= BUZZER_CRITICO_MS) ledcWriteTone(PINO_BUZZER, 0);  // o LED continua aceso
+  } else if (sinal == SINAL_ATENCAO) {
+    if (passou >= PISCA_ATENCAO_MS) {
+      apagarSinal();
+    } else {
+      digitalWrite(PINO_LED_ALERTA, (passou / PISCA_PERIODO_MS) % 2 == 0 ? HIGH : LOW);
+    }
+  }
+}
+
+// Envia o lote e devolve o statusConformidade da API, ou "" se o lote não foi registrado.
+String enviarLote(float litros) {
   conectarWiFi();
   // Segunda volta só se o login tiver vencido no meio (a sessão dura 8 horas).
   for (int volta = 0; volta < 2; volta++) {
     if (token.length() == 0) token = fazerLogin();
     if (token.length() == 0) {
       Serial.println("Lote NAO enviado: sem login.");
-      return;
+      return "";
     }
     int processoId = buscarProcessoId(token);
     if (processoId > 0) {
@@ -225,29 +294,35 @@ void enviarLote(float litros) {
       int codigo = postJson(String(API_URL) + "/lotes", corpo, token, resposta);
       if (codigo == 201) {
         Serial.printf("Lote registrado na API: %s\n", resposta.c_str());
-        return;
+        return statusDaResposta(resposta);
       }
       if (codigo != 401) {
         Serial.printf("Falha ao registrar lote (HTTP %d): %s\n", codigo, resposta.c_str());
-        return;
+        return "";
       }
     } else if (ultimoCodigo != 401) {
       Serial.println("Lote NAO enviado: confira PROCESSO_NOME no sketch.ino.");
-      return;
+      return "";
     }
     Serial.println("Login vencido: entrando de novo.");
     token = "";
   }
   Serial.println("Lote NAO enviado: a API recusou o login.");
+  return "";
 }
 
 void setup() {
   Serial.begin(115200);
   pinMode(PINO_BOTAO, INPUT_PULLUP);
   pinMode(PINO_LED, OUTPUT);
+  pinMode(PINO_LED_ALERTA, OUTPUT);
+  // Canais em timers diferentes (o timer vale para um par de canais): o tom do buzzer não muda a
+  // frequência do gerador de pulsos, nem a medição dos litros.
+  ledcAttachChannel(PINO_BUZZER, BUZZER_FREQ_HZ, 8, CANAL_BUZZER);
+  apagarSinal();
   pinMode(PINO_SENSOR, INPUT);
   attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
-  ledcAttach(PINO_GERADOR, 100, 10);
+  ledcAttachChannel(PINO_GERADOR, 100, 10, CANAL_GERADOR);
   ledcWrite(PINO_GERADOR, 0);
   cliente.setInsecure();  // o certificado é conferido pela impressão digital em conectarSeguro()
   cliente.setHandshakeTimeout(TEMPO_TLS_S);
@@ -276,6 +351,7 @@ void loop() {
       pulsos = 0;
       interrupts();
       loteAtivo = true;
+      apagarSinal();  // o alerta do lote anterior some quando o próximo começa
       digitalWrite(PINO_LED, HIGH);
       Serial.println(">>> Lote iniciado.");
     } else {
@@ -289,13 +365,16 @@ void loop() {
         // Gerador parado durante o envio: os pulsos deixam o TLS lento demais no simulador, e a API fecha a conexão.
         ledcWrite(PINO_GERADOR, 0);
         detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
-        enviarLote(litros);
+        String status = enviarLote(litros);
+        if (status.length() > 0) sinalizar(status);
+        else Serial.println("Envio falhou: nenhum alerta acionado.");
         attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
         freqAtual = 0;
       }
     }
   }
   botaoAntes = botao;
+  atualizarSinal(millis());  // não usa `agora`: o envio acima pode ter levado minutos
 
   if (loteAtivo && agora - ultimoStatus >= 1000) {
     ultimoStatus = agora;

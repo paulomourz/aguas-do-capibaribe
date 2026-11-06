@@ -14,6 +14,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   alguém digita um sinônimo como "stone wash" ou "branqueamento". Termos e fontes em
   `docs/tecnico/glossario-textil.md`.
 
+### IoT
+
+- **Buzzer e LED vermelho de alerta no sensor do Wokwi** (issue #83, item [IOT-ALERT-BUZZER] do parecer de
+  03/11/2026). Depois do envio, o sensor lê o `statusConformidade` da resposta do `POST /lotes`: `CRITICO` acende o
+  LED vermelho (pino 19) e toca o buzzer (pino 26) por 3 segundos; `ATENCAO` pisca o LED; `DENTRO_DA_META` não
+  aciona nada. Se o envio falhar, nenhum alerta é dado. O status aparece no monitor serial. O buzzer usa outro
+  timer de PWM, para não mudar a frequência do gerador de pulsos. Pinos e sinais em `iot/LEIA-ME.md`.
+
 ### Documentação
 
 - **TAP v3.0 e ERS v1.2** em `docs/gestao/`, em Markdown com PDF gerado: escopo, perfis, histórias US-10 a US-15,

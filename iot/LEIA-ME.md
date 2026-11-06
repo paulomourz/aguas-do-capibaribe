@@ -19,7 +19,29 @@ O passo a passo de cada um está no [roteiro de apresentação](../docs/guia/rot
 | Arquivo | O que é |
 |---|---|
 | `sketch.ino` | código do ESP32. O endereço da API já vem preenchido; a senha fica em branco (`COLE-AQUI-...`) e é preenchida só no Wokwi |
-| `diagram.json` | circuito: ESP32, potenciômetro (vazão), botão (iniciar/encerrar lote) e LED |
+| `diagram.json` | circuito: ESP32, potenciômetro (vazão), botão (iniciar/encerrar lote), LED azul, LED vermelho e buzzer |
+
+### Pinos e sinais
+
+| Pino | Peça | Para quê |
+|---|---|---|
+| 34 | potenciômetro | vazão da água (0 a 30 L/min) |
+| 25 → 27 | fio laranja | pulsos simulados do sensor de vazão |
+| 4 | botão verde | iniciar e encerrar o lote |
+| 2 | LED azul (resistor 220 Ω) | aceso enquanto o lote está em andamento |
+| 19 | LED vermelho (resistor 220 Ω) | status do lote enviado (abaixo) |
+| 26 | buzzer | toca quando o lote enviado é crítico |
+
+Depois que a API registra o lote, o sensor lê o `statusConformidade` da resposta e mostra no monitor serial:
+
+| Status da API | Desvio do lote | LED vermelho | Buzzer |
+|---|---|---|---|
+| `CRITICO` | acima de 8% da meta | aceso até o próximo lote começar | toca por 3 segundos |
+| `ATENCAO` | de 0% a 8% acima da meta | pisca por 5 segundos | não toca |
+| `DENTRO_DA_META` | na meta ou abaixo | apagado | não toca |
+| envio falhou | — | apagado | não toca |
+
+O sinal não trava o sensor: dá para iniciar o próximo lote enquanto o LED pisca, e isso apaga o sinal anterior.
 
 ## 1. Conta do sensor
 
@@ -56,8 +78,12 @@ a senha se perder, um administrador a redefine em **Usuários → Redefinir senh
    POST https://.../api/lotes ...
      -> HTTP 201
    Lote registrado na API: {...}
+   Status do lote: DENTRO_DA_META -> sem alerta.
    ```
-4. No site, o lote aparece no **Histórico**, registrado por "Sensor de vazão (Wokwi)".
+4. Para ver o alerta, gire o potenciômetro até o fim e demore mais no lote: com mais litros do que a meta, o status
+   vem `CRITICO`, o LED vermelho acende e o buzzer toca. Com 50 peças de Estonagem (meta de 12 L/peça), passar de
+   648 L dá crítico.
+5. No site, o lote aparece no **Histórico**, registrado por "Sensor de vazão (Wokwi)".
 
 ## Usar com a API do seu PC
 
