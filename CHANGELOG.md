@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### IoT
+
+- **Aviso de lote crítico no sensor do Wokwi, com som e luz.** Quando a API classifica o lote enviado como
+  crítico (desvio acima de 8%), o buzzer (pino 26) apita 3 vezes e o LED vermelho (pino 33) pisca e fica aceso
+  até o próximo lote começar. O sensor lê o `statusConformidade` da resposta do `POST /lotes`, então segue a mesma
+  regra do site. O monitor serial passa a mostrar o status e o desvio de todo lote enviado. Circuito e guia
+  atualizados em `iot/`.
+
 ### Interface
 
 - **Glossário têxtil e nomes padronizados dos processos** (issue #55, item #27 do parecer). Dica acessível por
