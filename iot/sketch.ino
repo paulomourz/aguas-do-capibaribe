@@ -7,6 +7,9 @@
 //     exatamente como seria com o sensor físico ligado no pino 27.
 //   - Botão verde: 1º clique inicia o lote, 2º clique encerra e envia à API.
 //   - LED azul aceso = lote em andamento.
+//   - Lote crítico (desvio acima de 8%, segundo a API): o buzzer apita 3 vezes e o LED vermelho pisca e fica
+//     aceso até o próximo lote começar. Quem classifica é a API (campo "statusConformidade" da resposta), então
+//     o sensor segue sempre a mesma regra do site.
 //
 // No dispositivo físico: remova o fio 25 -> 27, ligue o sinal do sensor no 27
 // e calibre PULSOS_POR_LITRO.
@@ -58,6 +61,14 @@ const int PINO_GERADOR = 25;  // simula o sinal do sensor
 const int PINO_SENSOR  = 27;  // entrada de pulsos
 const int PINO_BOTAO   = 4;
 const int PINO_LED     = 2;
+const int PINO_BUZZER  = 26;  // apito do lote crítico
+const int PINO_LED_CRITICO = 33;  // LED vermelho do lote crítico
+
+// Aviso de lote crítico: 3 apitos de 2 kHz. O som é gerado no próprio código, sem LEDC, porque o gerador do
+// pino 25 já usa o LEDC e dois canais no mesmo timer disputam a frequência.
+const uint32_t FREQ_APITO_HZ = 2000;
+const uint32_t DURACAO_APITO_MS = 300;
+const int      QTD_APITOS = 3;
 
 volatile uint32_t pulsos = 0;
 bool loteAtivo = false;
@@ -207,14 +218,15 @@ String fazerLogin() {
   return resposta.substring(ini, resposta.indexOf('"', ini));
 }
 
-void enviarLote(float litros) {
+// Envia o lote. Devolve a resposta da API (o lote gravado, em JSON) ou "" se o lote não foi registrado.
+String enviarLote(float litros) {
   conectarWiFi();
   // Segunda volta só se o login tiver vencido no meio (a sessão dura 8 horas).
   for (int volta = 0; volta < 2; volta++) {
     if (token.length() == 0) token = fazerLogin();
     if (token.length() == 0) {
       Serial.println("Lote NAO enviado: sem login.");
-      return;
+      return "";
     }
     int processoId = buscarProcessoId(token);
     if (processoId > 0) {
@@ -225,26 +237,87 @@ void enviarLote(float litros) {
       int codigo = postJson(String(API_URL) + "/lotes", corpo, token, resposta);
       if (codigo == 201) {
         Serial.printf("Lote registrado na API: %s\n", resposta.c_str());
-        return;
+        return resposta;
       }
       if (codigo != 401) {
         Serial.printf("Falha ao registrar lote (HTTP %d): %s\n", codigo, resposta.c_str());
-        return;
+        return "";
       }
     } else if (ultimoCodigo != 401) {
       Serial.println("Lote NAO enviado: confira PROCESSO_NOME no sketch.ino.");
-      return;
+      return "";
     }
     Serial.println("Login vencido: entrando de novo.");
     token = "";
   }
   Serial.println("Lote NAO enviado: a API recusou o login.");
+  return "";
+}
+
+// Lê um campo de texto da resposta, como "statusConformidade":"CRITICO". Devolve "" se não achar.
+String campoTexto(const String& json, const char* nome) {
+  String chave = String("\"") + nome + "\":\"";
+  int ini = json.indexOf(chave);
+  if (ini < 0) return "";
+  ini += chave.length();
+  int fim = json.indexOf('"', ini);
+  return fim < 0 ? "" : json.substring(ini, fim);
+}
+
+// Lê um campo numérico da resposta, como "desvio":12.35. Devolve 0 se não achar.
+float campoNumero(const String& json, const char* nome) {
+  String chave = String("\"") + nome + "\":";
+  int ini = json.indexOf(chave);
+  if (ini < 0) return 0;
+  return json.substring(ini + chave.length()).toFloat();
+}
+
+// Um apito: onda quadrada no pino do buzzer, durante "ms" milissegundos.
+void apitar(uint32_t freqHz, uint32_t ms) {
+  uint32_t meioPeriodoUs = 500000UL / freqHz;
+  uint32_t inicio = millis();
+  while (millis() - inicio < ms) {
+    digitalWrite(PINO_BUZZER, HIGH);
+    delayMicroseconds(meioPeriodoUs);
+    digitalWrite(PINO_BUZZER, LOW);
+    delayMicroseconds(meioPeriodoUs);
+  }
+}
+
+// Som e luz do lote crítico. O LED vermelho pisca junto com os apitos e fica aceso no fim.
+void avisarLoteCritico() {
+  for (int i = 0; i < QTD_APITOS; i++) {
+    digitalWrite(PINO_LED_CRITICO, HIGH);
+    apitar(FREQ_APITO_HZ, DURACAO_APITO_MS);
+    digitalWrite(PINO_LED_CRITICO, LOW);
+    delay(200);
+  }
+  digitalWrite(PINO_LED_CRITICO, HIGH);
+}
+
+// Mostra o status que a API deu ao lote e avisa se ele for crítico.
+void conferirStatus(const String& resposta) {
+  String status = campoTexto(resposta, "statusConformidade");
+  float desvio = campoNumero(resposta, "desvio");
+  if (status.length() == 0) {
+    Serial.println("A API não informou o status do lote.");
+    return;
+  }
+  Serial.printf("Status do lote: %s (desvio de %.2f%%)\n", status.c_str(), desvio);
+  if (status == "CRITICO") {
+    Serial.println("!!! LOTE CRITICO: desvio acima de 8%. Confira o processo. !!!");
+    avisarLoteCritico();
+  }
 }
 
 void setup() {
   Serial.begin(115200);
   pinMode(PINO_BOTAO, INPUT_PULLUP);
   pinMode(PINO_LED, OUTPUT);
+  pinMode(PINO_BUZZER, OUTPUT);
+  pinMode(PINO_LED_CRITICO, OUTPUT);
+  digitalWrite(PINO_BUZZER, LOW);
+  digitalWrite(PINO_LED_CRITICO, LOW);
   pinMode(PINO_SENSOR, INPUT);
   attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
   ledcAttach(PINO_GERADOR, 100, 10);
@@ -277,6 +350,7 @@ void loop() {
       interrupts();
       loteAtivo = true;
       digitalWrite(PINO_LED, HIGH);
+      digitalWrite(PINO_LED_CRITICO, LOW);  // o aviso do lote anterior se apaga
       Serial.println(">>> Lote iniciado.");
     } else {
       loteAtivo = false;
@@ -289,7 +363,9 @@ void loop() {
         // Gerador parado durante o envio: os pulsos deixam o TLS lento demais no simulador, e a API fecha a conexão.
         ledcWrite(PINO_GERADOR, 0);
         detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
-        enviarLote(litros);
+        String resposta = enviarLote(litros);
+        // Ainda com o gerador parado: o apito é gerado no código e não pode ser atrapalhado pelos pulsos.
+        if (resposta.length() > 0) conferirStatus(resposta);
         attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
         freqAtual = 0;
       }
