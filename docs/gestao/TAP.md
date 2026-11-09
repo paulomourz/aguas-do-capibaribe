@@ -212,14 +212,14 @@ Semanas contadas a partir de 12/10/2026. A data final de entrega ainda precisa s
 | IoT | Túnel temporário em HTTP. | Projeto público em HTTPS ligado à API publicada; projeto local para testes. |
 | Validação com persona | Prevista. | Roteiro, questionário SUS e kit prontos (issue #50); aplicação pendente. |
 
-Na versão 3.1 (09/11/2026): glossário têxtil na interface (issue #55), aviso de lote crítico com buzzer e LED no sensor (issue #83), tema escuro (issue #82) e documentação nas normas ISO/IEC (seção 5.1), com a ERS migrada da IEEE 830 para a ISO/IEC/IEEE 29148.
+Na versão 3.1 (09/11/2026): glossário têxtil na interface (issue #55), aviso de lote crítico com buzzer e LED no sensor (issue #83), tema escuro (issue #82) e documentação nas normas ISO/IEC (seção 5.1), com a ERS migrada da IEEE 830 para a ISO/IEC/IEEE 29148. A US-15 (vários sensores por linha de lavagem, issue #47) foi adiada (seção 11.1).
 
 ### 11.1 Em aberto
 
 - **Bancada física (seção 6):** a equipe propõe ficar no simulado; falta a ata assinada pelo orientador. **[A CONFIRMAR]**
 - **Versão 1.0.0:** o parecer orienta não declarar 1.0.0 antes da homologação, que ainda não foi feita; a numeração precisa ser alinhada com o orientador. **[A CONFIRMAR]**
 - **Regra de alerta:** hoje, cada nova sequência de 3 lotes acima da meta abre outro alerta, se a anterior foi interrompida; o parecer descreve o lote sendo anexado ao alerta já aberto. **[A CONFIRMAR]**
-- **Item ainda em desenvolvimento:** vários sensores por linha de lavagem (issue #47).
+- **Item adiado:** vários sensores por linha de lavagem (US-15, RF31, issue #47). O sensor é simulado no Wokwi, que roda no navegador, e cada sensor a mais precisa de outra aba do simulador aberta ao mesmo tempo; no teste de 06/11/2026, com o computador carregado, um único sensor caiu para 3% da velocidade e a conexão segura com a API falhou. A API não é o limite: aceita lotes de vários dispositivos ao mesmo tempo (teste de carga com 50 sensores). Com sensores físicos, o caminho é uma conta de perfil sensor por linha de lavagem, sem mudar o banco. Detalhes no Apêndice B da ERS.
 - **Numeração deste termo:** o parecer de 27/10/2026 cita um TAP v3.0 que não está no repositório; esta versão segue a numeração do repositório. **[A CONFIRMAR]**
 - **Data final de entrega (seção 10).** **[A CONFIRMAR]**
 
@@ -400,4 +400,4 @@ Backlog ágil no padrão INVEST, com critérios de aceitação no formato Given 
 
 **Como** gestor, **quero** identificar de qual linha de lavagem veio cada lote enviado por sensor, **para que** eu compare o consumo entre máquinas.
 
-**Rastreabilidade:** RF31; parecer item #19, issue #47. **Situação:** **pendente**.
+**Rastreabilidade:** RF31; parecer item #19, issue #47. **Situação:** **adiada** em 09/11/2026: o limite é o simulador do Wokwi, que roda no navegador, e não a API (seção 11.1 e Apêndice B da ERS).

@@ -22,7 +22,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 1.0 | 27/10/2026 | Primeira versão da ERS, alinhada ao TAP v2.1 e ao sistema implementado. | Equipe Águas do Capibaribe |
 | 1.1 | 02/11/2026 | Sistema publicado, versão 1.0.0 e issues do parecer: Flyway, HTTPS, usuário aguas_api, status na API, PDF e Docker. | Equipe Águas do Capibaribe |
 | 1.2 | 05/11/2026 | Perfis de administrador e sensor, auditoria, registro sem conexão, exportação em CSV, aviso no Telegram, gráficos, limite de requisições, monitoramento, backup, desempenho medido, entrega contínua e remoção do modo simulado. | Equipe Águas do Capibaribe |
-| 2.0 | 09/11/2026 | Migração da IEEE 830 para a ISO/IEC/IEEE 29148: estrutura nova, requisitos de negócio e dos stakeholders, conceito de operação, método de verificação em cada requisito, seção de verificação, conformidade com normas e matriz de rastreabilidade com a verificação. Glossário têxtil (RNF26) e aviso de lote crítico no sensor (RF26) implementados. | Equipe Águas do Capibaribe |
+| 2.0 | 09/11/2026 | Migração da IEEE 830 para a ISO/IEC/IEEE 29148: estrutura nova, requisitos de negócio e dos stakeholders, conceito de operação, método de verificação em cada requisito, seção de verificação, conformidade com normas e matriz de rastreabilidade com a verificação. Glossário têxtil (RNF26) e aviso de lote crítico no sensor (RF26) implementados. RF31 (vários sensores por linha de lavagem) adiado (issue #47). | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -98,7 +98,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 | NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14 |
 | NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27 |
-| NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26, RF31 |
+| NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26; RF31 adiado (Apêndice B) |
 | NS-04 | Entender os termos técnicos dos processos de lavagem. | Operador e gestor | RNF26 |
 
 ### 1.3.6 Conceito de operação
@@ -582,8 +582,8 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Saídas | Lotes identificados por linha de lavagem. |
 | Prioridade | Desejável |
 | Origem | US-15 · parecer, item #19 · issue #47 |
-| Situação | **Pendente.** |
-| Verificação | A definir: Requisito pendente; o método de verificação será definido com a solução. |
+| Situação | **Adiado** (09/11/2026, issue #47). Ver Apêndice B. |
+| Verificação | Não se aplica nesta versão; o método de verificação será definido se o requisito voltar ao escopo. |
 
 ## 3.2 Requisitos de desempenho
 
@@ -789,6 +789,7 @@ Ficam para versões futuras, ou dependem de decisão:
 - Protótipo físico de bancada do sensor (TAP, seção 6), sujeito ao ponto de verificação.
 - Registro de volume de efluente e índice de reúso, conforme a decisão P7 do Registro de Decisões v1.
 - Integração com sensores em operação real numa lavanderia.
+- **RF31 — Identificar a linha de lavagem de cada sensor** (US-15, parecer item #19, issue #47). Adiado em 09/11/2026. O projeto foi feito sem custo, e o sensor é simulado no Wokwi, que roda no navegador. Cada sensor a mais precisa de outra aba do simulador aberta ao mesmo tempo, o que consome processador e memória do computador. No teste de 06/11/2026, com o computador carregado, um único sensor caiu para 3% da velocidade, e a conexão segura com a API falhou (SSL EOF); com dois ou mais, a demonstração ficaria instável. O limite é o simulador, não a API: ela já aceita lotes de vários dispositivos ao mesmo tempo (RNF17, teste de carga com 50 sensores simultâneos em docs/tecnico/teste-carga.md), e cada lote guarda a conta que o enviou. Com sensores físicos, o caminho é uma conta de perfil sensor por linha de lavagem (por exemplo, sensor.linha1 e sensor.linha2), sem mudar o banco.
 
 ## Apêndice C — Matriz de rastreabilidade
 
@@ -826,9 +827,9 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF28 | US-11 | POST /lotes (Idempotency-Key) | Registro de lotes | Teste | Implementado |
 | RF29 | US-12 | GET /lotes | Histórico de lotes | Teste | Implementado |
 | RF30 | US-13 | — (Bot API do Telegram) | — (grupo do Telegram) | Teste e Demonstração | Implementado |
-| RF31 | US-15 | a definir | a definir | A definir | Pendente |
+| RF31 | US-15 | — | — | Não se aplica | Adiado (Apêndice B) |
 
-Resumo: 31 requisitos funcionais, 30 implementados e 1 pendente (RF31); 26 requisitos não funcionais, 25 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 31 requisitos funcionais, 30 implementados e 1 adiado (RF31); 26 requisitos não funcionais, 25 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 

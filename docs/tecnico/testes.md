@@ -121,11 +121,17 @@ banco local, que não roda no CI.
 | 03/11/2026 | Índices com 200.000 lotes | Regra de alerta de 73,5 ms para 0,19 ms |
 | 05/11/2026 | Aviso no Telegram com o sistema publicado | Alerta aberto e mensagem recebida no grupo |
 | 06/11/2026 | Sensor no Wokwi com a API publicada | Lote de 19,55 L crítico, com LED vermelho; lote de 3,74 L dentro da meta, sem sinal |
+| 06/11/2026 | Sensor no Wokwi com o computador carregado | A simulação caiu para 3% da velocidade, e o envio à API falhou (SSL EOF). Base do adiamento do RF31 (issue #47) |
 
 ### 4.3 Pendências
 
 | Item | Situação |
 |---|---|
 | Teste de usabilidade com operador real (RNF25) | Roteiro, questionário SUS e kit prontos; aplicação pendente (issue #50). |
-| Vários sensores por linha de lavagem (RF31) | Requisito pendente; os casos serão escritos com a solução (issue #47). |
 | Desempenho do sistema publicado | Não medido, por ser plano grátis. |
+
+### 4.4 Requisitos adiados
+
+| Item | Situação |
+|---|---|
+| Vários sensores por linha de lavagem (RF31) | Adiado em 09/11/2026 (issue #47; Apêndice B da ERS). Sem casos de teste nesta versão. O limite é o simulador do Wokwi no navegador, não a API, que já aceita vários sensores ao mesmo tempo (teste de carga com 50, seção 4.2). |
