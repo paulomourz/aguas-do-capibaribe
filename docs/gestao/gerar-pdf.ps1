@@ -1,4 +1,4 @@
-﻿# Gera TAP.pdf e ERS.pdf a partir de TAP.md e ERS.md (nesta pasta), usando o marked e o Chrome (ou o Edge).
+﻿# Gera TAP.pdf, ERS.pdf, seguranca.pdf e ciclo-de-vida.pdf a partir dos .md desta pasta, usando o marked e o Chrome (ou o Edge).
 # Uso, a partir desta pasta:  powershell -ExecutionPolicy Bypass -File .\gerar-pdf.ps1
 # Precisa do Node.js (npx baixa o marked na primeira vez). O comentário <!-- sumario --> vira o sumário.
 
@@ -14,8 +14,10 @@ $nav = $navegadores | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $nav) { throw 'Chrome ou Edge não encontrado.' }
 
 $documentos = @(
-  @{ Nome = 'TAP'; Rodape = 'Águas do Capibaribe · Termo de Abertura do Projeto v3.0' },
-  @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v1.2' }
+  @{ Nome = 'TAP'; Rodape = 'Águas do Capibaribe · Termo de Abertura do Projeto v3.1' },
+  @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v2.0 · ISO/IEC/IEEE 29148' },
+  @{ Nome = 'seguranca'; Rodape = 'Águas do Capibaribe · Segurança da Informação v1.0 · ISO/IEC 27001' },
+  @{ Nome = 'ciclo-de-vida'; Rodape = 'Águas do Capibaribe · Processos do Ciclo de Vida v1.0 · ISO/IEC 12207' }
 )
 
 $estilo = @'

@@ -6,6 +6,17 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Documentação nas normas ISO/IEC
+
+- **ERS v2.0 na ISO/IEC/IEEE 29148**, que substitui a IEEE 830: estrutura nova, necessidades de negócio e dos
+  stakeholders, conceito de operação, método de verificação em cada requisito, seção de verificação, conformidade com
+  normas e matriz de rastreabilidade com a verificação.
+- **Documentos novos:** arquitetura (`docs/tecnico/arquitetura.md`, ISO/IEC/IEEE 42010), testes
+  (`docs/tecnico/testes.md`, ISO/IEC/IEEE 29119), segurança da informação (`docs/gestao/seguranca.md`, ISO/IEC
+  27001) e ciclo de vida (`docs/gestao/ciclo-de-vida.md`, ISO/IEC 12207).
+- **Guia 2.1 (ISO/IEC/IEEE 26514)** com a seção "Sobre este guia" (público, convenções e como usar), glossário,
+  aviso de lote crítico e testes atuais; **TAP v3.1** com a tabela das normas.
+
 ### IoT
 
 - **Aviso de lote crítico no sensor do Wokwi, com som e luz.** Quando a API classifica o lote enviado como

@@ -98,7 +98,7 @@ flowchart LR
 | [`backend/`](backend/README.md) | API REST em Java 25 LTS + Spring Boot 3.5 |
 | [`database/`](database/LEIA-ME.md) | Guia do banco, script do usuário `aguas_api`, backup e restauração, e scripts de desempenho (as migrações Flyway ficam no `backend/`) |
 | [`iot/`](iot/LEIA-ME.md) | Sensor de vazão simulado no Wokwi (ESP32): código, circuito e guia |
-| [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md), [validação com usuário](docs/validacao/LEIA-ME.md) e [gestão: TAP e ERS](docs/gestao/LEIA-ME.md) |
+| [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md), [validação com usuário](docs/validacao/LEIA-ME.md), [arquitetura](docs/tecnico/arquitetura.md), [testes](docs/tecnico/testes.md) e [gestão: TAP, ERS, segurança e ciclo de vida](docs/gestao/LEIA-ME.md), cada um na sua norma ISO/IEC |
 | `e2e/` | Teste de ponta a ponta do modo offline (Playwright) |
 | [`testes-carga/`](docs/tecnico/teste-carga.md) | Teste de carga do registro de lotes (k6) |
 | `public/` | Arquivos servidos como estão (favicon) |
@@ -259,7 +259,7 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 **Site:**
 
 ```bash
-pnpm test        # Vitest (27 testes): fila em IndexedDB, sincronização e exportação em CSV
+pnpm test        # Vitest (47 testes): fila em IndexedDB, sincronização, CSV, tema e glossário
 pnpm test:e2e    # Playwright (3 testes): site de produção com service worker, Wi-Fi caindo e voltando
 ```
 
