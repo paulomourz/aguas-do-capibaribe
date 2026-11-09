@@ -116,7 +116,7 @@
   <h1>Guia do Águas do Capibaribe</h1>
   <p class="chamada">Como o sistema funciona no dia a dia da lavanderia e como colocá-lo para rodar, do banco de dados ao sensor.</p>
   <div class="rodape">
-    <span><strong>Versão 2.0</strong> · 5 de novembro de 2026</span>
+    <span><strong>Versão 2.1</strong> · 9 de novembro de 2026</span>
     <span>Toritama · Caruaru · Santa Cruz do Capibaribe</span>
   </div>
 </section>
@@ -138,6 +138,30 @@
     <li><span class="t">Cuidados e boas práticas</span><span class="d">senhas, banco oficial e testes</span></li>
     <li><span class="t">Onde encontrar mais</span><span class="d">mapa da documentação e equipe</span></li>
   </ol>
+</section>
+
+<!-- ============ SOBRE ============ -->
+<section class="secao">
+  <div class="rotulo">Antes de começar</div>
+  <h2>Sobre este guia</h2>
+  <p class="abertura">Este guia segue a norma <strong>ISO/IEC/IEEE 26514</strong> (documentação para usuários): diz para quem é, para que serve e como usá-lo, e separa os conceitos, as tarefas do dia a dia e a parte de referência.</p>
+
+  <table>
+    <tr><th style="width:28%">Quem lê</th><th>Por onde começar</th></tr>
+    <tr><td><strong>Operador</strong></td><td>Seções 2 e 5: o que é um lote e como registrar, inclusive sem Wi-Fi.</td></tr>
+    <tr><td><strong>Gestor e administrador</strong></td><td>Seções 2 a 5: metas, alertas, perfis, acompanhamento do mês e criação de acessos.</td></tr>
+    <tr><td><strong>Equipe e banca</strong></td><td>Seções 6 a 11: sensor, arquitetura, como rodar, problemas comuns e referências.</td></tr>
+  </table>
+
+  <h3>Convenções</h3>
+  <ul>
+    <li><strong>Negrito</strong> indica o nome de uma tela, de um botão ou de um menu, como aparece no sistema.</li>
+    <li><code>Texto em fonte fixa</code> indica algo para digitar ou um arquivo do projeto.</li>
+    <li>Passos numerados são tarefas: siga na ordem. Quadros de nota trazem avisos e dicas.</li>
+    <li>No sistema, o ícone de informação ao lado do nome de um processo explica o termo têxtil (estonagem, amaciamento, alvejamento, tingimento).</li>
+  </ul>
+
+  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve o sistema da branch <code>develop</code> em 9 de novembro de 2026. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
 </section>
 
 <!-- ============ 1 ============ -->
@@ -279,6 +303,7 @@
     <li><strong>Abra Registro de lotes</strong>É a primeira tela do operador ao entrar.</li>
     <li><strong>Preencha os três campos</strong>Escolha o processo executado na máquina, informe a quantidade de peças e os litros usados.</li>
     <li><strong>Registre e confira</strong>O resultado aparece na hora: esperado, real, desvio e status. O lote fica no histórico.</li>
+    <li><strong>Dúvida sobre o processo?</strong>Toque no ícone de informação ao lado do nome: ele explica o que a etapa faz e por que gasta água.</li>
   </ol>
   <div class="nota agua"><p><strong>A Wi-Fi caiu?</strong> Registre normalmente. O lote fica guardado no aparelho, aparece como pendente no topo da tela e é enviado sozinho quando a conexão volta, sem duplicar. O site também pode ser instalado como aplicativo.</p></div>
 
@@ -309,6 +334,7 @@
     <li><strong>Abrir a água</strong>O potenciômetro faz o papel da vazão: girar abre mais ou menos água.</li>
     <li><strong>Iniciar o lote</strong>O botão verde liga a medição; o LED azul acende e o monitor serial mostra vazão e litros.</li>
     <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 faz login na API, procura o processo pelo nome e envia peças e litros. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
+    <li><strong>Ver o resultado</strong>O monitor serial mostra o status que a API deu ao lote. Se for <strong>crítico</strong> (desvio acima de 8%), o buzzer apita 3 vezes e o LED vermelho fica aceso até o próximo lote.</li>
   </ol>
 
   <div class="nota"><p><strong>Dois projetos no Wokwi.</strong> O <code>aguas-capibaribe-sensor</code> (público) fala com a API publicada, em HTTPS. O <code>aguas-capibaribe-local</code> fala com o Docker, em HTTP, pelo túnel. O código é o mesmo: mudam o <code>API_URL</code> e a <code>SENHA</code> do <code>sensor.wokwi</code>. Os projetos do Wokwi são públicos, então a senha é colada só na hora de usar e o projeto não é salvo com ela.</p></div>
@@ -429,7 +455,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Sem modo simulado.</strong> O site sempre usa a API. Para mostrar o sistema sem internet, suba tudo no computador com o Docker (plano B do roteiro de apresentação).</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 98 testes da API: 68 de regras, segurança e validação, e 30 de integração, que usam o Docker (ou um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora). Na raiz, <code>pnpm test</code> roda os 27 testes do site e <code>pnpm test:e2e</code>, os 3 de ponta a ponta do modo offline. Em 05/11/2026, todos passaram. O passo a passo está no <code>backend/README.md</code>.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 98 testes da API: 68 de regras, segurança e validação, e 30 de integração, que usam o Docker (ou um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora). Na raiz, <code>pnpm test</code> roda os 47 testes do site e <code>pnpm test:e2e</code>, os 3 de ponta a ponta do modo offline. Em 06/11/2026 (CI nº 88), todos passaram. O plano e o relatório de testes estão em <code>docs/tecnico/testes.md</code>. O passo a passo está no <code>backend/README.md</code>.</p>
 
   <h3>Documentação interativa da API</h3>
   <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 19 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>
@@ -485,7 +511,9 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
     <tr><td><code>docs/tecnico/api.md</code></td><td>todos os endpoints da API, erros e validações</td></tr>
     <tr><td><code>docs/tecnico/banco-remoto.md</code></td><td>servidor de banco, permissões e situação atual</td></tr>
     <tr><td><code>iot/LEIA-ME.md</code></td><td>sensor simulado no Wokwi, passo a passo</td></tr>
-    <tr><td><code>docs/gestao/</code></td><td>Termo de Abertura do Projeto (TAP) e Especificação de Requisitos (ERS)</td></tr>
+    <tr><td><code>docs/gestao/</code></td><td>Termo de Abertura (TAP), Especificação de Requisitos (ERS, ISO/IEC/IEEE 29148), segurança da informação (ISO/IEC 27001) e ciclo de vida (ISO/IEC 12207)</td></tr>
+    <tr><td><code>docs/tecnico/arquitetura.md</code></td><td>descrição da arquitetura (ISO/IEC/IEEE 42010)</td></tr>
+    <tr><td><code>docs/tecnico/testes.md</code></td><td>plano, casos e relatório de testes (ISO/IEC/IEEE 29119)</td></tr>
     <tr><td><code>docs/validacao/</code></td><td>roteiro do teste com operador e questionário SUS</td></tr>
     <tr><td><code>docs/guia/fonte/</code></td><td>fonte deste guia; rode <code>gerar-pdf.ps1</code> para gerar o PDF de novo</td></tr>
   </table>

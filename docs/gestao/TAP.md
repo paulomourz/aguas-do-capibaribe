@@ -4,10 +4,10 @@
 
 **Sistema de Gestão de Consumo Hídrico por Lote em Lavanderias de Jeans do Agreste Pernambucano**
 
-Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.0**, atualizada em 5 de
-novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026) e 2.1 (20/10/2026).
+Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.1**, atualizada em 9 de
+novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (20/10/2026) e 3.0 (05/11/2026).
 
-> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
+> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
 
 <!-- sumario -->
 
@@ -21,7 +21,7 @@ novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026) e 2.1 
 | Responsável / aluno | Pedro |
 | Patrocinador / orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
 | Data de elaboração | 22 de setembro de 2026 (versão 1.0) |
-| Última atualização | 5 de novembro de 2026 (versão 3.0) |
+| Última atualização | 9 de novembro de 2026 (versão 3.1) |
 | Região de aplicação | Toritama, Caruaru e Santa Cruz do Capibaribe (PE) — Agreste Pernambucano |
 | Tipo de solução | Sistema web em arquitetura REST: front-end em React, acessado pelo navegador e instalável como aplicativo (PWA); back-end em Java com Spring Boot, que expõe uma API REST; banco de dados PostgreSQL. |
 | Endereço do sistema | Site: https://aguas-do-capibaribe.onrender.com · API: https://aguas-api-a0vq.onrender.com/api |
@@ -109,10 +109,23 @@ Tratamento definido em outro documento: o registro de volume de efluente e o ín
 | Simulação de IoT | Wokwi (ESP32) | Projeto público em HTTPS, ligado à API publicada; projeto local para testes com o Docker. |
 | Hospedagem | Render (site e API) e Neon (banco) | Planos gratuitos. O Render só publica depois que o CI passa e confere a saúde da API. |
 | Execução local | Docker Compose | Sobe banco, API e site com um comando, com túnel opcional para o Wokwi (plano B de apresentação). |
-| Qualidade | GitHub Actions | A cada pull request: 98 testes do back-end, 27 de unidade e 3 de ponta a ponta do front-end, build e teste do Docker. |
+| Qualidade | GitHub Actions | A cada pull request: 98 testes do back-end, 47 de unidade e 3 de ponta a ponta do front-end, build e teste do Docker. |
 | Versionamento | GitHub | Repositório privado com GitFlow (main, develop, feature, release, hotfix); develop é a branch padrão e a main só recebe versões. |
 
 **Princípios de arquitetura.** O front-end nunca acessa o banco: toda operação passa pela API REST. O back-end concentra as regras de negócio (desvio, status, alertas, autorização por perfil); o banco calcula o esperado de cada lote e impede que um lote ou um registro de auditoria seja alterado ou apagado. Senhas são guardadas com hash BCrypt, e nenhuma senha ou token fica no repositório.
+
+### 5.1 Documentação e normas
+
+| Norma | Documento |
+|---|---|
+| ISO/IEC/IEEE 29148 (requisitos) | Especificação de Requisitos de Software v2.0 (docs/gestao/ERS.pdf) |
+| ISO/IEC/IEEE 42010 (arquitetura) | Descrição da arquitetura (docs/tecnico/arquitetura.md) |
+| ISO/IEC/IEEE 26514 (documentação do usuário) | Guia do sistema v2.1 (docs/guia/) |
+| ISO/IEC/IEEE 29119 (testes) | Plano, casos e relatório de testes (docs/tecnico/testes.md) |
+| ISO/IEC 12207 (ciclo de vida) | Processos do ciclo de vida (docs/gestao/ciclo-de-vida.md) |
+| ISO/IEC 27001 (segurança da informação) | Política, análise de riscos e continuidade (docs/gestao/seguranca.md) |
+
+Os documentos seguem a estrutura de cada norma, adaptada ao porte de um projeto acadêmico, sem certificação formal.
 
 ## 6. Estratégia de IoT
 
@@ -141,13 +154,13 @@ Tratamento definido em outro documento: o registro de volume de efluente e o ín
 
 ## 8. Critérios de sucesso
 
-| Critério | Situação em 05/11/2026 |
+| Critério | Situação em 09/11/2026 |
 |---|---|
 | Sistema web funcional (front-end React e API REST em Spring Boot) com cadastro, registro de lote e comparação automática com a meta. | Atendido; sistema publicado. |
 | Autenticação funcional e persistência dos dados em PostgreSQL. | Atendido. |
 | Geração de pelo menos um relatório histórico consolidado a partir de dados de teste. | Atendido; relatório mensal com PDF e exportação em CSV. |
 | Validação do conceito com pelo menos um cenário ou persona representativo do setor. | **Pendente:** roteiro, questionário SUS e kit prontos em docs/validacao/; falta aplicar com um operador de Toritama (issue #50). |
-| Código organizado e documentado, com execução reproduzível pelos integrantes da equipe. | Atendido; Docker Compose, guia, roteiro de apresentação e CI. |
+| Código organizado e documentado, com execução reproduzível pelos integrantes da equipe. | Atendido; Docker Compose, guia, roteiro de apresentação, CI e documentação nas normas ISO/IEC (seção 5.1). |
 
 ## 9. Principais riscos
 
@@ -199,12 +212,14 @@ Semanas contadas a partir de 12/10/2026. A data final de entrega ainda precisa s
 | IoT | Túnel temporário em HTTP. | Projeto público em HTTPS ligado à API publicada; projeto local para testes. |
 | Validação com persona | Prevista. | Roteiro, questionário SUS e kit prontos (issue #50); aplicação pendente. |
 
+Na versão 3.1 (09/11/2026): glossário têxtil na interface (issue #55), aviso de lote crítico com buzzer e LED no sensor (issue #83), tema escuro (issue #82) e documentação nas normas ISO/IEC (seção 5.1), com a ERS migrada da IEEE 830 para a ISO/IEC/IEEE 29148.
+
 ### 11.1 Em aberto
 
 - **Bancada física (seção 6):** a equipe propõe ficar no simulado; falta a ata assinada pelo orientador. **[A CONFIRMAR]**
 - **Versão 1.0.0:** o parecer orienta não declarar 1.0.0 antes da homologação, que ainda não foi feita; a numeração precisa ser alinhada com o orientador. **[A CONFIRMAR]**
 - **Regra de alerta:** hoje, cada nova sequência de 3 lotes acima da meta abre outro alerta, se a anterior foi interrompida; o parecer descreve o lote sendo anexado ao alerta já aberto. **[A CONFIRMAR]**
-- **Itens ainda em desenvolvimento:** vários sensores por linha de lavagem (issue #47) e glossário têxtil na interface (issue #55).
+- **Item ainda em desenvolvimento:** vários sensores por linha de lavagem (issue #47).
 - **Numeração deste termo:** o parecer de 27/10/2026 cita um TAP v3.0 que não está no repositório; esta versão segue a numeração do repositório. **[A CONFIRMAR]**
 - **Data final de entrega (seção 10).** **[A CONFIRMAR]**
 
