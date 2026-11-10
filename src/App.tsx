@@ -4,7 +4,8 @@ import type { AlertaStatus, Perfil } from './domain'
 import { navigate, useRoute } from './router'
 import { AppProvider, homeDe, periodoAtual, useApp } from './store'
 import AppLayout, { type MenuId } from './layouts/AppLayout'
-import { AcessoNegado, Login, NaoEncontrada, SemConexao, SessaoExpirada } from './screens/Acesso'
+import { AcessoNegado, Login, NaoEncontrada, PublicShell, SemConexao, SessaoExpirada } from './screens/Acesso'
+import Privacidade from './screens/Privacidade'
 import RegistroLote, { ResultadoLote } from './screens/RegistroLote'
 import Historico from './screens/Historico'
 import Dashboard from './screens/Dashboard'
@@ -72,6 +73,18 @@ function Roteador() {
   } else if (path === '/login') {
     titulo = 'A1 Login'
     tela = <Login next={query.get('next') ?? undefined} />
+  } else if (path === '/privacidade') {
+    // Público: quem ainda não entrou lê o aviso antes do login.
+    titulo = 'A6 Aviso de privacidade'
+    tela = usuario ? (
+      <AppLayout>
+        <Privacidade />
+      </AppLayout>
+    ) : (
+      <PublicShell>
+        <Privacidade />
+      </PublicShell>
+    )
   } else if (path === '/sessao-expirada') {
     titulo = 'A2 Faça login para continuar'
     tela = <SessaoExpirada />

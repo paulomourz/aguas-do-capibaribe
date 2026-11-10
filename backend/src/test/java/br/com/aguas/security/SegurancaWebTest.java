@@ -124,7 +124,7 @@ class SegurancaWebTest {
     @Test
     void gestorListaUsuarios() throws Exception {
         String token = tokenDe(5, Perfil.gestor, true);
-        when(usuarioService.listar()).thenReturn(List.of(new UsuarioDTO(5, "Gestora", "gestora", Perfil.gestor, true)));
+        when(usuarioService.listar(any())).thenReturn(List.of(new UsuarioDTO(5, "Gestora", "gestora", Perfil.gestor, true)));
         mvc.perform(get("/usuarios").header(HttpHeaders.AUTHORIZATION, token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].usuario").value("gestora"))

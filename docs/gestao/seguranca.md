@@ -8,7 +8,7 @@ pede, adaptada ao porte de um projeto acadêmico, sem certificação formal.
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.0, 9 de novembro de 2026 |
+| Versão | 1.1, 10 de novembro de 2026 (aviso de privacidade e LGPD, seção 6) |
 | Escopo | Site, API, banco publicado (Render e Neon), ambiente Docker, sensor simulado, repositório no GitHub e aviso no Telegram |
 | Responsável | Paulo Moura (DevOps), com apoio da equipe |
 | Revisão | A cada versão do sistema ou depois de qualquer incidente |
@@ -66,6 +66,7 @@ Probabilidade e impacto em três níveis (baixo, médio, alto). O risco residual
 | R11 | Sessão roubada ou usada por muito tempo | Baixa | Médio | JWT de 8 horas, sem renovação; desativar a conta corta o acesso na hora | Baixo |
 | R12 | Certificado da API mudar e o sensor recusar a conexão | Alta | Baixo | Impressão digital atual vale até 20/12/2026; o comando para atualizar está no sketch | Baixo |
 | R13 | Dependência com vulnerabilidade conhecida (CVE) | Alta | Alto | Job `dependencias` do CI com o OSV-Scanner; atualização das versões; exceção só com motivo e prazo | Baixo |
+| R14 | Exposição de dados pessoais além do necessário (LGPD) | Média | Médio | Aviso de privacidade no login; login de outras pessoas mascarado na API; CSV e PDF só com o nome (seção 6) | Baixo |
 
 # 3. Controles aplicados
 
@@ -76,6 +77,7 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 | Controle de acesso | Quatro perfis, sem autocadastro, desativação imediata | RF03, RF17, RF18, RNF03 |
 | Autenticação | Senha de 8 a 72 bytes com BCrypt; JWT de 8 horas; limite de tentativas | RF01, RF02, RNF01, RNF02, RNF19 |
 | Registro de eventos | Auditoria das ações sobre contas, que não pode ser alterada nem apagada | RF27 |
+| Privacidade e proteção de dados pessoais (5.34) | Aviso de privacidade aberto a todos na tela de login; login de outras pessoas mascarado na API (ex.: `ca****in`); CSV e PDF sem login, senha nem perfil (seção 6) | RNF27 |
 | Criptografia | HTTPS em todo o tráfego publicado; senhas só como hash | RNF06, RNF01 |
 | Segurança no desenvolvimento | Pull request, CI com 148 testes, revisão, segredos fora do Git | RNF05, RNF24 |
 | Imagem mínima do contêiner | API em imagem distroless (sem shell, sem gerenciador de pacotes, usuário não root), presa por digest; o CI falha se a imagem tiver shell | RNF05, RNF24 |
@@ -112,3 +114,71 @@ Todo incidente é registrado numa issue do GitHub, **sem colocar o segredo nela*
 
 **Rotina de backup:** rodar `bash database/backup.sh` com o `.env.backup` do Neon pelo menos uma vez por semana e
 antes de cada apresentação ou mudança de banco. O backup fica em `database/backups/`, fora do Git.
+
+# 6. Privacidade e proteção de dados pessoais (LGPD)
+
+O sistema trata dados pessoais de quem o usa: nome, login e a autoria de cada lote e de cada ação nas contas. Esta
+seção adequa o projeto à **Lei Geral de Proteção de Dados** (Lei nº 13.709/2018) no que cabe a ele (issue #117,
+requisito RNF27 da ERS).
+
+## 6.1 Papéis
+
+| Papel na LGPD | Quem é |
+|---|---|
+| Controladora | A lavanderia que usa o sistema. O administrador da lavanderia responde por ela no sistema. |
+| Operadora | A equipe do Águas do Capibaribe, que mantém o sistema e trata os dados só para fazê-lo funcionar. |
+| Titulares | Operadores, gestores e administradores com conta no sistema. |
+| Suboperadores | Render (site e API) e Neon (banco de dados), com servidores que podem ficar fora do Brasil. |
+
+## 6.2 Aviso de privacidade
+
+O aviso fica na tela **Aviso de privacidade** (`/#/privacidade`), aberta pelo link da tela de login, sem precisar
+entrar, e pelo rodapé de todas as telas. O texto da tela vem de `src/domain/privacidade.ts`; ao mudar o aviso,
+mudar nos dois lugares.
+
+| Dado | Para quê (base legal, art. 7º) | Por quanto tempo | Quem vê |
+|---|---|---|---|
+| Nome | Identificar quem registrou cada lote e quem fez cada ação nas contas, para comprovar o consumo de água a clientes e órgãos ambientais (II e IX) | Enquanto a lavanderia usar o sistema; a conta é desativada, nunca apagada, para os lotes e a auditoria continuarem mostrando quem fez | A pessoa, o administrador e os gestores; no histórico, no CSV, na auditoria e, para quem emitiu, no PDF |
+| Usuário (login) | Entrar no sistema (V) | O mesmo do nome | Inteiro, só a pessoa e o administrador; para os outros, mascarado (`ca****in`) |
+| Senha | Confirmar a identidade no login (V) | Até ser trocada | Ninguém: só o hash BCrypt é guardado |
+| Perfil, situação da conta e data de criação | Definir o que cada pessoa pode fazer (V e IX) | O mesmo do nome | A pessoa, o administrador e os gestores |
+| Lotes registrados (data, hora e autoria) | Medir e comprovar o consumo de água (II e IX) | Permanente; o banco impede alterar ou apagar | A pessoa, os gestores e o administrador; o operador vê só os próprios |
+| Auditoria das contas | Segurança das contas (IX) | Permanente; o banco impede alterar ou apagar | Só o administrador |
+| Endereço IP | Limitar as tentativas de login (IX) | Só na memória da API, sem ir para o banco nem para os logs; some quando a API reinicia (ou quando passa de 10.000 endereços, os parados há mais de 1 minuto saem) | Ninguém consulta |
+| Dados no aparelho | Manter a sessão e registrar lotes sem conexão | Sessão de até 8 horas, apagada ao fechar a aba; o resto é apagado ao sair, menos os lotes ainda não enviados | Só quem usa o aparelho |
+
+**Com quem falar:** o administrador da lavanderia. Ele resolve o que for da conta (cópia dos dados, correção,
+desativação) e leva à equipe o que depender do sistema. A própria pessoa vê o nome, o usuário e o perfil em
+**Configurações da conta** e corrige o nome por lá.
+
+**Limite do direito de eliminação:** lotes e registros de auditoria não são apagados, mesmo a pedido, porque a
+lavanderia precisa guardá-los para comprovar o consumo de água (art. 16, I, da LGPD). A conta é desativada.
+
+## 6.3 Minimização: o login de outras pessoas
+
+O login só é necessário para quem entra com ele e para o administrador, que cria e cuida das contas. Nos outros
+lugares, a API o envia mascarado (`Privacidade.mascararLogin`): no máximo metade dos caracteres e sempre quatro
+asteriscos, para não revelar o tamanho. O nome continua inteiro, porque é ele que identifica quem fez.
+
+| Onde | Antes | Agora |
+|---|---|---|
+| Auditoria (`GET /auditoria`), "Feita por" e "Usuário afetado" | Nome e login inteiro | Nome e login mascarado (`ca****in`) |
+| Lista de usuários (`GET /usuarios`) pedida pelo gestor, usada só para mostrar quem registrou cada lote | Login inteiro de todos | Login dos outros mascarado; o próprio, inteiro |
+| Lista de usuários pedida pelo administrador (tela Usuários) | Login inteiro | Login inteiro (necessário para cuidar das contas) |
+| Configurações da conta (o próprio login) | Login inteiro | Login inteiro |
+
+Regra: login com até 4 caracteres mostra o primeiro (`ana` → `a****`); de 5 a 7, o primeiro e o último
+(`maria` → `m****a`); com 8 ou mais, os dois primeiros e os dois últimos (`carlos.martin` → `ca****in`).
+
+## 6.4 Arquivos exportados
+
+Conferido em 10/11/2026 que os arquivos levam só o necessário:
+
+| Arquivo | Dados pessoais | Por que são necessários |
+|---|---|---|
+| Histórico em CSV (RF29) | Só o **nome** de quem registrou cada lote ("Registrado por"). Sem login, perfil ou id de usuário. | A auditoria fiscal e ambiental precisa saber quem registrou cada lote (RF08). |
+| Relatório mensal em PDF (RF15) | Só o **nome** de quem emitiu ("Emitido por", assinatura e autor do arquivo). Os totais são por processo, sem nenhum operador. | O relatório é assinado pelo responsável técnico. |
+| Aviso no Telegram (RF30) | Nenhum: só o processo e o número dos lotes e do alerta. | — |
+
+Quem baixa um arquivo passa a responder por ele: não deve publicá-lo nem enviá-lo para fora da lavanderia sem
+necessidade.

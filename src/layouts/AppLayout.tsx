@@ -189,7 +189,12 @@ export function Footer() {
       <hr className="mb-6 border-line" />
       <div className="flex flex-col gap-1 text-[13px] text-ink-2 sm:flex-row sm:items-center sm:justify-between">
         <span>Águas do Capibaribe · Gestão de consumo de água por lote</span>
-        <span>Versão {pacote.version}</span>
+        <span>
+          <Link to="/privacidade" className="underline underline-offset-2 hover:text-ink">
+            Aviso de privacidade
+          </Link>{' '}
+          · Versão {pacote.version}
+        </span>
       </div>
     </footer>
   )

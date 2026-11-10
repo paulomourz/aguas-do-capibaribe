@@ -38,11 +38,13 @@ public class UsuarioController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar usuários", description = "Administrador e gestor.")
+    @Operation(summary = "Listar usuários",
+            description = "Administrador e gestor. Só o administrador recebe o login inteiro de outras pessoas; "
+                    + "para o gestor, o login dos outros vem mascarado (ex.: ca****in) e o nome vem inteiro.")
     @RespostasDoc.Ok
     @RespostasDoc.SoGestor
-    public List<UsuarioDTO> listar() {
-        return usuarios.listar();
+    public List<UsuarioDTO> listar(@AuthenticationPrincipal UsuarioAutenticado quem) {
+        return usuarios.listar(quem);
     }
 
     @PostMapping

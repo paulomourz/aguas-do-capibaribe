@@ -15,6 +15,12 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Segurança
 
+- **Privacidade e LGPD** (issue #117, RNF27). A tela de login ganhou o link **Aviso de privacidade**
+  (`/#/privacidade`, aberto sem entrar e também no rodapé), que diz quais dados pessoais o sistema guarda, para quê,
+  por quanto tempo, quem vê e com quem falar. O login de outras pessoas passou a sair mascarado da API (ex.:
+  `ca****in`), com o nome inteiro: na auditoria e na lista de usuários pedida pelo gestor. Só o administrador, na
+  tela Usuários, e a própria pessoa veem o login inteiro. O CSV e o PDF foram conferidos: levam só o nome. Aviso e
+  conferência na seção 6 de `docs/gestao/seguranca.md` (v1.1); ERS v2.1.
 - **Imagem distroless da API** (issue #105). O contêiner da API (Docker e Render) passa a usar
   `gcr.io/distroless/java25-debian13:nonroot`, presa por digest: só o Java 25 e o jar, sem shell, sem gerenciador de
   pacotes e sem root. O healthcheck do Docker virou uma classe Java (`backend/docker/Saude.java`) que chama

@@ -8,8 +8,8 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 
 | Campo | Descrição |
 |---|---|
-| Versão | 2.0 |
-| Data | 9 de novembro de 2026 |
+| Versão | 2.1 |
+| Data | 10 de novembro de 2026 |
 | Base | Termo de Abertura do Projeto v3.1 (09/11/2026), parecer técnico do orientador (27/10/2026) e código do repositório em 09/11/2026 (branch develop) |
 | Equipe | Pedro (Full Stack / PO), Abraão Filipe (Back-end), João Bezerra (Back-end), Matheus Andrade (Front-end), Mateus Basilio (Banco de dados) e Paulo Moura (DevOps) |
 | Orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
@@ -23,6 +23,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 1.1 | 02/11/2026 | Sistema publicado, versão 1.0.0 e issues do parecer: Flyway, HTTPS, usuário aguas_api, status na API, PDF e Docker. | Equipe Águas do Capibaribe |
 | 1.2 | 05/11/2026 | Perfis de administrador e sensor, auditoria, registro sem conexão, exportação em CSV, aviso no Telegram, gráficos, limite de requisições, monitoramento, backup, desempenho medido, entrega contínua e remoção do modo simulado. | Equipe Águas do Capibaribe |
 | 2.0 | 09/11/2026 | Migração da IEEE 830 para a ISO/IEC/IEEE 29148: estrutura nova, requisitos de negócio e dos stakeholders, conceito de operação, método de verificação em cada requisito, seção de verificação, conformidade com normas e matriz de rastreabilidade com a verificação. Glossário têxtil (RNF26) e aviso de lote crítico no sensor (RF26) implementados. RF31 (vários sensores por linha de lavagem) adiado (issue #47). | Equipe Águas do Capibaribe |
+| 2.1 | 10/11/2026 | Adequação à LGPD (RNF27, issue #117): aviso de privacidade na tela de login, login de outras pessoas mascarado na API (auditoria e lista de usuários do gestor) e conferência dos dados pessoais do CSV e do PDF. Necessidade NS-05. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -100,6 +101,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 | NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27 |
 | NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26; RF31 adiado (Apêndice B) |
 | NS-04 | Entender os termos técnicos dos processos de lavagem. | Operador e gestor | RNF26 |
+| NS-05 | Saber quais dados pessoais o sistema guarda e não ter o próprio login exposto a quem não precisa dele (LGPD). | Operador, gestor e administrador | RNF27 |
 
 ### 1.3.6 Conceito de operação
 
@@ -148,6 +150,7 @@ Um dia típico na lavanderia:
 - Descrição da arquitetura (docs/tecnico/arquitetura.md, ISO/IEC/IEEE 42010).
 - Documentação de testes (docs/tecnico/testes.md, ISO/IEC/IEEE 29119).
 - Segurança da informação (docs/gestao/seguranca.md, ISO/IEC 27001) e ciclo de vida (docs/gestao/ciclo-de-vida.md, ISO/IEC 12207).
+- Lei nº 13.709/2018 — Lei Geral de Proteção de Dados Pessoais (LGPD); aviso de privacidade na seção 6 de docs/gestao/seguranca.md.
 - Contrato da API REST (docs/tecnico/api.md) e esquema do banco (migrações Flyway em backend/src/main/resources/db/migration).
 - Teste de carga (docs/tecnico/teste-carga.md) e análise de índices (docs/tecnico/desempenho-indices.md).
 - Guia do sistema (docs/guia/, ISO/IEC/IEEE 26514), guia do sensor simulado (iot/LEIA-ME.md) e kit de validação de usabilidade (docs/validacao/).
@@ -495,7 +498,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Descrição | Toda criação, desativação, reativação e redefinição de senha de uma conta deve ficar registrada, e o administrador deve poder consultar esses registros. |
 | Entradas | Ação sobre uma conta; na consulta, período, tipo de ação e página. |
 | Processamento | A API grava o registro na mesma transação da ação; o banco impede alterar ou apagar registros (trigger trg_auditoria_imutavel). A consulta é só do administrador e lista do mais recente ao mais antigo. |
-| Saídas | Tela de Auditoria com data e hora, ação, quem fez e quem foi afetado; nenhuma senha ou hash aparece. |
+| Saídas | Tela de Auditoria com data e hora, ação, quem fez e quem foi afetado (nome inteiro e login mascarado, RNF27); nenhuma senha ou hash aparece. |
 | Prioridade | Importante |
 | Origem | US-10 · issues #16, #57 e #66 |
 | Situação | Implementado (GET /auditoria). |
@@ -608,7 +611,8 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 
 | Tela | Perfil | Conteúdo principal |
 |---|---|---|
-| Login | público | Usuário, senha (com botão de mostrar), botão Entrar; orientação para pedir ao administrador em caso de esquecimento. |
+| Login | público | Usuário, senha (com botão de mostrar), botão Entrar; orientação para pedir ao administrador em caso de esquecimento; link para o aviso de privacidade. |
+| Aviso de privacidade | público | Dados pessoais guardados, para quê, por quanto tempo e quem vê; com quem são compartilhados; direitos e com quem falar (RNF27). Também no rodapé das telas. |
 | Dashboard | gestor, administrador | Indicadores do mês, alertas ativos, resumo por processo e gráficos de meta e consumo por processo e por dia. |
 | Alertas e detalhe do alerta | gestor, administrador | Abas por status; sequência de lotes que gerou o alerta; ações "em análise" e "resolvido" com confirmação. |
 | Relatórios e pré-visualização do PDF | gestor, administrador | Escolha de mês e ano; tabela por processo; pré-visualização A4 e download em PDF. |
@@ -616,7 +620,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Histórico de lotes | operador, gestor, administrador | Lista com filtro por processo e botão "Exportar CSV"; gestor e administrador também veem quem registrou. |
 | Processos e metas | gestor, administrador | Lista de processos; cadastro e edição com nome, unidade e meta. |
 | Usuários | administrador | Lista com situação; cadastrar, desativar, reativar e redefinir senha. |
-| Auditoria | administrador | Registros das ações sobre contas, com filtro por período e ação, e paginação. |
+| Auditoria | administrador | Registros das ações sobre contas, com filtro por período e ação, e paginação; pessoas pelo nome, com o login mascarado. |
 | Configurações da conta | todos | Nome editável; usuário e perfil somente leitura; troca de senha. |
 | Sessão expirada, acesso negado e página não encontrada | todos | Mensagens claras com caminho de volta. |
 
@@ -713,6 +717,7 @@ Os documentos seguem a estrutura e o conteúdo pedidos por cada norma, adaptados
 | RNF06 | A API publicada e o dispositivo usam HTTPS. O HTTP só é aceito no projeto local de testes, por túnel temporário. A conta do sensor tem perfil próprio e a senha não fica salva no projeto público do Wokwi. | Implementado |
 | RNF07 | A API conecta ao banco com um usuário próprio (aguas_api), sem permissão de DELETE, TRUNCATE ou de alterar o esquema. | Implementado |
 | RNF19 | Limite de requisições por minuto: 5 tentativas de login por IP e 60 lotes por usuário; acima disso, 429 (LIMITE_EXCEDIDO) com o cabeçalho Retry-After. | Implementado |
+| RNF27 | Privacidade (LGPD, Lei nº 13.709/2018): (a) a tela de login tem um link para o aviso de privacidade, aberto sem entrar, que diz quais dados pessoais são guardados, para quê, por quanto tempo, quem vê e com quem falar; (b) o login de outra pessoa só sai inteiro da API para o administrador na lista de usuários; na auditoria e na lista de usuários pedida pelo gestor, vai mascarado (no máximo metade dos caracteres e sempre quatro asteriscos, ex.: ca****in), com o nome inteiro; (c) o CSV e o PDF levam só o nome, sem login, senha ou perfil. | Implementado (issue #117) |
 
 A política de segurança, a análise de riscos e o plano de continuidade estão em docs/gestao/seguranca.md.
 
@@ -768,6 +773,7 @@ A ISO/IEC/IEEE 29148 pede que cada requisito tenha um meio de verificação defi
 | RNF21 | Demonstração | database/backup.sh, que restaura o backup num banco temporário e confere as tabelas. |
 | RNF25 | Teste de usabilidade | Roteiro e questionário SUS de docs/validacao/ (pendente). |
 | RNF26 | Teste | glossario.test.ts. |
+| RNF27 | Teste e inspeção | e2e/privacidade.spec.ts (critério de aceitação: o aviso abre a partir do login), privacidade.test.ts, PrivacidadeTest, AuditoriaServiceTest e auditoriaListaAsAcoesComFiltrosEPaginacao (integração); conferência do CSV e do PDF na seção 6.4 de docs/gestao/seguranca.md. |
 
 **Ambiente e resultado.** Os testes automatizados rodam no GitHub Actions em toda mudança: 98 testes do back-end (com PostgreSQL 18 em contêiner), 47 de unidade e 3 de ponta a ponta do site, e o teste do Docker Compose. Na última execução da develop (CI nº 88, 06/11/2026), todos passaram. O plano, os casos e o relatório completos estão em docs/tecnico/testes.md, conforme a ISO/IEC/IEEE 29119.
 
@@ -829,7 +835,7 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF30 | US-13 | — (Bot API do Telegram) | — (grupo do Telegram) | Teste e Demonstração | Implementado |
 | RF31 | US-15 | — | — | Não se aplica | Adiado (Apêndice B) |
 
-Resumo: 31 requisitos funcionais, 30 implementados e 1 adiado (RF31); 26 requisitos não funcionais, 25 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 31 requisitos funcionais, 30 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 
