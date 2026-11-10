@@ -42,7 +42,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 |---|---|---|---|
 | `POST /auth/login` | público | `{usuario, senha}` | `200 {token, usuario: UsuarioDTO}` |
 | `GET /auth/me` | autenticado | — | `UsuarioDTO` |
-| `GET /usuarios` | gestor | — | `UsuarioDTO[]` |
+| `GET /usuarios` | gestor | — | `UsuarioDTO[]`; só o admin recebe o `usuario` (login) inteiro dos outros; para o gestor ele vem mascarado (ex.: `ca****in`), menos o próprio (LGPD, RNF27) |
 | `POST /usuarios` | admin | `{nome, usuario, perfil, senha}` (`perfil`: `admin`, `gestor`, `operador` ou `sensor`) | `201 UsuarioDTO`; registra `CRIACAO_USUARIO` na auditoria |
 | `PATCH /usuarios/{id}` | a própria pessoa | `{nome?, senha?, senhaAtual?}` (`senhaAtual` é obrigatória quando há `senha`) | `UsuarioDTO` |
 | `PATCH /usuarios/{id}/senha` | admin (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO`; registra `REDEFINICAO_SENHA` na auditoria |
@@ -56,7 +56,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
-| `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; sem senha nem hash |
+| `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |

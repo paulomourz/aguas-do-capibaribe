@@ -56,8 +56,9 @@ public class AuditoriaService {
         return new PaginaAuditoriaDTO(itens, registros.getTotalElements(), pagina, tamanho);
     }
 
+    /** Nome inteiro e login mascarado (LGPD, RNF27): o nome já identifica quem fez e quem foi afetado. */
     private static PessoaDTO pessoa(Map<Integer, Usuario> pessoas, Integer id) {
         Usuario u = pessoas.get(id);
-        return new PessoaDTO(id, u == null ? null : u.getNome(), u == null ? null : u.getLogin());
+        return new PessoaDTO(id, u == null ? null : u.getNome(), u == null ? null : Privacidade.mascararLogin(u.getLogin()));
     }
 }

@@ -2,7 +2,7 @@ import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import SeletorTema from '../components/SeletorTema'
 import { Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
 import { IconCloudOff, IconCompass, IconLock, IconRefresh } from '../components/icons'
-import { navigate } from '../router'
+import { Link, navigate } from '../router'
 import { errosDaApi, homeDe, useApp } from '../store'
 import waveReference from '../assets/wave-minimal-reference.jpg'
 import AppLayout, { Footer } from '../layouts/AppLayout'
@@ -148,6 +148,12 @@ export function Login({ next }: { next?: string }) {
             </form>
 
             <p className="mt-6 text-[14px] text-ink-2">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+            <p className="mt-3 text-[14px] text-ink-2">
+              <Link to="/privacidade" className="font-semibold text-brand underline underline-offset-2">
+                Aviso de privacidade
+              </Link>
+              : quais dados guardamos, para quê e por quanto tempo.
+            </p>
           </div>
         </div>
       </section>

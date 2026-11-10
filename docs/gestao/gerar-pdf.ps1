@@ -15,8 +15,8 @@ if (-not $nav) { throw 'Chrome ou Edge não encontrado.' }
 
 $documentos = @(
   @{ Nome = 'TAP'; Rodape = 'Águas do Capibaribe · Termo de Abertura do Projeto v3.1' },
-  @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v2.0 · ISO/IEC/IEEE 29148' },
-  @{ Nome = 'seguranca'; Rodape = 'Águas do Capibaribe · Segurança da Informação v1.0 · ISO/IEC 27001' },
+  @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v2.1 · ISO/IEC/IEEE 29148' },
+  @{ Nome = 'seguranca'; Rodape = 'Águas do Capibaribe · Segurança da Informação v1.1 · ISO/IEC 27001' },
   @{ Nome = 'ciclo-de-vida'; Rodape = 'Águas do Capibaribe · Processos do Ciclo de Vida v1.0 · ISO/IEC 12207' }
 )
 

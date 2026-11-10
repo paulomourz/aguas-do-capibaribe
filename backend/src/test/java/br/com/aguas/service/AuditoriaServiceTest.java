@@ -52,7 +52,7 @@ class AuditoriaServiceTest {
     void devolveAPaginaComOsNomesDasPessoasEOsMaisRecentesPrimeiro() {
         when(auditoria.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(registro(9, 1, 2, AcaoAuditoria.REDEFINICAO_SENHA)), PageRequest.of(1, 20), 21));
-        when(usuarios.findAllById(Set.of(1, 2))).thenReturn(List.of(usuario(1, "gestora"), usuario(2, "joao")));
+        when(usuarios.findAllById(Set.of(1, 2))).thenReturn(List.of(usuario(1, "gestora.silva"), usuario(2, "joao")));
 
         PaginaAuditoriaDTO pagina = servico.listar(null, null, null, 1, 20);
 
@@ -60,8 +60,11 @@ class AuditoriaServiceTest {
         assertThat(pagina.pagina()).isEqualTo(1);
         var item = pagina.itens().getFirst();
         assertThat(item.acao()).isEqualTo(AcaoAuditoria.REDEFINICAO_SENHA);
-        assertThat(item.gestor().usuario()).isEqualTo("gestora");
+        // LGPD (RNF27): nome inteiro, login mascarado.
+        assertThat(item.gestor().nome()).isEqualTo("Pessoa 1");
+        assertThat(item.gestor().usuario()).isEqualTo("ge****va");
         assertThat(item.usuarioAfetado().nome()).isEqualTo("Pessoa 2");
+        assertThat(item.usuarioAfetado().usuario()).isEqualTo("j****");
 
         ArgumentCaptor<Pageable> paginacao = ArgumentCaptor.forClass(Pageable.class);
         verify(auditoria).findAll(any(Specification.class), paginacao.capture());

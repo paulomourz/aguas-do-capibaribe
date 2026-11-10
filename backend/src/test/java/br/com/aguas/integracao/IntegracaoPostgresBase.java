@@ -38,6 +38,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import br.com.aguas.service.Privacidade;
+
 /**
  * Testes de integração contra um PostgreSQL com o esquema criado pelas migrações do Flyway.
  * Nunca usam o banco real: as subclasses só aceitam um contêiner descartável
@@ -467,9 +469,17 @@ abstract class IntegracaoPostgresBase {
         List<JsonNode> doCriado = new ArrayList<>();
         pagina.get("itens").forEach(r -> { if (r.get("usuarioAfetado").get("id").asInt() == criado) doCriado.add(r); });
         assertThat(doCriado).extracting(r -> r.get("acao").asText()).containsExactly("DESATIVACAO_USUARIO", "CRIACAO_USUARIO");
-        assertThat(doCriado.getFirst().get("gestor").get("usuario").asText()).isEqualTo(g.login());
-        assertThat(doCriado.getFirst().get("usuarioAfetado").get("usuario").asText()).isEqualTo(login);
-        assertThat(doCriado.getFirst().toString()).doesNotContain("senha", "hash");
+        // LGPD (RNF27): nome inteiro, login mascarado.
+        assertThat(doCriado.getFirst().get("gestor").get("usuario").asText()).isEqualTo(Privacidade.mascararLogin(g.login()));
+        assertThat(doCriado.getFirst().get("usuarioAfetado").get("nome").asText()).isEqualTo("Pessoa Auditada");
+        assertThat(doCriado.getFirst().get("usuarioAfetado").get("usuario").asText()).isEqualTo(Privacidade.mascararLogin(login));
+        assertThat(doCriado.getFirst().toString()).doesNotContain("senha", "hash", login);
+
+        // Lista de usuários: o administrador vê o login inteiro; o gestor, só o próprio.
+        Conta gestor = conta("gestor");
+        assertThat(loginNaLista(g, criado)).isEqualTo(login);
+        assertThat(loginNaLista(gestor, criado)).isEqualTo(Privacidade.mascararLogin(login));
+        assertThat(loginNaLista(gestor, gestor.id())).isEqualTo(gestor.login());
 
         JsonNode porAcao = ler(chamar(get("/auditoria").param("acao", "CRIACAO_USUARIO").param("tamanho", "100"), g).andExpect(status().isOk()));
         porAcao.get("itens").forEach(r -> assertThat(r.get("acao").asText()).isEqualTo("CRIACAO_USUARIO"));
@@ -484,6 +494,13 @@ abstract class IntegracaoPostgresBase {
         chamar(get("/auditoria"), op).andExpect(status().isForbidden());
         chamar(get("/auditoria").param("tamanho", "101"), g).andExpect(status().isUnprocessableEntity());
         mvc.perform(get("/auditoria")).andExpect(status().isUnauthorized());
+    }
+
+    /** Login de um usuário como aparece em GET /usuarios para quem pergunta. */
+    private String loginNaLista(Conta quem, int usuarioId) throws Exception {
+        JsonNode lista = ler(chamar(get("/usuarios"), quem).andExpect(status().isOk()));
+        for (JsonNode u : lista) if (u.get("id").asInt() == usuarioId) return u.get("usuario").asText();
+        throw new AssertionError("Usuário " + usuarioId + " fora da lista.");
     }
 
     /** Ações registradas sobre um usuário, em ordem, no formato "ACAO por gestorId". */

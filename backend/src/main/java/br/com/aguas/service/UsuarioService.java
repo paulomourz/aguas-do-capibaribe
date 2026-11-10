@@ -17,6 +17,7 @@ import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
 import br.com.aguas.entity.AcaoAuditoria;
 import br.com.aguas.entity.AuditoriaUsuario;
+import br.com.aguas.entity.Perfil;
 import br.com.aguas.entity.Usuario;
 import br.com.aguas.exception.ApiException;
 import br.com.aguas.repository.AuditoriaUsuarioRepository;
@@ -44,9 +45,18 @@ public class UsuarioService {
         this.auditoria = auditoria;
     }
 
+    /**
+     * O administrador recebe os logins inteiros (cria e cuida das contas). O gestor usa a lista só para mostrar
+     * quem registrou cada lote: recebe os nomes inteiros e os logins dos outros mascarados (LGPD, RNF27).
+     */
     @Transactional(readOnly = true)
-    public List<UsuarioDTO> listar() {
-        return usuarios.findAll(Sort.by("id")).stream().map(UsuarioDTO::de).toList();
+    public List<UsuarioDTO> listar(UsuarioAutenticado quem) {
+        List<UsuarioDTO> todos = usuarios.findAll(Sort.by("id")).stream().map(UsuarioDTO::de).toList();
+        if (quem.perfil() == Perfil.admin) return todos;
+        return todos.stream()
+                .map(u -> u.id().equals(quem.id()) ? u
+                        : new UsuarioDTO(u.id(), u.nome(), Privacidade.mascararLogin(u.usuario()), u.perfil(), u.ativo()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
