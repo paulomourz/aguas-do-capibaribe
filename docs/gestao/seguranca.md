@@ -141,10 +141,10 @@ mudar nos dois lugares.
 | Nome | Identificar quem registrou cada lote e quem fez cada ação nas contas, para comprovar o consumo de água a clientes e órgãos ambientais (II e IX) | Enquanto a lavanderia usar o sistema; a conta é desativada, nunca apagada, para os lotes e a auditoria continuarem mostrando quem fez | A pessoa, o administrador e os gestores; no histórico, no CSV, na auditoria e, para quem emitiu, no PDF |
 | Usuário (login) | Entrar no sistema (V) | O mesmo do nome | Inteiro, só a pessoa e o administrador; para os outros, mascarado (`ca****in`) |
 | Senha | Confirmar a identidade no login (V) | Até ser trocada | Ninguém: só o hash BCrypt é guardado |
-| Perfil, situação da conta e data de criação | Definir o que cada pessoa pode fazer (V e IX) | O mesmo do nome | A pessoa, o administrador e os gestores |
+| Perfil, situação da conta e data de criação | Definir o que cada pessoa pode fazer (V e IX) | O mesmo do nome | Perfil e situação: a pessoa, o administrador e os gestores; a data de criação não aparece nas telas |
 | Lotes registrados (data, hora e autoria) | Medir e comprovar o consumo de água (II e IX) | Permanente; o banco impede alterar ou apagar | A pessoa, os gestores e o administrador; o operador vê só os próprios |
 | Auditoria das contas | Segurança das contas (IX) | Permanente; o banco impede alterar ou apagar | Só o administrador |
-| Endereço IP | Limitar as tentativas de login (IX) | Só na memória da API, sem ir para o banco nem para os logs; some quando a API reinicia (ou quando passa de 10.000 endereços, os parados há mais de 1 minuto saem) | Ninguém consulta |
+| Endereço IP | Limitar as tentativas de login (IX) | Só na memória da API, sem ir para o banco nem para os logs; some quando a API reinicia (ou quando passa de 10.000 endereços, os parados há mais de 1 minuto saem) | Ninguém consulta; o Render pode registrar o endereço nos logs de acesso dele, pelo prazo que ele define |
 | Dados no aparelho | Manter a sessão e registrar lotes sem conexão | Sessão de até 8 horas, apagada ao fechar a aba; o resto é apagado ao sair, menos os lotes ainda não enviados | Só quem usa o aparelho |
 
 **Com quem falar:** o administrador da lavanderia. Ele resolve o que for da conta (cópia dos dados, correção,

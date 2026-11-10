@@ -45,7 +45,7 @@ export const DADOS_GUARDADOS: DadoPessoal[] = [
     dado: 'Perfil, situação da conta e data de criação',
     finalidade: 'Definir o que cada pessoa pode fazer no sistema (art. 7º, V e IX).',
     prazo: 'O mesmo do nome.',
-    quemVe: 'Você, o administrador e os gestores.',
+    quemVe: 'Perfil e situação: você, o administrador e os gestores. A data de criação não aparece nas telas.',
   },
   {
     dado: 'Lotes que você registrou (data, hora e autoria)',
@@ -66,7 +66,8 @@ export const DADOS_GUARDADOS: DadoPessoal[] = [
     finalidade: 'Limitar as tentativas de login (5 por minuto) e barrar quem tenta adivinhar senhas (art. 7º, IX).',
     prazo:
       'Só na memória do servidor, sem ir para o banco de dados nem para os registros do sistema. Some quando o servidor reinicia.',
-    quemVe: 'Ninguém consulta.',
+    quemVe:
+      'Ninguém consulta. O serviço de hospedagem (Render) pode registrar o endereço nos registros de acesso dele, pelo prazo que ele define.',
   },
   {
     dado: 'Dados guardados neste aparelho',

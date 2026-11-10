@@ -70,6 +70,6 @@ class PrivacidadeTest {
     void gestorRecebeOsNomesInteirosEOsLoginsDosOutrosMascarados() {
         List<UsuarioDTO> lista = listarComo(2, Perfil.gestor);
         assertThat(lista).extracting(UsuarioDTO::nome).containsExactly("Administradora", "Gestora", "Carlos Martin");
-        assertThat(lista).extracting(UsuarioDTO::usuario).containsExactly("ad****ia","gestora.silva", "ca****in");
+        assertThat(lista).extracting(UsuarioDTO::usuario).containsExactly("ad****ia", "gestora.silva", "ca****in");
     }
 }
