@@ -87,7 +87,8 @@ services:
     volumes:
       - segredos-api:/run/secrets/aguas:ro
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8080"]
+      # A imagem distroless não tem shell: o healthcheck é uma classe Java que chama /api/actuator/health.
+      test: ["CMD", "java", "-Xmx16m", "-XX:TieredStopAtLevel=1", "-cp", "/app/saude", "Saude"]
       interval: 5s
       timeout: 3s
       retries: 30
