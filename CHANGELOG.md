@@ -8,6 +8,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Segurança
 
+- **Segredos do Docker como arquivos** (issue #118). No Docker Compose, a API lê as senhas e a chave JWT como
+  arquivos só de leitura em `/run/secrets/aguas` (configtree do Spring Boot, no padrão do Docker Secrets), num
+  volume que só ela monta. Nenhuma senha aparece mais nas variáveis de ambiente do contêiner nem do processo, e o
+  job `docker-compose` do CI confere isso. Sem a pasta (Render, PC), as variáveis de ambiente continuam valendo.
 - **Vulnerabilidades das dependências no CI** (issue #112). O job novo `dependencias` roda o OSV-Scanner
   (versão fixa, com checksum) no `backend/pom.xml` e no `pnpm-lock.yaml` e bloqueia o merge com vulnerabilidade alta
   ou crítica (CVSS 7,0 ou mais), mostrando a tabela no resumo do CI. Na primeira execução, encontrou 16; foram
