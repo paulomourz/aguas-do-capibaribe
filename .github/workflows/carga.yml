@@ -1,0 +1,81 @@
+name: Teste de carga
+
+# Roda o teste de carga do registro de lotes (k6, de 10 a 100 sensores) num ambiente descartável do Docker, no
+# próprio GitHub Actions. Não toca no site publicado. Sob demanda (Actions > Teste de carga > Run workflow) e em todo
+# PR que mude o teste. Ver docs/tecnico/teste-carga.md.
+on:
+  workflow_dispatch:
+    inputs:
+      pool:
+        description: Conexões no pool do banco (HikariCP)
+        default: '10'
+  pull_request:
+    branches: [develop]
+    paths:
+      - testes-carga/**
+      - docker-compose.carga.yml
+      - .github/workflows/carga.yml
+
+permissions:
+  contents: read
+
+jobs:
+  carga:
+    name: carga
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DB_POOL_MAX: ${{ inputs.pool || '10' }}
+      COMPOSE: docker compose -p aguas-carga -f docker-compose.yml -f docker-compose.carga.yml --profile carga
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Máquina do teste
+        run: |
+          {
+            echo "### Ambiente"
+            echo "- Runner do GitHub: $(nproc) CPUs, $(free -g | awk '/Mem/ {print $2}') GB de memória"
+            echo "- Pool de conexões da API: $DB_POOL_MAX"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Teste de carga (10, 25, 50 e 100 sensores)
+        run: |
+          mkdir -p testes-carga/resultados && chmod 777 testes-carga/resultados
+          $COMPOSE run --rm --no-TTY k6 | tee k6.txt
+
+      - name: Resultado por etapa
+        if: always()
+        run: |
+          if [ -f testes-carga/resultados/resumo.json ]; then
+            {
+              echo "### Resultado"
+              echo "| Etapa | Média | p95 | Maior |"
+              echo "|---|---|---|---|"
+              for s in 10 25 50 100; do
+                jq -r --arg s "$s" '.metrics["http_req_duration{scenario:sensores_\($s)}"].values // empty
+                  | "| \($s) sensores | \(.avg | . * 100 | round / 100) ms | \(.["p(95)"] | . * 100 | round / 100) ms | \(.max | . * 100 | round / 100) ms |"' \
+                  testes-carga/resultados/resumo.json
+              done
+              jq -r '"- Lotes aceitos: \(.metrics.lotes_aceitos.values.count) (\(.metrics.lotes_aceitos.values.rate | round) por segundo)",
+                     "- Falhas: \(.metrics.http_req_failed.values.passes)"' testes-carga/resultados/resumo.json
+              grep -o 'POOL {.*}' k6.txt | sed 's/^POOL /- Pool (HikariCP): /' || true
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Logs da API em caso de falha
+        if: failure()
+        run: $COMPOSE logs --no-color backend | tail -200
+
+      - name: Guarda o resultado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: carga-pool-${{ env.DB_POOL_MAX }}
+          path: |
+            k6.txt
+            testes-carga/resultados/resumo.json
+          if-no-files-found: ignore
+
+      - name: Apaga o ambiente
+        if: always()
+        run: $COMPOSE down -v
