@@ -1,0 +1,19 @@
+%% C4 nível 1 — Contexto: quem usa o sistema e com quais sistemas externos ele fala.
+flowchart LR
+  operador["👷 Operador<br/><i>[Pessoa]</i><br/>Registra os lotes no chão de fábrica"]
+  gestor["🧑‍💼 Gestor e administrador<br/><i>[Pessoa]</i><br/>Metas, alertas, relatórios e usuários"]
+  sensor["📟 Sensor de vazão<br/><i>[Dispositivo: ESP32 no Wokwi]</i><br/>Mede e envia o lote sozinho"]
+  sistema["💧 Águas do Capibaribe<br/><i>[Sistema de software]</i><br/>Consumo de água por lote, comparado à meta"]
+  telegram["✉️ Telegram<br/><i>[Sistema externo]</i><br/>Grupo que recebe o aviso de alerta"]
+
+  operador -- "registra lotes<br/>(HTTPS)" --> sistema
+  gestor -- "acompanha e decide<br/>(HTTPS)" --> sistema
+  sensor -- "envia lotes<br/>(HTTPS + JSON)" --> sistema
+  sistema -- "avisa alerta aberto<br/>(Bot API, HTTPS)" --> telegram
+
+  classDef pessoa fill:#08427b,color:#fff,stroke:#052e56
+  classDef sis fill:#1168bd,color:#fff,stroke:#0b4884
+  classDef ext fill:#999,color:#fff,stroke:#6b6b6b
+  class operador,gestor pessoa
+  class sistema sis
+  class sensor,telegram ext

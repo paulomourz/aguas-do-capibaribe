@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Arquitetura
+
+- **Diagramas C4** (issue #111): contexto, contêineres e componentes da API em Mermaid e SVG
+  (`docs/tecnico/diagramas/`), com a segurança (JWT e limite de requisições por token bucket), os avisos assíncronos
+  no Telegram e o sensor IoT. A descrição da arquitetura (ISO/IEC/IEEE 42010) foi para a versão 1.1, com a imagem
+  distroless, os segredos como arquivos e o pool de 20 conexões.
+
 ### Segurança
 
 - **Imagem distroless da API** (issue #105). O contêiner da API (Docker e Render) passa a usar

@@ -7,7 +7,7 @@ os pontos de vista usados e as visões do sistema, com as decisões e a justific
 | Campo | Descrição |
 |---|---|
 | Sistema | Águas do Capibaribe — gestão de consumo de água por lote em lavanderias de jeans |
-| Versão | 1.0, 9 de novembro de 2026 (branch `develop`) |
+| Versão | 1.1, 10 de novembro de 2026 (branch `develop`) |
 | Requisitos | [ERS v2.0](../gestao/ERS.md) (ISO/IEC/IEEE 29148) |
 | Responsáveis | Equipe Águas do Capibaribe |
 
@@ -26,13 +26,28 @@ os pontos de vista usados e as visões do sistema, com as decisões e a justific
 
 | Ponto de vista | Pergunta que responde | Notação |
 |---|---|---|
-| Contexto | Com quem o sistema conversa? | Diagrama de blocos em texto e tabela |
-| Lógico | Quais são as partes do software e o que cada uma faz? | Camadas e pacotes |
+| Contexto | Com quem o sistema conversa? | C4 nível 1 (seção 3.1) e tabela |
+| Contêineres | Quais partes rodam separadas e como conversam? | C4 nível 2 (seção 3.2) |
+| Lógico | Quais são as partes do software e o que cada uma faz? | C4 nível 3 da API (seção 4.3), camadas e pacotes |
 | Dados | O que é guardado, com quais regras? | Tabelas, triggers e migrações |
 | Implantação | Onde cada parte roda? | Tabela de ambientes e serviços |
 | Desenvolvimento | Como o código vira sistema publicado? | Fluxo de branches e CI/CD |
 
 ## 3. Visão de contexto
+
+Os diagramas seguem o modelo **C4** (contexto, contêineres e componentes). A fonte de cada um, em Mermaid, fica em
+[`diagramas/`](diagramas/), junto do SVG gerado. Para gerar de novo, na pasta `diagramas`:
+`npx @mermaid-js/mermaid-cli -i <arquivo>.mmd -o <arquivo>.svg -b white`.
+
+### 3.1 C4 nível 1: contexto
+
+![C4 nível 1: contexto](diagramas/c4-1-contexto.svg)
+
+### 3.2 C4 nível 2: contêineres
+
+![C4 nível 2: contêineres](diagramas/c4-2-conteineres.svg)
+
+### 3.3 Resumo em texto
 
 ```
   Operador / Gestor / Administrador          Sensor (ESP32 no Wokwi)
@@ -82,6 +97,17 @@ aparelho e são enviados com a mesma chave de envio (`Idempotency-Key`) até a A
 
 A dependência segue sempre o mesmo sentido: `controller → service → repository → banco`.
 
+### 4.3 C4 nível 3: componentes da API
+
+![C4 nível 3: componentes da API](diagramas/c4-3-componentes-api.svg)
+
+- **Segurança:** toda requisição passa pelo filtro JWT, que lê o perfil no banco, e depois pelo `FiltroDeLimite`, um
+  *token bucket* (Bucket4j) por IP no login e por usuário no envio de lotes. Acima do limite, a resposta é 429 com
+  `Retry-After`.
+- **Avisos:** a `RegraDeAlerta` publica o evento `AlertaAberto`. O `AvisoDeAlerta` só o recebe depois do commit e
+  manda a mensagem ao Telegram em outra thread, então o registro do lote nunca espera nem depende do Telegram.
+- **IoT:** o sensor ESP32 é um cliente igual ao site e passa pelos mesmos filtros, com o perfil `sensor`.
+
 ## 5. Visão de dados
 
 | Elemento | Regra |
@@ -97,13 +123,18 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 
 | Ambiente | Site | API | Banco | Uso |
 |---|---|---|---|---|
-| Publicado | Render (site estático, HTTPS) | Render (contêiner Docker, HTTPS, checagem em `/api/actuator/health`) | Neon (PostgreSQL 18) | Uso real e apresentação (plano A) |
+| Publicado | Render (site estático, HTTPS) | Render (contêiner Docker distroless, HTTPS, checagem em `/api/actuator/health`) | Neon (PostgreSQL 18) | Uso real e apresentação (plano A) |
 | Local com Docker | contêiner `frontend` (Nginx, porta 3000) | contêiner `backend` | contêiner `db` | Plano B sem internet e testes |
 | Desenvolvimento | Vite na porta 8443 | Spring Boot na porta 8080 | PostgreSQL local | Programar |
 | CI | build e testes no GitHub Actions | testes com PostgreSQL em contêiner | contêiner temporário | Conferir cada pull request |
 
-No Docker, o serviço `segredos` gera as senhas na primeira subida, e o serviço `tunel` (perfil `tunel`) liga o
-Wokwi à API local por um túnel temporário.
+No Docker, o serviço `segredos` gera as senhas na primeira subida, e a API as lê como arquivos só de leitura em
+`/run/secrets/aguas`, sem variáveis de ambiente. A imagem da API é distroless (só o Java 25 e o jar, sem shell e sem
+root, cerca de 132 MB), e o healthcheck é uma classe Java que chama `/api/actuator/health`. O serviço `tunel`
+(perfil `tunel`) liga o Wokwi à API local por um túnel temporário.
+
+O pool de conexões da API com o banco tem 20 conexões por padrão, medido no teste de carga com 100 sensores
+([teste-carga.md](teste-carga.md)); no Render, com 0,1 de CPU, o valor vem de `DB_POOL_MAX`.
 
 ## 7. Visão de desenvolvimento
 
@@ -124,6 +155,7 @@ Detalhes dos processos em [ciclo de vida](../gestao/ciclo-de-vida.md) (ISO/IEC 1
 | Fila no aparelho com chave de envio | O operador registra sem conexão, e o reenvio nunca duplica o lote. |
 | Aviso no Telegram depois do commit, em outra thread | O registro do lote não espera nem depende do Telegram. |
 | Render e Neon nos planos grátis, com Docker como plano B | Custo zero; o Docker cobre a falta de internet ou a API dormindo. |
+| Imagem distroless e segredos como arquivos | Menos coisas para um invasor usar no contêiner, e nenhuma senha nas variáveis de ambiente. |
 
 ## 9. Correspondência com os requisitos
 
