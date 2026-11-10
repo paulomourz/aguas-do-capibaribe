@@ -8,6 +8,7 @@ services:
     image: postgres:18-alpine
     volumes:
       - segredos:/segredos
+      - segredos-api:/segredos-api
       - db-init:/db-init
     entrypoint:
       - sh
@@ -23,6 +24,14 @@ services:
         [ -f gestor ] || novo 16 > gestor
         [ -f sensor ] || novo 16 > sensor
         chmod 644 postgres api jwt admin gestor sensor
+        # Segredos da API, um arquivo por variável, num volume que só a API monta (em /run/secrets/aguas).
+        cp postgres /segredos-api/FLYWAY_PASSWORD
+        cp api /segredos-api/DB_PASSWORD
+        cp jwt /segredos-api/JWT_SECRET
+        cp admin /segredos-api/ADMIN_SENHA
+        cp gestor /segredos-api/GESTOR_SENHA
+        cp sensor /segredos-api/SENSOR_SENHA
+        chmod 444 /segredos-api/FLYWAY_PASSWORD /segredos-api/DB_PASSWORD /segredos-api/JWT_SECRET /segredos-api/ADMIN_SENHA /segredos-api/GESTOR_SENHA /segredos-api/SENSOR_SENHA
         # Usuário restrito da API, antes do Flyway: as migrações dão a ele as permissões de cada tabela.
         cat > /db-init/01-usuario-api.sql <<FIM
         CREATE ROLE aguas_api LOGIN PASSWORD '$$(cat api)'
@@ -73,19 +82,10 @@ services:
       FLYWAY_USER: postgres
       CORS_ORIGINS: http://localhost:3000
       LIMITE_CABECALHO_IP: X-Real-IP
+    # Segredos como arquivos só de leitura, no padrão do Docker Secrets: nenhuma senha aparece nas variáveis de
+    # ambiente do contêiner (docker inspect) nem do processo (/proc/1/environ).
     volumes:
-      - segredos:/segredos:ro
-    entrypoint:
-      - sh
-      - -c
-      - |
-        export DB_PASSWORD="$$(cat /segredos/api)"
-        export FLYWAY_PASSWORD="$$(cat /segredos/postgres)"
-        export JWT_SECRET="$$(cat /segredos/jwt)"
-        export ADMIN_SENHA="$$(cat /segredos/admin)"
-        export GESTOR_SENHA="$$(cat /segredos/gestor)"
-        export SENSOR_SENHA="$$(cat /segredos/sensor)"
-        exec java -jar /app/app.jar
+      - segredos-api:/run/secrets/aguas:ro
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8080"]
       interval: 5s
@@ -116,5 +116,6 @@ services:
 
 volumes:
   segredos:
+  segredos-api:
   db-init:
   db-dados:

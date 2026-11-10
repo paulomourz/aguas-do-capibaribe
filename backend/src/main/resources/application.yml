@@ -1,10 +1,15 @@
-# Todas as informações sensíveis vêm de variáveis de ambiente (ver .env.example).
+# Todas as informações sensíveis vêm de variáveis de ambiente (ver .env.example) ou de arquivos de segredo.
 # Um arquivo backend/.env, se existir, é lido automaticamente; variáveis do sistema têm prioridade.
+# No Docker, cada segredo é um arquivo em /run/secrets/aguas (nome do arquivo = nome da variável, como
+# DB_PASSWORD), lido como propriedade (configtree). Assim a senha nunca vira variável de ambiente do processo.
+# Fora do Docker (Render, PC), a pasta não existe e nada muda.
 spring:
   application:
     name: aguas-api
   config:
-    import: optional:file:.env[.properties]
+    import:
+      - optional:file:.env[.properties]
+      - optional:configtree:${SEGREDOS_DIR:/run/secrets/aguas}/
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}?sslmode=${DB_SSLMODE:prefer}
     username: ${DB_USER}

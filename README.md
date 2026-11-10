@@ -133,7 +133,9 @@ O site abre em <http://localhost:3000> e o Swagger em <http://localhost:3000/api
 subida baixa as imagens e compila tudo, então precisa de internet e demora alguns minutos.
 
 - **Banco próprio:** é separado do PostgreSQL instalado no PC e já vem com os processos iniciais.
-- **Senhas:** são sorteadas na primeira subida e ficam só em um volume do Docker, fora do Git.
+- **Senhas:** são sorteadas na primeira subida e ficam só em volumes do Docker, fora do Git. A API as lê como
+  arquivos só de leitura em `/run/secrets/aguas` (padrão do Docker Secrets), então nenhuma senha aparece nas
+  variáveis de ambiente do contêiner; o CI confere isso a cada mudança.
 - **Parar:** `docker compose down` mantém os dados. Com `docker compose down -v`, os dados e as senhas são **apagados**.
 - **Contas prontas:** `capibaribe.admin` (administrador), `capibaribe.gestor` (gestor) e `sensor.wokwi` (sensor).
 - **Wokwi com o Docker:** `docker compose --profile tunel up -d --build` liga também o túnel, e `docker compose --profile tunel stop tunel` desliga. Veja o [roteiro de apresentação](docs/guia/roteiro-apresentacao.md).
