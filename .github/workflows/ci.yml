@@ -92,7 +92,7 @@ jobs:
       - name: Procura vulnerabilidades
         run: |
           set +e
-          ./osv-scanner scan source --format json -L backend/pom.xml -L pnpm-lock.yaml > osv.json
+          ./osv-scanner scan source --config osv-scanner.toml --format json -L backend/pom.xml -L pnpm-lock.yaml > osv.json
           codigo=$?
           set -e
           # 0 = nada encontrado; 1 = vulnerabilidades encontradas; outro código = o scanner falhou.
