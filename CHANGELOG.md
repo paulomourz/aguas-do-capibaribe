@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Desempenho
+
+- **Teste de carga com 100 sensores e pool do banco** (issue #113). O teste ganhou a etapa de 100 sensores e lê no
+  Actuator a espera por conexão do HikariCP. Roda também no GitHub Actions (workflow "Teste de carga", sob demanda
+  e em PRs que mudem o teste), comparando pool 10 e 20. Com 100 sensores e 20 conexões, o p95 caiu 31% (377 para
+  262 ms) e a vazão subiu 15%, sem falhas; o padrão da API passou de 10 para 20 conexões.
+
 ### Segurança
 
 - **Imagem distroless da API** (issue #105). O contêiner da API (Docker e Render) passa a usar
