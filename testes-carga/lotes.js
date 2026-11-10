@@ -10,6 +10,9 @@ const SENHA = open('/segredos/admin').trim()
 const JSON_CAB = { 'Content-Type': 'application/json' }
 
 const lotesAceitos = new Counter('lotes_aceitos')
+// Meta de p95. 200 ms vale para o PC (docs/tecnico/teste-carga.md); no GitHub Actions, com 2 CPUs divididas entre
+// k6, API e banco, o workflow usa outra meta.
+const META_P95 = Number(__ENV.META_P95_MS || 200)
 
 const etapa = (vus, inicio, duracao) => ({ executor: 'constant-vus', vus, startTime: inicio, duration: duracao, gracefulStop: '10s' })
 
@@ -22,10 +25,10 @@ export const options = {
   },
   thresholds: {
     http_req_failed: ['rate==0'],
-    'http_req_duration{scenario:sensores_10}': ['p(95)<200'],
-    'http_req_duration{scenario:sensores_25}': ['p(95)<200'],
-    'http_req_duration{scenario:sensores_50}': ['p(95)<200'],
-    'http_req_duration{scenario:sensores_100}': ['p(95)<200'],
+    'http_req_duration{scenario:sensores_10}': [`p(95)<${META_P95}`],
+    'http_req_duration{scenario:sensores_25}': [`p(95)<${META_P95}`],
+    'http_req_duration{scenario:sensores_50}': [`p(95)<${META_P95}`],
+    'http_req_duration{scenario:sensores_100}': [`p(95)<${META_P95}`],
   },
   summaryTrendStats: ['avg', 'p(95)', 'max'],
 }

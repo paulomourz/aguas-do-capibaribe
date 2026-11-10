@@ -16,6 +16,7 @@ services:
     environment:
       API_URL: http://backend:8080/api
       RESUMO: /resultados/resumo.json
+      META_P95_MS: "${META_P95_MS:-200}"
     volumes:
       - ./testes-carga:/scripts:ro
       - ./testes-carga/resultados:/resultados

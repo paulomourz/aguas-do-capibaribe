@@ -21,11 +21,18 @@ permissions:
 
 jobs:
   carga:
-    name: carga
+    name: carga (pool ${{ matrix.pool }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # No PR, compara pool 10 (padrão) e 20; sob demanda, usa o valor informado.
+        pool: ${{ fromJSON(inputs.pool && format('["{0}"]', inputs.pool) || '["10", "20"]') }}
     env:
-      DB_POOL_MAX: ${{ inputs.pool || '10' }}
+      DB_POOL_MAX: ${{ matrix.pool }}
+      # 2 CPUs divididas entre k6, API e banco: meta de p95 maior que a do PC (200 ms).
+      META_P95_MS: '500'
       COMPOSE: docker compose -p aguas-carga -f docker-compose.yml -f docker-compose.carga.yml --profile carga
     steps:
       - uses: actions/checkout@v5
@@ -36,12 +43,14 @@ jobs:
             echo "### Ambiente"
             echo "- Runner do GitHub: $(nproc) CPUs, $(free -g | awk '/Mem/ {print $2}') GB de memória"
             echo "- Pool de conexões da API: $DB_POOL_MAX"
+            echo "- Meta de p95: $META_P95_MS ms"
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Teste de carga (10, 25, 50 e 100 sensores)
+        shell: bash -eo pipefail {0}
         run: |
           mkdir -p testes-carga/resultados && chmod 777 testes-carga/resultados
-          $COMPOSE run --rm --no-TTY k6 | tee k6.txt
+          $COMPOSE run --rm --no-TTY k6 2>&1 | tee k6.txt
 
       - name: Resultado por etapa
         if: always()
@@ -58,7 +67,7 @@ jobs:
               done
               jq -r '"- Lotes aceitos: \(.metrics.lotes_aceitos.values.count) (\(.metrics.lotes_aceitos.values.rate | round) por segundo)",
                      "- Falhas: \(.metrics.http_req_failed.values.passes)"' testes-carga/resultados/resumo.json
-              grep -o 'POOL {.*}' k6.txt | sed 's/^POOL /- Pool (HikariCP): /' || true
+              grep -o 'POOL {[^}]*}' k6.txt | sed -e 's/^POOL //' -e 's/\\"/"/g' | jq -r '"- Pool (HikariCP): \(.conexoes_maximas) conexões; \(.pedidos_de_conexao) pedidos; espera média de \(.espera_media_ms | . * 100 | round / 100) ms; maior espera de \(.maior_espera_ms | round) ms; \(.pedidos_que_esgotaram_o_tempo) pedidos esgotaram o tempo"' || true
             } | tee -a "$GITHUB_STEP_SUMMARY"
           fi
 
