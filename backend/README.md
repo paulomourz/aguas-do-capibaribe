@@ -51,7 +51,7 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `DB_NAME` | sim | Nome do banco |
 | `DB_USER` / `DB_PASSWORD` | sim | Usuário e senha da API no banco |
 | `DB_SSLMODE` | não (`prefer`) | `disable`, `prefer`, `require` ou `verify-full` |
-| `DB_POOL_MAX` | não (10) | Máximo de conexões simultâneas |
+| `DB_POOL_MAX` | não (20) | Máximo de conexões simultâneas (no Render, 3) |
 | `FLYWAY_USER` / `FLYWAY_PASSWORD` | sim, com `DB_USER=aguas_api` | Dono do banco, usado só para as migrações. Sem elas, o Flyway usa `DB_USER`, que não pode criar tabelas |
 | `FLYWAY_ATIVO` | não (true) | `false`: a API não aplica migrações (rode `mvn flyway:migrate` à mão) |
 | `FLYWAY_BASELINE` | não (false) | `true` **uma vez**, no banco que já existia antes do Flyway ([detalhes](../database/LEIA-ME.md#banco-que-já-existia-antes-do-flyway-o-aguas)) |

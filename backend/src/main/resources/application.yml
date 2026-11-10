@@ -15,7 +15,9 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: ${DB_POOL_MAX:10}
+      # 20 por padrão: no teste de carga com 100 sensores, 20 conexões baixaram o p95 em 31% (docs/tecnico/teste-carga.md).
+      # No Render (0,1 de CPU), a variável DB_POOL_MAX define um valor menor.
+      maximum-pool-size: ${DB_POOL_MAX:20}
       connection-timeout: 10000
   # O esquema é criado e evoluído pelo Flyway (src/main/resources/db/migration), antes do Hibernate.
   flyway:
