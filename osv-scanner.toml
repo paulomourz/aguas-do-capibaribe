@@ -1,0 +1,12 @@
+# Exceções do job "dependencias" do CI (OSV-Scanner). Cada exceção precisa de motivo e de data para ser revista.
+# Só entra aqui vulnerabilidade sem correção na linha de versões que usamos e que não afeta o sistema.
+
+[[IgnoredVulns]]
+id = "GHSA-j9f9-w8pj-32f8"
+ignoreUntil = 2026-12-31
+reason = "Spring Framework 6.2.x sem correção (só na 7.0.9, Spring Boot 4). Afeta Server-Sent Events com fragmentos de view; a API só devolve JSON e não usa SSE nem views. Rever ao migrar para o Spring Boot 4."
+
+[[IgnoredVulns]]
+id = "GHSA-pc63-qcmh-9cmg"
+ignoreUntil = 2026-12-31
+reason = "Spring Framework 6.2.x sem correção (só na 7.0.9, Spring Boot 4). Afeta XsltView; a API não usa XsltView nem renderiza views. Rever ao migrar para o Spring Boot 4."

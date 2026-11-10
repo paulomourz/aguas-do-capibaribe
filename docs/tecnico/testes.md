@@ -31,6 +31,7 @@ monitoramento, migrações do banco, execução com Docker e envio de lotes pelo
 | Unidade (site) | Fila do aparelho, sincronização, CSV, tema e glossário | Vitest | `src/**/__testes__` |
 | Ponta a ponta (site) | Site de produção com service worker, conexão caindo e voltando, sem duplicar lote | Playwright | `e2e/offline.spec.ts` |
 | Implantação | Docker Compose sobe e responde: login, processos e registro de lote pelo Nginx | GitHub Actions | job `docker-compose` do CI |
+| Segurança das dependências | Vulnerabilidades conhecidas no `pom.xml` e no `pnpm-lock.yaml`; bloqueia CVSS 7,0 ou mais | OSV-Scanner | job `dependencias` do CI; exceções em `osv-scanner.toml` |
 | Desempenho | 50 sensores ao mesmo tempo; índices do banco | k6, EXPLAIN ANALYZE | [teste de carga](teste-carga.md), [índices](desempenho-indices.md) |
 | Usabilidade | Operador real registrando lotes; questionário SUS | Roteiro e ficha | [`docs/validacao/`](../validacao/LEIA-ME.md) |
 | Demonstração | Telas e sensor funcionando | Navegador e Wokwi | seção 4 |
@@ -47,7 +48,7 @@ monitoramento, migrações do banco, execução com Docker e envio de lotes pelo
 ### 1.4 Critérios
 
 - **Entrada:** o pull request compila e aponta para a `develop`.
-- **Aprovação:** todos os jobs do CI verdes (`backend-test`, `frontend-build`, `docker-compose`).
+- **Aprovação:** todos os jobs do CI verdes (`backend-test`, `frontend-build`, `docker-compose`, `dependencias`).
 - **Suspensão:** CI vermelho bloqueia o merge, e o Render não publica.
 - **Conclusão da versão:** todos os requisitos implementados com verificação feita (ERS, Apêndice C).
 

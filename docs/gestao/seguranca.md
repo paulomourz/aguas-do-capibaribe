@@ -65,6 +65,7 @@ Probabilidade e impacto em três níveis (baixo, médio, alto). O risco residual
 | R10 | Token do bot do Telegram vazar | Baixa | Baixo | Token só nas variáveis do Render; `/revoke` no BotFather (docs/tecnico/telegram.md) | Baixo |
 | R11 | Sessão roubada ou usada por muito tempo | Baixa | Médio | JWT de 8 horas, sem renovação; desativar a conta corta o acesso na hora | Baixo |
 | R12 | Certificado da API mudar e o sensor recusar a conexão | Alta | Baixo | Impressão digital atual vale até 20/12/2026; o comando para atualizar está no sketch | Baixo |
+| R13 | Dependência com vulnerabilidade conhecida (CVE) | Alta | Alto | Job `dependencias` do CI com o OSV-Scanner; atualização das versões; exceção só com motivo e prazo | Baixo |
 
 # 3. Controles aplicados
 
@@ -81,7 +82,7 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 | Backup | `backup.sh` com verificação e `restore.sh` só em banco vazio | RNF21 |
 | Monitoramento | Saúde aberta, métricas só para o administrador, nada mais do Actuator exposto | RNF20 |
 | Menor privilégio | Usuário `aguas_api` sem DELETE, TRUNCATE nem mudança de esquema; perfil `sensor` restrito | RNF07 |
-| Gestão de vulnerabilidades técnicas | Versões atuais (Java 25, Spring Boot 3.5, PostgreSQL 18); CORS sem `*` | RNF04 |
+| Gestão de vulnerabilidades técnicas | Versões atuais (Java 25, Spring Boot 3.5, PostgreSQL 18); CORS sem `*`; job `dependencias` do CI (OSV-Scanner) bloqueia dependência com vulnerabilidade alta ou crítica, e as exceções ficam em `osv-scanner.toml`, com motivo e data de revisão | RNF04, RNF24 |
 
 # 4. Resposta a incidentes
 

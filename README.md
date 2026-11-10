@@ -270,7 +270,10 @@ resposta perdida (a API grava, o site não recebe) e confere que o reenvio não 
 
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
 `develop`: `backend-test` (no Java 25), `frontend-build` (`tsc --noEmit`, `pnpm test`, `pnpm build` e `pnpm test:e2e`) e
-`docker-compose` (sobe o Docker e testa login, processos e registro de lote pelo Nginx). O Render só publica depois
+`docker-compose` (sobe o Docker e testa login, processos e registro de lote pelo Nginx) e `dependencias` (procura
+vulnerabilidades conhecidas no `pom.xml` e no `pnpm-lock.yaml` com o [OSV-Scanner](https://google.github.io/osv-scanner/)
+e bloqueia as de gravidade alta ou crítica, CVSS 7,0 ou mais; exceções, sempre com motivo e data, ficam em
+[`osv-scanner.toml`](osv-scanner.toml)). O Render só publica depois
 que esses checks passam. **Não faça merge com check vermelho.**
 
 ### Se uma publicação der problema (voltar versão)

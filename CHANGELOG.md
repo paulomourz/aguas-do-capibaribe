@@ -6,6 +6,15 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Segurança
+
+- **Vulnerabilidades das dependências no CI** (issue #112). O job novo `dependencias` roda o OSV-Scanner
+  (versão fixa, com checksum) no `backend/pom.xml` e no `pnpm-lock.yaml` e bloqueia o merge com vulnerabilidade alta
+  ou crítica (CVSS 7,0 ou mais), mostrando a tabela no resumo do CI. Na primeira execução, encontrou 16; foram
+  corrigidas com Tomcat 10.1.61, driver PostgreSQL 42.7.14, Jackson 2.21.8, Vite 8.3 e source-map-js 1.2.2. Duas do
+  Spring Framework 6.2 sem correção nessa linha (SSE com fragmentos de view e XsltView, recursos que a API não usa)
+  ficaram como exceção em `osv-scanner.toml`, com motivo e revisão em 31/12/2026.
+
 ### Documentação nas normas ISO/IEC
 
 - **ERS v2.0 na ISO/IEC/IEEE 29148**, que substitui a IEEE 830: estrutura nova, necessidades de negócio e dos
