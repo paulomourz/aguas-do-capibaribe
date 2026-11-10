@@ -119,6 +119,7 @@ banco local, que não roda no CI.
 | Data | Teste | Resultado |
 |---|---|---|
 | 03/11/2026 | Carga com 50 sensores simultâneos (local) | p95 de 68 ms, cerca de 1.000 lotes por segundo, nenhuma falha |
+| 10/11/2026 | Carga com 100 sensores no GitHub Actions, pool 10 e 20 | 0 falhas; p95 de 377 ms (pool 10) e 262 ms (pool 20); padrão da API passou a 20 conexões |
 | 03/11/2026 | Índices com 200.000 lotes | Regra de alerta de 73,5 ms para 0,19 ms |
 | 05/11/2026 | Aviso no Telegram com o sistema publicado | Alerta aberto e mensagem recebida no grupo |
 | 06/11/2026 | Sensor no Wokwi com a API publicada | Lote de 19,55 L crítico, com LED vermelho; lote de 3,74 L dentro da meta, sem sinal |

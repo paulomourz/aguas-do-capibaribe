@@ -4,8 +4,8 @@ services:
     environment:
       # O teste usa um só usuário; o limite de lotes por minuto recusaria as requisições.
       LIMITE_LOTES_POR_MINUTO: "1000000"
-      # Tamanho do pool de conexões do banco (HikariCP). Padrão da API: 10.
-      DB_POOL_MAX: "${DB_POOL_MAX:-10}"
+      # Tamanho do pool de conexões do banco (HikariCP). Padrão da API: 20.
+      DB_POOL_MAX: "${DB_POOL_MAX:-20}"
 
   k6:
     image: grafana/k6:1.3.0

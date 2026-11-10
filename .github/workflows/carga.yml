@@ -8,7 +8,7 @@ on:
     inputs:
       pool:
         description: Conexões no pool do banco (HikariCP)
-        default: '10'
+        default: '20'
   pull_request:
     branches: [develop]
     paths:
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # No PR, compara pool 10 (padrão) e 20; sob demanda, usa o valor informado.
+        # No PR, compara pool 10 e 20 (padrão); sob demanda, usa o valor informado.
         pool: ${{ fromJSON(inputs.pool && format('["{0}"]', inputs.pool) || '["10", "20"]') }}
     env:
       DB_POOL_MAX: ${{ matrix.pool }}
