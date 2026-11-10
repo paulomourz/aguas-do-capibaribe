@@ -135,7 +135,8 @@ jobs:
             # O Nginx pode levar alguns segundos para aceitar a primeira conexão.
             curl -fsS --retry 15 --retry-delay 2 --retry-all-errors http://localhost:3000/ | grep -q 'id="root"'
             curl -fsS -o /dev/null http://localhost:3000/api/swagger-ui/index.html
-            senha=$(docker compose exec -T backend cat /run/secrets/aguas/ADMIN_SENHA)
+            # A API é distroless (sem cat): a senha é lida do contêiner do banco, que monta os segredos.
+            senha=$(docker compose exec -T db cat /segredos/admin)
             corpo=$(jq -n --arg s "$senha" '{usuario: "capibaribe.admin", senha: $s}')
             token=$(curl -fsS -H 'Content-Type: application/json' -d "$corpo" http://localhost:3000/api/auth/login | jq -r .token)
             curl -fsS -H "Authorization: Bearer $token" http://localhost:3000/api/processos > processos.json
@@ -153,7 +154,9 @@ jobs:
         run: |
           id=$(docker compose ps -q backend)
           docker inspect "$id" --format '{{json .Config.Env}}' > env-container.txt
-          docker compose exec -T backend cat /proc/1/environ | tr '\0' '\n' > env-processo.txt
+          # Sem shell na imagem: o ambiente do processo da API é lido pelo host do runner.
+          sudo cat "/proc/$(docker inspect "$id" --format '{{.State.Pid}}')/environ" | tr '\0' '\n' > env-processo.txt
+          test -s env-processo.txt
           for s in api postgres jwt admin gestor sensor; do
             valor=$(docker compose exec -T db cat "/segredos/$s")
             if grep -qF "$valor" env-container.txt env-processo.txt; then
@@ -162,6 +165,18 @@ jobs:
             fi
           done
           echo "Nenhum segredo nas variáveis de ambiente da API."
+
+      - name: Imagem da API (distroless, sem shell)
+        run: |
+          imagem=$(docker inspect "$(docker compose ps -q backend)" --format '{{.Image}}')
+          tamanho=$(docker image inspect "$imagem" --format '{{.Size}}')
+          mb=$((tamanho / 1000000))
+          echo "Imagem da API: $mb MB" | tee -a "$GITHUB_STEP_SUMMARY"
+          if docker compose exec -T backend sh -c true 2>/dev/null; then
+            echo "::error::A imagem da API tem shell; devia ser distroless."
+            exit 1
+          fi
+          test "$(docker inspect "$(docker compose ps -q backend)" --format '{{.State.Health.Status}}')" = healthy
 
       - name: Logs em caso de falha
         if: failure()

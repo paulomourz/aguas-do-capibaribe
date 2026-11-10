@@ -78,6 +78,7 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 | Registro de eventos | Auditoria das ações sobre contas, que não pode ser alterada nem apagada | RF27 |
 | Criptografia | HTTPS em todo o tráfego publicado; senhas só como hash | RNF06, RNF01 |
 | Segurança no desenvolvimento | Pull request, CI com 148 testes, revisão, segredos fora do Git | RNF05, RNF24 |
+| Imagem mínima do contêiner | API em imagem distroless (sem shell, sem gerenciador de pacotes, usuário não root), presa por digest; o CI falha se a imagem tiver shell | RNF05, RNF24 |
 | Proteção de segredos em execução | No Docker, a API lê as senhas e a chave JWT como arquivos só de leitura (`/run/secrets/aguas`), sem variáveis de ambiente; o CI confere que nenhuma aparece em `docker inspect` nem no processo | RNF05 |
 | Separação de ambientes | Desenvolvimento, Docker, CI e publicado separados; testes nunca no banco oficial | RNF15 |
 | Backup | `backup.sh` com verificação e `restore.sh` só em banco vazio | RNF21 |

@@ -8,6 +8,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Segurança
 
+- **Imagem distroless da API** (issue #105). O contêiner da API (Docker e Render) passa a usar
+  `gcr.io/distroless/java25-debian13:nonroot`, presa por digest: só o Java 25 e o jar, sem shell, sem gerenciador de
+  pacotes e sem root. O healthcheck do Docker virou uma classe Java (`backend/docker/Saude.java`) que chama
+  `/api/actuator/health`. O CI mostra o tamanho da imagem e falha se ela tiver shell.
 - **Segredos do Docker como arquivos** (issue #118). No Docker Compose, a API lê as senhas e a chave JWT como
   arquivos só de leitura em `/run/secrets/aguas` (configtree do Spring Boot, no padrão do Docker Secrets), num
   volume que só ela monta. Nenhuma senha aparece mais nas variáveis de ambiente do contêiner nem do processo, e o
