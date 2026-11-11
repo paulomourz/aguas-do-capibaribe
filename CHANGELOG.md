@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Acessibilidade
+
+- **Contraste WCAG 2.1 AA medido nos dois temas** (issue #106, continuação da #82). Novo teste
+  `src/services/__testes__/contraste.test.ts` lê as cores do `src/index.css` e confere 4,5:1 para texto e 3:1 para
+  barras, linhas dos gráficos e bordas de campo, no tema claro e no escuro. A barra "esperado pela meta" do gráfico meta
+  x real no tema claro estava em 1,52:1 sobre o cartão branco e passou para 3,57:1 (`--color-meta: #5b8db0`).
+
 ### IoT (token)
 
 - **Sensor do Wokwi com token de API** (issue #129, continuação da #103). O `iot/sketch.ino` não faz mais login com
