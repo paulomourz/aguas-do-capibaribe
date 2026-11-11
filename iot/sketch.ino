@@ -348,10 +348,12 @@ void setup() {
   Serial.println("Águas do Capibaribe - sensor de vazão (simulado)");
   Serial.printf("Coeficiente K: %.1f pulsos por litro\n", PULSOS_POR_LITRO);
   if (MODO_CALIBRACAO) {
+    // Nada vai para a API, então não precisa de Wi-Fi: dá para calibrar na bancada sem rede.
     Serial.printf("MODO DE CALIBRAÇÃO: passe %.1f L pelo sensor entre os dois cliques. O lote NÃO vai para a API.\n",
                   LITROS_CALIBRACAO);
+  } else {
+    conectarWiFi();
   }
-  conectarWiFi();
   Serial.println("Gire o potenciômetro para abrir a água e aperte o botão para iniciar o lote.");
 }
 

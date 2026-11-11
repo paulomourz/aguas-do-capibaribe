@@ -110,7 +110,8 @@ O K fica no próprio sketch, e não no banco: ele é do sensor físico, e o sist
 **Procedimento** (no dispositivo físico, com a montagem final, porque a vazão e a pressão mudam a contagem):
 
 1. No sketch, use `MODO_CALIBRACAO = true` e, em `LITROS_CALIBRACAO`, o volume do recipiente, por exemplo
-   `10.0`. Nesse modo, **o lote não é enviado à API**, então nenhum consumo falso fica no histórico.
+   `10.0`. Nesse modo, **o lote não é enviado à API**, então nenhum consumo falso fica no histórico. O sensor
+   também não conecta ao Wi-Fi, então dá para calibrar sem rede.
 2. Clique no botão verde, encha o recipiente graduado passando a água pelo sensor e clique de novo. O monitor
    mostra os pulsos contados e o K calculado:
    ```
