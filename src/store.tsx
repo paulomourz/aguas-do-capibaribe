@@ -27,6 +27,8 @@ type Ctx = {
   criarUsuario: (u: { nome: string; usuario: string; senha: string; perfil: Perfil }) => Promise<Usuario>
   definirAtivo: (id: string, ativo: boolean) => Promise<void>
   redefinirSenha: (id: string, senha: string) => Promise<void>
+  /** Troca o token de API de uma conta de sensor e devolve a chave nova, que não fica guardada no site. */
+  rotacionarToken: (id: string) => Promise<string>
   atualizarUsuario: (id: string, dados: { nome?: string; senha?: string; senhaAtual?: string }) => Promise<void>
   processos: Processo[]
   salvarProcesso: (p: { id?: string; nome: string; unidade: Unidade; meta: number }) => Promise<Processo>
@@ -466,6 +468,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     redefinirSenha: async (id, senha) => {
       await api.redefinirSenha(Number(id), senha)
     },
+    rotacionarToken: async (id) => (await api.rotacionarToken(Number(id))).token,
     processos,
     salvarProcesso: async ({ id, ...dados }) => {
       const p = deProcesso(await api.salvarProcesso({ ...dados, id: id ? Number(id) : undefined }))
