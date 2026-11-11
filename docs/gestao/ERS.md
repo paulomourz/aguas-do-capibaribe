@@ -741,6 +741,7 @@ A política de segurança, a análise de riscos e o plano de continuidade estão
 - **Execução local:** o Docker Compose sobe banco, API e site com um comando; com o perfil tunel, liga também o túnel para o Wokwi.
 - **Configuração:** banco, chave JWT, origens CORS, limites, contas iniciais e aviso no Telegram vêm de variáveis de ambiente ou do arquivo backend/.env.
 - **Sem modo de demonstração:** o site sempre usa a API; para demonstrar sem internet, usa-se o Docker.
+- **Particionamento da tabela lote** (issue #100): analisado e não adotado. Com 1 milhão de lotes, o particionamento mensal quebraria a chave de envio única (RF28) e a ligação alerta_lote → lote, e deixaria a regra de alerta de menos de 0,5 ms para 63 a 109 ms. O relatório mensal ganharia pouco, porque já fica abaixo de 0,1 s. A medição, o volume em que vale reavaliar e como seria feito estão em docs/tecnico/desempenho-indices.md.
 - **Regras de negócio** em detalhe: Apêndice D.
 
 # 4. Verificação
