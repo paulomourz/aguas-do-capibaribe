@@ -31,7 +31,8 @@
   --color-zebra: #fbfaf7;
   --color-nav-hover: #f3f0ea;
   --color-track: #f1ede5;
-  --color-meta: #bbd5e6;
+  /* Barra "esperado pela meta" do gráfico meta x real: 3:1 (WCAG 1.4.11) sobre branco, areia e o cursor do gráfico */
+  --color-meta: #5b8db0;
   --color-water-meta: #7dc8ed;
   --color-water-meta-highlight: #d7f3ff;
   --color-water-real: #123f61;
