@@ -68,3 +68,56 @@ Abaixo de 1 ms, a diferença de tempo é ruído da máquina. Nessa faixa, vale o
 
 A issue cita `lotes`, `data_hora` e `lavanderia_id`. No esquema, a tabela é `lote`, a data é `registrado_em`, e não
 existe coluna de lavanderia (o sistema atende uma lavanderia).
+
+## Índice parcial para os alertas ativos (issue #110), em 11/11/2026
+
+A issue propôs um índice parcial só com os alertas ativos (`status IN ('aberto', 'analise')`), porque quase todo
+alerta termina resolvido e o Dashboard só lista os abertos e os em análise. A tabela `lote` não tem status (o status do
+lote é calculado pelo desvio), então o índice seria na tabela `alerta`.
+
+**Decisão: o índice não entrou.** Em nenhuma das versões testadas o tempo ou o número de blocos lidos melhorou, e um
+índice que o planejador não usa só deixa a gravação mais lenta. É a mesma regra da V8: só entra o índice que muda o
+plano e o tempo na medição.
+
+### Como foi medido
+
+Mesmo roteiro da seção [Como repetir](#como-repetir), com a V1 a V10 aplicadas, PostgreSQL 18.6 e
+`qtd=1000000` no `popula-lotes.sql`. Isso dá 1.000.005 lotes e 33.334 alertas. O script não grava alertas em
+análise, então 1% dos resolvidos passou para `analise`, e a massa ficou com 1.667 abertos, 334 em análise e 31.333
+resolvidos:
+
+```sql
+UPDATE alerta SET status = 'analise' WHERE status = 'resolvido' AND id % 100 = 7;
+VACUUM ANALYZE alerta;
+```
+
+Cada versão do índice foi criada dentro de `BEGIN; ... ROLLBACK;`, seguida de `ANALYZE alerta` e da consulta 3 do
+[`explain-indices.sql`](../../database/desempenho/explain-indices.sql) (a mesma de
+`AlertaRepository.findByStatusOrderByDetectadoEmDescIdDesc`), rodada duas vezes para usar a segunda medição.
+
+### Resultado
+
+| Versão | Alertas abertos (1.667 linhas) | Tamanho do índice |
+|---|---|---|
+| Só o `ix_alerta_status` da V1 (hoje) | 0,76 ms, Index Scan, 253 blocos | 232 kB |
+| `+ (detectado_em DESC, id DESC) WHERE status IN ('aberto', 'analise')` | sem mudança: o planejador continua no `ix_alerta_status` | 72 kB |
+| A mesma, forçada (sem o `ix_alerta_status`) | 1,70 ms, Bitmap Heap Scan, 266 blocos, descarta os 334 em análise | 72 kB |
+| `+ (status, detectado_em DESC, id DESC) WHERE status IN (...)` | sem mudança: o planejador continua no `ix_alerta_status` | 96 kB |
+| A mesma, **no lugar** do `ix_alerta_status` | 0,79 ms, Bitmap Heap Scan, 254 blocos | 96 kB |
+
+Os alertas em análise (334 linhas) ficaram em 0,15 ms em todos os casos.
+
+### Por que não houve ganho
+
+- **A consulta já é rápida.** Com 33 mil alertas, ela fica abaixo de 1 ms. Nessa faixa, a diferença de tempo é ruído.
+- **O custo está na tabela, não no índice.** Os alertas abertos ficam espalhados por quase todas as 246 páginas da
+  tabela, então qualquer índice termina lendo as mesmas páginas. O índice só deixaria de ordenar em memória 1.667
+  linhas, o que custa cerca de 0,05 ms.
+- **O `ix_alerta_status` já filtra pelo status.** O índice parcial não traz informação que o planejador não tenha.
+
+Trocar o `ix_alerta_status` pelo índice parcial economizaria 136 kB e um pouco de escrita, sem ganho de leitura. Além
+disso, o filtro "resolvidos" da tela de alertas, que hoje já lê a tabela inteira (8 ms com 31 mil alertas), não seria
+atendido. Por isso o índice da V1 continua como está.
+
+Valeria medir de novo se os alertas ativos passassem de dezenas de milhares, ou se a tela de alertas passasse a usar
+paginação (`LIMIT`). Nesse caso, um índice já na ordem da tela evitaria ler todos os alertas para mostrar os primeiros.
