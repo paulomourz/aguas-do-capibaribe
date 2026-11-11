@@ -54,4 +54,7 @@ public final class UsuarioDTOs {
             @NotBlank(message = "Informe a senha.") String senha) {}
 
     public record SessaoDTO(String token, UsuarioDTO usuario) {}
+
+    /** Resposta da rotação: a chave nova (64 caracteres alfanuméricos) aparece só aqui, uma única vez. */
+    public record TokenDeApiDTO(String token, UsuarioDTO usuario) {}
 }

@@ -147,7 +147,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -162,7 +162,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(8);
+           assertThat(flyway.info().applied()).hasSize(9);
     }
 
     @Test
@@ -432,6 +432,58 @@ abstract class IntegracaoPostgresBase {
         assertThat(jdbc.queryForObject(
                 "select data_hora > now() - interval '1 minute' from auditoria_usuario where usuario_afetado_id = ?",
                 Boolean.class, op.id())).isTrue();
+    }
+
+    @Test
+    void administradorRotacionaTokenDeApiERevogaOAnteriorNaHora() throws Exception {
+        Conta adm = conta("admin");
+        Conta sensor = conta("sensor");
+        int p = processo(adm, "lote", "100");
+        var corpoLote = Map.of("processoId", p, "pecas", 10, "litros", new BigDecimal("90"));
+
+        // Given: administrador autenticado. When: aciona a rotação. Then: chave de 64 caracteres alfanuméricos.
+        String primeira = ler(chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), adm).andExpect(status().isOk()))
+                .get("token").asText();
+        assertThat(primeira).matches("[A-Za-z0-9]{64}");
+        // O sensor usa a chave direto, sem login, e só no que o perfil dele permite.
+        mvc.perform(post("/lotes").header(HttpHeaders.AUTHORIZATION, "Bearer " + primeira)
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpoLote)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.usuarioId").value(sensor.id()));
+        mvc.perform(get("/usuarios").header(HttpHeaders.AUTHORIZATION, "Bearer " + primeira))
+                .andExpect(status().isForbidden());
+
+        // Nova rotação: outra chave, e a anterior para de valer já na requisição seguinte.
+        String segunda = ler(chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), adm).andExpect(status().isOk()))
+                .get("token").asText();
+        assertThat(segunda).matches("[A-Za-z0-9]{64}").isNotEqualTo(primeira);
+        mvc.perform(post("/lotes").header(HttpHeaders.AUTHORIZATION, "Bearer " + primeira)
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpoLote)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"));
+        mvc.perform(get("/processos").header(HttpHeaders.AUTHORIZATION, "Bearer " + segunda)).andExpect(status().isOk());
+
+        // No banco fica só o hash (SHA-256) da chave atual, nunca a chave.
+        String hash = jdbc.queryForObject("select token_hash from usuario where id = ?", String.class, sensor.id());
+        assertThat(hash).matches("[0-9a-f]{64}").isNotEqualTo(segunda);
+        assertThat(jdbc.queryForObject("select count(*) from usuario where token_hash in (?, ?)", Integer.class, primeira, segunda))
+                .isZero();
+
+        // Conta desativada perde o acesso também pelo token.
+        enviar(patch("/usuarios/" + sensor.id() + "/ativo"), adm, Map.of("ativo", false)).andExpect(status().isOk());
+        mvc.perform(get("/processos").header(HttpHeaders.AUTHORIZATION, "Bearer " + segunda)).andExpect(status().isUnauthorized());
+
+        // Só administrador, só conta de sensor; o que foi recusado não entra na auditoria.
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), g).andExpect(status().isForbidden());
+        chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), sensor).andExpect(status().isForbidden());
+        chamar(post("/usuarios/" + op.id() + "/token/rotacao"), adm).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("OPERACAO_NAO_PERMITIDA"));
+        chamar(post("/usuarios/999999999/token/rotacao"), adm).andExpect(status().isNotFound());
+        assertThat(auditoriaDe(sensor.id())).containsExactly("ROTACAO_TOKEN por " + adm.id(),
+                "ROTACAO_TOKEN por " + adm.id(), "DESATIVACAO_USUARIO por " + adm.id());
+        assertThat(auditoriaDe(op.id())).isEmpty();
     }
 
     @Test

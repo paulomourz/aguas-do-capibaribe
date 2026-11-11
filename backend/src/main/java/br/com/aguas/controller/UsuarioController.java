@@ -18,6 +18,7 @@ import br.com.aguas.dto.UsuarioDTOs.AtivoDTO;
 import br.com.aguas.dto.UsuarioDTOs.AtualizarUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.RedefinirSenhaDTO;
+import br.com.aguas.dto.UsuarioDTOs.TokenDeApiDTO;
 import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
 import br.com.aguas.security.UsuarioAutenticado;
 import br.com.aguas.service.UsuarioService;
@@ -98,5 +99,18 @@ public class UsuarioController {
     public UsuarioDTO definirAtivo(@AuthenticationPrincipal UsuarioAutenticado quem, @PathVariable Integer id,
                                    @Valid @RequestBody AtivoDTO dados) {
         return usuarios.definirAtivo(quem, id, dados.ativo());
+    }
+
+    @PostMapping("/{id}/token/rotacao")
+    @Operation(summary = "Rotacionar o token de API do sensor",
+            description = "Só administrador, e só para contas de perfil `sensor`. Gera uma chave nova de 64 caracteres "
+                    + "alfanuméricos e revoga a anterior na hora. A chave aparece só nesta resposta: a API guarda apenas o "
+                    + "hash dela. O sensor a envia em `Authorization: Bearer <chave>`, sem passar pelo login.")
+    @RespostasDoc.Ok
+    @RespostasDoc.SoAdmin
+    @RespostasDoc.NaoEncontrado
+    @RespostasDoc.Conflito
+    public TokenDeApiDTO rotacionarToken(@AuthenticationPrincipal UsuarioAutenticado quem, @PathVariable Integer id) {
+        return usuarios.rotacionarToken(quem, id);
     }
 }

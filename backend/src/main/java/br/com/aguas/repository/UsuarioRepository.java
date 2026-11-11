@@ -11,4 +11,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     Optional<Usuario> findByLoginIgnoreCase(String login);
 
     boolean existsByLoginIgnoreCase(String login);
+
+    /** Conta dona do token de API, pelo SHA-256 da chave. */
+    Optional<Usuario> findByTokenHash(String tokenHash);
 }
