@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### IoT (token)
+
+- **Sensor do Wokwi com token de API** (issue #129, continuação da #103). O `iot/sketch.ino` não faz mais login com
+  senha: manda o token da conta `sensor.wokwi` (`TOKEN_API`, gerado em **Usuários > Rotacionar token**) direto em
+  `GET /processos` e `POST /lotes`. Se o token for trocado, o monitor serial avisa como gerar outro. Guias do IoT,
+  roteiro de apresentação, guia do sistema e segurança atualizados.
+
 ### Avisos
 
 - **Novas tentativas e aviso pendente no Telegram.** Quando o envio do aviso de alerta falha (erro de rede, Telegram

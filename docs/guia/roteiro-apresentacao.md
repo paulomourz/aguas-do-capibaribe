@@ -21,8 +21,9 @@ Não precisa de deploy nem de login no Render e no Neon.
 1. Abra o site uns 5 minutos antes. A API dorme sem uso e leva cerca de 2 minutos para acordar.
 2. Entre com `capibaribe.admin`. A senha fica em `docs/privado/hospedagem.md`, só no computador de quem cuida da
    hospedagem, ou é a que você trocou pelo site.
-3. Abra o projeto [`aguas-capibaribe-sensor`](https://wokwi.com/projects/479626230908397569) e, na linha `SENHA` do
-   `sketch.ino`, cole a senha do sensor, que também fica em `docs/privado/hospedagem.md`. **Não salve** o projeto.
+3. No site, em **Usuários**, clique em **Rotacionar token** na linha do `sensor.wokwi` e copie o token.
+4. Abra o projeto [`aguas-capibaribe-sensor`](https://wokwi.com/projects/479626230908397569) e, na linha
+   `TOKEN_API` do `sketch.ino`, cole o token. **Não salve** o projeto.
 
 **Durante a apresentação**
 
@@ -70,7 +71,8 @@ docker compose --profile tunel logs tunel
    ```cpp
    const char* API_URL = "http://palavras-aleatorias.trycloudflare.com/api";
    ```
-4. Em `SENHA`, cole a senha do sensor que aparece em `docker compose logs segredos`.
+4. No site local (<http://localhost:3000>), entre como `capibaribe.admin` com a senha de `docker compose logs segredos`,
+   vá em **Usuários > Rotacionar token** na linha do `sensor.wokwi` e cole o token em `TOKEN_API`.
 5. Clique em ▶ e siga os mesmos passos do plano A, olhando o site em <http://localhost:3000>.
 
 **Ao terminar, desligue o túnel:**
@@ -79,10 +81,10 @@ docker compose --profile tunel logs tunel
 docker compose --profile tunel stop tunel
 ```
 
-Com o túnel ligado, o site e a API locais ficam acessíveis pela internet, e a senha passa sem criptografia até a
+Com o túnel ligado, o site e a API locais ficam acessíveis pela internet, e o token passa sem criptografia até a
 Cloudflare. Use só dados de teste. O endereço do túnel muda toda vez que ele é ligado.
 
-**Não clique em SAVE no projeto local depois de colar a senha:** ele é público. Sem salvar, a senha e o endereço valem
+**Não clique em SAVE no projeto local depois de colar o token:** ele é público. Sem salvar, o token e o endereço valem
 enquanto a aba estiver aberta.
 
 Para desligar tudo, use `docker compose --profile tunel down`. Só use `-v` se quiser **apagar** os dados e as senhas
@@ -93,7 +95,7 @@ do Docker.
 1. Na sua branch, rode o plano B com o sensor.
 2. Passe um lote pelo projeto local e confira no site local.
 3. Abra o PR para a `develop`. Depois do merge, o site publicado atualiza sozinho.
-4. Se o `iot/sketch.ino` mudou, cole o novo código no projeto público e salve, com a `SENHA` ainda como
+4. Se o `iot/sketch.ino` mudou, cole o novo código no projeto público e salve, com o `TOKEN_API` ainda como
    `COLE-AQUI-...`.
 
 ## Começar com o histórico limpo

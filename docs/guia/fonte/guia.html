@@ -337,7 +337,7 @@
     <li><strong>Ver o resultado</strong>O monitor serial mostra o status que a API deu ao lote. Se for <strong>crítico</strong> (desvio acima de 8%), o buzzer apita 3 vezes e o LED vermelho fica aceso até o próximo lote.</li>
   </ol>
 
-  <div class="nota"><p><strong>Dois projetos no Wokwi.</strong> O <code>aguas-capibaribe-sensor</code> (público) fala com a API publicada, em HTTPS. O <code>aguas-capibaribe-local</code> fala com o Docker, em HTTP, pelo túnel. O código é o mesmo: mudam o <code>API_URL</code> e a <code>SENHA</code> do <code>sensor.wokwi</code>. Os projetos do Wokwi são públicos, então a senha é colada só na hora de usar e o projeto não é salvo com ela.</p></div>
+  <div class="nota"><p><strong>Dois projetos no Wokwi.</strong> O <code>aguas-capibaribe-sensor</code> (público) fala com a API publicada, em HTTPS. O <code>aguas-capibaribe-local</code> fala com o Docker, em HTTP, pelo túnel. O código é o mesmo: mudam o <code>API_URL</code> e o <code>TOKEN_API</code>, o token do <code>sensor.wokwi</code> gerado em <strong>Usuários &gt; Rotacionar token</strong>. Os projetos do Wokwi são públicos, então o token é colado só na hora de usar e o projeto não é salvo com ele; se vazar, basta rotacionar.</p></div>
 
   <div class="nota"><p><strong>Qual processo o sensor mede?</strong> O que estiver em <code>PROCESSO_NOME</code>, no <code>sketch.ino</code>, escrito como aparece no site (por exemplo, <code>"Estonagem"</code>). O sensor descobre o id sozinho pela API, então não é preciso consultar o banco. Se o nome não existir, o monitor serial lista os processos cadastrados. O guia completo, com o circuito e os erros comuns, está em <code>iot/LEIA-ME.md</code>.</p></div>
 </section>
