@@ -87,6 +87,9 @@ app:
     token: ${TELEGRAM_TOKEN:}
     chat-id: ${TELEGRAM_CHAT_ID:}
     site-url: ${SITE_URL:}
+    # Se o envio falhar, a API tenta de novo (3 envios no total), com esta pausa entre eles.
+    # Se todos falharem, o aviso fica gravado como pendente (tabela aviso_pendente).
+    espera-entre-tentativas: 2s
   # Fuso usado para definir o mês dos relatórios.
   fuso-relatorios: America/Recife
   # Versão do pom.xml (preenchida no build); aparece no Swagger.

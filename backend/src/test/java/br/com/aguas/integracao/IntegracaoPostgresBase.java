@@ -65,6 +65,8 @@ abstract class IntegracaoPostgresBase {
         r.add("app.telegram.url", TelegramFalso::url);
         r.add("app.telegram.token", () -> TelegramFalso.TOKEN);
         r.add("app.telegram.chat-id", () -> "123");
+        // Pausa curta entre as tentativas do aviso, para os testes não esperarem os 2 segundos de verdade.
+        r.add("app.telegram.espera-entre-tentativas", () -> "50ms");
     }
 
     private static final String SENHA = "senha-de-teste-123";
@@ -147,7 +149,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -162,7 +164,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(9);
+           assertThat(flyway.info().applied()).hasSize(10);
     }
 
     @Test
@@ -615,24 +617,47 @@ abstract class IntegracaoPostgresBase {
         TelegramFalso.Pedido aviso = esperarAviso(nome);
         assertThat(aviso.caminho()).isEqualTo("/bot" + TelegramFalso.TOKEN + "/sendMessage");
         assertThat(aviso.corpo()).contains("\"chat_id\":\"123\"", "Alerta #" + alerta);
+        // Envio que deu certo não fica pendente.
+        assertThat(jdbc.queryForObject("select count(*) from aviso_pendente where alerta_id = ?", Integer.class, alerta)).isZero();
     }
 
     @Test
-    void telegramForaDoArNaoAtrapalhaORegistroDoLote() throws Exception {
+    void telegramForaDoArNaoAtrapalhaORegistroDoLoteEOAvisoFicaPendente() throws Exception {
         Conta g = conta("gestor");
         int p = processo(g, "lote", "800");
         String nome = jdbc.queryForObject("select nome from processo where id = ?", String.class, p);
         TelegramFalso.status = 500;
         try {
+            // Given: lotes com consumo acima da meta abrem o alerta. When: o Telegram falha em todo envio.
             lote(g, p, 10, "900");
             lote(g, p, 10, "900");
             lote(g, p, 10, "900");
-            esperarAviso(nome);
+            int alerta = alertasDo(g, p).getFirst().get("id").asInt();
+
+            // Then: 3 tentativas e o aviso gravado como pendente, com o status HTTP e sem o token.
+            Map<String, Object> pendente = esperarPendente(alerta);
+            assertThat(pendente.get("tentativas")).isEqualTo(3);
+            assertThat(pendente.get("ultimo_erro")).isEqualTo("HTTP 500");
+            assertThat(TelegramFalso.pedidos.stream().filter(x -> x.corpo().contains(nome))).hasSize(3);
+            assertThat(jdbc.queryForObject("select criado_em > now() - interval '1 minute' from aviso_pendente where alerta_id = ?",
+                    Boolean.class, alerta)).isTrue();
         } finally {
             TelegramFalso.status = 200;
         }
+        // O lote e o alerta continuam gravados.
         assertThat(alertasDo(g, p)).hasSize(1);
         assertThat(jdbc.queryForObject("select count(*) from lote where processo_id = ?", Integer.class, p)).isEqualTo(3);
+    }
+
+    /** As tentativas saem em outra thread: espera até 10 s pelo registro do aviso pendente do alerta. */
+    private Map<String, Object> esperarPendente(int alertaId) throws InterruptedException {
+        for (int i = 0; i < 100; i++) {
+            List<Map<String, Object>> linhas = jdbc.queryForList(
+                    "select tentativas, ultimo_erro from aviso_pendente where alerta_id = ?", alertaId);
+            if (!linhas.isEmpty()) return linhas.getFirst();
+            Thread.sleep(100);
+        }
+        throw new AssertionError("O aviso do alerta " + alertaId + " não foi gravado como pendente");
     }
 
     /** O aviso sai em outra thread, depois do commit: espera até 5 s pela mensagem do processo. */
