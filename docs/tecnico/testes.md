@@ -30,6 +30,7 @@ monitoramento, migrações do banco, execução com Docker e envio de lotes pelo
 | Sistema (back-end) | Jornada do login ao relatório | JUnit + PostgreSQL | `CicloCompletoLavanderiaE2ETest` |
 | Unidade (site) | Fila do aparelho, sincronização, CSV, tema e glossário | Vitest | `src/**/__testes__` |
 | Ponta a ponta (site) | Site de produção com service worker, conexão caindo e voltando, sem duplicar lote | Playwright | `e2e/offline.spec.ts` |
+| Mutação (back-end) | Se os testes percebem quando o código muda: o PIT altera as regras de negócio, a segurança e os avisos (`service`, `security`, `notificacao`) e roda os testes; sobrevivência de mutantes abaixo de 20% | PIT (pitest) | `backend/pom.xml`; workflow "Teste de mutação" |
 | Implantação | Docker Compose sobe e responde: login, processos e registro de lote pelo Nginx | GitHub Actions | job `docker-compose` do CI |
 | Segurança das dependências | Vulnerabilidades conhecidas no `pom.xml` e no `pnpm-lock.yaml`; bloqueia CVSS 7,0 ou mais | OSV-Scanner | job `dependencias` do CI; exceções em `osv-scanner.toml` |
 | Desempenho | 50 sensores ao mesmo tempo; índices do banco | k6, EXPLAIN ANALYZE | [teste de carga](teste-carga.md), [índices](desempenho-indices.md) |
@@ -89,6 +90,7 @@ por função:
 | O que rodar | Comando | Precisa de |
 |---|---|---|
 | Back-end completo | `cd backend` e `./mvnw test` | JDK 25 e Docker (integração) |
+| Mutação (back-end) | `cd backend`, `mvn test-compile` e `mvn org.pitest:pitest-maven:mutationCoverage`; relatório em `backend/target/pit-reports/index.html`. No GitHub: Actions > Teste de mutação (o resumo mostra a sobrevivência e os mutantes vivos) | JDK 25 e Docker (integração); sem Docker, os testes de integração são pulados e a sobrevivência sobe |
 | Site, unidade | `pnpm test` | Node.js e pnpm |
 | Site, ponta a ponta | `pnpm exec playwright install chromium` (1ª vez) e `pnpm test:e2e` | Node.js e pnpm |
 | Docker | `docker compose up -d --build` e abrir `http://localhost:3000` | Docker |

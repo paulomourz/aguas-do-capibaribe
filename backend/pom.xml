@@ -150,6 +150,43 @@
                     <mainClass>br.com.aguas.ferramentas.GerarHashSenha</mainClass>
                 </configuration>
             </plugin>
+            <!-- Teste de mutação (PIT): mvn test-compile org.pitest:pitest-maven:mutationCoverage
+                 Muda o código das regras de negócio, da segurança e dos avisos e confere se algum teste falha.
+                 Usa todos os testes, inclusive os de integração (precisa de Docker, como o mvn test).
+                 Relatório em target/pit-reports/index.html. Ver docs/tecnico/testes.md. -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.25.9</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>1.2.3</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <targetClasses>
+                        <param>br.com.aguas.service.*</param>
+                        <param>br.com.aguas.security.*</param>
+                        <param>br.com.aguas.notificacao.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>br.com.aguas.*</param>
+                    </targetTests>
+                    <threads>4</threads>
+                    <!-- Cada processo do PIT sobe o Spring e o PostgreSQL de teste de novo: sem esta folga,
+                         a subida seria contada como demora do mutante (falso "morto por tempo"). -->
+                    <timeoutConstant>60000</timeoutConstant>
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                    </outputFormats>
+                    <timestampedReports>false</timestampedReports>
+                    <!-- Mutantes mortos em pelo menos 81%: sobrevivência (com os sem cobertura) abaixo de 20%. -->
+                    <mutationThreshold>81</mutationThreshold>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

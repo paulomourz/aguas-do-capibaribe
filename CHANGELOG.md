@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Testes
+
+- **Teste de mutação com PIT.** `mvn org.pitest:pitest-maven:mutationCoverage` (depois de `mvn test-compile`) muda o
+  código das regras de negócio, da segurança e dos avisos e roda todos os testes, inclusive os de integração. O
+  build falha se menos de 81% dos mutantes morrerem, ou seja, se a sobrevivência não ficar abaixo de 20%. O workflow
+  "Teste de mutação" roda sob demanda e em PRs que mudem o backend, mostra a sobrevivência e os mutantes vivos no
+  resumo e guarda o relatório HTML.
+
 ### Arquitetura
 
 - **Diagramas C4** (issue #111): contexto, contêineres e componentes da API em Mermaid e SVG
