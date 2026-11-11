@@ -12,8 +12,21 @@ ele fica desligado e o resto do sistema funciona igual.
 1. A regra de alerta abre o alerta e publica um evento.
 2. Depois que o lote foi gravado no banco (commit), o `AvisoDeAlerta` monta a mensagem e chama a Bot API do Telegram,
    em outra thread. O operador não espera o envio.
-3. Se o Telegram falhar, recusar ou demorar, o lote e o alerta continuam gravados. A falha vira só uma linha no log,
-   com o status HTTP ou o tipo do erro, **nunca com o token**.
+3. Se o envio falhar (erro de rede, Telegram fora do ar ou recusando), a API tenta de novo: são **até 3 envios** no
+   total, com 2 segundos de pausa entre eles (`app.telegram.espera-entre-tentativas`).
+4. Se os 3 falharem, o aviso é gravado como **pendente** na tabela `aviso_pendente` (migração `V10`), com o alerta, o
+   número de tentativas, o último erro e a hora. O lote e o alerta continuam gravados, e o operador não percebe nada.
+5. O log e a tabela guardam só o status HTTP ou o tipo do erro, **nunca o token**.
+
+Para ver o que ficou pendente:
+
+```sql
+select p.alerta_id, p.tentativas, p.ultimo_erro, p.criado_em
+from aviso_pendente p order by p.criado_em desc;
+```
+
+A API ainda não reenvia os avisos pendentes sozinha: a tabela registra o que não chegou, e o alerta continua
+aparecendo na tela Alertas.
 
 O código fica em `backend/src/main/java/br/com/aguas/notificacao/`.
 

@@ -44,13 +44,16 @@ GRANT SELECT, INSERT, UPDATE ON public.usuario, public.processo, public.alerta T
 --    (o trigger trg_lote_imutavel também bloqueia, mas a permissão barra antes).
 --    A auditoria segue a mesma regra (trigger trg_auditoria_imutavel).
 GRANT SELECT, INSERT ON public.lote, public.alerta_lote, public.auditoria_usuario TO :"papel";
+--    Avisos que o Telegram não recebeu (aviso_pendente): a API só registra.
+GRANT SELECT, INSERT ON public.aviso_pendente TO :"papel";
 
 -- 5. Views: só leitura.
 GRANT SELECT ON public.v_alertas, public.v_historico_lotes TO :"papel";
 
 -- 6. Sequências dos ids: nextval (USAGE) e leitura do valor atual (SELECT).
 GRANT USAGE, SELECT ON SEQUENCE public.usuario_id_seq, public.processo_id_seq,
-  public.lote_id_seq, public.alerta_id_seq, public.auditoria_usuario_id_seq TO :"papel";
+  public.lote_id_seq, public.alerta_id_seq, public.auditoria_usuario_id_seq,
+  public.aviso_pendente_id_seq TO :"papel";
 
 -- DROP, ALTER e TRUNCATE não precisam de REVOKE: as tabelas pertencem ao postgres,
 -- e só o dono pode alterar a estrutura. DELETE e TRUNCATE nunca foram concedidos.

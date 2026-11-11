@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Avisos
+
+- **Novas tentativas e aviso pendente no Telegram.** Quando o envio do aviso de alerta falha (erro de rede, Telegram
+  fora do ar ou recusando), a API tenta de novo, até 3 envios no total, com 2 segundos de pausa. Se a falha
+  persistir, o aviso fica gravado como pendente na tabela `aviso_pendente` (migração `V10`), com o número de
+  tentativas e o último erro, sem o token. O registro do lote continua sem esperar o Telegram.
+
 ### Testes
 
 - **Teste de mutação com PIT.** `mvn org.pitest:pitest-maven:mutationCoverage` (depois de `mvn test-compile`) muda o
