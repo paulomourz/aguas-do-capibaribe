@@ -32,7 +32,7 @@ const claro = cores(bloco('@theme {'))
 const escuro = { ...claro, ...cores(bloco(":root[data-tema='escuro'] {")) }
 
 /** No tema escuro, a classe text-brand usa --color-brand-ink (regra no index.css). */
-const TEMAS = {
+const TEMAS: Record<string, Record<string, string>> = {
   claro: { ...claro, 'brand-texto': claro.brand, white: '#ffffff' },
   escuro: { ...escuro, 'brand-texto': escuro['brand-ink'], white: '#ffffff' },
 }
