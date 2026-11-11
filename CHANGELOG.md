@@ -22,6 +22,11 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Segurança
 
+- **Rotação do token de API do sensor.** `POST /api/usuarios/{id}/token/rotacao`, só para o administrador e só em
+  contas de perfil `sensor`, gera uma chave de 64 caracteres alfanuméricos e revoga a anterior na hora. O sensor a
+  envia em `Authorization: Bearer <chave>`, sem login. A chave aparece só na resposta; o banco guarda o SHA-256 dela
+  (migração `V9`, coluna `usuario.token_hash`) e a auditoria registra `ROTACAO_TOKEN`. O login com usuário e senha
+  do sensor continua funcionando.
 - **Privacidade e LGPD** (issue #117, RNF27). A tela de login ganhou o link **Aviso de privacidade**
   (`/#/privacidade`, aberto sem entrar e também no rodapé), que diz quais dados pessoais o sistema guarda, para quê,
   por quanto tempo, quem vê e com quem falar. O login de outras pessoas passou a sair mascarado da API (ex.:

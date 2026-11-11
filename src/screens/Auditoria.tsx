@@ -24,6 +24,7 @@ const ROTULOS: Record<api.AcaoAuditoria, string> = {
   REDEFINICAO_SENHA: "Redefiniu a senha",
   DESATIVACAO_USUARIO: "Desativou o acesso",
   REATIVACAO_USUARIO: "Reativou o acesso",
+  ROTACAO_TOKEN: "Rotacionou o token de API",
 }
 
 const nomeDe = (p: api.PessoaDTO) => (

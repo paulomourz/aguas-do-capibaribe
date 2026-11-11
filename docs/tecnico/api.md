@@ -47,6 +47,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `PATCH /usuarios/{id}` | a própria pessoa | `{nome?, senha?, senhaAtual?}` (`senhaAtual` é obrigatória quando há `senha`) | `UsuarioDTO` |
 | `PATCH /usuarios/{id}/senha` | admin (não em si mesmo nem no administrador principal) | `{senha}` (8 a 72 bytes) | `UsuarioDTO`; registra `REDEFINICAO_SENHA` na auditoria |
 | `PATCH /usuarios/{id}/ativo` | admin (não em si mesmo nem no administrador principal) | `{ativo}` | `UsuarioDTO`; registra `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO` na auditoria |
+| `POST /usuarios/{id}/token/rotacao` | admin (só para contas de perfil `sensor`) | — | `{token, usuario: UsuarioDTO}`; `token` é a chave nova, com 64 caracteres alfanuméricos, mostrada só nesta resposta; a anterior é revogada na hora; registra `ROTACAO_TOKEN` na auditoria; conta de outro perfil → `409 OPERACAO_NAO_PERMITIDA` |
 | `GET /processos` | autenticado, inclusive o sensor | — | `ProcessoDTO[]` (lista guardada em cache, atualizada a cada cadastro ou edição) |
 | `POST /processos` | gestor | `{nome, unidade, meta}` | `201 ProcessoDTO` |
 | `PUT /processos/{id}` | gestor | `{nome, unidade, meta}` | `ProcessoDTO` |
@@ -56,7 +57,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
-| `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO` ou `REATIVACAO_USUARIO`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
+| `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |
@@ -94,6 +95,26 @@ O site gera um UUID para cada lote e o manda no cabeçalho `Idempotency-Key`. Se
 gravou, mas antes da resposta chegar, o site reenvia o mesmo lote com a mesma chave e recebe `200` com o lote
 original: nada é gravado de novo e a regra de alerta não roda outra vez. A chave fica em `lote.chave_envio`
 (migração `V5`, índice único). Sem o cabeçalho (o sensor ESP32), cada `POST` continua sendo um lote novo.
+
+
+## Token de API do sensor
+
+O sensor pode enviar lotes sem passar pelo login, com um token de API no mesmo cabeçalho do JWT:
+`Authorization: Bearer <chave de 64 caracteres>`. A chave dá o acesso do perfil `sensor` (consultar processos e
+registrar lotes) e não expira: vale até a próxima rotação ou até a conta ser desativada.
+
+- **Rotação:** o administrador chama `POST /usuarios/{id}/token/rotacao`. A API sorteia uma chave nova (letras e
+  números, 64 caracteres) e troca o hash guardado na mesma transação. A chave anterior deixa de valer na requisição
+  seguinte (`401 NAO_AUTENTICADO`), porque a conta é procurada no banco pelo hash a cada chamada.
+- **Guarda:** a chave aparece uma única vez, na resposta da rotação. O banco guarda só o SHA-256 dela
+  (`usuario.token_hash`, migração `V9`); a auditoria e o log registram quem rotacionou, sem a chave.
+- **Primeira chave:** a conta de sensor começa sem token; a primeira rotação cria o primeiro.
+
+```bash
+curl -X POST -H "Authorization: Bearer <token do admin>" \
+  https://<api>/api/usuarios/<id do sensor>/token/rotacao
+# {"token":"<64 caracteres>","usuario":{"id":7,"nome":"Sensor de vazão (Wokwi)","usuario":"sensor.wokwi","perfil":"sensor","ativo":true}}
+```
 
 ## Tipos
 

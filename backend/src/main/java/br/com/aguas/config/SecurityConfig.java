@@ -13,6 +13,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -20,7 +22,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import br.com.aguas.security.ConversorJwt;
+import br.com.aguas.repository.UsuarioRepository;
 import br.com.aguas.security.FiltroDeLimite;
+import br.com.aguas.security.FiltroTokenDeApi;
 import br.com.aguas.security.JwtService;
 import br.com.aguas.security.RespostasDeSeguranca;
 
@@ -31,7 +35,10 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filtros(HttpSecurity http, ConversorJwt conversor, RespostasDeSeguranca respostas,
-            LimiteProperties limite) throws Exception {
+            LimiteProperties limite, UsuarioRepository usuarios) throws Exception {
+        // O token de API (64 caracteres alfanuméricos) é tratado pelo FiltroTokenDeApi; o que sobra é JWT.
+        DefaultBearerTokenResolver cabecalho = new DefaultBearerTokenResolver();
+        BearerTokenResolver soJwt = req -> FiltroTokenDeApi.chaveDe(req) != null ? null : cabecalho.resolve(req);
         http
             // API sem cookies de sessão: o token vai no cabeçalho Authorization, então CSRF não se aplica.
             .csrf(c -> c.disable())
@@ -52,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/usuarios/*/ativo").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/usuarios/*/senha").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/usuarios/*/token/rotacao").hasRole("ADMIN")
                 .requestMatchers("/auditoria/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/processos").hasAnyRole("ADMIN", "GESTOR")
                 .requestMatchers(HttpMethod.PUT, "/processos/*").hasAnyRole("ADMIN", "GESTOR")
@@ -61,9 +69,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/lotes").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
                 .anyRequest().hasAnyRole("ADMIN", "GESTOR", "OPERADOR"))
             .oauth2ResourceServer(o -> o
+                .bearerTokenResolver(soJwt)
                 .jwt(j -> j.jwtAuthenticationConverter(conversor))
                 .authenticationEntryPoint(respostas))
             .exceptionHandling(e -> e.authenticationEntryPoint(respostas).accessDeniedHandler(respostas))
+            .addFilterBefore(new FiltroTokenDeApi(usuarios), BearerTokenAuthenticationFilter.class)
             // Depois do token, para limitar os lotes por usuário; depois do CORS, para o navegador ler o 429.
             .addFilterAfter(new FiltroDeLimite(limite, respostas), BearerTokenAuthenticationFilter.class);
         return http.build();

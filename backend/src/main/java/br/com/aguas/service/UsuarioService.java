@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.aguas.config.AdminProperties;
 import br.com.aguas.dto.UsuarioDTOs.AtualizarUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
+import br.com.aguas.dto.UsuarioDTOs.TokenDeApiDTO;
 import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
 import br.com.aguas.entity.AcaoAuditoria;
 import br.com.aguas.entity.AuditoriaUsuario;
@@ -22,6 +23,7 @@ import br.com.aguas.entity.Usuario;
 import br.com.aguas.exception.ApiException;
 import br.com.aguas.repository.AuditoriaUsuarioRepository;
 import br.com.aguas.repository.UsuarioRepository;
+import br.com.aguas.security.TokenDeApi;
 import br.com.aguas.security.UsuarioAutenticado;
 
 @Service
@@ -145,6 +147,25 @@ public class UsuarioService {
         usuarios.flush();
         auditar(quem, u, ativo ? AcaoAuditoria.REATIVACAO_USUARIO : AcaoAuditoria.DESATIVACAO_USUARIO);
         return UsuarioDTO.de(u);
+    }
+
+    /**
+     * O administrador troca o token de API de uma conta de sensor. O hash novo substitui o anterior na
+     * mesma transação: a chave antiga deixa de valer assim que a rotação é gravada. A chave nova só
+     * existe na resposta; o banco, a auditoria e o log ficam sem ela.
+     */
+    @Transactional
+    public TokenDeApiDTO rotacionarToken(UsuarioAutenticado quem, Integer id) {
+        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+        if (u.getPerfil() != Perfil.sensor) {
+            throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
+                    "Só contas de sensor usam token de API. As pessoas entram com usuário e senha.", null);
+        }
+        String chave = TokenDeApi.gerar();
+        u.setTokenHash(TokenDeApi.hash(chave));
+        usuarios.flush();
+        auditar(quem, u, AcaoAuditoria.ROTACAO_TOKEN);
+        return new TokenDeApiDTO(chave, UsuarioDTO.de(u));
     }
 
     /**
