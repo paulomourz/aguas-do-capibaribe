@@ -1,5 +1,5 @@
 import { requisicao } from './http'
-import type { AtualizarUsuarioDTO, Id, NovoUsuarioDTO, UsuarioDTO } from './tipos'
+import type { AtualizarUsuarioDTO, Id, NovoUsuarioDTO, TokenDeApiDTO, UsuarioDTO } from './tipos'
 
 export async function listarUsuarios(): Promise<UsuarioDTO[]> {
   return requisicao('/usuarios')
@@ -20,4 +20,9 @@ export async function redefinirSenha(id: Id, senha: string): Promise<UsuarioDTO>
 
 export async function definirAtivo(id: Id, ativo: boolean): Promise<UsuarioDTO> {
   return requisicao(`/usuarios/${id}/ativo`, { method: 'PATCH', corpo: { ativo } })
+}
+
+/** O administrador troca o token de API de uma conta de sensor. A chave anterior deixa de valer na hora. */
+export async function rotacionarToken(id: Id): Promise<TokenDeApiDTO> {
+  return requisicao(`/usuarios/${id}/token/rotacao`, { method: 'POST' })
 }

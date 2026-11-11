@@ -14,6 +14,8 @@ export type AtualizarUsuarioDTO = { nome?: string; senha?: string; senhaAtual?: 
 
 export type LoginDTO = { usuario: string; senha: string }
 export type SessaoDTO = { token: string; usuario: UsuarioDTO }
+/** Resposta da rotação: `token` é a chave nova (64 caracteres), mostrada uma única vez. */
+export type TokenDeApiDTO = { token: string; usuario: UsuarioDTO }
 
 export type ProcessoDTO = { id: Id; nome: string; unidade: Unidade; meta: number }
 export type SalvarProcessoDTO = Omit<ProcessoDTO, 'id'> & { id?: Id }

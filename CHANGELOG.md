@@ -27,6 +27,9 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   envia em `Authorization: Bearer <chave>`, sem login. A chave aparece só na resposta; o banco guarda o SHA-256 dela
   (migração `V9`, coluna `usuario.token_hash`) e a auditoria registra `ROTACAO_TOKEN`. O login com usuário e senha
   do sensor continua funcionando.
+- **Botão "Rotacionar token" na tela Usuários.** Aparece nas contas de perfil sensor, para o administrador. Pede
+  confirmação (a chave atual para de valer na hora) e mostra a chave nova uma única vez, com botão de copiar. A chave
+  não fica guardada no navegador.
 - **Privacidade e LGPD** (issue #117, RNF27). A tela de login ganhou o link **Aviso de privacidade**
   (`/#/privacidade`, aberto sem entrar e também no rodapé), que diz quais dados pessoais o sistema guarda, para quê,
   por quanto tempo, quem vê e com quem falar. O login de outras pessoas passou a sair mascarado da API (ex.:
