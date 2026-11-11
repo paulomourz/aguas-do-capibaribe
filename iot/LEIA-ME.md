@@ -97,6 +97,45 @@ o aviso numa apresentação, use `PECAS = 1` no sketch: o esperado cai para 12 L
 de 30 segundos com a vazão no máximo e a simulação perto de 100% (a velocidade aparece no canto de cima do
 Wokwi). O som do buzzer só toca com o áudio do navegador ligado.
 
+## Calibrar o coeficiente K
+
+O sensor de vazão gera um número de pulsos por litro, o **coeficiente K**. O sketch calcula
+`litros = pulsos / K`. O valor fica em `PULSOS_POR_LITRO`, no bloco CONFIGURAÇÃO, e aparece no monitor serial ao
+ligar (`Coeficiente K: 450.0 pulsos por litro`). O padrão, 450, é o do YF-S201. Outros modelos têm outro valor, e
+mesmo duas unidades do mesmo modelo variam cerca de 10%. Com um sensor novo, comece pelo valor do fabricante e
+calibre.
+
+O K fica no próprio sketch, e não no banco: ele é do sensor físico, e o sistema não tem cadastro de sensores.
+
+**Procedimento** (no dispositivo físico, com a montagem final, porque a vazão e a pressão mudam a contagem):
+
+1. No sketch, use `MODO_CALIBRACAO = true` e, em `LITROS_CALIBRACAO`, o volume do recipiente, por exemplo
+   `10.0`. Nesse modo, **o lote não é enviado à API**, então nenhum consumo falso fica no histórico.
+2. Clique no botão verde, encha o recipiente graduado passando a água pelo sensor e clique de novo. O monitor
+   mostra os pulsos contados e o K calculado:
+   ```
+   >>> Calibração encerrada: 4680 pulsos para 10.0 L.
+       K calculado = 4680 / 10.0 = 468.0 pulsos por litro.
+       Com o K atual (450.0), o sensor mediria 10.40 L.
+   ```
+3. Repita pelo menos 3 vezes e coloque a média em `PULSOS_POR_LITRO`.
+4. Volte para `MODO_CALIBRACAO = false`. Na operação normal, o monitor mostra os pulsos a cada segundo
+   (`Pulsos: ...`) e no fim do lote, para conferência.
+
+**Testar no Wokwi.** O gerador de pulsos imita um sensor com o K de `PULSOS_POR_LITRO_SIMULADO`, separado do K
+usado na conta. Com os dois iguais, os litros batem com a vazão do potenciômetro. Para ver o efeito da calibração:
+
+| `PULSOS_POR_LITRO_SIMULADO` | `PULSOS_POR_LITRO` | 20 s com a vazão no máximo (30 L/min, 10 L) |
+|---|---|---|
+| 450 | 450 | cerca de 10 L: calibrado |
+| 330 | 450 | cerca de 7,3 L: K errado, mede 27% a menos |
+| 330 | 330 | cerca de 10 L: calibrado de novo |
+
+Com `MODO_CALIBRACAO = true` e `LITROS_CALIBRACAO = 10.0`, deixar a vazão no máximo por 20 s mostra um K calculado
+perto de 330. O tempo é contado à mão, e a simulação abaixo de 100% conta menos pulsos, então o valor varia um
+pouco. No dispositivo físico, deixe `PULSOS_POR_LITRO_SIMULADO` como está: o gerador sai junto com o fio
+25 → 27.
+
 ## Usar com a API do seu PC
 
 Com o Docker, o túnel já vem pronto: `docker compose --profile tunel up -d --build` liga tudo, e o endereço aparece em
@@ -131,4 +170,4 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080`, 
   salvo lá, e a conta tem o perfil sensor, que só registra lotes. Se vazar, basta rotacionar. O simulador não tem
   armazenamento protegido; no dispositivo físico, guarde o token fora do código.
 - No dispositivo físico: remova o fio entre os pinos 25 e 27, ligue o sinal do sensor de vazão no pino 27 e
-  calibre `PULSOS_POR_LITRO`.
+  calibre o coeficiente K (`PULSOS_POR_LITRO`), como em [Calibrar o coeficiente K](#calibrar-o-coeficiente-k).

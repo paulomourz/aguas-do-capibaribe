@@ -568,7 +568,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 |---|---|
 | Descrição | O dispositivo simulado deve medir a água de um lote e enviá-lo ao final. |
 | Entradas | Vazão (potenciômetro, 0 a 30 L/min) e botão de iniciar/encerrar. |
-| Processamento | O 1º toque no botão inicia o lote e acende o LED; o dispositivo conta os pulsos (referência YF-S201, cerca de 450 pulsos por litro). O 2º toque encerra; se a água medida for maior que zero, o dispositivo localiza o processo pelo nome e envia o lote. |
+| Processamento | O 1º toque no botão inicia o lote e acende o LED; o dispositivo conta os pulsos e calcula os litros pelo coeficiente K configurado no sketch (referência YF-S201, cerca de 450 pulsos por litro). No modo de calibração, o dispositivo mostra os pulsos e o K calculado e não envia o lote (issue #114). O 2º toque encerra; se a água medida for maior que zero, o dispositivo localiza o processo pelo nome e envia o lote. |
 | Saídas | Monitor serial com a vazão, o total acumulado, o resultado do envio (HTTP 201) e o status do lote devolvido pela API. Se o status for crítico (desvio acima de 8%), o buzzer apita 3 vezes e o LED vermelho pisca e fica aceso até o próximo lote. |
 | Prioridade | Desejável |
 | Origem | US-09 · TAP, seção 6 |
@@ -628,7 +628,7 @@ Todas as telas mostram estados de carregamento, de lista vazia e de erro com op�
 
 ### 3.4.2 Interfaces de hardware
 
-O sistema web não exige hardware específico. O sensor simulado usa: ESP32 DevKit C v4; potenciômetro no pino 34 (vazão de 0 a 30 L/min); gerador de pulsos no pino 25, ligado por fio à entrada de contagem no pino 27 (no dispositivo físico, o sinal do sensor de vazão entra direto no pino 27); botão no pino 4 (iniciar/encerrar lote); LED azul no pino 2 (lote em andamento); LED vermelho no pino 33 e buzzer no pino 26 (aviso de lote crítico). Referência de sensor: YF-S201, cerca de 450 pulsos por litro, a calibrar no dispositivo físico. A especificação da bancada física está em docs/tecnico/hardware-bancada.md.
+O sistema web não exige hardware específico. O sensor simulado usa: ESP32 DevKit C v4; potenciômetro no pino 34 (vazão de 0 a 30 L/min); gerador de pulsos no pino 25, ligado por fio à entrada de contagem no pino 27 (no dispositivo físico, o sinal do sensor de vazão entra direto no pino 27); botão no pino 4 (iniciar/encerrar lote); LED azul no pino 2 (lote em andamento); LED vermelho no pino 33 e buzzer no pino 26 (aviso de lote crítico). Referência de sensor: YF-S201, cerca de 450 pulsos por litro. O coeficiente K (pulsos por litro) é configurável no sketch e calibrado no dispositivo físico pelo procedimento de iot/LEIA-ME.md. A especificação da bancada física está em docs/tecnico/hardware-bancada.md.
 
 ### 3.4.3 Interfaces de software
 

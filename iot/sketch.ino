@@ -14,7 +14,7 @@
 //     o sensor segue sempre a mesma regra do site.
 //
 // No dispositivo físico: remova o fio 25 -> 27, ligue o sinal do sensor no 27
-// e calibre PULSOS_POR_LITRO.
+// e calibre o coeficiente K (PULSOS_POR_LITRO), como em iot/LEIA-ME.md, "Calibrar o coeficiente K".
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -37,8 +37,19 @@ const char* WIFI_SENHA = "";
 const char* PROCESSO_NOME = "Estonagem";
 const int PECAS = 50;  // peças do lote
 
-// YF-S201: ~450 pulsos por litro (frequência = 7,5 x vazão em L/min). Calibrar no físico.
+// Coeficiente K do sensor de vazão: quantos pulsos ele gera por litro. Litros do lote = pulsos / K.
+// Cada modelo tem o seu, e cada unidade varia um pouco. YF-S201: ~450 (frequência = 7,5 x vazão em L/min).
+// Com outro modelo, comece pelo valor do fabricante e calibre: iot/LEIA-ME.md, "Calibrar o coeficiente K".
 const float PULSOS_POR_LITRO = 450.0;
+
+// Modo de calibração: true = ao encerrar, mostra os pulsos e o K calculado e NÃO envia o lote à API.
+// Volte para false depois de calibrar.
+const bool  MODO_CALIBRACAO   = false;
+const float LITROS_CALIBRACAO = 10.0;  // volume conhecido do recipiente usado na calibração, em litros
+
+// Só no Wokwi: o K do sensor "físico" que o gerador de pulsos imita. Deixe igual ao PULSOS_POR_LITRO.
+// Para testar a calibração, use valores diferentes: os litros saem errados, como num sensor não calibrado.
+const float PULSOS_POR_LITRO_SIMULADO = 450.0;
 const float VAZAO_MAX_LPM    = 30.0;
 // ========================================================
 
@@ -86,16 +97,21 @@ void IRAM_ATTR contarPulso() {
   pulsos++;
 }
 
-float litrosMedidos() {
+uint32_t pulsosContados() {
   noInterrupts();
   uint32_t p = pulsos;
   interrupts();
-  return p / PULSOS_POR_LITRO;
+  return p;
+}
+
+float litrosMedidos() {
+  return pulsosContados() / PULSOS_POR_LITRO;
 }
 
 // Ajusta a frequência dos pulsos simulados conforme a vazão escolhida no potenciômetro.
+// Usa o K do sensor simulado, e não o configurado: assim o Wokwi mostra o efeito de um K errado.
 void ajustarGerador(float vazaoLpm) {
-  uint32_t freq = (uint32_t)(vazaoLpm * PULSOS_POR_LITRO / 60.0);
+  uint32_t freq = (uint32_t)(vazaoLpm * PULSOS_POR_LITRO_SIMULADO / 60.0);
   if (freq < 2) freq = 0;
   if (abs((int)freq - (int)freqAtual) < 2) return;
   freqAtual = freq;
@@ -302,6 +318,17 @@ void conferirStatus(const String& resposta) {
   }
 }
 
+// Fim de uma medição no modo de calibração: K = pulsos / litros do recipiente. Nada é enviado à API.
+void mostrarCalibracao(uint32_t totalPulsos) {
+  float kCalculado = totalPulsos / LITROS_CALIBRACAO;
+  Serial.printf(">>> Calibração encerrada: %lu pulsos para %.1f L.\n", (unsigned long)totalPulsos, LITROS_CALIBRACAO);
+  Serial.printf("    K calculado = %lu / %.1f = %.1f pulsos por litro.\n", (unsigned long)totalPulsos,
+                LITROS_CALIBRACAO, kCalculado);
+  Serial.printf("    Com o K atual (%.1f), o sensor mediria %.2f L.\n", PULSOS_POR_LITRO,
+                totalPulsos / PULSOS_POR_LITRO);
+  Serial.println("    Repita pelo menos 3 vezes e coloque a média em PULSOS_POR_LITRO. Lote não enviado.");
+}
+
 void setup() {
   Serial.begin(115200);
   pinMode(PINO_BOTAO, INPUT_PULLUP);
@@ -319,6 +346,11 @@ void setup() {
   WiFi.setAutoReconnect(true);
 
   Serial.println("Águas do Capibaribe - sensor de vazão (simulado)");
+  Serial.printf("Coeficiente K: %.1f pulsos por litro\n", PULSOS_POR_LITRO);
+  if (MODO_CALIBRACAO) {
+    Serial.printf("MODO DE CALIBRAÇÃO: passe %.1f L pelo sensor entre os dois cliques. O lote NÃO vai para a API.\n",
+                  LITROS_CALIBRACAO);
+  }
   conectarWiFi();
   Serial.println("Gire o potenciômetro para abrir a água e aperte o botão para iniciar o lote.");
 }
@@ -347,11 +379,15 @@ void loop() {
     } else {
       loteAtivo = false;
       digitalWrite(PINO_LED, LOW);
-      float litros = litrosMedidos();
-      Serial.printf(">>> Lote encerrado: %.2f L, %d pecas. Enviando...\n", litros, PECAS);
-      if (litros < 0.01) {
-        Serial.println("Nenhuma água medida: lote não enviado.");
+      uint32_t totalPulsos = pulsosContados();
+      float litros = totalPulsos / PULSOS_POR_LITRO;
+      if (MODO_CALIBRACAO) {
+        mostrarCalibracao(totalPulsos);
+      } else if (litros < 0.01) {
+        Serial.println(">>> Lote encerrado: nenhuma água medida, lote não enviado.");
       } else {
+        Serial.printf(">>> Lote encerrado: %.2f L (%lu pulsos), %d pecas. Enviando...\n", litros,
+                      (unsigned long)totalPulsos, PECAS);
         // Gerador parado durante o envio: os pulsos deixam o TLS lento demais no simulador, e a API fecha a conexão.
         ledcWrite(PINO_GERADOR, 0);
         detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
@@ -367,7 +403,7 @@ void loop() {
 
   if (loteAtivo && agora - ultimoStatus >= 1000) {
     ultimoStatus = agora;
-    Serial.printf("Vazão: %.1f L/min | Acumulado: %.2f L\n",
-                  freqAtual * 60.0 / PULSOS_POR_LITRO, litrosMedidos());
+    Serial.printf("Vazão: %.1f L/min | Acumulado: %.2f L | Pulsos: %lu\n",
+                  freqAtual * 60.0 / PULSOS_POR_LITRO, litrosMedidos(), (unsigned long)pulsosContados());
   }
 }
