@@ -469,6 +469,9 @@ abstract class IntegracaoPostgresBase {
         assertThat(jdbc.queryForObject("select count(*) from usuario where token_hash in (?, ?)", Integer.class, primeira, segunda))
                 .isZero();
 
+        // O próprio sensor não rotaciona o token dele.
+        chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), sensor).andExpect(status().isForbidden());
+
         // Conta desativada perde o acesso também pelo token.
         enviar(patch("/usuarios/" + sensor.id() + "/ativo"), adm, Map.of("ativo", false)).andExpect(status().isOk());
         mvc.perform(get("/processos").header(HttpHeaders.AUTHORIZATION, "Bearer " + segunda)).andExpect(status().isUnauthorized());
@@ -477,7 +480,6 @@ abstract class IntegracaoPostgresBase {
         Conta g = conta("gestor");
         Conta op = conta("operador");
         chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), g).andExpect(status().isForbidden());
-        chamar(post("/usuarios/" + sensor.id() + "/token/rotacao"), sensor).andExpect(status().isForbidden());
         chamar(post("/usuarios/" + op.id() + "/token/rotacao"), adm).andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("OPERACAO_NAO_PERMITIDA"));
         chamar(post("/usuarios/999999999/token/rotacao"), adm).andExpect(status().isNotFound());
