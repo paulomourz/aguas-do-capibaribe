@@ -35,7 +35,8 @@ Proteger os dados de consumo de água das lavanderias e as contas de acesso, gar
 4. **Dados de consumo são permanentes.** Ninguém altera nem apaga um lote ou um registro de auditoria.
 5. **Toda mudança passa por pull request e CI.** O Render só publica depois que os testes passam.
 6. **Testes nunca usam o banco oficial.** Dados de teste ficam no Docker ou num banco temporário.
-7. **Senha do sensor só é colada no Wokwi na hora do uso**, sem salvar no projeto público.
+7. **O token do sensor só é colado no Wokwi na hora do uso**, sem salvar no projeto público. Se vazar, o
+   administrador gera outro em **Usuários > Rotacionar token**, e o anterior para de valer na hora.
 8. **Incidente se comunica na hora** no grupo da equipe, e o responsável segue a seção 4.
 
 ## 1.3 Papéis e responsabilidades
@@ -58,7 +59,7 @@ Probabilidade e impacto em três níveis (baixo, médio, alto). O risco residual
 | R03 | Pessoa acessar função de outro perfil | Média | Alto | Autorização na API, com o perfil lido do banco a cada requisição; testes de cada perfil | Baixo |
 | R04 | Alguém alterar ou apagar registros de consumo | Baixa | Alto | Triggers que impedem UPDATE e DELETE; usuário `aguas_api` sem DELETE nem TRUNCATE | Baixo |
 | R05 | Perda do banco publicado (o Neon grátis pode apagar o banco depois de 90 dias parado) | Média | Alto | Backup com `database/backup.sh`, conferido por restauração num banco temporário; 7 dias guardados | Médio |
-| R06 | Senha do sensor exposta no simulador público | Média | Baixo | Perfil `sensor` só consulta processos e registra lotes; senha não fica salva; administrador redefine | Baixo |
+| R06 | Token do sensor exposto no simulador público | Média | Baixo | Perfil `sensor` só consulta processos e registra lotes; o sensor usa token de API, não a senha; o token não fica salvo e é rotacionado pelo administrador, com auditoria; o banco guarda só o SHA-256 | Baixo |
 | R07 | Interceptação dos dados na rede | Baixa | Médio | HTTPS no site, na API e no sensor, que confere a impressão digital do certificado | Baixo |
 | R08 | Publicação com erro derrubar o sistema | Média | Médio | CI obrigatório para publicar; checagem de saúde; rollback no Render (README) | Baixo |
 | R09 | Indisponibilidade do Render, do Neon ou da internet na apresentação | Média | Médio | Plano B com Docker no computador, sem internet | Baixo |

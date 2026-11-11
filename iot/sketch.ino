@@ -6,6 +6,8 @@
 //     Um fio liga o pino 25 ao 27, onde os pulsos são contados por interrupção,
 //     exatamente como seria com o sensor físico ligado no pino 27.
 //   - Botão verde: 1º clique inicia o lote, 2º clique encerra e envia à API.
+//   - O sensor se identifica pelo token de API da conta de sensor (Authorization: Bearer <token>), sem login
+//     nem senha. O token é gerado no site, em Usuários > Rotacionar token; gerar outro invalida o anterior.
 //   - LED azul aceso = lote em andamento.
 //   - Lote crítico (desvio acima de 8%, segundo a API): o buzzer apita 3 vezes e o LED vermelho pisca e fica
 //     aceso até o próximo lote começar. Quem classifica é a API (campo "statusConformidade" da resposta), então
@@ -23,13 +25,12 @@
 //   Projeto público: a API publicada, em https://, como abaixo.
 //   Projeto local (Docker): o endereço do túnel, em http://. Ele muda toda vez que o túnel é ligado.
 const char* API_URL = "https://aguas-api-a0vq.onrender.com/api";
-// Senha da conta sensor.wokwi. Preencha só no Wokwi: NUNCA faça commit com a senha real.
-const char* SENHA   = "COLE-AQUI-A-SENHA-DO-SENSOR";
+// Token de API da conta sensor.wokwi (64 letras e números), gerado no site em Usuários > Rotacionar token.
+// Preencha só no Wokwi: NUNCA faça commit com o token real. Ele aparece uma vez só, na hora da rotação.
+const char* TOKEN_API = "COLE-AQUI-O-TOKEN-DO-SENSOR";
 
 const char* WIFI_SSID  = "Wokwi-GUEST";   // rede Wi-Fi do simulador
 const char* WIFI_SENHA = "";
-
-const char* USUARIO = "sensor.wokwi";
 
 // Nome do processo cadastrado no site (Processos e metas), sem diferenciar maiúsculas.
 // O sensor descobre o id sozinho, consultando a API; não é preciso olhar o banco.
@@ -51,7 +52,7 @@ const char* IMPRESSAO_DIGITAL = "A8:8C:F8:E1:2B:2E:73:1A:48:5D:32:0C:92:B4:8E:A7
 const uint16_t TEMPO_RESPOSTA_MS = 60000;  // o HTTPClient aceita no máximo 65 s
 const int32_t  TEMPO_CONEXAO_MS  = 120000;
 const uint32_t TEMPO_TLS_S       = 300;    // o TLS é lento no simulador
-const int      TENTATIVAS_LOGIN  = 4;
+const int      TENTATIVAS_API    = 4;    // a 1ª requisição do lote espera a API acordar
 // A negociação do TLS às vezes cai no simulador. Só repete se a conexão nem abriu: assim um lote já
 // enviado nunca é enviado de novo.
 const int      TENTATIVAS_CONEXAO = 3;
@@ -79,7 +80,6 @@ WiFiClientSecure cliente;
 WiFiClient clienteLocal;  // sem TLS, só para o projeto local
 const bool usaHttps = strncmp(API_URL, "https://", 8) == 0;
 HTTPClient http;
-String token;          // guardado entre os lotes; renovado quando a API responde 401
 int ultimoCodigo = 0;  // código HTTP da última requisição
 
 void IRAM_ATTR contarPulso() {
@@ -198,59 +198,51 @@ int buscarProcessoId(const String& token) {
   return lista.substring(ini + 5).toInt();
 }
 
-String fazerLogin() {
-  String corpo = String("{\"usuario\":\"") + USUARIO + "\",\"senha\":\"" + SENHA + "\"}";
-  String resposta;
-  int codigo = -1;
-  // Código negativo = sem resposta: a API pode estar acordando ou a conexão pode ter falhado.
-  for (int i = 1; i <= TENTATIVAS_LOGIN && codigo < 0; i++) {
-    codigo = postJson(String(API_URL) + "/auth/login", corpo, "", resposta);
-    if (codigo < 0) Serial.printf("Sem resposta da API (tentativa %d de %d).\n", i, TENTATIVAS_LOGIN);
-  }
-  if (codigo != 200) {
-    Serial.printf("Falha no login (HTTP %d): %s\n", codigo, resposta.c_str());
-    return "";
-  }
-  const String chave = "\"token\":\"";
-  int ini = resposta.indexOf(chave);
-  if (ini < 0) return "";
-  ini += chave.length();
-  return resposta.substring(ini, resposta.indexOf('"', ini));
+// O token só tem o formato certo depois de colado (64 letras e números).
+bool tokenConfigurado() {
+  if (strlen(TOKEN_API) != 64) return false;
+  for (const char* c = TOKEN_API; *c; c++) if (!isalnum((unsigned char)*c)) return false;
+  return true;
+}
+
+void avisarTokenRecusado() {
+  Serial.println("Lote NAO enviado: token recusado (HTTP 401). Ele foi trocado ou a conta foi desativada:");
+  Serial.println("  gere outro no site, em Usuarios > Rotacionar token, e cole em TOKEN_API.");
 }
 
 // Envia o lote. Devolve a resposta da API (o lote gravado, em JSON) ou "" se o lote não foi registrado.
 String enviarLote(float litros) {
   conectarWiFi();
-  // Segunda volta só se o login tiver vencido no meio (a sessão dura 8 horas).
-  for (int volta = 0; volta < 2; volta++) {
-    if (token.length() == 0) token = fazerLogin();
-    if (token.length() == 0) {
-      Serial.println("Lote NAO enviado: sem login.");
-      return "";
-    }
-    int processoId = buscarProcessoId(token);
-    if (processoId > 0) {
-      char corpo[96];
-      snprintf(corpo, sizeof(corpo), "{\"processoId\":%d,\"pecas\":%d,\"litros\":%.2f}",
-               processoId, PECAS, litros);
-      String resposta;
-      int codigo = postJson(String(API_URL) + "/lotes", corpo, token, resposta);
-      if (codigo == 201) {
-        Serial.printf("Lote registrado na API: %s\n", resposta.c_str());
-        return resposta;
-      }
-      if (codigo != 401) {
-        Serial.printf("Falha ao registrar lote (HTTP %d): %s\n", codigo, resposta.c_str());
-        return "";
-      }
-    } else if (ultimoCodigo != 401) {
-      Serial.println("Lote NAO enviado: confira PROCESSO_NOME no sketch.ino.");
-      return "";
-    }
-    Serial.println("Login vencido: entrando de novo.");
-    token = "";
+  if (!tokenConfigurado()) {
+    Serial.println("Lote NAO enviado: cole o token de API do sensor em TOKEN_API (Usuarios > Rotacionar token).");
+    return "";
   }
-  Serial.println("Lote NAO enviado: a API recusou o login.");
+  // Código negativo = sem resposta: a API pode estar acordando ou a conexão pode ter falhado.
+  int processoId = -1;
+  for (int i = 1; i <= TENTATIVAS_API; i++) {
+    processoId = buscarProcessoId(TOKEN_API);
+    if (ultimoCodigo >= 0) break;
+    Serial.printf("Sem resposta da API (tentativa %d de %d).\n", i, TENTATIVAS_API);
+  }
+  if (ultimoCodigo == 401) {
+    avisarTokenRecusado();
+    return "";
+  }
+  if (processoId <= 0) {
+    if (ultimoCodigo == 200) Serial.println("Lote NAO enviado: confira PROCESSO_NOME no sketch.ino.");
+    else Serial.printf("Lote NAO enviado: a API respondeu HTTP %d ao listar os processos.\n", ultimoCodigo);
+    return "";
+  }
+  char corpo[96];
+  snprintf(corpo, sizeof(corpo), "{\"processoId\":%d,\"pecas\":%d,\"litros\":%.2f}", processoId, PECAS, litros);
+  String resposta;
+  int codigo = postJson(String(API_URL) + "/lotes", corpo, TOKEN_API, resposta);
+  if (codigo == 201) {
+    Serial.printf("Lote registrado na API: %s\n", resposta.c_str());
+    return resposta;
+  }
+  if (codigo == 401) avisarTokenRecusado();
+  else Serial.printf("Falha ao registrar lote (HTTP %d): %s\n", codigo, resposta.c_str());
   return "";
 }
 

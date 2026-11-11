@@ -18,7 +18,7 @@ O passo a passo de cada um está no [roteiro de apresentação](../docs/guia/rot
 
 | Arquivo | O que é |
 |---|---|
-| `sketch.ino` | código do ESP32. O endereço da API já vem preenchido; a senha fica em branco (`COLE-AQUI-...`) e é preenchida só no Wokwi |
+| `sketch.ino` | código do ESP32. O endereço da API já vem preenchido; o token fica em branco (`COLE-AQUI-...`) e é preenchido só no Wokwi |
 | `diagram.json` | circuito: ESP32, potenciômetro (vazão), botão (iniciar/encerrar lote), LED azul (lote em andamento), LED vermelho e buzzer (lote crítico) |
 
 ### Pinos
@@ -32,22 +32,31 @@ O passo a passo de cada um está no [roteiro de apresentação](../docs/guia/rot
 | LED vermelho (220 Ω) | 33 | lote crítico |
 | Buzzer | 26 | apito do lote crítico |
 
-## 1. Conta do sensor
+## 1. Conta e token do sensor
 
-A API cria a conta `sensor.wokwi` sozinha ao subir, com a senha da variável `SENSOR_SENHA`. Ela tem o perfil
-**sensor**, que só consulta os processos e registra lotes, e não entra no site. Se a conta já existir, nada muda. Se
-a senha se perder, um administrador a redefine em **Usuários → Redefinir senha**.
+A API cria a conta `sensor.wokwi` sozinha ao subir (com a senha da variável `SENSOR_SENHA`). Ela tem o perfil
+**sensor**, que só consulta os processos e registra lotes, e não entra no site.
+
+O sensor **não usa a senha**: ele se identifica por um **token de API**, mandado em toda requisição
+(`Authorization: Bearer <token>`), sem fazer login.
+
+1. No site, entre como administrador e abra **Usuários**.
+2. Na linha do `sensor.wokwi`, clique em **Rotacionar token** e confirme.
+3. Copie o token (64 letras e números). Ele aparece **uma vez só**; o banco guarda apenas o SHA-256 dele.
+
+Gerar outro token invalida o anterior na hora, e a troca fica na **Auditoria**. Faça isso se o token vazar, por
+exemplo se alguém salvar o projeto público do Wokwi com ele.
 
 ## 2. Rodar no Wokwi
 
 1. Em [wokwi.com](https://wokwi.com), crie um projeto **ESP32** (em *Starter Templates*, o primeiro).
 2. Na aba `sketch.ino`, apague tudo e cole o conteúdo de `sketch.ino`.
 3. Na aba `diagram.json`, apague tudo e cole o conteúdo de `diagram.json`.
-4. No começo do `sketch.ino` (bloco CONFIGURAÇÃO), preencha a senha:
+4. No começo do `sketch.ino` (bloco CONFIGURAÇÃO), cole o token:
    ```cpp
-   const char* SENHA = "a senha do sensor.wokwi";
+   const char* TOKEN_API = "o token gerado em Usuários > Rotacionar token";
    ```
-   **Não salve** o projeto com a senha preenchida: os projetos do Wokwi são públicos. Cole a senha só na hora de
+   **Não salve** o projeto com o token preenchido: os projetos do Wokwi são públicos. Cole o token só na hora de
    usar. No repositório, a linha continua com `COLE-AQUI-...`.
 5. Em `PROCESSO_NOME`, escreva o nome do processo como aparece no site (maiúsculas não importam). O sensor
    consulta a API e descobre o id sozinho.
@@ -60,8 +69,6 @@ a senha se perder, um administrador a redefine em **Usuários → Redefinir senh
 3. Clique de novo para encerrar. A conexão segura é lenta no simulador, então o envio pode levar alguns
    minutos. O resultado esperado é:
    ```
-   POST https://.../api/auth/login ...
-     -> HTTP 200
    GET https://.../api/processos ...
      -> HTTP 200
    POST https://.../api/lotes ...
@@ -93,10 +100,11 @@ Wokwi). O som do buzzer só toca com o áudio do navegador ligado.
 ## Usar com a API do seu PC
 
 Com o Docker, o túnel já vem pronto: `docker compose --profile tunel up -d --build` liga tudo, e o endereço aparece em
-`docker compose --profile tunel logs tunel`. No projeto local, use esse endereço em `API_URL`, com `http://` e `/api` no final, e a
-senha que aparece em `docker compose logs segredos`. Ao terminar, desligue com `docker compose --profile tunel stop tunel`.
+`docker compose --profile tunel logs tunel`. No projeto local, use esse endereço em `API_URL`, com `http://` e `/api` no final, e um
+token gerado no **site local** (<http://localhost:3000>, entrando como `capibaribe.admin` com a senha de
+`docker compose logs segredos`, em **Usuários > Rotacionar token**). O token do site publicado não vale no Docker. Ao terminar, desligue com `docker compose --profile tunel stop tunel`.
 
-Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e defina `SENSOR_SENHA` no `backend/.env`.
+Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080`, defina `SENSOR_SENHA` no `backend/.env` (para a conta ser criada) e gere o token no site local.
 
 ## Se der errado
 
@@ -106,7 +114,8 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e
 | `Sem resposta da API` | a API está acordando (ele tenta de novo sozinho) ou o endereço está errado |
 | `SSL - The connection indicated an EOF` em todas as tentativas | a simulação está lenta (bem abaixo de 100% no canto de cima), e a API desiste da conexão segura: feche programas pesados no PC e reinicie a simulação |
 | `certificado da API diferente do esperado` | o Render renovou o certificado (o atual vale até 20/12/2026): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
-| `Falha no login (HTTP 401)` | senha errada; confira a senha ou redefina em **Usuários** |
+| `Lote NAO enviado: cole o token de API` | `TOKEN_API` ainda com `COLE-AQUI-...` ou colado incompleto (são 64 letras e números) |
+| `token recusado (HTTP 401)` | o token foi trocado por outra rotação, é de outro ambiente (publicado × Docker) ou a conta foi desativada: gere outro em **Usuários > Rotacionar token** |
 | `Processo "..." não encontrado` | `PROCESSO_NOME` diferente dos nomes cadastrados no site (a lista aparece logo depois) |
 | Lote crítico sem som | o áudio da aba do Wokwi está mudo, ou o `diagram.json` antigo ainda está colado (sem buzzer no pino 26) |
 
@@ -117,9 +126,9 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080` e
 - O apito é gerado no próprio código, sem o PWM (LEDC), porque o gerador de pulsos já usa o LEDC e dois canais
   no mesmo timer disputam a frequência. Ele toca enquanto o gerador está parado, logo depois do envio, e leva
   cerca de 1,5 s.
-- O login é renovado sozinho quando a sessão de 8 horas vence.
-- Os projetos do Wokwi são públicos: quem tiver o link vê o que estiver salvo. Por isso a senha do sensor não fica
-  salva lá, e a conta tem o perfil sensor, que só registra lotes. O simulador não tem armazenamento protegido; no
-  dispositivo físico, guarde a senha fora do código.
+- O token não vence sozinho: vale até o administrador gerar outro. Não há login nem sessão de 8 horas.
+- Os projetos do Wokwi são públicos: quem tiver o link vê o que estiver salvo. Por isso o token do sensor não fica
+  salvo lá, e a conta tem o perfil sensor, que só registra lotes. Se vazar, basta rotacionar. O simulador não tem
+  armazenamento protegido; no dispositivo físico, guarde o token fora do código.
 - No dispositivo físico: remova o fio entre os pinos 25 e 27, ligue o sinal do sensor de vazão no pino 27 e
   calibre `PULSOS_POR_LITRO`.
