@@ -41,10 +41,30 @@ class PrivacidadeTest {
         assertThat(Privacidade.mascararLogin("")).isEqualTo("****");
     }
 
+    // ---------- IP no painel de segurança (issue #109) ----------
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "200.17.33.45 | 200.17.33.***",
+        " 10.0.0.1 | 10.0.0.***",
+        "2804:14c:65:8a00:1:2:3:4 | 2804:14c:65:8a00:****",
+        "::1 | ****",
+        "localhost | ****",
+    })
+    void mascaraOIpMostrandoSoARede(String ip, String esperado) {
+        assertThat(Privacidade.mascararIp(ip)).isEqualTo(esperado);
+    }
+
+    @Test
+    void ipAusenteFicaOculto() {
+        assertThat(Privacidade.mascararIp(null)).isEqualTo("****");
+        assertThat(Privacidade.mascararIp(" ")).isEqualTo("****");
+    }
+
     // ---------- lista de usuários ----------
 
     UsuarioRepository repo = mock(UsuarioRepository.class);
-    UsuarioService servico = new UsuarioService(repo, null, null, null);
+    UsuarioService servico = new UsuarioService(repo, null, null, null, null);
 
     private static Usuario usuario(int id, String nome, String login, Perfil perfil) {
         Usuario u = new Usuario(nome, login, "x".repeat(60), perfil);

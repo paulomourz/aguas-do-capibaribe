@@ -1,7 +1,7 @@
 # API REST: endpoints
 
 > **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
-> Lá estão as 19 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> Lá estão as 20 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
 > `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
 
 Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://localhost:8080/api` no computador. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
@@ -58,6 +58,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
 | `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
+| `GET /auditoria/seguranca` | admin | — | `{desde, loginsAceitos, loginsRecusados, bloqueiosLogin, bloqueiosLotes, senhasTrocadas, senhasRedefinidas, bloqueios: [{rota, ip, primeiro, ultimo, tentativas}]}`; contado em memória desde `desde` (o último início da API), zera quando ela reinicia; `rota` é `login` ou `lotes`; `ip` mascarado (ex.: `200.17.33.***`, LGPD); no máximo 100 linhas em `bloqueios`, do bloqueio mais recente ao mais antigo; sem senha (issue #109) |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |
@@ -78,6 +79,9 @@ Issue #51. O Spring Boot Actuator expõe só `health` e `metrics`. Os outros end
 | `http.server.requests?tag=status:500` | quantas respostas com erro |
 | `jvm.memory.used?tag=area:heap` | memória em uso pela API, em bytes |
 | `hikaricp.connections.active` | conexões com o banco em uso |
+| `aguas.seguranca.login?tag=resultado:falha` | logins recusados desde o início da API (`resultado:sucesso` para os aceitos) |
+| `aguas.seguranca.limite?tag=rota:login` | requisições bloqueadas pelo limite (429) no login (`rota:lotes` no registro de lotes) |
+| `aguas.seguranca.senha?tag=tipo:redefinicao` | senhas redefinidas pelo administrador (`tipo:troca_propria` para as trocadas pela própria pessoa) |
 
 ```bash
 curl https://aguas-api-a0vq.onrender.com/api/actuator/health

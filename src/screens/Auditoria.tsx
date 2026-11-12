@@ -10,9 +10,11 @@ import {
   PageHeader,
   Pagination,
   Select,
+  Tabs,
   TextInput,
   type Col,
 } from "../components/ui"
+import EventosSeguranca from "../components/EventosSeguranca"
 import { IconSearchCheck } from "../components/icons"
 import { fmtData, fmtHora } from "../domain"
 import * as api from "../services"
@@ -39,8 +41,35 @@ const inicioDoDia = (dia: string) => (dia ? `${dia}T00:00:00-03:00` : undefined)
 const fimDoDia = (dia: string) =>
   dia ? `${dia}T23:59:59.999-03:00` : undefined
 
-/** G11: ações de administradores e gestores sobre a conta de outra pessoa. Os registros não podem ser alterados nem apagados. */
+type Aba = "acoes" | "seguranca"
+
+/**
+ * G11: ações de administradores e gestores sobre a conta de outra pessoa (os registros não podem ser alterados nem
+ * apagados) e, na outra aba, os eventos de segurança: logins, bloqueios por limite e trocas de senha (issue #109).
+ */
 export default function Auditoria() {
+  const [aba, setAba] = useState<Aba>("acoes")
+  return (
+    <div className="flex flex-col gap-6 lg:gap-8">
+      <PageHeader
+        title="Auditoria"
+        description="Ações sobre as contas de outras pessoas e eventos de segurança do acesso ao sistema."
+      />
+      <Tabs
+        label="Tipo de registro"
+        value={aba}
+        onChange={setAba}
+        tabs={[
+          { value: "acoes", label: "Ações nas contas" },
+          { value: "seguranca", label: "Eventos de segurança" },
+        ]}
+      />
+      {aba === "acoes" ? <AcoesNasContas /> : <EventosSeguranca />}
+    </div>
+  )
+}
+
+function AcoesNasContas() {
   const [de, setDe] = useState("")
   const [ate, setAte] = useState("")
   const [acao, setAcao] = useState<api.AcaoAuditoria | "">("")
@@ -108,11 +137,10 @@ export default function Auditoria() {
   ]
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
-      <PageHeader
-        title="Auditoria"
-        description="Ações sobre as contas de outras pessoas. Estes registros não podem ser alterados nem apagados."
-      />
+    <div className="flex flex-col gap-4">
+      <p className="text-base text-ink-2">
+        Estes registros não podem ser alterados nem apagados.
+      </p>
 
       <Card as="section" className="overflow-hidden">
         <FilterBar onClear={filtrando ? limpar : undefined}>

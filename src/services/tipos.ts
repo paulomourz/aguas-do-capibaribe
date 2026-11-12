@@ -43,4 +43,18 @@ export type PessoaDTO = { id: Id; nome: string | null; usuario: string | null }
 export type RegistroAuditoriaDTO = { id: Id; acao: AcaoAuditoria; data: string; gestor: PessoaDTO; usuarioAfetado: PessoaDTO }
 export type PaginaAuditoriaDTO = { itens: RegistroAuditoriaDTO[]; total: number; pagina: number; tamanho: number }
 
+/** GET /auditoria/seguranca (issue #109): contado desde o último início da API ("desde"). IP já vem mascarado. */
+export type RotaBloqueio = 'login' | 'lotes'
+export type BloqueioDTO = { rota: RotaBloqueio; ip: string; primeiro: string; ultimo: string; tentativas: number }
+export type SegurancaDTO = {
+  desde: string
+  loginsAceitos: number
+  loginsRecusados: number
+  bloqueiosLogin: number
+  bloqueiosLotes: number
+  senhasTrocadas: number
+  senhasRedefinidas: number
+  bloqueios: BloqueioDTO[]
+}
+
 export type ErroApiDTO = { codigo: string; mensagem: string; campos?: Record<string, string> }

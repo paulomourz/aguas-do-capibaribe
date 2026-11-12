@@ -4,7 +4,7 @@
  * O mesmo conteúdo está em docs/gestao/seguranca.md, seção 6: mudar nos dois.
  */
 
-export const AVISO_ATUALIZADO_EM = '10/11/2026'
+export const AVISO_ATUALIZADO_EM = '11/11/2026'
 
 export type DadoPessoal = {
   /** O que é guardado. */
@@ -67,7 +67,7 @@ export const DADOS_GUARDADOS: DadoPessoal[] = [
     prazo:
       'Só na memória do servidor, sem ir para o banco de dados nem para os registros do sistema. Some quando o servidor reinicia.',
     quemVe:
-      'Ninguém consulta. O serviço de hospedagem (Render) pode registrar o endereço nos registros de acesso dele, pelo prazo que ele define.',
+      'Só o administrador, e mascarado (por exemplo 200.17.33.***), quando alguém passa do limite de tentativas. O serviço de hospedagem (Render) pode registrar o endereço nos registros de acesso dele, pelo prazo que ele define.',
   },
   {
     dado: 'Dados guardados neste aparelho',

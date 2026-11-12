@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import br.com.aguas.security.EventosDeSeguranca;
 import br.com.aguas.config.AdminProperties;
 import br.com.aguas.dto.UsuarioDTOs.TokenDeApiDTO;
 import br.com.aguas.entity.AcaoAuditoria;
@@ -39,7 +40,7 @@ class RotacaoTokenTest {
     UsuarioRepository usuarios = mock(UsuarioRepository.class);
     AuditoriaUsuarioRepository auditoria = mock(AuditoriaUsuarioRepository.class);
     UsuarioService servico = new UsuarioService(usuarios, new BCryptPasswordEncoder(4),
-            new AdminProperties("capibaribe.admin", null, null), auditoria);
+            new AdminProperties("capibaribe.admin", null, null), auditoria, EventosDeSeguranca.paraTeste());
     UsuarioAutenticado admin = new UsuarioAutenticado(ADMIN, Perfil.admin);
     Usuario sensor = usuario(SENSOR, "sensor.wokwi", Perfil.sensor);
 

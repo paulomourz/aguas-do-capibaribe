@@ -77,7 +77,7 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 |---|---|---|
 | Controle de acesso | Quatro perfis, sem autocadastro, desativação imediata | RF03, RF17, RF18, RNF03 |
 | Autenticação | Senha de 8 a 72 bytes com BCrypt; JWT de 8 horas; limite de tentativas | RF01, RF02, RNF01, RNF02, RNF19 |
-| Registro de eventos | Auditoria das ações sobre contas, que não pode ser alterada nem apagada | RF27 |
+| Registro de eventos | Auditoria das ações sobre contas, que não pode ser alterada nem apagada; painel de eventos de segurança (logins aceitos e recusados, bloqueios por limite com IP mascarado, trocas de senha), com exportação em JSON | RF27, RF32 |
 | Privacidade e proteção de dados pessoais (5.34) | Aviso de privacidade aberto a todos na tela de login; login de outras pessoas mascarado na API (ex.: `ca****in`); CSV e PDF sem login, senha nem perfil (seção 6) | RNF27 |
 | Criptografia | HTTPS em todo o tráfego publicado; senhas só como hash | RNF06, RNF01 |
 | Segurança no desenvolvimento | Pull request, CI com 148 testes, revisão, segredos fora do Git | RNF05, RNF24 |
@@ -94,6 +94,7 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 | Incidente | O que fazer na hora | Depois |
 |---|---|---|
 | Senha de uma pessoa vazou | Administrador redefine a senha em **Usuários** | Conferir a auditoria daquela conta |
+| Muitas tentativas de login (força bruta) | Conferir em **Auditoria > Eventos de segurança** os logins recusados e os IPs bloqueados; o limite por IP já responde 429 | Exportar o JSON e anexar à issue do incidente; se a conta atacada for conhecida, trocar a senha |
 | Senha do sensor vazou | Administrador redefine a senha de `sensor.wokwi` | Atualizar `docs/privado/hospedagem.md` |
 | Token do Telegram vazou | `/revoke` no BotFather e novo token no Render | Atualizar `docs/privado/hospedagem.md` |
 | Chave JWT vazou | Trocar `JWT_SECRET` no Render (todas as sessões caem) | Pedir para todos entrarem de novo |
@@ -145,7 +146,7 @@ mudar nos dois lugares.
 | Perfil, situação da conta e data de criação | Definir o que cada pessoa pode fazer (V e IX) | O mesmo do nome | Perfil e situação: a pessoa, o administrador e os gestores; a data de criação não aparece nas telas |
 | Lotes registrados (data, hora e autoria) | Medir e comprovar o consumo de água (II e IX) | Permanente; o banco impede alterar ou apagar | A pessoa, os gestores e o administrador; o operador vê só os próprios |
 | Auditoria das contas | Segurança das contas (IX) | Permanente; o banco impede alterar ou apagar | Só o administrador |
-| Endereço IP | Limitar as tentativas de login (IX) | Só na memória da API, sem ir para o banco nem para os logs; some quando a API reinicia (ou quando passa de 10.000 endereços, os parados há mais de 1 minuto saem) | Ninguém consulta; o Render pode registrar o endereço nos logs de acesso dele, pelo prazo que ele define |
+| Endereço IP | Limitar as tentativas de login (IX) | Só na memória da API, sem ir para o banco nem para os logs; some quando a API reinicia (ou quando passa de 10.000 endereços, os parados há mais de 1 minuto saem) | Só o administrador, mascarado (`200.17.33.***`), no painel de eventos de segurança, quando alguém passa do limite; o Render pode registrar o endereço nos logs de acesso dele, pelo prazo que ele define |
 | Dados no aparelho | Manter a sessão e registrar lotes sem conexão | Sessão de até 8 horas, apagada ao fechar a aba; o resto é apagado ao sair, menos os lotes ainda não enviados | Só quem usa o aparelho |
 
 **Com quem falar:** o administrador da lavanderia. Ele resolve o que for da conta (cópia dos dados, correção,
@@ -170,6 +171,11 @@ asteriscos, para não revelar o tamanho. O nome continua inteiro, porque é ele 
 
 Regra: login com até 4 caracteres mostra o primeiro (`ana` → `a****`); de 5 a 7, o primeiro e o último
 (`maria` → `m****a`); com 8 ou mais, os dois primeiros e os dois últimos (`carlos.martin` → `ca****in`).
+
+No painel de eventos de segurança (`GET /auditoria/seguranca`, issue #109), o IP de quem foi bloqueado pelo limite
+aparece mascarado (`Privacidade.mascararIp`): no IPv4, sem o último número (`200.17.33.***`); no IPv6, só os
+4 primeiros grupos. Dá para ver se as tentativas vêm da mesma rede, sem identificar a máquina. Os eventos ficam só
+na memória da API, não vão para o banco e somem quando ela reinicia.
 
 ## 6.4 Arquivos exportados
 

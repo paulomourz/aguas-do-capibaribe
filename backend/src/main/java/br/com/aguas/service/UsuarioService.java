@@ -23,6 +23,7 @@ import br.com.aguas.entity.Usuario;
 import br.com.aguas.exception.ApiException;
 import br.com.aguas.repository.AuditoriaUsuarioRepository;
 import br.com.aguas.repository.UsuarioRepository;
+import br.com.aguas.security.EventosDeSeguranca;
 import br.com.aguas.security.TokenDeApi;
 import br.com.aguas.security.UsuarioAutenticado;
 
@@ -38,13 +39,15 @@ public class UsuarioService {
     private final PasswordEncoder senhas;
     private final AdminProperties admin;
     private final AuditoriaUsuarioRepository auditoria;
+    private final EventosDeSeguranca eventos;
 
     public UsuarioService(UsuarioRepository usuarios, PasswordEncoder senhas, AdminProperties admin,
-                          AuditoriaUsuarioRepository auditoria) {
+                          AuditoriaUsuarioRepository auditoria, EventosDeSeguranca eventos) {
         this.usuarios = usuarios;
         this.senhas = senhas;
         this.admin = admin;
         this.auditoria = auditoria;
+        this.eventos = eventos;
     }
 
     /**
@@ -107,6 +110,7 @@ public class UsuarioService {
             u.setSenhaHash(senhas.encode(dados.senha()));
         }
         usuarios.flush();
+        if (dados.senha() != null) eventos.senhaTrocadaPeloProprio();
         return UsuarioDTO.de(u);
     }
 
@@ -129,6 +133,7 @@ public class UsuarioService {
         u.setSenhaHash(senhas.encode(novaSenha));
         usuarios.flush();
         auditar(quem, u, AcaoAuditoria.REDEFINICAO_SENHA);
+        eventos.senhaRedefinidaPeloAdmin();
         return UsuarioDTO.de(u);
     }
 
