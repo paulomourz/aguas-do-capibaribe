@@ -2,6 +2,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { _fecharBanco, guardarPendente, listarPendentes, novaChave, type LotePendente } from '../filaOffline'
 import { ApiError } from '../http'
+import { _limparBloqueios, registrarBloqueio } from '../limite'
 import { classificarErro, sincronizarPendentes } from '../sincronizacao'
 import type { LoteDTO } from '../tipos'
 
@@ -196,12 +197,52 @@ describe('sincronização da fila de lotes', () => {
   })
 })
 
+describe('limite de lotes por minuto (429)', () => {
+  beforeEach(() => _limparBloqueios())
+  afterEach(() => _limparBloqueios())
+
+  it('429 no meio do envio: para, mantém o resto na fila e não marca como sem conexão', async () => {
+    const api = apiFalsa()
+    const [a, b, c] = [pendente(), pendente(), pendente()]
+    for (const p of [a, b, c]) await guardarPendente(p)
+
+    let n = 0
+    const enviarComLimite = async (p: LotePendente) => {
+      if (n++ === 1) throw new ApiError(429, { codigo: 'LIMITE_EXCEDIDO', mensagem: 'Muitas tentativas.' }, 30)
+      return api.enviar(p)
+    }
+    const r = await sincronizarPendentes(7, enviarComLimite)
+
+    expect(r.enviados.map((e) => e.chave)).toEqual([a.chave])
+    expect(r.recusados).toEqual([])
+    expect(r.parouPor).toBe('limite')
+    expect(r.restantes).toBe(2)
+    const fila = await listarPendentes(7)
+    expect(fila.map((p) => p.chave)).toEqual([b.chave, c.chave])
+    expect(fila.every((p) => p.estado === 'pendente')).toBe(true)
+  })
+
+  it('durante a espera do Retry-After, não envia nem conta tentativa', async () => {
+    const api = apiFalsa()
+    const a = pendente()
+    await guardarPendente(a)
+    registrarBloqueio('lotes', 30)
+
+    const r = await sincronizarPendentes(7, api.enviar)
+
+    expect(api.chamadas).toEqual([])
+    expect(r.parouPor).toBe('limite')
+    expect(r.restantes).toBe(1)
+    expect((await listarPendentes(7))[0].tentativas).toBe(0)
+  })
+})
+
 describe('classificarErro', () => {
   const erro = (status: number) => new ApiError(status, { codigo: 'X', mensagem: 'm' })
   it.each([
     [0, 'tentarDepois'],
     [408, 'tentarDepois'],
-    [429, 'tentarDepois'],
+    [429, 'limite'],
     [500, 'tentarDepois'],
     [502, 'tentarDepois'],
     [503, 'tentarDepois'],

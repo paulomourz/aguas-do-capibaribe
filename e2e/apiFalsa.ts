@@ -8,6 +8,9 @@ import type { BrowserContext, Route } from '@playwright/test'
  *  - 'ok'            responde normalmente
  *  - 'fora'          a requisição nem chega (como sem Wi-Fi)
  *  - 'perdeResposta' a API grava o lote, mas a resposta se perde no caminho (o pior caso para duplicar)
+ *
+ * `limite` simula o RNF19: com segundos definidos para 'login' ou 'lotes', o POST responde 429 (LIMITE_EXCEDIDO)
+ * com o cabeçalho Retry-After, como o FiltroDeLimite da API real.
  */
 export type Rede = 'ok' | 'fora' | 'perdeResposta'
 
@@ -36,10 +39,20 @@ export async function instalarApiFalsa(context: BrowserContext) {
     porChave: new Map<string, Lote>(),
     /** Todo POST /lotes que chegou ao servidor, com a chave usada. */
     postsRecebidos: [] as (string | null)[],
+    limite: {} as { login?: number; lotes?: number },
+    /** Quantos POST /auth/login chegaram ao servidor. */
+    loginsRecebidos: 0,
   }
 
   const json = (route: Route, status: number, corpo: unknown) =>
     route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(corpo) })
+  const limiteExcedido = (route: Route, segundos: number) =>
+    route.fulfill({
+      status: 429,
+      contentType: 'application/json',
+      headers: { 'Retry-After': String(segundos) },
+      body: JSON.stringify({ codigo: 'LIMITE_EXCEDIDO', mensagem: `Muitas tentativas. Aguarde ${segundos} segundos e tente de novo.` }),
+    })
 
   await context.route('**/api/**', async (route) => {
     const req = route.request()
@@ -48,6 +61,10 @@ export async function instalarApiFalsa(context: BrowserContext) {
 
     if (estado.rede === 'fora') return route.abort('internetdisconnected')
 
+    if (caminho === '/auth/login' && req.method() === 'POST') {
+      estado.loginsRecebidos++
+      if (estado.limite.login) return limiteExcedido(route, estado.limite.login)
+    }
     if (caminho === '/auth/login' && req.method() === 'POST') return json(route, 200, { token: 'token-de-teste', usuario: OPERADOR })
     if (caminho === '/auth/me') return json(route, 200, OPERADOR)
     if (caminho === '/processos') return json(route, 200, PROCESSOS)
@@ -56,6 +73,7 @@ export async function instalarApiFalsa(context: BrowserContext) {
     if (caminho === '/lotes' && req.method() === 'POST') {
       const chave = req.headers()['idempotency-key'] ?? null
       estado.postsRecebidos.push(chave)
+      if (estado.limite.lotes) return limiteExcedido(route, estado.limite.lotes)
       const corpo = req.postDataJSON() as { processoId: number; pecas: number; litros: number }
       let lote = chave ? estado.porChave.get(chave) : undefined
       const repetido = !!lote
