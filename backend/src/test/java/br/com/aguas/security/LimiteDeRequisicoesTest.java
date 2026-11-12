@@ -1,6 +1,7 @@
 package br.com.aguas.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -175,5 +176,19 @@ class LimiteDeRequisicoesTest {
         limitador.consumir("novo");
 
         assertThat(limitador.chavesNaMemoria()).isEqualTo(1);
+    }
+
+    @Test
+    void retryAfterFicaVisivelParaOSiteEmOutraOrigem() throws Exception {
+        when(authService.login(any())).thenThrow(new ApiException(HttpStatus.UNAUTHORIZED,
+                "CREDENCIAIS_INVALIDAS", "Usuário ou senha incorretos.", null));
+
+        for (int i = 0; i < 5; i++) entrar("10.0.0.9");
+
+        // O contador do site (issue #101) lê o Retry-After pelo fetch; sem o expose, o navegador devolve null.
+        mvc.perform(post("/auth/login").header("X-Real-IP", "10.0.0.9").header(HttpHeaders.ORIGIN, "http://localhost:8443")
+                .contentType(MediaType.APPLICATION_JSON).content(LOGIN))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, containsString(HttpHeaders.RETRY_AFTER)));
     }
 }

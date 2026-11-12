@@ -1,9 +1,11 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import SeletorTema from '../components/SeletorTema'
+import { AvisoLimite, textoEspera, useEsperaLimite } from '../components/LimiteRequisicoes'
 import { Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
 import { IconCloudOff, IconCompass, IconLock, IconRefresh } from '../components/icons'
 import { Link, navigate } from '../router'
 import { errosDaApi, homeDe, useApp } from '../store'
+import { ApiError } from '../services'
 import waveReference from '../assets/wave-minimal-reference.jpg'
 import AppLayout, { Footer } from '../layouts/AppLayout'
 import logoUrl from '../assets/logo.png'
@@ -48,9 +50,12 @@ export function Login({ next }: { next?: string }) {
   const [erro, setErro] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+  // 429: mais de 5 tentativas por minuto deste IP. O botão fica parado até o Retry-After acabar.
+  const espera = useEsperaLimite('login')
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
+    if (espera > 0) return
     setErro(false)
     setFalha(null)
     setCarregando(true)
@@ -64,7 +69,8 @@ export function Login({ next }: { next?: string }) {
       const destino = next && (u.perfil !== 'operador' || ['/registro', '/historico'].some((p) => next.startsWith(p))) ? next : homeDe(u.perfil)
       navigate(destino, { replace: true })
     } catch (err) {
-      setFalha(errosDaApi(err).mensagem)
+      // O 429 aparece na faixa de espera, com a contagem.
+      if (!(err instanceof ApiError && err.status === 429)) setFalha(errosDaApi(err).mensagem)
     } finally {
       setCarregando(false)
     }
@@ -116,6 +122,11 @@ export function Login({ next }: { next?: string }) {
             <form onSubmit={enviar} noValidate className="mt-8 flex flex-col gap-5">
               {erro && <Banner tone="crit" title="Não foi possível entrar">Usuário ou senha incorretos. Confira os dados e tente novamente.</Banner>}
               {falha && <Banner tone="crit" title="Não foi possível entrar">{falha}</Banner>}
+              {espera > 0 && (
+                <AvisoLimite segundos={espera} titulo="Muitas tentativas de entrar">
+                  Por segurança, o sistema aceita até 5 tentativas por minuto.
+                </AvisoLimite>
+              )}
 
               <Field id="usuario" label="Usuário">
                 <TextInput
@@ -142,8 +153,8 @@ export function Login({ next }: { next?: string }) {
                 />
               </Field>
 
-              <Button type="submit" size="lg" full loading={carregando} className="mt-2">
-                {carregando ? 'Entrando…' : 'Entrar'}
+              <Button type="submit" size="lg" full loading={carregando} disabled={espera > 0} className="mt-2">
+                {carregando ? 'Entrando…' : espera > 0 ? `Aguarde ${textoEspera(espera)}` : 'Entrar'}
               </Button>
             </form>
 

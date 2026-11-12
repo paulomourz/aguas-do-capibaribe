@@ -1,5 +1,6 @@
 import { atualizarPendente, listarPendentes, removerPendente, type LotePendente } from './filaOffline'
 import { ApiError } from './http'
+import { estaBloqueado } from './limite'
 import { registrarLote } from './lotes'
 import type { Id, LoteDTO } from './tipos'
 
@@ -16,16 +17,18 @@ import type { Id, LoteDTO } from './tipos'
  * ordem em que foram feitos, o que importa para a regra de alerta (3 lotes seguidos acima da meta).
  */
 
-export type TipoFalha = 'tentarDepois' | 'recusado' | 'sessaoExpirada'
+export type TipoFalha = 'tentarDepois' | 'recusado' | 'sessaoExpirada' | 'limite'
 
 /** O que fazer com um erro do envio. */
 export function classificarErro(e: unknown): { tipo: TipoFalha; mensagem: string } {
   if (!(e instanceof ApiError)) return { tipo: 'tentarDepois', mensagem: 'A conexão caiu durante o envio.' }
   const s = e.status
   if (s === 401) return { tipo: 'sessaoExpirada', mensagem: 'Sessão expirada. Entre de novo para enviar.' }
-  // 0 = sem resposta (Wi-Fi fora, tempo esgotado); 408/425/429 e 5xx = servidor ocupado ou acordando.
-  if (s === 0 || s === 408 || s === 425 || s === 429 || s >= 500) {
-    const mensagem = s === 0 ? 'Sem conexão com o servidor.' : s === 429 ? 'Muitos envios seguidos; tentando de novo em instantes.' : 'O servidor não respondeu direito.'
+  // 429 (RNF19): a conexão está boa, só passou de 60 lotes por minuto. Espera o Retry-After e continua.
+  if (s === 429) return { tipo: 'limite', mensagem: 'Limite de envios por minuto atingido; o envio continua depois da espera.' }
+  // 0 = sem resposta (Wi-Fi fora, tempo esgotado); 408/425 e 5xx = servidor ocupado ou acordando.
+  if (s === 0 || s === 408 || s === 425 || s >= 500) {
+    const mensagem = s === 0 ? 'Sem conexão com o servidor.' : 'O servidor não respondeu direito.'
     return { tipo: 'tentarDepois', mensagem }
   }
   // 400, 403, 404, 409, 422: a API leu o pedido e recusou. Reenviar igual daria o mesmo erro.
@@ -39,7 +42,7 @@ export type ResultadoSincronizacao = {
   /** Pendentes que continuam esperando (sem contar os recusados). */
   restantes: number
   /** Motivo de ter parado antes do fim, se parou. */
-  parouPor?: 'semConexao' | 'sessaoExpirada'
+  parouPor?: 'semConexao' | 'sessaoExpirada' | 'limite'
 }
 
 type Enviar = (p: LotePendente) => Promise<LoteDTO>
@@ -50,6 +53,8 @@ async function executar(usuarioId: Id, enviar: Enviar): Promise<ResultadoSincron
   const r: ResultadoSincronizacao = { enviados: [], recusados: [], restantes: 0 }
   // Lê a fila agora (dentro da trava), não antes: pega o que outra aba já enviou ou o que acabou de entrar.
   const fila = (await listarPendentes(usuarioId)).filter((p) => p.estado === 'pendente')
+  // Ainda na espera de um 429: nem tenta (não conta tentativa nem vai à rede).
+  if (fila.length && estaBloqueado('lotes')) return { ...r, restantes: fila.length, parouPor: 'limite' }
   for (let i = 0; i < fila.length; i++) {
     const p = fila[i]
     const tentativa = { tentativas: p.tentativas + 1, ultimaTentativa: new Date().toISOString() }
@@ -65,7 +70,7 @@ async function executar(usuarioId: Id, enviar: Enviar): Promise<ResultadoSincron
         continue
       }
       await atualizarPendente(p.chave, { ...tentativa, ultimoErro: mensagem })
-      r.parouPor = tipo === 'sessaoExpirada' ? 'sessaoExpirada' : 'semConexao'
+      r.parouPor = tipo === 'sessaoExpirada' ? 'sessaoExpirada' : tipo === 'limite' ? 'limite' : 'semConexao'
       r.restantes = fila.length - i
       return r
     }

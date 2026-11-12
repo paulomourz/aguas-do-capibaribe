@@ -22,6 +22,7 @@ import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 import { PainelPendentes, ResultadoPendenteCard } from '../components/FilaOffline'
 import DicaGlossario from '../components/DicaGlossario'
+import { AvisoLimite, textoEspera, useEsperaLimite } from '../components/LimiteRequisicoes'
 import type { LotePendente } from '../services'
 
 type Erros = Partial<Record<'processo' | 'pecas' | 'litros', string>>
@@ -38,6 +39,8 @@ export default function RegistroLote() {
   const [confirmar, setConfirmar] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
+  // 429: passou de 60 lotes por minuto. Novos registros esperam o Retry-After; o que já entrou fica na fila.
+  const espera = useEsperaLimite('lotes')
   const [resultado, setResultado] = useState<Lote | null>(null)
   /** Lote que ficou guardado no aparelho; quando a fila o enviar, vira `enviadosAgora[chave]`. */
   const [guardado, setGuardado] = useState<LotePendente | null>(null)
@@ -52,6 +55,7 @@ export default function RegistroLote() {
 
   function validar(e: FormEvent) {
     e.preventDefault()
+    if (espera > 0) return
     const novo: Erros = {}
     if (!processo) novo.processo = 'Selecione o processo do lote.'
     if (pecas.trim() === '') novo.pecas = 'Informe a quantidade de peças.'
@@ -144,7 +148,12 @@ export default function RegistroLote() {
               <hr className="my-6 border-line" />
 
               <form onSubmit={validar} noValidate className="flex flex-col gap-6">
-                {falha && (
+                {espera > 0 && (
+                  <AvisoLimite segundos={espera} titulo="Muitos lotes em pouco tempo">
+                    O sistema aceita até 60 lotes por minuto para cada usuário. Os dados preenchidos ficam no formulário.
+                  </AvisoLimite>
+                )}
+                {falha && espera <= 0 && (
                   <Banner tone="crit" title="Não foi possível registrar o lote">
                     {falha} Os dados preenchidos foram mantidos.
                   </Banner>
@@ -235,8 +244,8 @@ export default function RegistroLote() {
                   <dd className="text-lg font-semibold tabular-nums text-ink">{esperadoPrevio ? fmtL(esperadoPrevio) : '—'}</dd>
                 </dl>
 
-                <Button type="submit" size="lg" full loading={enviando} icon={<IconDroplet size={22} />} className="min-h-16 text-lg">
-                  Registrar lote
+                <Button type="submit" size="lg" full loading={enviando} disabled={espera > 0} icon={<IconDroplet size={22} />} className="min-h-16 text-lg">
+                  {espera > 0 ? `Aguarde ${textoEspera(espera)}` : 'Registrar lote'}
                 </Button>
               </form>
             </>
@@ -284,7 +293,7 @@ export default function RegistroLote() {
             <Button variant="secondary" onClick={() => setConfirmar(false)} disabled={enviando}>
               Voltar e corrigir
             </Button>
-            <Button onClick={enviar} loading={enviando} data-autofocus>
+            <Button onClick={enviar} loading={enviando} disabled={espera > 0} data-autofocus>
               {enviando ? 'Registrando…' : 'Confirmar registro'}
             </Button>
           </>

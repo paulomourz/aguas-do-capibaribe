@@ -6,6 +6,22 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Interface (limite de requisições)
+
+- **Erro 429 com contagem regressiva** (issue #101, RNF19). Quando a API responde 429 (`LIMITE_EXCEDIDO`), o
+  `src/services/http.ts` lê o cabeçalho `Retry-After`, guarda o prazo da ação (login ou envio de lotes, em
+  `src/services/limite.ts`) e não dispara a mesma ação de novo até ele acabar. Se o cabeçalho não vier, espera 60 s.
+  - **Login** (5 tentativas por minuto por IP): o botão **Entrar** fica desabilitado, mostrando "Aguarde N segundos",
+    com uma faixa de aviso.
+  - **Registro de lotes** (60 por minuto por usuário): **Registrar lote** e **Enviar agora** ficam desabilitados
+    durante a contagem.
+  - **Fila offline:** o lote que recebeu 429 continua na fila, sem aparecer como "sem conexão", e é enviado sozinho
+    quando a espera acaba, com a mesma `Idempotency-Key`.
+  - **Backend:** o CORS passou a expor o `Retry-After` (`setExposedHeaders`). Sem isso, o site em outra origem lia
+    `null`.
+  - **Testes:** `limite.test.ts`, novos casos em `sincronizacao.test.ts`, `e2e/limite.spec.ts` e
+    `LimiteDeRequisicoesTest`.
+
 ### Acessibilidade
 
 - **Contraste WCAG 2.1 AA medido nos dois temas** (issue #106, continuação da #82). Novo teste

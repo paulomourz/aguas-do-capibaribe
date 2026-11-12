@@ -392,6 +392,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [usuario, tentarAgora, atualizarPendentes])
 
+  // 429 no envio de lotes: quando o Retry-After acabar, envia o que ficou na fila sem esperar o intervalo.
+  useEffect(() => {
+    if (!usuario) return
+    let t: number | undefined
+    const agendar = () => {
+      window.clearTimeout(t)
+      const s = api.segundosRestantes('lotes')
+      if (s > 0) t = window.setTimeout(() => {
+        if (temFilaRef.current) void tentarAgora()
+      }, s * 1000 + 250)
+    }
+    agendar()
+    const sair = api.assinarLimite(agendar)
+    return () => {
+      sair()
+      window.clearTimeout(t)
+    }
+  }, [usuario, tentarAgora])
+
   useEffect(() => {
     let vivo = true
     restaurar(() => vivo)

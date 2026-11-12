@@ -96,6 +96,8 @@ public class SecurityConfig {
         cfg.setAllowedOrigins(props.origensCors());
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Idempotency-Key"));
+        // Sem isto, o navegador esconde o Retry-After do 429 do site em outra origem (o fetch lê null).
+        cfg.setExposedHeaders(List.of("Retry-After"));
         cfg.setAllowCredentials(false);
         cfg.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource fonte = new UrlBasedCorsConfigurationSource();

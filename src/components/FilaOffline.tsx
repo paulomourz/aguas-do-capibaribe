@@ -5,6 +5,7 @@ import { esperadoDe, fmtDataHora, fmtL, fmtNum } from '../domain'
 import { navigate } from '../router'
 import { useApp } from '../store'
 import type { LotePendente } from '../services'
+import { textoEspera, useEsperaLimite } from './LimiteRequisicoes'
 
 /*
  * O que o operador vê da fila de lotes sem conexão:
@@ -28,6 +29,7 @@ function irParaPendentes() {
 
 export function IndicadorConexao() {
   const { pendentes, conectado, modoOffline, sincronizando } = useApp()
+  const espera = useEsperaLimite('lotes')
   const esperando = pendentes.filter((p) => p.estado === 'pendente').length
   const recusados = pendentes.length - esperando
   const offline = !conectado || modoOffline
@@ -42,6 +44,10 @@ export function IndicadorConexao() {
   } else if (sincronizando && esperando) {
     texto = `Enviando ${plural(esperando, 'lote', 'lotes')}…`
     tom = 'info'
+  } else if (espera > 0 && esperando) {
+    // Sem contador: o indicador é aria-live e anunciaria a cada segundo.
+    texto = `Limite por minuto · ${plural(esperando, 'lote aguardando', 'lotes aguardando')}`
+    tom = 'warn'
   } else if (offline) {
     texto = esperando ? `Sem conexão · ${plural(esperando, 'lote guardado', 'lotes guardados')}` : 'Sem conexão'
     tom = 'warn'
@@ -97,19 +103,27 @@ export function AvisoOffline() {
 /** Mostrado logo depois do registro quando o lote ficou na fila. */
 export function ResultadoPendenteCard({ pendente, onNovo }: { pendente: LotePendente; onNovo: () => void }) {
   const { processos, nomeProcesso } = useApp()
+  const espera = useEsperaLimite('lotes')
   const processo = processos.find((p) => p.id === String(pendente.processoId))
   const esperado = processo ? esperadoDe(processo, pendente.pecas) : null
   return (
     <Card className="rise h-full overflow-hidden">
       <div tabIndex={-1} className="bg-warn-bg px-4 py-6 text-warn outline-none sm:px-8 sm:py-8" aria-live="polite" data-testid="resultado-pendente">
         <div className="flex items-center gap-3">
-          <IconCloudOff size={28} strokeWidth={2.2} className="shrink-0" />
+          {espera > 0 ? <IconClock size={28} strokeWidth={2.2} className="shrink-0" /> : <IconCloudOff size={28} strokeWidth={2.2} className="shrink-0" />}
           <h2 className="text-[22px] font-semibold">Lote guardado neste aparelho</h2>
         </div>
-        <p className="mt-4 max-w-prose text-base font-medium">
-          A conexão com o servidor falhou, mas o lote não se perdeu. Ele será enviado sozinho quando a conexão voltar, sem duplicar. Pode
-          continuar registrando os próximos.
-        </p>
+        {espera > 0 ? (
+          <p className="mt-4 max-w-prose text-base font-medium">
+            O servidor pediu uma pausa: foram muitos lotes em pouco tempo. O lote não se perdeu e será enviado sozinho em{' '}
+            <span className="tabular-nums">{textoEspera(espera)}</span>, sem duplicar.
+          </p>
+        ) : (
+          <p className="mt-4 max-w-prose text-base font-medium">
+            A conexão com o servidor falhou, mas o lote não se perdeu. Ele será enviado sozinho quando a conexão voltar, sem duplicar. Pode
+            continuar registrando os próximos.
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-6 px-4 py-6 sm:px-8">
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
@@ -149,6 +163,7 @@ export function PainelPendentes() {
   const { pendentes, pendentesDeOutros, sincronizando, conectado, modoOffline, enviarPendentes, tentarDeNovo, descartarPendente, nomeProcesso } = useApp()
   const [descartar, setDescartar] = useState<LotePendente | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  const espera = useEsperaLimite('lotes')
 
   if (!pendentes.length && !pendentesDeOutros) return null
   const esperando = pendentes.filter((p) => p.estado === 'pendente').length
@@ -171,6 +186,8 @@ export function PainelPendentes() {
                   ? 'Nenhum lote seu esperando envio.'
                   : sincronizando
                     ? 'Enviando ao servidor…'
+                    : esperando && espera > 0
+                      ? `${plural(esperando, 'lote aguardando', 'lotes aguardando')} envio. Limite de lotes por minuto atingido: o envio volta sozinho em ${textoEspera(espera)}.`
                     : esperando
                       ? `${plural(esperando, 'lote aguardando', 'lotes aguardando')} envio${offline ? ' · sem conexão agora' : ''}. O envio é automático.`
                       : 'Os lotes abaixo foram recusados pelo servidor.'}
@@ -178,8 +195,8 @@ export function PainelPendentes() {
             </div>
           </div>
           {esperando > 0 && (
-            <Button variant="secondary" icon={<IconRefresh size={20} />} loading={sincronizando} onClick={() => void enviarPendentes()}>
-              Enviar agora
+            <Button variant="secondary" icon={<IconRefresh size={20} />} loading={sincronizando} disabled={espera > 0} onClick={() => void enviarPendentes()}>
+              {espera > 0 ? `Aguarde ${textoEspera(espera)}` : 'Enviar agora'}
             </Button>
           )}
         </div>
@@ -211,7 +228,7 @@ export function PainelPendentes() {
                       size="sm"
                       variant="text"
                       icon={<IconRefresh size={18} />}
-                      disabled={ocupado}
+                      disabled={ocupado || espera > 0}
                       onClick={async () => {
                         setOcupado(true)
                         await tentarDeNovo(p.chave)
