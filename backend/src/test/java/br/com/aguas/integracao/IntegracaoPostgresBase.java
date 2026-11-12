@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -38,6 +40,14 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import br.com.aguas.notificacao.AvisoDeAlerta;
+import br.com.aguas.notificacao.ReenvioDeAvisos;
+import br.com.aguas.notificacao.Telegram;
+import br.com.aguas.notificacao.TelegramProperties;
+import br.com.aguas.repository.AlertaLoteRepository;
+import br.com.aguas.repository.AlertaRepository;
+import br.com.aguas.repository.AvisoPendenteRepository;
+import br.com.aguas.repository.ProcessoRepository;
 import br.com.aguas.service.Privacidade;
 
 /**
@@ -67,6 +77,8 @@ abstract class IntegracaoPostgresBase {
         r.add("app.telegram.chat-id", () -> "123");
         // Pausa curta entre as tentativas do aviso, para os testes não esperarem os 2 segundos de verdade.
         r.add("app.telegram.espera-entre-tentativas", () -> "50ms");
+        // A rotina de reenvio só roda quando o teste chama: o agendamento automático fica para daqui a 1 hora.
+        r.add("app.telegram.reenvio-a-cada", () -> "1h");
     }
 
     private static final String SENHA = "senha-de-teste-123";
@@ -80,6 +92,8 @@ abstract class IntegracaoPostgresBase {
     @Autowired ObjectMapper json;
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
+    @Autowired ReenvioDeAvisos reenvio;
+    @Autowired ApplicationContext contexto;
 
     record Conta(int id, String login, String token) {}
 
@@ -149,7 +163,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -164,7 +178,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(10);
+           assertThat(flyway.info().applied()).hasSize(11);
     }
 
     @Test
@@ -669,6 +683,88 @@ abstract class IntegracaoPostgresBase {
         // O lote e o alerta continuam gravados.
         assertThat(alertasDo(g, p)).hasSize(1);
         assertThat(jdbc.queryForObject("select count(*) from lote where processo_id = ?", Integer.class, p)).isEqualTo(3);
+    }
+
+    @Test
+    void telegramVoltaEARotinaReenviaOAvisoPendenteUmaVezSo() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "800");
+        int alerta;
+        TelegramFalso.status = 500;
+        try {
+            // Given: o Telegram fora do ar quando o alerta abre; o aviso fica pendente.
+            lote(g, p, 10, "900");
+            lote(g, p, 10, "900");
+            lote(g, p, 10, "900");
+            alerta = alertasDo(g, p).getFirst().get("id").asInt();
+            esperarPendente(alerta);
+        } finally {
+            TelegramFalso.status = 200;
+        }
+
+        // When: o Telegram volta e a rotina roda.
+        reenvio.reenviarPendentes();
+
+        // Then: o aviso atrasado chega e fica marcado como enviado, com a tentativa contada.
+        List<TelegramFalso.Pedido> atrasados = avisosAtrasados(alerta);
+        assertThat(atrasados).hasSize(1);
+        assertThat(atrasados.getFirst().corpo()).contains("Aviso atrasado");
+        Map<String, Object> linha = jdbc.queryForMap(
+                "select tentativas, enviado_em > now() - interval '1 minute' as recente from aviso_pendente where alerta_id = ?", alerta);
+        assertThat(linha.get("tentativas")).isEqualTo(4);
+        assertThat(linha.get("recente")).isEqualTo(true);
+
+        // A próxima rodada não manda de novo o que já chegou.
+        reenvio.reenviarPendentes();
+        assertThat(avisosAtrasados(alerta)).hasSize(1);
+    }
+
+    @Test
+    void avisoPendenteAlemDoLimiteOuDeAlertaJaTratadoNaoEReenviado() throws Exception {
+        Conta g = conta("gestor");
+
+        // Passou do limite: uma rotina com limite de 1 ms já vê o aviso como vencido. Assim o teste não precisa
+        // mudar criado_em, que o aguas_api não pode atualizar (V11), e roda com qualquer usuário do banco.
+        int antigo = alertaComAvisoPendente(g);
+        TelegramProperties p = contexto.getBean(TelegramProperties.class);
+        var limiteCurto = new TelegramProperties(p.token(), p.chatId(), p.url(), p.siteUrl(), p.esperaEntreTentativas(),
+                p.reenvioACada(), Duration.ofMillis(1));
+        Thread.sleep(5);
+        new ReenvioDeAvisos(contexto.getBean(Telegram.class), limiteCurto, contexto.getBean(AvisoDeAlerta.class),
+                contexto.getBean(AvisoPendenteRepository.class), contexto.getBean(AlertaRepository.class),
+                contexto.getBean(ProcessoRepository.class), contexto.getBean(AlertaLoteRepository.class))
+                .reenviarPendentes();
+        assertThat(avisosAtrasados(antigo)).isEmpty();
+
+        // Alerta que o gestor já pôs em análise: a rotina normal não manda o aviso atrasado.
+        int tratado = alertaComAvisoPendente(g);
+        enviar(patch("/alertas/" + tratado + "/status"), g, Map.of("status", "analise")).andExpect(status().isOk());
+        reenvio.reenviarPendentes();
+        assertThat(avisosAtrasados(tratado)).isEmpty();
+        assertThat(jdbc.queryForObject("select count(*) from aviso_pendente where alerta_id = ? and enviado_em is null",
+                Integer.class, tratado)).isOne();
+    }
+
+    /** Abre um alerta com o Telegram fora do ar e espera o aviso ficar pendente. */
+    private int alertaComAvisoPendente(Conta g) throws Exception {
+        int p = processo(g, "lote", "800");
+        TelegramFalso.status = 500;
+        try {
+            lote(g, p, 10, "900");
+            lote(g, p, 10, "900");
+            lote(g, p, 10, "900");
+            int alerta = alertasDo(g, p).getFirst().get("id").asInt();
+            esperarPendente(alerta);
+            return alerta;
+        } finally {
+            TelegramFalso.status = 200;
+        }
+    }
+
+    private static List<TelegramFalso.Pedido> avisosAtrasados(int alertaId) {
+        return TelegramFalso.pedidos.stream()
+                .filter(x -> x.corpo().contains("Aviso atrasado") && x.corpo().contains("Alerta #" + alertaId + " aberto"))
+                .toList();
     }
 
     /** As tentativas saem em outra thread: espera até 10 s pelo registro do aviso pendente do alerta. */

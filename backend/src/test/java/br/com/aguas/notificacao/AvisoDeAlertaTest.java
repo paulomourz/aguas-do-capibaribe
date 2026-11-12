@@ -37,7 +37,7 @@ class AvisoDeAlertaTest {
     AlertaAberto alerta = new AlertaAberto(7, "Estonagem", List.of(10, 11, 12));
 
     private AvisoDeAlerta aviso(String siteUrl) {
-        return new AvisoDeAlerta(telegram, new TelegramProperties("t", "1", null, siteUrl, ESPERA), pendentes, pausas::add);
+        return new AvisoDeAlerta(telegram, new TelegramProperties("t", "1", null, siteUrl, ESPERA, null, null), pendentes, pausas::add);
     }
 
     private static ResourceAccessException erroDeRede() {
@@ -109,7 +109,7 @@ class AvisoDeAlertaTest {
         aviso(null).aoAbrir(alerta);
 
         verify(telegram, times(3)).enviar(anyString());
-        assertThat(pausas).containsExactly(ESPERA, ESPERA);
+        assertThat(pausas).containsExactly(ESPERA, ESPERA.multipliedBy(2));
         verify(pendentes, never()).save(any());
     }
 
@@ -120,9 +120,9 @@ class AvisoDeAlertaTest {
 
         assertThatCode(() -> aviso(null).aoAbrir(alerta)).doesNotThrowAnyException();
 
-        // 3 envios no total, com pausa só entre eles (não depois do último).
+        // 3 envios no total, com pausa só entre eles (não depois do último), e a segunda pausa é o dobro da primeira.
         verify(telegram, times(3)).enviar(anyString());
-        assertThat(pausas).containsExactly(ESPERA, ESPERA);
+        assertThat(pausas).containsExactly(ESPERA, ESPERA.multipliedBy(2));
         AvisoPendente pendente = pendenteGravado();
         assertThat(pendente.getAlertaId()).isEqualTo(7);
         assertThat(pendente.getTentativas()).isEqualTo(3);
@@ -158,7 +158,7 @@ class AvisoDeAlertaTest {
     void interrupcaoNaEsperaParaAsTentativasEGuardaComoPendente() {
         when(telegram.configurado()).thenReturn(true);
         doThrow(erroDeRede()).when(telegram).enviar(anyString());
-        AvisoDeAlerta aviso = new AvisoDeAlerta(telegram, new TelegramProperties("t", "1", null, null, ESPERA), pendentes,
+        AvisoDeAlerta aviso = new AvisoDeAlerta(telegram, new TelegramProperties("t", "1", null, null, ESPERA, null, null), pendentes,
                 tempo -> { throw new InterruptedException(); });
 
         aviso.aoAbrir(alerta);
@@ -187,12 +187,12 @@ class AvisoDeAlertaTest {
         try (ServerSocket livre = new ServerSocket(0)) {
             porta = livre.getLocalPort();
         }
-        var props = new TelegramProperties("token-de-teste", "1", "http://localhost:" + porta, null, ESPERA);
+        var props = new TelegramProperties("token-de-teste", "1", "http://localhost:" + porta, null, ESPERA, null, null);
         AvisoDeAlerta aviso = new AvisoDeAlerta(new Telegram(props, RestClient.builder()), props, pendentes, pausas::add);
 
         aviso.aoAbrir(alerta);
 
-        assertThat(pausas).containsExactly(ESPERA, ESPERA);
+        assertThat(pausas).containsExactly(ESPERA, ESPERA.multipliedBy(2));
         AvisoPendente pendente = pendenteGravado();
         assertThat(pendente.getTentativas()).isEqualTo(3);
         assertThat(pendente.getUltimoErro()).isEqualTo("ResourceAccessException");
@@ -201,8 +201,17 @@ class AvisoDeAlertaTest {
     // ---------- configuração ----------
 
     @Test
-    void esperaEntreTentativasTemPadraoDe2Segundos() {
-        assertThat(new TelegramProperties("t", "1", null, null, null).esperaOuPadrao()).isEqualTo(Duration.ofSeconds(2));
-        assertThat(new TelegramProperties("t", "1", null, null, ESPERA).esperaOuPadrao()).isEqualTo(ESPERA);
+    void esperaEntreTentativasTemPadraoDe1Segundo() {
+        assertThat(new TelegramProperties("t", "1", null, null, null, null, null).esperaOuPadrao()).isEqualTo(Duration.ofSeconds(1));
+        assertThat(new TelegramProperties("t", "1", null, null, ESPERA, null, null).esperaOuPadrao()).isEqualTo(ESPERA);
+    }
+
+    @Test
+    void esperaCrescenteComOPadraoE1sDepois2s() {
+        // Issue #97: espera exponencial, inicial de 1000 ms e multiplicador 2.
+        var padrao = new AvisoDeAlerta(telegram, new TelegramProperties("t", "1", null, null, null, null, null), pendentes, pausas::add);
+        assertThat(padrao.pausaAntesDaTentativa(2)).isEqualTo(Duration.ofSeconds(1));
+        assertThat(padrao.pausaAntesDaTentativa(3)).isEqualTo(Duration.ofSeconds(2));
+        assertThat(padrao.pausaAntesDaTentativa(4)).isEqualTo(Duration.ofSeconds(4));
     }
 }
