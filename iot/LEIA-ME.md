@@ -97,6 +97,30 @@ o aviso numa apresentação, use `PECAS = 1` no sketch: o esperado cai para 12 L
 de 30 segundos com a vazão no máximo e a simulação perto de 100% (a velocidade aparece no canto de cima do
 Wokwi). O som do buzzer só toca com o áudio do navegador ligado.
 
+### Sem Wi-Fi: as leituras ficam guardadas
+
+Se o Wi-Fi cair, o sensor **continua medindo**. Cada lote encerrado sem conexão vira uma **leitura** (pulsos, litros
+e hora, pelo relógio da internet no fuso de Brasília) num buffer de até **100 leituras** na memória. Quando o Wi-Fi
+volta, o sensor envia as leituras em ordem, sozinho.
+
+- Cada leitura tem a própria chave `Idempotency-Key`, a mesma em todas as tentativas: se a resposta da API se perder
+  e o sensor reenviar, o lote **não é duplicado**.
+- Se a API não responder, o sensor espera 15 s e tenta de novo; se ela responder 429 (limite de lotes por minuto),
+  espera 60 s.
+- Com o buffer cheio, a leitura mais antiga é descartada, com aviso no monitor (`Buffer cheio`).
+- O envio do buffer só acontece sem lote em andamento, porque o envio para o contador de pulsos.
+- A API grava a hora em que o lote **chega**; a hora em que ele foi medido aparece no monitor serial.
+- A memória é RAM: se o ESP32 for reiniciado, as leituras guardadas se perdem.
+
+**Para testar no Wokwi:**
+
+1. Com a simulação rodando, clique no monitor serial, digite **Q** e aperte Enter: o Wi-Fi cai por 60 segundos
+   (`Perda de sinal simulada`).
+2. Faça um ou mais lotes nesse tempo. Cada um mostra `Leitura guardada (N de 100 no buffer)`.
+3. Quando o Wi-Fi voltar (`Fim da perda de sinal simulada`), o monitor mostra `Enviando N leitura(s)
+   guardada(s)...` e termina em `Buffer vazio: todas as leituras foram enviadas`.
+4. Confira no **Histórico** do site: um lote para cada leitura, sem repetição.
+
 ## Calibrar o coeficiente K
 
 O sensor de vazão gera um número de pulsos por litro, o **coeficiente K**. O sketch calcula
@@ -154,6 +178,8 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080`, 
 | `Sem resposta da API` | a API está acordando (ele tenta de novo sozinho) ou o endereço está errado |
 | `SSL - The connection indicated an EOF` em todas as tentativas | a simulação está lenta (bem abaixo de 100% no canto de cima), e a API desiste da conexão segura: feche programas pesados no PC e reinicie a simulação |
 | `certificado da API diferente do esperado` | o Render renovou o certificado (o atual vale até 20/12/2026): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
+| `Buffer cheio (100 leituras)` | o Wi-Fi ficou fora tempo demais: a leitura mais antiga foi descartada |
+| `Sem envio agora (HTTP ...)`, `A leitura continua guardada` | a API não respondeu ou recusou por limite: o sensor tenta de novo sozinho |
 | `Lote NAO enviado: cole o token de API` | `TOKEN_API` ainda com `COLE-AQUI-...` ou colado incompleto (são 64 letras e números) |
 | `token recusado (HTTP 401)` | o token foi trocado por outra rotação, é de outro ambiente (publicado × Docker) ou a conta foi desativada: gere outro em **Usuários > Rotacionar token** |
 | `Processo "..." não encontrado` | `PROCESSO_NOME` diferente dos nomes cadastrados no site (a lista aparece logo depois) |
