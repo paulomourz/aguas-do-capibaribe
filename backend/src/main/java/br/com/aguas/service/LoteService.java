@@ -55,11 +55,15 @@ public class LoteService {
         this.eventos = eventos;
     }
 
-    /** Gestor vê todos os lotes; operador, apenas os próprios. */
+    /**
+     * Gestor e administrador veem todos os lotes e podem filtrar por quem registrou (issue #107);
+     * o operador vê apenas os próprios, e o filtro de usuário é ignorado para ele.
+     */
     @Transactional(readOnly = true)
-    public List<LoteDTO> listar(UsuarioAutenticado quem, Integer processoId, OffsetDateTime inicio, OffsetDateTime fim) {
-        Integer usuarioId = quem.gestor() ? null : quem.id();
-        return lotes.findAll(LoteRepository.filtro(processoId, usuarioId, inicio, fim), MAIS_RECENTES)
+    public List<LoteDTO> listar(UsuarioAutenticado quem, Integer processoId, Integer usuarioId,
+                                OffsetDateTime inicio, OffsetDateTime fim) {
+        Integer deQuem = quem.gestor() ? usuarioId : quem.id();
+        return lotes.findAll(LoteRepository.filtro(processoId, deQuem, inicio, fim), MAIS_RECENTES)
                 .stream().map(LoteDTO::de).toList();
     }
 

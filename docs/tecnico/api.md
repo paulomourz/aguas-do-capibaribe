@@ -51,7 +51,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /processos` | autenticado, inclusive o sensor | — | `ProcessoDTO[]` (lista guardada em cache, atualizada a cada cadastro ou edição) |
 | `POST /processos` | gestor | `{nome, unidade, meta}` | `201 ProcessoDTO` |
 | `PUT /processos/{id}` | gestor | `{nome, unidade, meta}` | `ProcessoDTO` |
-| `GET /lotes?processoId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais (`inicio`/`fim` em ISO 8601 com fuso) | `LoteDTO[]`, do mais recente ao mais antigo |
+| `GET /lotes?processoId=&usuarioId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais, combináveis (`inicio`/`fim` em ISO 8601 com fuso); `usuarioId` (quem registrou) vale para gestor e administrador, e para o operador é ignorado: ele continua vendo só os próprios (issue #107) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
 | `POST /lotes` | autenticado, inclusive o sensor | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |

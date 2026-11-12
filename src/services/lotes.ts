@@ -1,7 +1,7 @@
 import { requisicao } from './http'
 import type { Id, LoteDTO, NovoLoteDTO } from './tipos'
 
-export type FiltroLotes = { processoId?: Id; inicio?: string; fim?: string }
+export type FiltroLotes = { processoId?: Id; usuarioId?: Id; inicio?: string; fim?: string }
 
 export async function listarLotes(f: FiltroLotes = {}): Promise<LoteDTO[]> {
   return requisicao('/lotes', { query: f })
