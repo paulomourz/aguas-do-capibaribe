@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /*
- * Teste ponta a ponta do modo offline: o site de produção (com service worker) contra uma API falsa
- * criada dentro do teste (e2e/apiFalsa.ts), onde dá para derrubar e devolver a "Wi-Fi" à vontade.
+ * Testes ponta a ponta do modo offline e do fluxo completo do operador: o site de produção (com service worker)
+ * contra uma API falsa criada dentro do teste (e2e/apiFalsa.ts), onde dá para derrubar e devolver a "Wi-Fi" à vontade.
  *   pnpm test:e2e
  */
 const PORTA = 4173
