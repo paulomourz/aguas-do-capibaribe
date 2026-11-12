@@ -13,7 +13,8 @@ ele fica desligado e o resto do sistema funciona igual.
 2. Depois que o lote foi gravado no banco (commit), o `AvisoDeAlerta` monta a mensagem e chama a Bot API do Telegram,
    em outra thread. O operador não espera o envio.
 3. Se o envio falhar (erro de rede, Telegram fora do ar ou recusando), a API tenta de novo: são **até 3 envios** no
-   total, com 2 segundos de pausa entre eles (`app.telegram.espera-entre-tentativas`).
+   total, com uma pausa que dobra a cada vez: **1 segundo** antes do 2º envio e **2 segundos** antes do 3º
+   (`app.telegram.espera-entre-tentativas` é a primeira pausa).
 4. Se os 3 falharem, o aviso é gravado como **pendente** na tabela `aviso_pendente` (migração `V10`), com o alerta, o
    número de tentativas, o último erro e a hora. O lote e o alerta continuam gravados, e o operador não percebe nada.
 5. Uma rotina da API (`ReenvioDeAvisos`) roda **a cada 5 minutos** (`app.telegram.reenvio-a-cada`) e tenta de novo os

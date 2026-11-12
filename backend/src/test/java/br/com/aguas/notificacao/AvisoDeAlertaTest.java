@@ -110,7 +110,7 @@ class AvisoDeAlertaTest {
         aviso(null).aoAbrir(alerta);
 
         verify(telegram, times(3)).enviar(anyString());
-        assertThat(pausas).containsExactly(ESPERA, ESPERA);
+        assertThat(pausas).containsExactly(ESPERA, ESPERA.multipliedBy(2));
         verify(pendentes, never()).save(any());
     }
 
@@ -121,9 +121,9 @@ class AvisoDeAlertaTest {
 
         assertThatCode(() -> aviso(null).aoAbrir(alerta)).doesNotThrowAnyException();
 
-        // 3 envios no total, com pausa só entre eles (não depois do último).
+        // 3 envios no total, com pausa só entre eles (não depois do último), e a segunda pausa é o dobro da primeira.
         verify(telegram, times(3)).enviar(anyString());
-        assertThat(pausas).containsExactly(ESPERA, ESPERA);
+        assertThat(pausas).containsExactly(ESPERA, ESPERA.multipliedBy(2));
         AvisoPendente pendente = pendenteGravado();
         assertThat(pendente.getAlertaId()).isEqualTo(7);
         assertThat(pendente.getTentativas()).isEqualTo(3);
@@ -193,7 +193,7 @@ class AvisoDeAlertaTest {
 
         aviso.aoAbrir(alerta);
 
-        assertThat(pausas).containsExactly(ESPERA, ESPERA);
+        assertThat(pausas).containsExactly(ESPERA, ESPERA.multipliedBy(2));
         AvisoPendente pendente = pendenteGravado();
         assertThat(pendente.getTentativas()).isEqualTo(3);
         assertThat(pendente.getUltimoErro()).isEqualTo("ResourceAccessException");
@@ -202,8 +202,17 @@ class AvisoDeAlertaTest {
     // ---------- configuração ----------
 
     @Test
-    void esperaEntreTentativasTemPadraoDe2Segundos() {
-        assertThat(new TelegramProperties("t", "1", null, null, null, null, null).esperaOuPadrao()).isEqualTo(Duration.ofSeconds(2));
+    void esperaEntreTentativasTemPadraoDe1Segundo() {
+        assertThat(new TelegramProperties("t", "1", null, null, null, null, null).esperaOuPadrao()).isEqualTo(Duration.ofSeconds(1));
         assertThat(new TelegramProperties("t", "1", null, null, ESPERA, null, null).esperaOuPadrao()).isEqualTo(ESPERA);
+    }
+
+    @Test
+    void esperaCrescenteComOPadraoE1sDepois2s() {
+        // Issue #97: espera exponencial, inicial de 1000 ms e multiplicador 2.
+        var padrao = new AvisoDeAlerta(telegram, new TelegramProperties("t", "1", null, null, null, null, null), pendentes, pausas::add);
+        assertThat(padrao.pausaAntesDaTentativa(2)).isEqualTo(Duration.ofSeconds(1));
+        assertThat(padrao.pausaAntesDaTentativa(3)).isEqualTo(Duration.ofSeconds(2));
+        assertThat(padrao.pausaAntesDaTentativa(4)).isEqualTo(Duration.ofSeconds(4));
     }
 }

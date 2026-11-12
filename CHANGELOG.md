@@ -12,7 +12,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   5 minutos) tenta de novo os avisos gravados em `aviso_pendente`, uma vez por rodada, só de alertas ainda abertos.
   A mensagem começa com "Aviso atrasado". Quando chega, a coluna nova `enviado_em` recebe a hora e o aviso não sai de
   novo; se falhar, a tentativa e o erro são registrados e a rodada para. Depois de 24 horas pendente, a rotina desiste
-  (a última tentativa que falhar fica no log). Intervalo e limite em `app.telegram.reenvio-a-cada` e `app.telegram.reenvio-limite`.
+  (a última tentativa que falhar fica no log). Intervalo e limite em `app.telegram.reenvio-a-cada` e
+  `app.telegram.reenvio-limite`.
+  - **Espera crescente** nas 3 tentativas imediatas: a pausa dobra a cada vez, 1 s antes da 2ª e 2 s antes da 3ª
+    (`app.telegram.espera-entre-tentativas` passou a ser a primeira pausa, com padrão de 1 s em vez de 2 s fixos).
   - **Banco:** migração `V11` com `enviado_em`, um índice parcial dos não enviados e `GRANT UPDATE (enviado_em,
     tentativas, ultimo_erro)` para o `aguas_api`, que continua sem DELETE. `database/seguranca-usuario-api.sql`
     atualizado.

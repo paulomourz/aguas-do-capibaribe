@@ -19,7 +19,8 @@ import br.com.aguas.repository.AvisoPendenteRepository;
  * gravado e a resposta ao operador não espera o envio.
  *
  * Se o envio falhar (erro de rede, Telegram fora do ar ou recusando), a API tenta de novo, até 3 vezes
- * no total, com uma pausa entre as tentativas. Se a falha persistir, o aviso é gravado como pendente em
+ * no total, com uma pausa entre as tentativas que dobra a cada vez (1 s e depois 2 s, por padrão).
+ * Se a falha persistir, o aviso é gravado como pendente em
  * aviso_pendente. Nada disso sobe para quem registrou o lote.
  */
 @Component
@@ -27,6 +28,9 @@ public class AvisoDeAlerta {
 
     /** Total de envios por aviso: o primeiro e mais duas novas tentativas. */
     static final int TENTATIVAS = 3;
+
+    /** Cada pausa é o dobro da anterior (espera exponencial), a partir de app.telegram.espera-entre-tentativas. */
+    static final int MULTIPLICADOR = 2;
 
     /** Pausa entre as tentativas; trocada nos testes para não esperar de verdade. */
     interface Pausa {
@@ -69,15 +73,20 @@ public class AvisoDeAlerta {
                 erro = descrever(e);
             }
             log.warn("Aviso do alerta {}: tentativa {} de {} falhou ({}).", alerta.alertaId(), feitas, TENTATIVAS, erro);
-            if (feitas < TENTATIVAS && !esperar()) break;
+            if (feitas < TENTATIVAS && !esperar(pausaAntesDaTentativa(feitas + 1))) break;
         }
         guardarPendente(alerta, feitas, erro);
     }
 
+    /** Pausa antes da tentativa n (n >= 2): a inicial antes da 2ª, o dobro antes da 3ª, e assim por diante. */
+    Duration pausaAntesDaTentativa(int n) {
+        return props.esperaOuPadrao().multipliedBy((long) Math.pow(MULTIPLICADOR, n - 2));
+    }
+
     /** Falso se a thread foi interrompida (a API está parando): não adianta tentar de novo. */
-    private boolean esperar() {
+    private boolean esperar(Duration tempo) {
         try {
-            pausa.esperar(props.esperaOuPadrao());
+            pausa.esperar(tempo);
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

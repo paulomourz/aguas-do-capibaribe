@@ -87,9 +87,10 @@ app:
     token: ${TELEGRAM_TOKEN:}
     chat-id: ${TELEGRAM_CHAT_ID:}
     site-url: ${SITE_URL:}
-    # Se o envio falhar, a API tenta de novo (3 envios no total), com esta pausa entre eles.
-    # Se todos falharem, o aviso fica gravado como pendente (tabela aviso_pendente).
-    espera-entre-tentativas: 2s
+    # Se o envio falhar, a API tenta de novo (3 envios no total). A primeira pausa é esta, e cada uma
+    # seguinte é o dobro (1 s e depois 2 s). Se todos falharem, o aviso fica gravado como pendente
+    # (tabela aviso_pendente).
+    espera-entre-tentativas: 1s
     # Os pendentes são reenviados por uma rotina, a cada reenvio-a-cada, até reenvio-limite depois de
     # ficarem pendentes. Quando um chega, aviso_pendente.enviado_em recebe a hora do envio.
     reenvio-a-cada: 5m
