@@ -12,6 +12,11 @@
 //   - Lote crítico (desvio acima de 8%, segundo a API): o buzzer apita 3 vezes e o LED vermelho pisca e fica
 //     aceso até o próximo lote começar. Quem classifica é a API (campo "statusConformidade" da resposta), então
 //     o sensor segue sempre a mesma regra do site.
+//   - Sem Wi-Fi, o sensor continua medindo: cada lote encerrado vira uma leitura (pulsos, litros e hora) num
+//     buffer circular de até 100 leituras na RAM. Quando o Wi-Fi volta, as leituras são enviadas em ordem, cada
+//     uma com sua chave Idempotency-Key, para que um reenvio nunca duplique o lote na API.
+//   - Para simular a perda de sinal: digite Q no monitor serial. O Wi-Fi cai por 60 segundos e volta sozinho.
+//     A hora de cada leitura aparece no monitor serial; a API grava a hora em que o lote chega.
 //
 // No dispositivo físico: remova o fio 25 -> 27, ligue o sinal do sensor no 27
 // e calibre o coeficiente K (PULSOS_POR_LITRO), como em iot/LEIA-ME.md, "Calibrar o coeficiente K".
@@ -19,6 +24,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
+#include <time.h>
 
 // ===================== CONFIGURAÇÃO =====================
 // Endereço da API, com /api no final.
@@ -51,6 +57,14 @@ const float LITROS_CALIBRACAO = 10.0;  // volume conhecido do recipiente usado n
 // Para testar a calibração, use valores diferentes: os litros saem errados, como num sensor não calibrado.
 const float PULSOS_POR_LITRO_SIMULADO = 450.0;
 const float VAZAO_MAX_LPM    = 30.0;
+
+// Perda de sinal simulada (comando Q no monitor serial) e buffer das leituras feitas sem Wi-Fi.
+const uint32_t QUEDA_WIFI_MS = 60000;  // tempo que o Wi-Fi fica fora
+const int      MAX_LEITURAS  = 100;    // leituras guardadas na RAM; cheio, a mais antiga é sobrescrita
+const uint32_t ESPERA_REENVIO_MS = 15000;  // a API não respondeu: espera antes de tentar de novo
+const uint32_t ESPERA_LIMITE_MS  = 60000;  // a API respondeu 429 (limite de lotes por minuto)
+// Hora das leituras: relógio da internet (NTP), no fuso de Brasília.
+const long FUSO_SEGUNDOS = -3 * 3600;
 // ========================================================
 
 // Certificado esperado da API: impressão digital SHA-256, válida até 20/12/2026. Verificar a cadeia inteira
@@ -93,6 +107,24 @@ const bool usaHttps = strncmp(API_URL, "https://", 8) == 0;
 HTTPClient http;
 int ultimoCodigo = 0;  // código HTTP da última requisição
 
+// Uma leitura = um lote encerrado. A hora é guardada em millis() e convertida para data e hora quando o
+// relógio estiver sincronizado: assim a hora sai certa mesmo se o lote foi medido antes de haver internet.
+struct Leitura {
+  uint32_t pulsos;
+  float litros;
+  uint32_t fimMs;   // millis() no encerramento do lote
+  char chave[37];   // Idempotency-Key (UUID): a mesma em todas as tentativas desta leitura
+};
+Leitura leituras[MAX_LEITURAS];
+enum Resultado { ENVIADA, RECUSADA, TENTAR_DEPOIS, PARAR };  // resultado do envio de uma leitura
+int inicioBuffer = 0;  // posição da leitura mais antiga
+int qtdLeituras = 0;
+
+bool emQueda = false;        // perda de sinal simulada em andamento
+uint32_t fimQuedaMs = 0;
+bool wifiAntes = false;      // para avisar quando o Wi-Fi cai ou volta
+uint32_t proximoEnvioMs = 0; // antes disso, não tenta enviar o buffer
+
 void IRAM_ATTR contarPulso() {
   pulsos++;
 }
@@ -123,15 +155,95 @@ void ajustarGerador(float vazaoLpm) {
   }
 }
 
-void conectarWiFi() {
-  if (WiFi.status() == WL_CONNECTED) return;
-  Serial.print("Conectando ao Wi-Fi");
+// Liga o Wi-Fi sem esperar: o loop continua medindo enquanto ele conecta.
+void iniciarWiFi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_SENHA, 6);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(250);
-    Serial.print(".");
+  Serial.println("Conectando ao Wi-Fi...");
+}
+
+bool wifiDisponivel() {
+  return !emQueda && WiFi.status() == WL_CONNECTED;
+}
+
+// Comando Q: derruba o Wi-Fi por QUEDA_WIFI_MS. O rádio é desligado para não reconectar sozinho.
+void iniciarQueda() {
+  if (emQueda) return;
+  emQueda = true;
+  fimQuedaMs = millis() + QUEDA_WIFI_MS;
+  cliente.stop();
+  WiFi.disconnect(true);
+  Serial.printf(">>> Perda de sinal simulada: Wi-Fi fora por %lu s. As leituras ficam guardadas.\n",
+                (unsigned long)(QUEDA_WIFI_MS / 1000));
+}
+
+// Avisa quando o Wi-Fi cai ou volta e encerra a queda simulada no tempo certo.
+void acompanharWiFi() {
+  if (emQueda && (int32_t)(millis() - fimQuedaMs) >= 0) {
+    emQueda = false;
+    Serial.println(">>> Fim da perda de sinal simulada.");
+    iniciarWiFi();
   }
-  Serial.println(" conectado.");
+  bool agora = wifiDisponivel();
+  if (agora && !wifiAntes) {
+    Serial.println("Wi-Fi conectado.");
+    configTime(FUSO_SEGUNDOS, 0, "pool.ntp.org", "time.google.com");
+    proximoEnvioMs = millis();  // envia o que estiver guardado sem esperar
+  } else if (!agora && wifiAntes) {
+    cliente.stop();
+    Serial.println("Wi-Fi caiu. As leituras ficam guardadas até ele voltar.");
+  }
+  wifiAntes = agora;
+}
+
+// UUID versão 4, gerado com o sorteio de hardware do ESP32.
+void gerarChave(char* destino) {
+  uint8_t b[16];
+  for (int i = 0; i < 16; i++) b[i] = esp_random() & 0xFF;
+  b[6] = (b[6] & 0x0F) | 0x40;
+  b[8] = (b[8] & 0x3F) | 0x80;
+  snprintf(destino, 37, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+           b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+}
+
+// Data e hora em que a leitura foi medida. Sem relógio sincronizado, mostra há quanto tempo foi.
+String horaDaLeitura(const Leitura& l) {
+  uint32_t idadeS = (millis() - l.fimMs) / 1000;
+  time_t agora = time(nullptr);
+  char texto[64];
+  if (agora < 1700000000) {  // relógio ainda não sincronizado pela internet
+    snprintf(texto, sizeof(texto), "ha %lu s (hora ainda nao sincronizada)", (unsigned long)idadeS);
+  } else {
+    time_t quando = agora - idadeS;
+    struct tm t;
+    localtime_r(&quando, &t);
+    strftime(texto, sizeof(texto), "%d/%m/%Y %H:%M:%S", &t);
+  }
+  return String(texto);
+}
+
+// Guarda a leitura no fim do buffer circular. Cheio, sobrescreve a mais antiga e avisa.
+void guardarLeitura(uint32_t totalPulsos, float litros) {
+  if (qtdLeituras == MAX_LEITURAS) {
+    Serial.printf("!!! Buffer cheio (%d leituras): a mais antiga, de %.2f L, foi descartada.\n", MAX_LEITURAS,
+                  leituras[inicioBuffer].litros);
+    inicioBuffer = (inicioBuffer + 1) % MAX_LEITURAS;
+    qtdLeituras--;
+  }
+  Leitura& l = leituras[(inicioBuffer + qtdLeituras) % MAX_LEITURAS];
+  l.pulsos = totalPulsos;
+  l.litros = litros;
+  l.fimMs = millis();
+  gerarChave(l.chave);
+  qtdLeituras++;
+  Serial.printf("Leitura guardada (%d de %d no buffer), medida em %s.\n", qtdLeituras, MAX_LEITURAS,
+                horaDaLeitura(l).c_str());
+}
+
+void removerMaisAntiga() {
+  inicioBuffer = (inicioBuffer + 1) % MAX_LEITURAS;
+  qtdLeituras--;
 }
 
 // Abre a conexão segura e só a libera se o certificado for o esperado.
@@ -169,7 +281,8 @@ int concluir(int codigo, String& resposta) {
 }
 
 // Faz uma requisição POST com corpo JSON. Retorna o código HTTP e preenche a resposta.
-int postJson(const String& url, const String& corpo, const String& token, String& resposta) {
+// A chave (Idempotency-Key) faz a API devolver o lote já gravado, em vez de criar outro, num reenvio.
+int postJson(const String& url, const String& corpo, const String& token, const char* chave, String& resposta) {
   int codigo = HTTPC_ERROR_CONNECTION_REFUSED;
   for (int i = 1; i <= TENTATIVAS_CONEXAO && codigo == HTTPC_ERROR_CONNECTION_REFUSED; i++) {
     Serial.printf("POST %s ...\n", url.c_str());
@@ -177,6 +290,7 @@ int postJson(const String& url, const String& corpo, const String& token, String
     abrirConexao(url);
     http.addHeader("Content-Type", "application/json");
     if (token.length() > 0) http.addHeader("Authorization", "Bearer " + token);
+    if (chave != nullptr) http.addHeader("Idempotency-Key", chave);
     codigo = concluir(http.POST(corpo), resposta);
   }
   return codigo;
@@ -226,40 +340,88 @@ void avisarTokenRecusado() {
   Serial.println("  gere outro no site, em Usuarios > Rotacionar token, e cole em TOKEN_API.");
 }
 
-// Envia o lote. Devolve a resposta da API (o lote gravado, em JSON) ou "" se o lote não foi registrado.
-String enviarLote(float litros) {
-  conectarWiFi();
-  if (!tokenConfigurado()) {
-    Serial.println("Lote NAO enviado: cole o token de API do sensor em TOKEN_API (Usuarios > Rotacionar token).");
-    return "";
-  }
-  // Código negativo = sem resposta: a API pode estar acordando ou a conexão pode ter falhado.
+// Procura o processo na API. Código negativo = sem resposta: a API pode estar acordando.
+int obterProcessoId() {
   int processoId = -1;
   for (int i = 1; i <= TENTATIVAS_API; i++) {
     processoId = buscarProcessoId(TOKEN_API);
     if (ultimoCodigo >= 0) break;
     Serial.printf("Sem resposta da API (tentativa %d de %d).\n", i, TENTATIVAS_API);
   }
+  return processoId;
+}
+
+// Envia uma leitura como lote. 201 = gravado agora; 200 = a API já tinha esta chave (reenvio, sem duplicar).
+Resultado enviarLeitura(const Leitura& l, int processoId, String& resposta) {
+  char corpo[96];
+  snprintf(corpo, sizeof(corpo), "{\"processoId\":%d,\"pecas\":%d,\"litros\":%.2f}", processoId, PECAS, l.litros);
+  int codigo = postJson(String(API_URL) + "/lotes", corpo, TOKEN_API, l.chave, resposta);
+  if (codigo == 201 || codigo == 200) {
+    Serial.printf("Lote registrado na API: %s\n", resposta.c_str());
+    return ENVIADA;
+  }
+  if (codigo == 401) {
+    avisarTokenRecusado();
+    return PARAR;
+  }
+  if (codigo < 0 || codigo == 429 || codigo >= 500) {
+    Serial.printf("Sem envio agora (HTTP %d). A leitura continua guardada.\n", codigo);
+    return TENTAR_DEPOIS;
+  }
+  // Outro 4xx: a API recusou os dados, e reenviar não muda a resposta.
+  Serial.printf("A API recusou a leitura (HTTP %d): %s\n", codigo, resposta.c_str());
+  return RECUSADA;
+}
+
+// Envia as leituras guardadas, da mais antiga para a mais nova, enquanto houver Wi-Fi.
+void despejarLeituras() {
+  if (!tokenConfigurado()) {
+    Serial.println("Leituras NAO enviadas: cole o token de API do sensor em TOKEN_API (Usuarios > Rotacionar token).");
+    proximoEnvioMs = millis() + ESPERA_LIMITE_MS;
+    return;
+  }
+  Serial.printf(">>> Enviando %d leitura(s) guardada(s)...\n", qtdLeituras);
+  // Gerador parado durante o envio: os pulsos deixam o TLS lento demais no simulador, e a API fecha a conexão.
+  // Só acontece sem lote em andamento, então nenhum pulso de lote se perde.
+  ledcWrite(PINO_GERADOR, 0);
+  detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
+
+  int processoId = obterProcessoId();
   if (ultimoCodigo == 401) {
     avisarTokenRecusado();
-    return "";
+    proximoEnvioMs = millis() + ESPERA_LIMITE_MS;
+  } else if (processoId <= 0) {
+    if (ultimoCodigo == 200) Serial.println("Leituras NAO enviadas: confira PROCESSO_NOME no sketch.ino.");
+    else Serial.printf("Leituras NAO enviadas: a API respondeu HTTP %d ao listar os processos.\n", ultimoCodigo);
+    proximoEnvioMs = millis() + ESPERA_REENVIO_MS;
+  } else {
+    while (qtdLeituras > 0) {
+      if (!wifiDisponivel()) {
+        Serial.println("Wi-Fi caiu durante o envio. O restante continua guardado.");
+        break;
+      }
+      Leitura& l = leituras[inicioBuffer];
+      Serial.printf("Leitura medida em %s: %.2f L (%lu pulsos).\n", horaDaLeitura(l).c_str(), l.litros,
+                    (unsigned long)l.pulsos);
+      String resposta;
+      Resultado r = enviarLeitura(l, processoId, resposta);
+      if (r == ENVIADA) {
+        removerMaisAntiga();
+        Serial.printf("Restam %d leitura(s) no buffer.\n", qtdLeituras);
+        conferirStatus(resposta);
+      } else if (r == RECUSADA) {
+        Serial.println("Leitura descartada: a API nao aceita estes dados.");
+        removerMaisAntiga();
+      } else {
+        proximoEnvioMs = millis() + (r == PARAR || ultimoCodigo == 429 ? ESPERA_LIMITE_MS : ESPERA_REENVIO_MS);
+        break;
+      }
+    }
+    if (qtdLeituras == 0) Serial.println(">>> Buffer vazio: todas as leituras foram enviadas.");
   }
-  if (processoId <= 0) {
-    if (ultimoCodigo == 200) Serial.println("Lote NAO enviado: confira PROCESSO_NOME no sketch.ino.");
-    else Serial.printf("Lote NAO enviado: a API respondeu HTTP %d ao listar os processos.\n", ultimoCodigo);
-    return "";
-  }
-  char corpo[96];
-  snprintf(corpo, sizeof(corpo), "{\"processoId\":%d,\"pecas\":%d,\"litros\":%.2f}", processoId, PECAS, litros);
-  String resposta;
-  int codigo = postJson(String(API_URL) + "/lotes", corpo, TOKEN_API, resposta);
-  if (codigo == 201) {
-    Serial.printf("Lote registrado na API: %s\n", resposta.c_str());
-    return resposta;
-  }
-  if (codigo == 401) avisarTokenRecusado();
-  else Serial.printf("Falha ao registrar lote (HTTP %d): %s\n", codigo, resposta.c_str());
-  return "";
+
+  attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
+  freqAtual = 0;
 }
 
 // Lê um campo de texto da resposta, como "statusConformidade":"CRITICO". Devolve "" se não achar.
@@ -343,7 +505,6 @@ void setup() {
   ledcWrite(PINO_GERADOR, 0);
   cliente.setInsecure();  // o certificado é conferido pela impressão digital em conectarSeguro()
   cliente.setHandshakeTimeout(TEMPO_TLS_S);
-  WiFi.setAutoReconnect(true);
 
   Serial.println("Águas do Capibaribe - sensor de vazão (simulado)");
   Serial.printf("Coeficiente K: %.1f pulsos por litro\n", PULSOS_POR_LITRO);
@@ -352,7 +513,8 @@ void setup() {
     Serial.printf("MODO DE CALIBRAÇÃO: passe %.1f L pelo sensor entre os dois cliques. O lote NÃO vai para a API.\n",
                   LITROS_CALIBRACAO);
   } else {
-    conectarWiFi();
+    iniciarWiFi();
+    Serial.println("Para simular a perda de sinal, digite Q no monitor serial: o Wi-Fi cai por 60 s.");
   }
   Serial.println("Gire o potenciômetro para abrir a água e aperte o botão para iniciar o lote.");
 }
@@ -361,6 +523,14 @@ void loop() {
   static uint32_t ultimoPot = 0, ultimoStatus = 0, ultimoBotao = 0;
   static bool botaoAntes = HIGH;
   uint32_t agora = millis();
+
+  if (!MODO_CALIBRACAO) {
+    while (Serial.available()) {
+      char c = Serial.read();
+      if (c == 'q' || c == 'Q') iniciarQueda();
+    }
+    acompanharWiFi();
+  }
 
   if (agora - ultimoPot >= 200) {
     ultimoPot = agora;
@@ -388,20 +558,20 @@ void loop() {
       } else if (litros < 0.01) {
         Serial.println(">>> Lote encerrado: nenhuma água medida, lote não enviado.");
       } else {
-        Serial.printf(">>> Lote encerrado: %.2f L (%lu pulsos), %d pecas. Enviando...\n", litros,
-                      (unsigned long)totalPulsos, PECAS);
-        // Gerador parado durante o envio: os pulsos deixam o TLS lento demais no simulador, e a API fecha a conexão.
-        ledcWrite(PINO_GERADOR, 0);
-        detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
-        String resposta = enviarLote(litros);
-        // Ainda com o gerador parado: o apito é gerado no código e não pode ser atrapalhado pelos pulsos.
-        if (resposta.length() > 0) conferirStatus(resposta);
-        attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
-        freqAtual = 0;
+        Serial.printf(">>> Lote encerrado: %.2f L (%lu pulsos), %d pecas.\n", litros, (unsigned long)totalPulsos,
+                      PECAS);
+        guardarLeitura(totalPulsos, litros);
+        if (!wifiDisponivel()) Serial.println("Sem Wi-Fi: a leitura sera enviada quando ele voltar.");
       }
     }
   }
   botaoAntes = botao;
+
+  // Envia o buffer só sem lote em andamento: o envio para o contador de pulsos.
+  // O apito do lote crítico também roda com o gerador parado, sem ser atrapalhado pelos pulsos.
+  if (!loteAtivo && qtdLeituras > 0 && wifiDisponivel() && (int32_t)(millis() - proximoEnvioMs) >= 0) {
+    despejarLeituras();
+  }
 
   if (loteAtivo && agora - ultimoStatus >= 1000) {
     ultimoStatus = agora;
