@@ -16,7 +16,7 @@ import {
 } from '../components/ui'
 import { IconEdit, IconPlus, IconTarget } from '../components/icons'
 import DicaGlossario from '../components/DicaGlossario'
-import { fmtNum, nomeSugerido, unidadeCurta, unidadeLabel, type Processo, type Unidade } from '../domain'
+import { fmtNum, lerNumeroBR, nomeSugerido, unidadeCurta, unidadeLabel, type Processo, type Unidade } from '../domain'
 import { navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 
@@ -112,7 +112,8 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
   const { processos, salvarProcesso, notificar } = useApp()
   const [nome, setNome] = useState(processo?.nome ?? '')
   const [unidade, setUnidade] = useState<Unidade | ''>(processo?.unidade ?? '')
-  const [meta, setMeta] = useState(processo ? String(processo.meta) : '')
+  // Vírgula decimal, como o campo espera ("12,5", não "12.5").
+  const [meta, setMeta] = useState(processo ? String(processo.meta).replace('.', ',') : '')
   const [erros, setErros] = useState<Erros>({})
   const [salvando, setSalvando] = useState(false)
   const [aberto, setAberto] = useState(false)
@@ -125,9 +126,10 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
     if (!n) novo.nome = 'Informe o nome do processo.'
     else if (processos.some((p) => p.nome.toLowerCase() === n.toLowerCase() && p.id !== processo?.id)) novo.nome = 'Já existe um processo com esse nome.'
     if (!unidade) novo.unidade = 'Escolha a unidade da meta.'
-    const v = Number(meta.replace(',', '.'))
+    // "1.500" é mil e quinhentos (issue #139); antes virava 1,5.
+    const v = lerNumeroBR(meta)
     if (meta.trim() === '') novo.meta = 'Informe o valor da meta.'
-    else if (Number.isNaN(v)) novo.meta = 'Use apenas números no valor da meta.'
+    else if (Number.isNaN(v)) novo.meta = 'Use apenas números no valor da meta, por exemplo 12,5 ou 1.500.'
     else if (v <= 0) novo.meta = 'A meta deve ser maior que zero. Valores zero ou negativos não são aceitos.'
     setErros(novo)
     const primeiro = Object.keys(novo)[0]
@@ -221,8 +223,9 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
         >
           <TextInput
             id="p-meta"
-            type="number"
+            type="text"
             inputMode="decimal"
+            autoComplete="off"
             value={meta}
             invalid={!!erros.meta}
             suffix={unidade ? unidadeCurta[unidade] : 'litros'}
