@@ -448,7 +448,17 @@ h1, h2, h3, h4 {
   100% { opacity: 0; transform: translateY(-90px) scale(1.15); }
 }
 
+/* Gauge de tolerância (#98): o ponteiro gira suave até o desvio novo e a faixa crítica pulsa quando ativa. */
+.gauge-ponteiro { transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes gauge-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.gauge-pulso { animation: gauge-pulso 1.2s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .skeleton, .rise, .animate-spin, .water-fill, .water-surface, .water-ripple, .water-bubble { animation: none !important; }
+  .skeleton, .rise, .animate-spin, .water-fill, .water-surface, .water-ripple, .water-bubble, .gauge-pulso { animation: none !important; }
   .water-fill { clip-path: inset(0); }
+  .gauge-ponteiro { transition: none; }
 }

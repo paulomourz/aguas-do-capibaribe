@@ -22,6 +22,7 @@ import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 import { PainelPendentes, ResultadoPendenteCard } from '../components/FilaOffline'
 import DicaGlossario from '../components/DicaGlossario'
+import ToleranceGauge from '../components/ToleranceGauge'
 import { AvisoLimite, textoEspera, useEsperaLimite } from '../components/LimiteRequisicoes'
 import type { LotePendente } from '../services'
 
@@ -344,10 +345,16 @@ export function ResultadoCard({ lote, refEl, onNovo }: { lote: Lote; refEl?: Ref
           </h2>
           <StatusBadge status={st} size="lg" />
         </div>
-        <p className={cx('mt-6 text-[15px] font-medium', m.text)}>Desvio em relação à meta</p>
-        <p className={cx('font-display text-[64px] font-bold leading-none tracking-tight tabular-nums sm:text-[80px]', m.text)}>
-          {fmtPct(lote.desvio)}
-        </p>
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className={cx('text-[15px] font-medium', m.text)}>Desvio em relação à meta</p>
+            <p className={cx('font-display text-[64px] font-bold leading-none tracking-tight tabular-nums sm:text-[80px]', m.text)}>
+              {fmtPct(lote.desvio)}
+            </p>
+          </div>
+          {/* O desvio e a faixa já estão em texto ao lado (selo e número): o gauge é só o reforço visual. */}
+          <ToleranceGauge desvio={lote.desvio} status={st} legenda={false} decorativo className="w-full max-w-[200px] self-center sm:self-end" />
+        </div>
         <p className={cx('mt-4 flex items-start gap-2 text-base font-medium', m.text)}>
           <m.Icon size={20} strokeWidth={2.2} className="mt-0.5 shrink-0" />
           {mensagens[st]}

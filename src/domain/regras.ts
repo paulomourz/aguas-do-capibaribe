@@ -18,9 +18,10 @@ export const statusDaApi: Record<StatusConformidade, Status> = { DENTRO_DA_META:
 /*
  * Mesmos limites de StatusConformidade no backend: mudar nos dois. Usadas só para totais e médias
  * (relatório, dashboard, média do alerta); lotes usam o status da API.
- * Configuração única de faixas (desvio em %, limite superior inclusivo). Nunca exibir na interface.
+ * Configuração única de faixas (desvio em %, limite superior inclusivo). Nunca exibir os números na interface:
+ * o gauge de tolerância usa estas faixas só para desenhar os arcos coloridos, sem rótulo de limite.
  */
-const FAIXAS_DE_STATUS: { ate: number; status: Status }[] = [
+export const FAIXAS_DE_STATUS: readonly { ate: number; status: Status }[] = [
   { ate: 0, status: 'ok' },
   { ate: 8, status: 'warn' },
 ]
