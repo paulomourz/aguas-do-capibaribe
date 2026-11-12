@@ -25,3 +25,26 @@ export const meses = [
 /** aguas-do-capibaribe-relatorio-AAAA-MM.pdf */
 export const nomeArquivoRelatorio = (mes: number, ano: number) =>
   `aguas-do-capibaribe-relatorio-${ano}-${String(mes).padStart(2, '0')}.pdf`
+
+/**
+ * Lê um número digitado no padrão brasileiro: ponto separa milhar e vírgula separa decimal ("1.590" = 1590,
+ * "1.590,5" = 1590,5, "12,5" = 12,5). Um ponto fora de grupos de 3 dígitos ("1.5", "1.59") é ambíguo e dá NaN:
+ * melhor pedir para corrigir do que adivinhar e gravar um valor errado (issue #139). Texto que não é número dá NaN.
+ */
+export function lerNumeroBR(texto: string): number {
+  const t = texto.trim().replace(/\s/g, '')
+  if (!/^\d[\d.,]*$/.test(t)) return NaN
+  let normal: string
+  if (t.includes(',')) {
+    // Vírgula decimal: os pontos antes dela só podem ser de milhar.
+    const [inteira, decimal, ...resto] = t.split(',')
+    if (resto.length || decimal.includes('.') || (inteira.includes('.') && !/^\d{1,3}(\.\d{3})+$/.test(inteira))) return NaN
+    normal = `${inteira.replace(/\./g, '')}.${decimal}`
+  } else if (t.includes('.')) {
+    if (!/^\d{1,3}(\.\d{3})+$/.test(t)) return NaN
+    normal = t.replace(/\./g, '')
+  } else {
+    normal = t
+  }
+  return /^\d+(\.\d+)?$/.test(normal) ? Number(normal) : NaN
+}
