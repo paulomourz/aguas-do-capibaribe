@@ -5,7 +5,8 @@ Um arquivo por sessão, copiado de [`modelo-resultado.md`](modelo-resultado.md),
 
 | Sessão | Participante | SUS | T1 a T5 | Situação |
 |---|---|---|---|---|
-| — | — | — | — | **ainda não aplicado** |
+| [2026-11-11](2026-11-11-avaliacao-simulada-ia.md) | nenhum (avaliação por inspeção com IA) | não se aplica | 5 de 5 | **simulada**: não substitui o teste com operador |
+| — | operador real | — | — | **não aplicado** (limitação aceita pelo orientador) |
 
 Quando houver mais de um participante, acrescente aqui a média das notas SUS.
 

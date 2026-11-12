@@ -17,6 +17,16 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
     para o leitor de tela, para não repetir a informação.
   - **Testes:** `src/domain/__testes__/gauge.test.ts` (ângulo do ponteiro e arcos alinhados com `statusDe`).
 
+### Correções
+
+- **Números com ponto de milhar** (issue #139, achada na avaliação simulada da #50). No registro de lote, digitar
+  `1.590` litros gravava **2 L**, e na tela de processos uma meta de `1.500` virava 1,5. A nova `lerNumeroBR`
+  (`src/domain/formatacao.ts`) lê o padrão brasileiro: `1.590` = 1590, `1.590,5` e `12,5` como decimais. Um ponto
+  ambíguo, como `1.59`, é recusado com mensagem, em vez de gravar um valor errado.
+  - **Campos:** peças, litros e meta deixaram de ser `type="number"`, então as setas não cobrem mais os dígitos.
+  - **Celular:** peças e litros ficam em uma coluna, para o número aparecer inteiro.
+  - **Testes:** `numeroBR.test.ts` e `e2e/numeros.spec.ts`.
+
 ### Interface (limite de requisições)
 
 - **Erro 429 com contagem regressiva** (issue #101, RNF19). Quando a API responde 429 (`LIMITE_EXCEDIDO`), o
