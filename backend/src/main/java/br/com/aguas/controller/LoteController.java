@@ -48,11 +48,13 @@ public class LoteController {
     @RespostasDoc.Validacao
     public List<LoteDTO> listar(@AuthenticationPrincipal UsuarioAutenticado quem,
                                 @Parameter(description = "Filtra por processo") @RequestParam(required = false) Integer processoId,
+                                @Parameter(description = "Filtra por quem registrou (gestor e administrador; para o operador, vale sempre ele mesmo)")
+                                @RequestParam(required = false) Integer usuarioId,
                                 @Parameter(description = "Data e hora inicial, ISO 8601 com fuso", example = "2026-09-01T00:00:00-03:00")
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime inicio,
                                 @Parameter(description = "Data e hora final, ISO 8601 com fuso", example = "2026-09-30T23:59:59-03:00")
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fim) {
-        return lotes.listar(quem, processoId, inicio, fim);
+        return lotes.listar(quem, processoId, usuarioId, inicio, fim);
     }
 
     @GetMapping("/{id}")

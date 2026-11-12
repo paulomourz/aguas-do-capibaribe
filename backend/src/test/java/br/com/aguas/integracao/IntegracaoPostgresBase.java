@@ -351,6 +351,28 @@ abstract class IntegracaoPostgresBase {
     }
 
     @Test
+    void historicoFiltraPorQuemRegistrouSoParaGestor() throws Exception {
+        Conta g = conta("gestor");
+        Conta op1 = conta("operador");
+        Conta op2 = conta("operador");
+        int p = processo(g, "peca", "10");
+        int doOp1 = lote(op1, p, 5, "40").get("id").asInt();
+        int doOp2 = lote(op2, p, 5, "40").get("id").asInt();
+
+        // Gestor: só os lotes da pessoa escolhida, combinando com o processo.
+        List<Integer> doGestor = new ArrayList<>();
+        ler(chamar(get("/lotes?processoId=" + p + "&usuarioId=" + op2.id()), g).andExpect(status().isOk()))
+                .forEach(l -> doGestor.add(l.get("id").asInt()));
+        assertThat(doGestor).containsExactly(doOp2);
+
+        // Operador: o filtro de outra pessoa é ignorado; ele continua vendo só os próprios lotes.
+        List<Integer> doOperador = new ArrayList<>();
+        ler(chamar(get("/lotes?processoId=" + p + "&usuarioId=" + op2.id()), op1).andExpect(status().isOk()))
+                .forEach(l -> doOperador.add(l.get("id").asInt()));
+        assertThat(doOperador).containsExactly(doOp1);
+    }
+
+    @Test
     void usuarioDesativadoPerdeAcessoNaProximaRequisicao() throws Exception {
         Conta g = conta("admin");
         Conta op = conta("operador");

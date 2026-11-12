@@ -524,21 +524,21 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 
 | Atributo | Descrição |
 |---|---|
-| Descrição | Os usuários do site devem poder consultar os lotes registrados, do mais recente ao mais antigo, com filtro por processo. |
-| Entradas | Filtro opcional por processo (a API também aceita período). |
+| Descrição | Os usuários do site devem poder consultar os lotes registrados, do mais recente ao mais antigo, com filtros por período, processo e quem registrou. |
+| Entradas | Filtros opcionais e combináveis: período (data inicial e final, em dias do fuso America/Recife), processo e, para gestor e administrador, quem registrou (pessoa ou sensor). |
 | Processamento | O operador vê apenas os lotes que registrou; gestor e administrador veem todos. O operador recebe 404 ao pedir um lote de outra pessoa. |
 | Saídas | Lista com data e hora, processo, peças, litros, desvio e status; para gestor e administrador, também quem registrou. |
 | Prioridade | Essencial |
-| Origem | US-08, Cenários 1 e 2 |
+| Origem | US-08, Cenários 1 e 2 · issue #107 (filtros) |
 | Situação | Implementado (GET /lotes, GET /lotes/{id}). |
-| Verificação | Teste: operadorVeSoOsPropriosLotes (integração). |
+| Verificação | Teste: operadorVeSoOsPropriosLotes e historicoFiltraPorQuemRegistrouSoParaGestor (integração); filtroLotes.test.ts. |
 
 #### RF29 — Exportar o histórico em CSV
 
 | Atributo | Descrição |
 |---|---|
 | Descrição | O usuário deve poder baixar os lotes do filtro atual em CSV, para auditoria externa. |
-| Entradas | Lotes do filtro atual (todos, não só a página visível). |
+| Entradas | Lotes do filtro atual, com os mesmos filtros do histórico (período, processo e quem registrou), todos, não só a página visível. |
 | Processamento | O site gera o arquivo em ordem cronológica, com separador ";", vírgula decimal, BOM para o Excel, data e hora de Recife e em UTC, e protege contra fórmulas em textos digitados. |
 | Saídas | Arquivo CSV com id, data, hora, processo, peças, litros, esperado, diferença, desvio, status e quem registrou. |
 | Prioridade | Importante |
