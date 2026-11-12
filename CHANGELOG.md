@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Testes e IoT (complementos)
+
+- **Prints do teste de ponta a ponta no CI:** o job `frontend-build` guarda os prints de cada passo do fluxo do
+  operador (`e2e/fluxo-operador.spec.ts`, issue #104) no artefato `screenshots-e2e`, por 14 dias.
+- **Guia do buffer sem Wi-Fi** (issue #108) no `iot/LEIA-ME.md`: como o sensor guarda até 100 leituras, como evita
+  duplicar no reenvio e como simular a queda com o comando Q no monitor serial.
+
 ### Avisos (reenvio)
 
 - **Reenvio dos avisos pendentes do Telegram** (issue #97, RNF03). Uma rotina agendada (`ReenvioDeAvisos`, a cada

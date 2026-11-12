@@ -70,6 +70,16 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
 
+      # Prints de cada passo do fluxo do operador (e2e/fluxo-operador.spec.ts), para conferir a tela sem rodar o teste.
+      - name: Guarda os prints do teste de ponta a ponta
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-e2e
+          path: test-results/**/*.png
+          retention-days: 14
+          if-no-files-found: ignore
+
   # Vulnerabilidades conhecidas (CVEs) nas dependências do back-end (pom.xml) e do site (pnpm-lock.yaml),
   # pela base pública OSV.dev, sem token. Bloqueia com gravidade alta ou crítica (CVSS 7.0 ou mais).
   dependencias:
