@@ -1,10 +1,10 @@
-﻿# Gera TAP.pdf, ERS.pdf, seguranca.pdf e ciclo-de-vida.pdf a partir dos .md desta pasta, usando o marked e o Chrome (ou o Edge).
+﻿# Gera os PDFs dos documentos de gestão (TAP, ERS, segurança e ciclo de vida) e dos técnicos das normas (arquitetura e
+# testes, em docs/tecnico), a partir dos .md, usando o marked e o Chrome (ou o Edge). Cada PDF fica ao lado do seu .md.
 # Uso, a partir desta pasta:  powershell -ExecutionPolicy Bypass -File .\gerar-pdf.ps1
 # Precisa do Node.js (npx baixa o marked na primeira vez). O comentário <!-- sumario --> vira o sumário.
 
 $ErrorActionPreference = 'Stop'
 $aqui = Split-Path -Parent $MyInvocation.MyCommand.Path
-$destino = $aqui
 
 $navegadores = @(
   "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
@@ -17,7 +17,9 @@ $documentos = @(
   @{ Nome = 'TAP'; Rodape = 'Águas do Capibaribe · Termo de Abertura do Projeto v3.1' },
   @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v2.1 · ISO/IEC/IEEE 29148' },
   @{ Nome = 'seguranca'; Rodape = 'Águas do Capibaribe · Segurança da Informação v1.1 · ISO/IEC 27001' },
-  @{ Nome = 'ciclo-de-vida'; Rodape = 'Águas do Capibaribe · Processos do Ciclo de Vida v1.0 · ISO/IEC 12207' }
+  @{ Nome = 'ciclo-de-vida'; Rodape = 'Águas do Capibaribe · Processos do Ciclo de Vida v1.0 · ISO/IEC 12207' },
+  @{ Nome = 'arquitetura'; Pasta = '../tecnico'; Rodape = 'Águas do Capibaribe · Descrição da Arquitetura v1.1 · ISO/IEC/IEEE 42010' },
+  @{ Nome = 'testes'; Pasta = '../tecnico'; Rodape = 'Águas do Capibaribe · Documentação de Testes v1.0 · ISO/IEC/IEEE 29119' }
 )
 
 $estilo = @'
@@ -26,6 +28,8 @@ $estilo = @'
   @bottom-right { content: counter(page); font: bold 9pt Calibri, Arial, sans-serif; color: #12344d; } }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { font: 10.5pt/1.4 Calibri, Arial, sans-serif; color: #1f2933; }
+img { max-width: 100%; break-inside: avoid; }
+pre { font: 8.5pt Consolas, monospace; background: #faf6ee; padding: 6pt; white-space: pre; overflow: hidden; }
 h1, h2, h3, h4 { color: #12344d; break-after: avoid; }
 h1 { font-size: 18pt; margin: 0 0 8pt; }
 h1:not(:first-of-type) { break-before: page; }
@@ -44,8 +48,11 @@ code { font: 9pt Consolas, monospace; background: #faf6ee; }
 '@
 
 foreach ($d in $documentos) {
-  $md = Join-Path $aqui "$($d.Nome).md"
-  $saida = Join-Path $aqui ".$($d.Nome).corpo.html"
+  # Pasta do documento: esta, ou outra (docs/tecnico). O HTML temporário fica ao lado do .md, para as imagens
+  # com caminho relativo (como os diagramas da arquitetura) aparecerem no PDF.
+  $pasta = if ($d.Pasta) { [IO.Path]::GetFullPath((Join-Path $aqui $d.Pasta)) } else { $aqui }
+  $md = Join-Path $pasta "$($d.Nome).md"
+  $saida = Join-Path $pasta ".$($d.Nome).corpo.html"
   & npx --yes marked@12.0.2 -i $md -o $saida
   if ($LASTEXITCODE -ne 0) { throw "O marked falhou em $md." }
   $corpo = [IO.File]::ReadAllText($saida, [Text.Encoding]::UTF8)
@@ -69,9 +76,9 @@ foreach ($d in $documentos) {
 
   $html = "<!doctype html><html lang=""pt-BR""><head><meta charset=""utf-8""><style>" +
     $estilo.Replace('RODAPE', $d.Rodape) + "</style></head><body>$corpo</body></html>"
-  $temp = Join-Path $aqui ".$($d.Nome).gerado.html"
+  $temp = Join-Path $pasta ".$($d.Nome).gerado.html"
   [IO.File]::WriteAllText($temp, $html, (New-Object Text.UTF8Encoding $false))
-  $pdf = Join-Path $destino "$($d.Nome).pdf"
+  $pdf = Join-Path $pasta "$($d.Nome).pdf"
   $url = 'file:///' + ($temp -replace '\\', '/')
   & $nav --headless=new --disable-gpu --no-pdf-header-footer --virtual-time-budget=5000 "--print-to-pdf=$pdf" $url | Out-Null
   Remove-Item $temp
