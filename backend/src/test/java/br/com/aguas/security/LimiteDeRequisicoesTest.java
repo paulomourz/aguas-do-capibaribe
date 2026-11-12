@@ -41,7 +41,7 @@ import br.com.aguas.service.UsuarioService;
 
 /** Limite de login por IP e de lotes por usuário, passando pela cadeia de segurança real. */
 @WebMvcTest(controllers = { AuthController.class, LoteController.class })
-@Import({ SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class })
+@Import({ SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class, EventosDeSeguranca.class })
 @TestPropertySource(properties = {
         "app.jwt.segredo=segredo-de-teste-com-mais-de-32-caracteres",
         "app.jwt.expiracao=8h",
@@ -56,6 +56,7 @@ class LimiteDeRequisicoesTest {
 
     @Autowired MockMvc mvc;
     @Autowired JwtService jwt;
+    @Autowired EventosDeSeguranca eventos;
 
     @MockitoBean UsuarioRepository usuarios;
     @MockitoBean AuthService authService;
@@ -91,6 +92,21 @@ class LimiteDeRequisicoesTest {
                 .andExpect(header().exists(HttpHeaders.RETRY_AFTER))
                 .andExpect(jsonPath("$.codigo").value("LIMITE_EXCEDIDO"));
         verify(authService, times(5)).login(any());
+    }
+
+    @Test
+    void bloqueioDoLoginApareceNoPainelDeSegurancaComOIpMascarado() throws Exception {
+        when(authService.login(any())).thenThrow(new ApiException(HttpStatus.UNAUTHORIZED,
+                "CREDENCIAIS_INVALIDAS", "Usuário ou senha incorretos.", null));
+
+        for (int i = 0; i < 5; i++) entrar("10.9.9.1");
+        entrar("10.9.9.1").andExpect(status().isTooManyRequests());
+        entrar("10.9.9.1").andExpect(status().isTooManyRequests());
+
+        var bloqueio = eventos.resumo().bloqueios().stream()
+                .filter(b -> b.ip().equals("10.9.9.***")).findFirst().orElseThrow();
+        assertThat(bloqueio.rota()).isEqualTo(EventosDeSeguranca.ROTA_LOGIN);
+        assertThat(bloqueio.tentativas()).isEqualTo(2);
     }
 
     @Test

@@ -25,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.aguas.config.SecurityConfig;
+import br.com.aguas.controller.AuditoriaController;
 import br.com.aguas.controller.AuthController;
 import br.com.aguas.controller.ProcessoController;
 import br.com.aguas.controller.RelatorioController;
@@ -34,14 +35,16 @@ import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
 import br.com.aguas.entity.Perfil;
 import br.com.aguas.entity.Usuario;
 import br.com.aguas.repository.UsuarioRepository;
+import br.com.aguas.service.AuditoriaService;
 import br.com.aguas.service.AuthService;
 import br.com.aguas.service.ProcessoService;
 import br.com.aguas.service.RelatorioService;
 import br.com.aguas.service.UsuarioService;
 
 /** Segurança, validação e formato de erro dos endpoints, sem banco (serviços simulados). */
-@WebMvcTest(controllers = { UsuarioController.class, ProcessoController.class, AuthController.class, RelatorioController.class })
-@Import({ SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class })
+@WebMvcTest(controllers = { UsuarioController.class, ProcessoController.class, AuthController.class, RelatorioController.class,
+        AuditoriaController.class })
+@Import({ SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class, EventosDeSeguranca.class })
 @TestPropertySource(properties = {
         "app.limite.login-por-minuto=100000",
         "app.limite.lotes-por-minuto=100000",
@@ -58,6 +61,7 @@ class SegurancaWebTest {
     @MockitoBean ProcessoService processoService;
     @MockitoBean AuthService authService;
     @MockitoBean RelatorioService relatorioService;
+    @MockitoBean AuditoriaService auditoriaService;
 
     private String tokenDe(int id, Perfil perfil, boolean ativo) {
         Usuario u = new Usuario("Pessoa " + id, "pessoa" + id, "x".repeat(60), perfil);
@@ -65,6 +69,18 @@ class SegurancaWebTest {
         u.setAtivo(ativo);
         when(usuarios.findById(id)).thenReturn(Optional.of(u));
         return "Bearer " + jwt.gerar(id);
+    }
+
+    @Test
+    void eventosDeSegurancaSoParaOAdmin() throws Exception {
+        mvc.perform(get("/auditoria/seguranca")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/auditoria/seguranca").header(HttpHeaders.AUTHORIZATION, tokenDe(40, Perfil.gestor, true)))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/auditoria/seguranca").header(HttpHeaders.AUTHORIZATION, tokenDe(41, Perfil.admin, true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.desde").isString())
+                .andExpect(jsonPath("$.loginsRecusados").isNumber())
+                .andExpect(jsonPath("$.bloqueios").isArray());
     }
 
     @Test

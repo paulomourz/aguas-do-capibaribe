@@ -24,6 +24,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 1.2 | 05/11/2026 | Perfis de administrador e sensor, auditoria, registro sem conexão, exportação em CSV, aviso no Telegram, gráficos, limite de requisições, monitoramento, backup, desempenho medido, entrega contínua e remoção do modo simulado. | Equipe Águas do Capibaribe |
 | 2.0 | 09/11/2026 | Migração da IEEE 830 para a ISO/IEC/IEEE 29148: estrutura nova, requisitos de negócio e dos stakeholders, conceito de operação, método de verificação em cada requisito, seção de verificação, conformidade com normas e matriz de rastreabilidade com a verificação. Glossário têxtil (RNF26) e aviso de lote crítico no sensor (RF26) implementados. RF31 (vários sensores por linha de lavagem) adiado (issue #47). | Equipe Águas do Capibaribe |
 | 2.1 | 10/11/2026 | Adequação à LGPD (RNF27, issue #117): aviso de privacidade na tela de login, login de outras pessoas mascarado na API (auditoria e lista de usuários do gestor) e conferência dos dados pessoais do CSV e do PDF. Necessidade NS-05. | Equipe Águas do Capibaribe |
+| 2.2 | 11/11/2026 | Painel de eventos de segurança na Auditoria (RF32, issue #109): logins aceitos e recusados, bloqueios por limite com o IP mascarado e trocas de senha, com exportação em JSON. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -98,7 +99,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 | NB-02 | Descobrir cedo quando um processo passa a gastar demais. | Gestor da lavanderia | RF11, RF12, RF30 |
 | NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14 |
-| NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27 |
+| NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27, RF32 |
 | NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26; RF31 adiado (Apêndice B) |
 | NS-04 | Entender os termos técnicos dos processos de lavagem. | Operador e gestor | RNF26 |
 | NS-05 | Saber quais dados pessoais o sistema guarda e não ter o próprio login exposto a quem não precisa dele (LGPD). | Operador, gestor e administrador | RNF27 |
@@ -504,6 +505,19 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Situação | Implementado (GET /auditoria). |
 | Verificação | Teste: AuditoriaUsuarioTest; AuditoriaServiceTest; auditoriaListaAsAcoesComFiltrosEPaginacao (integração). |
 
+#### RF32 — Consultar os eventos de segurança
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O administrador deve poder ver as tentativas de login, os bloqueios pelo limite de requisições e as trocas de senha, e exportar esses números. |
+| Entradas | Tipo de evento (todos, logins, bloqueios ou trocas de senha). |
+| Processamento | A API conta os eventos em memória, com contadores do Micrometer (também em /api/actuator/metrics), desde o último início, sem tabela no banco. Os bloqueios guardam a rota, o IP mascarado, o primeiro e o último horário e a quantidade, no máximo 100 linhas. Nenhuma senha é guardada. A consulta é só do administrador. |
+| Saídas | Aba Eventos de segurança da tela Auditoria: logins aceitos e recusados, bloqueios por limite (login e registro de lotes), senhas trocadas e redefinidas, tabela dos bloqueios com IP mascarado, horários e tentativas, e exportação em JSON. Os números zeram quando a API reinicia, e a tela diz desde quando valem. |
+| Prioridade | Desejável |
+| Origem | Issue #109 (ISO/IEC 27001, registro de eventos) |
+| Situação | Implementado (GET /auditoria/seguranca). |
+| Verificação | Teste: EventosDeSegurancaTest; bloqueioDoLoginApareceNoPainelDeSegurancaComOIpMascarado; eventosDeSegurancaSoParaOAdmin; mascaraOIpMostrandoSoARede; segurancaJson.test.ts. |
+
 ### 3.1.7 Histórico de lotes
 
 #### RF23 — Consultar o histórico de lotes
@@ -647,7 +661,7 @@ O sistema web não exige hardware específico. O sensor simulado usa: ESP32 DevK
 ### 3.4.4 Interfaces de comunicação
 
 - HTTP com corpo JSON (UTF-8), sob o prefixo /api; autenticação pelo cabeçalho `Authorization: Bearer <token>`.
-- 19 endpoints: autenticação (2), usuários (5), processos (3), lotes (3), alertas (2), relatórios (1), auditoria (1) e monitoramento (2), descritos em docs/tecnico/api.md e no Swagger.
+- 20 endpoints: autenticação (2), usuários (5), processos (3), lotes (3), alertas (2), relatórios (1), auditoria (2) e monitoramento (2), descritos em docs/tecnico/api.md e no Swagger.
 - Códigos de resposta padronizados: 400, 401, 403, 404, 405, 409, 422, 429, 500 e 503, sempre no formato {codigo, mensagem, campos}.
 - Registro de lote: cabeçalho opcional Idempotency-Key (UUID); um reenvio com a mesma chave devolve o lote já gravado (200), em vez de criar outro (201).
 - Sensor simulado: HTTPS com conferência da impressão digital do certificado no projeto público; HTTP sem criptografia, pelo túnel, só no projeto local de testes (RNF06).
@@ -835,8 +849,9 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF29 | US-12 | GET /lotes | Histórico de lotes | Teste | Implementado |
 | RF30 | US-13 | — (Bot API do Telegram) | — (grupo do Telegram) | Teste e Demonstração | Implementado |
 | RF31 | US-15 | — | — | Não se aplica | Adiado (Apêndice B) |
+| RF32 | Issue #109 | GET /auditoria/seguranca | Auditoria (Eventos de segurança) | Teste | Implementado |
 
-Resumo: 31 requisitos funcionais, 30 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 32 requisitos funcionais, 31 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 

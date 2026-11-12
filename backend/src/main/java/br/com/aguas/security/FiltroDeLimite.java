@@ -22,29 +22,36 @@ public class FiltroDeLimite extends OncePerRequestFilter {
     private final Limitador lotes;
     private final String cabecalhoIp;
     private final RespostasDeSeguranca respostas;
+    private final EventosDeSeguranca eventos;
 
-    public FiltroDeLimite(LimiteProperties props, RespostasDeSeguranca respostas) {
+    public FiltroDeLimite(LimiteProperties props, RespostasDeSeguranca respostas, EventosDeSeguranca eventos) {
         this.login = new Limitador(props.loginPorMinuto());
         this.lotes = new Limitador(props.lotesPorMinuto());
         this.cabecalhoIp = props.cabecalhoIp();
         this.respostas = respostas;
+        this.eventos = eventos;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain cadeia)
             throws ServletException, IOException {
         long espera = 0;
+        String rota = null;
         if (HttpMethod.POST.matches(req.getMethod())) {
             String caminho = req.getRequestURI().substring(req.getContextPath().length());
             if (caminho.equals("/auth/login")) {
+                rota = EventosDeSeguranca.ROTA_LOGIN;
                 espera = login.consumir(ipDoCliente(req));
             } else if (caminho.equals("/lotes")
                     && SecurityContextHolder.getContext().getAuthentication() != null
                     && SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof UsuarioAutenticado quem) {
+                rota = EventosDeSeguranca.ROTA_LOTES;
                 espera = lotes.consumir(String.valueOf(quem.id()));
             }
         }
         if (espera > 0) {
+            // Para o painel de segurança do administrador (issue #109), com o IP mascarado.
+            eventos.bloqueio(rota, ipDoCliente(req));
             respostas.limiteExcedido(resp, espera);
             return;
         }

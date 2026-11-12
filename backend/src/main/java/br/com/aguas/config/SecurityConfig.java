@@ -23,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import br.com.aguas.security.ConversorJwt;
 import br.com.aguas.repository.UsuarioRepository;
+import br.com.aguas.security.EventosDeSeguranca;
 import br.com.aguas.security.FiltroDeLimite;
 import br.com.aguas.security.FiltroTokenDeApi;
 import br.com.aguas.security.JwtService;
@@ -35,7 +36,7 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filtros(HttpSecurity http, ConversorJwt conversor, RespostasDeSeguranca respostas,
-            LimiteProperties limite, UsuarioRepository usuarios) throws Exception {
+            LimiteProperties limite, UsuarioRepository usuarios, EventosDeSeguranca eventos) throws Exception {
         // O token de API (64 caracteres alfanuméricos) é tratado pelo FiltroTokenDeApi; o que sobra é JWT.
         DefaultBearerTokenResolver cabecalho = new DefaultBearerTokenResolver();
         BearerTokenResolver soJwt = req -> FiltroTokenDeApi.chaveDe(req) != null ? null : cabecalho.resolve(req);
@@ -75,7 +76,7 @@ public class SecurityConfig {
             .exceptionHandling(e -> e.authenticationEntryPoint(respostas).accessDeniedHandler(respostas))
             .addFilterBefore(new FiltroTokenDeApi(usuarios), BearerTokenAuthenticationFilter.class)
             // Depois do token, para limitar os lotes por usuário; depois do CORS, para o navegador ler o 429.
-            .addFilterAfter(new FiltroDeLimite(limite, respostas), BearerTokenAuthenticationFilter.class);
+            .addFilterAfter(new FiltroDeLimite(limite, respostas, eventos), BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

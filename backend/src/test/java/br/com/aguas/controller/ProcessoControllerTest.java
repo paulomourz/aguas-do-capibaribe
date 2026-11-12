@@ -35,6 +35,7 @@ import br.com.aguas.entity.Usuario;
 import br.com.aguas.repository.ProcessoRepository;
 import br.com.aguas.repository.UsuarioRepository;
 import br.com.aguas.security.ConversorJwt;
+import br.com.aguas.security.EventosDeSeguranca;
 import br.com.aguas.security.JwtService;
 import br.com.aguas.security.RespostasDeSeguranca;
 import br.com.aguas.service.ProcessoService;
@@ -44,7 +45,7 @@ import br.com.aguas.service.ProcessoService;
  * voltam com o erro no campo certo, e nada chega ao banco. Usa o ProcessoService real com o repositório simulado.
  */
 @WebMvcTest(controllers = ProcessoController.class)
-@Import({ ProcessoService.class, SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class })
+@Import({ ProcessoService.class, SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class, EventosDeSeguranca.class })
 @TestPropertySource(properties = {
         "app.limite.login-por-minuto=100000",
         "app.limite.lotes-por-minuto=100000",
