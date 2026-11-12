@@ -44,8 +44,10 @@ GRANT SELECT, INSERT, UPDATE ON public.usuario, public.processo, public.alerta T
 --    (o trigger trg_lote_imutavel também bloqueia, mas a permissão barra antes).
 --    A auditoria segue a mesma regra (trigger trg_auditoria_imutavel).
 GRANT SELECT, INSERT ON public.lote, public.alerta_lote, public.auditoria_usuario TO :"papel";
---    Avisos que o Telegram não recebeu (aviso_pendente): a API só registra.
+--    Avisos que o Telegram não recebeu (aviso_pendente): a API registra e, no reenvio,
+--    atualiza só as colunas da tentativa (V11). Sem DELETE: a linha fica como histórico.
 GRANT SELECT, INSERT ON public.aviso_pendente TO :"papel";
+GRANT UPDATE (enviado_em, tentativas, ultimo_erro) ON public.aviso_pendente TO :"papel";
 
 -- 5. Views: só leitura.
 GRANT SELECT ON public.v_alertas, public.v_historico_lotes TO :"papel";

@@ -65,11 +65,8 @@ public class AvisoDeAlerta {
                 telegram.enviar(texto);
                 log.info("Aviso do alerta {} enviado ao Telegram na tentativa {}.", alerta.alertaId(), feitas);
                 return;
-            } catch (RestClientResponseException e) {
-                erro = "HTTP " + e.getStatusCode().value();
             } catch (RuntimeException e) {
-                // Só o tipo do erro: a mensagem da exceção pode trazer a URL com o token.
-                erro = e.getClass().getSimpleName();
+                erro = descrever(e);
             }
             log.warn("Aviso do alerta {}: tentativa {} de {} falhou ({}).", alerta.alertaId(), feitas, TENTATIVAS, erro);
             if (feitas < TENTATIVAS && !esperar()) break;
@@ -96,6 +93,11 @@ public class AvisoDeAlerta {
             log.error("Aviso do alerta {} não foi enviado nem gravado como pendente: {}.", alerta.alertaId(),
                     e.getClass().getSimpleName());
         }
+    }
+
+    /** Só o status HTTP ou o tipo do erro: a mensagem da exceção pode trazer a URL com o token. */
+    static String descrever(RuntimeException e) {
+        return e instanceof RestClientResponseException r ? "HTTP " + r.getStatusCode().value() : e.getClass().getSimpleName();
     }
 
     String texto(AlertaAberto alerta) {

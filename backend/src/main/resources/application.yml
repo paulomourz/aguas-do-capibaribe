@@ -90,6 +90,10 @@ app:
     # Se o envio falhar, a API tenta de novo (3 envios no total), com esta pausa entre eles.
     # Se todos falharem, o aviso fica gravado como pendente (tabela aviso_pendente).
     espera-entre-tentativas: 2s
+    # Os pendentes são reenviados por uma rotina, a cada reenvio-a-cada, até reenvio-limite depois de
+    # ficarem pendentes. Quando um chega, aviso_pendente.enviado_em recebe a hora do envio.
+    reenvio-a-cada: 5m
+    reenvio-limite: 24h
   # Fuso usado para definir o mês dos relatórios.
   fuso-relatorios: America/Recife
   # Versão do pom.xml (preenchida no build); aparece no Swagger.
