@@ -6,6 +6,17 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Interface (gauge de tolerância)
+
+- **Gauge de tolerância hídrica no resultado do lote** (issue #98, US04). O cartão de resultado mostra, ao lado do
+  desvio, um semicírculo com as faixas oficiais (dentro da meta até 0%, atenção até 8%, crítico acima de 8%), lidas da
+  mesma configuração de `statusDe` (`FAIXAS_DE_STATUS`, agora exportada). Os números dos limites não aparecem na tela.
+  - O desvio e o status vêm da API; o ponteiro gira com transição suave quando o lote muda no estado global, e a faixa
+    crítica pulsa quando ativa. As duas animações ficam desligadas com `prefers-reduced-motion`.
+  - Cor nunca sozinha (RNF13): o selo com ícone e o texto do desvio ficam ao lado; no cartão o gauge é decorativo
+    para o leitor de tela, para não repetir a informação.
+  - **Testes:** `src/domain/__testes__/gauge.test.ts` (ângulo do ponteiro e arcos alinhados com `statusDe`).
+
 ### Interface (limite de requisições)
 
 - **Erro 429 com contagem regressiva** (issue #101, RNF19). Quando a API responde 429 (`LIMITE_EXCEDIDO`), o
