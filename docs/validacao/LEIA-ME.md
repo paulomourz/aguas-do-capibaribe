@@ -4,7 +4,10 @@ Teste do perfil **operador** com um operador real de lavanderia do Polo de Torit
 questionário SUS. Atende ao item #22 da seção 7 do Parecer Técnico de 27/10/2026 e ao critério de validação com persona
 da seção 8 do TAP.
 
-**Situação:** roteiro e material prontos; **aplicação ainda não feita**.
+**Situação:** roteiro e material prontos. O **teste com operador real não foi aplicado**: ficou como limitação aceita
+pelo orientador. Como mitigação, foi feita uma
+[avaliação simulada por inspeção, com apoio de IA](resultados/2026-11-11-avaliacao-simulada-ia.md), sem nota SUS. O kit
+continua pronto para um teste real.
 
 | Arquivo | Para que serve |
 |---|---|
