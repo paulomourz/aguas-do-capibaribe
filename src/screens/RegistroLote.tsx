@@ -17,7 +17,7 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconClipboard, IconClock, IconDroplet, IconHistory, IconPlus } from '../components/icons'
-import { esperadoDe, termoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
+import { esperadoDe, lerNumeroBR, termoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
 import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 import { PainelPendentes, ResultadoPendenteCard } from '../components/FilaOffline'
@@ -49,8 +49,9 @@ export default function RegistroLote() {
   const resultadoRef = useRef<HTMLDivElement>(null)
 
   const processo = processos.find((p) => p.id === processoId)
-  const nPecas = Number(pecas)
-  const nLitros = Number(String(litros).replace(',', '.'))
+  // Padrão brasileiro: "1.590" é mil quinhentos e noventa (issue #139); formato ambíguo vira NaN e cai na validação.
+  const nPecas = lerNumeroBR(pecas)
+  const nLitros = lerNumeroBR(litros)
   const esperadoPrevio = processo && nPecas > 0 ? esperadoDe(processo, nPecas) : null
 
   function validar(e: FormEvent) {
@@ -59,8 +60,10 @@ export default function RegistroLote() {
     const novo: Erros = {}
     if (!processo) novo.processo = 'Selecione o processo do lote.'
     if (pecas.trim() === '') novo.pecas = 'Informe a quantidade de peças.'
+    else if (Number.isNaN(nPecas)) novo.pecas = 'Digite só o número de peças, por exemplo 50 ou 1.200.'
     else if (!(nPecas > 0) || !Number.isInteger(nPecas)) novo.pecas = 'A quantidade de peças deve ser um número inteiro maior que zero.'
     if (String(litros).trim() === '') novo.litros = 'Informe os litros utilizados.'
+    else if (Number.isNaN(nLitros)) novo.litros = 'Digite só o número de litros, por exemplo 920 ou 1.590.'
     else if (!(nLitros > 0)) novo.litros = 'Os litros utilizados devem ser maiores que zero.'
     setErros(novo)
     setFalha(null)
@@ -203,14 +206,14 @@ export default function RegistroLote() {
                   </p>
                 )}
 
-                <div className="grid grid-cols-2 items-start gap-4 sm:gap-6">
+                {/* Uma coluna no celular: em duas, o campo de litros ficava estreito e cortava o número (issue #139). */}
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-6">
                   <Field id="pecas" label="Peças" error={erros.pecas} hint="Quantidade total de peças do lote.">
                     <TextInput
                       id="pecas"
-                      type="number"
+                      type="text"
                       inputMode="numeric"
-                      min={1}
-                      step={1}
+                      autoComplete="off"
                       value={pecas}
                       invalid={!!erros.pecas}
                       suffix="peças"
@@ -224,9 +227,9 @@ export default function RegistroLote() {
                   <Field id="litros" label="Litros utilizados" error={erros.litros} hint="Total de litros usados no lote.">
                     <TextInput
                       id="litros"
-                      type="number"
+                      type="text"
                       inputMode="decimal"
-                      min={1}
+                      autoComplete="off"
                       value={litros}
                       invalid={!!erros.litros}
                       suffix="litros"
