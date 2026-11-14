@@ -6,6 +6,12 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+## [1.1.0] - 2026-11-14
+
+Versão com as entregas dos pareceres das Weeks 01 e 02: perfis e auditoria, modo offline, avisos no Telegram com
+reenvio, token de API do sensor, pegada hídrica, gauge, LGPD, segurança do contêiner e do CI, e documentação nas
+normas ISO/IEC.
+
 ### Documentação da versão 1.1.0
 
 - **Auditoria nas normas e cronograma** (`docs/gestao/auditoria.md` e PDF): resultado por norma, 12 achados com o
@@ -375,5 +381,6 @@ Primeira versão preliminar: baseline das semanas 1 a 3 do cronograma do TAP.
 
 - README, guia em PDF, Termo de Abertura v2.1 e Especificação de Requisitos de Software (IEEE 830).
 
+[1.1.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.1.0
 [1.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.0.0
 [0.1.0-alpha]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v0.1.0-alpha
