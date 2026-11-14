@@ -4,10 +4,10 @@
 
 **Sistema de Gestão de Consumo Hídrico por Lote em Lavanderias de Jeans do Agreste Pernambucano**
 
-Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.1**, atualizada em 9 de
-novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (20/10/2026) e 3.0 (05/11/2026).
+Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.2**, atualizada em 14 de
+novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (20/10/2026), 3.0 (05/11/2026) e 3.1 (09/11/2026).
 
-> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
+> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. A versão 3.2 acompanha a versão 1.1.0 do sistema, com as entregas da sprint de 10 a 14/11/2026 (seção 11). Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
 
 <!-- sumario -->
 
@@ -21,12 +21,12 @@ novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (
 | Responsável / aluno | Pedro |
 | Patrocinador / orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
 | Data de elaboração | 22 de setembro de 2026 (versão 1.0) |
-| Última atualização | 9 de novembro de 2026 (versão 3.1) |
+| Última atualização | 14 de novembro de 2026 (versão 3.2) |
 | Região de aplicação | Toritama, Caruaru e Santa Cruz do Capibaribe (PE) — Agreste Pernambucano |
-| Tipo de solução | Sistema web em arquitetura REST: front-end em React, acessado pelo navegador e instalável como aplicativo (PWA); back-end em Java com Spring Boot, que expõe uma API REST; banco de dados PostgreSQL. |
+| Tipo de solução | Sistema web em arquitetura REST: front-end em React com TypeScript, acessado pelo navegador e instalável como aplicativo (PWA); back-end em Java com Spring Boot, que expõe uma API REST; banco de dados PostgreSQL. |
 | Endereço do sistema | Site: https://aguas-do-capibaribe.onrender.com · API: https://aguas-api-a0vq.onrender.com/api |
 | Repositório GitHub oficial | https://github.com/paulomourz/aguas-do-capibaribe (privado, fluxo GitFlow, branch padrão develop) |
-| Versão do sistema | 1.0.0, lançada em 02/11/2026; as entregas posteriores estão na develop e entram na próxima versão |
+| Versão do sistema | 1.1.0, lançada em 14/11/2026 (a 1.0.0 saiu em 02/11/2026) |
 
 ## 2. Papéis no projeto
 
@@ -50,7 +50,7 @@ As lavanderias industriais de jeans do Agreste Pernambucano — polo responsáve
 
 ### 3.2 A solução proposta
 
-Um sistema web, em arquitetura REST, que permite a lavanderias de jeans cadastrar metas de consumo de água por tipo de processo, registrar o consumo real por lote produzido, comparar automaticamente o realizado com a meta e gerar alertas, avisos e relatórios históricos que sustentem tanto a redução de custo quanto a comprovação de conformidade ambiental perante clientes e órgãos fiscalizadores. O back-end, em Java com Spring Boot, expõe uma API REST responsável pelas regras de negócio e pela persistência em PostgreSQL; o front-end, em React, consome essa API e funciona no computador e no celular, inclusive com a conexão oscilando.
+Um sistema web, em arquitetura REST, que permite a lavanderias de jeans cadastrar metas de consumo de água por tipo de processo, registrar o consumo real por lote produzido, comparar automaticamente o realizado com a meta e gerar alertas, avisos e relatórios históricos que sustentem tanto a redução de custo quanto a comprovação de conformidade ambiental perante clientes e órgãos fiscalizadores. O back-end, em Java com Spring Boot, expõe uma API REST responsável pelas regras de negócio e pela persistência em PostgreSQL; o front-end, em React com TypeScript, consome essa API e funciona no computador e no celular, inclusive com a conexão oscilando.
 
 ### 3.3 Justificativa financeira e de impacto
 
@@ -104,12 +104,12 @@ Tratamento definido em outro documento: o registro de volume de efluente e o ín
 |---|---|---|
 | Front-end | React 19, TypeScript, Vite 8, Tailwind CSS 4 | Protótipo gerado com apoio da IA do Figma. Instalável como aplicativo (PWA), com fila de lotes sem conexão no próprio aparelho. |
 | Back-end | Java 25 (LTS) com Spring Boot 3.5 | API REST, Spring Data JPA, validação, Spring Security (JWT), limite de requisições, cache da lista de processos, monitoramento (Actuator) e aviso no Telegram. |
-| Banco de dados | PostgreSQL 18 | Esquema versionado com migrações Flyway (V1 a V8). A API conecta com o usuário restrito aguas_api, sem permissão de apagar dados nem de alterar o esquema. |
+| Banco de dados | PostgreSQL 18 | Esquema versionado com migrações Flyway (V1 a V11). A API conecta com o usuário restrito aguas_api, sem permissão de apagar dados nem de alterar o esquema. |
 | Comunicação | API REST em JSON | 19 endpoints sob /api, documentados no Swagger e em docs/tecnico/api.md. |
 | Simulação de IoT | Wokwi (ESP32) | Projeto público em HTTPS, ligado à API publicada; projeto local para testes com o Docker. |
 | Hospedagem | Render (site e API) e Neon (banco) | Planos gratuitos. O Render só publica depois que o CI passa e confere a saúde da API. |
 | Execução local | Docker Compose | Sobe banco, API e site com um comando, com túnel opcional para o Wokwi (plano B de apresentação). |
-| Qualidade | GitHub Actions | A cada pull request: 98 testes do back-end, 47 de unidade e 3 de ponta a ponta do front-end, build e teste do Docker. |
+| Qualidade | GitHub Actions | A cada pull request: 169 testes do back-end, 199 de unidade e 10 de ponta a ponta do front-end, build, teste do Docker, vulnerabilidades nas dependências e testes de mutação. Teste de carga com até 100 sensores sob demanda. |
 | Versionamento | GitHub | Repositório privado com GitFlow (main, develop, feature, release, hotfix); develop é a branch padrão e a main só recebe versões. |
 
 **Princípios de arquitetura.** O front-end nunca acessa o banco: toda operação passa pela API REST. O back-end concentra as regras de negócio (desvio, status, alertas, autorização por perfil); o banco calcula o esperado de cada lote e impede que um lote ou um registro de auditoria seja alterado ou apagado. Senhas são guardadas com hash BCrypt, e nenhuma senha ou token fica no repositório.
@@ -154,9 +154,9 @@ Os documentos seguem a estrutura de cada norma, adaptada ao porte de um projeto 
 
 ## 8. Critérios de sucesso
 
-| Critério | Situação em 09/11/2026 |
+| Critério | Situação em 14/11/2026 |
 |---|---|
-| Sistema web funcional (front-end React e API REST em Spring Boot) com cadastro, registro de lote e comparação automática com a meta. | Atendido; sistema publicado. |
+| Sistema web funcional (front-end React com TypeScript e API REST em Spring Boot) com cadastro, registro de lote e comparação automática com a meta. | Atendido; sistema publicado. |
 | Autenticação funcional e persistência dos dados em PostgreSQL. | Atendido. |
 | Geração de pelo menos um relatório histórico consolidado a partir de dados de teste. | Atendido; relatório mensal com PDF e exportação em CSV. |
 | Validação do conceito com pelo menos um cenário ou persona representativo do setor. | **Pendente:** roteiro, questionário SUS e kit prontos em docs/validacao/; falta aplicar com um operador de Toritama (issue #50). |
@@ -188,7 +188,8 @@ Semanas contadas a partir de 12/10/2026. A data final de entrega ainda precisa s
 | 3 | Lotes, desvio e status, histórico e alertas (regra de 3 lotes consecutivos). | Concluída |
 | 4 | Dashboard e relatório mensal com PDF; integração completa do front-end. Ponto de verificação do IoT físico. | Concluída; ponto de verificação a formalizar |
 | 5 | Testes dos fluxos completos, implantação e simulação de IoT com a API publicada. Versão 1.0.0 (02/11/2026). | Concluída |
-| 6 | Itens do parecer técnico, documentação, validação com persona e apresentação. | Em andamento |
+| 6 | Itens do parecer técnico, documentação nas normas ISO/IEC, versão 1.1.0 (14/11/2026). | Concluída |
+| 7 | Auditoria e cronograma (16/11), revisão completa, correções e ensaio; tudo pronto até 23/11/2026. | Em andamento |
 
 ## 11. Alterações desde a versão 2.1
 
@@ -205,19 +206,21 @@ Semanas contadas a partir de 12/10/2026. A data final de entrega ainda precisa s
 | Segurança | Login e perfis. | Limite de tentativas de login e de envio de lotes (issue #60); usuário restrito no banco; HTTPS. |
 | Desempenho | Não medido. | Teste de carga (issue #56), índices medidos com EXPLAIN ANALYZE (issue #59) e cache da lista de processos (issue #46). |
 | Operação | API não publicada. | Site e API no Render, banco no Neon; monitoramento de saúde e métricas (issue #51); backup e restauração com verificação (issue #53). |
-| Banco | Script SQL; usuário postgres. | Migrações Flyway V1 a V8; usuário restrito aguas_api. |
+| Banco | Script SQL; usuário postgres. | Migrações Flyway V1 a V11; usuário restrito aguas_api. |
 | Execução local | PostgreSQL na máquina de DevOps. | Docker Compose com banco, API, site e túnel opcional. |
 | Modo simulado do site | Dados de exemplo sem API. | Removido (issue #49); para demonstrar sem internet, usa-se o Docker. |
 | Qualidade e entrega | Testes locais. | CI no GitHub Actions; o Render só publica depois do CI (issue #68). |
 | IoT | Túnel temporário em HTTP. | Projeto público em HTTPS ligado à API publicada; projeto local para testes. |
 | Validação com persona | Prevista. | Roteiro, questionário SUS e kit prontos (issue #50); aplicação pendente. |
 
+Na versão 3.2 (14/11/2026), com o sistema na versão 1.1.0: pegada hídrica por peça (issue #116), token de API do sensor (issues #103 e #129), reenvio dos avisos do Telegram (issue #97), gauge de tolerância (issue #98), filtros do histórico (issue #107), exportação em CSV pela API (issue #99), painel de eventos de segurança (issue #109), aviso de privacidade (LGPD, issue #117), contador do erro 429 (issue #101), contraste WCAG AA (issue #106), buffer do sensor sem Wi-Fi (issue #108), calibração do sensor (issue #114), vulnerabilidades e testes de mutação no CI (issues #112 e #102), imagem distroless e segredos como arquivos (issues #105 e #118), carga com 100 sensores (issue #113) e diagramas C4 (issue #111).
+
 Na versão 3.1 (09/11/2026): glossário têxtil na interface (issue #55), aviso de lote crítico com buzzer e LED no sensor (issue #83), tema escuro (issue #82) e documentação nas normas ISO/IEC (seção 5.1), com a ERS migrada da IEEE 830 para a ISO/IEC/IEEE 29148. A US-15 (vários sensores por linha de lavagem, issue #47) foi adiada (seção 11.1).
 
 ### 11.1 Em aberto
 
 - **Bancada física (seção 6):** a equipe propõe ficar no simulado; falta a ata assinada pelo orientador. **[A CONFIRMAR]**
-- **Versão 1.0.0:** o parecer orienta não declarar 1.0.0 antes da homologação, que ainda não foi feita; a numeração precisa ser alinhada com o orientador. **[A CONFIRMAR]**
+- **Numeração das versões:** o parecer de 27/10/2026 orienta não declarar 1.0.0 antes da homologação; o parecer da Week 02 (10/11/2026) já cita a preparação da 1.1.0, lançada em 14/11/2026. A homologação com operador real segue como limitação registrada (issue #50). **[A CONFIRMAR]**
 - **Regra de alerta:** hoje, cada nova sequência de 3 lotes acima da meta abre outro alerta, se a anterior foi interrompida; o parecer descreve o lote sendo anexado ao alerta já aberto. **[A CONFIRMAR]**
 - **Item adiado:** vários sensores por linha de lavagem (US-15, RF31, issue #47). O sensor é simulado no Wokwi, que roda no navegador, e cada sensor a mais precisa de outra aba do simulador aberta ao mesmo tempo; no teste de 06/11/2026, com o computador carregado, um único sensor caiu para 3% da velocidade e a conexão segura com a API falhou. A API não é o limite: aceita lotes de vários dispositivos ao mesmo tempo (teste de carga com 50 sensores). Com sensores físicos, o caminho é uma conta de perfil sensor por linha de lavagem, sem mudar o banco. Detalhes no Apêndice B da ERS.
 - **Numeração deste termo:** o parecer de 27/10/2026 cita um TAP v3.0 que não está no repositório; esta versão segue a numeração do repositório. **[A CONFIRMAR]**

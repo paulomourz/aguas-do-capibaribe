@@ -6,6 +6,16 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Documentação da versão 1.1.0
+
+- **Auditoria nas normas e cronograma** (`docs/gestao/auditoria.md` e PDF): resultado por norma, 12 achados com o
+  ajuste e a evidência, participação por integrante e cronograma até 23/11/2026, para a aula de 16/11.
+- **ERS v2.4, TAP v3.2, guia 2.2, arquitetura 1.2, testes 1.1 e segurança 1.2**, com as entregas de 10 a 14/11/2026:
+  RF35 (token de API do sensor), reenvio dos avisos (RF30), gauge (RF24), buffer do sensor (RF26), contador do 429
+  (RNF19), contraste WCAG AA (RNF13), carga com 100 sensores (RNF17), CI com vulnerabilidades e mutação (RNF24),
+  RNF28 (imagem distroless e segredos como arquivos), migrações V9 a V11 e números de testes atuais (169 no back-end,
+  199 de unidade e 10 de ponta a ponta no site). README, banco e guia com "React com TypeScript". PDFs gerados de novo.
+
 ### Relatórios (pegada hídrica)
 
 - **Pegada hídrica por peça** (issue #116, RF34). O resumo mensal da API (`GET /relatorios/resumo`) passa a trazer
