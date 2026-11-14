@@ -19,7 +19,7 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
-import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
 import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
 
@@ -228,6 +228,7 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
                 { key: 'l', header: 'Lotes', num: true, render: (r) => fmtNum(r.lotes) },
                 { key: 'c', header: 'Consumido (L)', num: true, render: (r) => fmtNum(r.real) },
                 { key: 'e', header: 'Esperado (L)', num: true, render: (r) => fmtNum(r.esperado) },
+                { key: 'lp', header: 'L/peça', num: true, render: (r) => fmtLitrosPorPeca(r.litrosPorPeca) },
                 { key: 'd', header: 'Desvio', num: true, mobile: 'value', render: (r) => <span className="font-semibold">{fmtPct(desvioDe(r.real, r.esperado))}</span> },
                 { key: 's', header: 'Status', mobile: 'badge', render: (r) => <StatusBadge status={statusDe(desvioDe(r.real, r.esperado))} size="sm" /> },
               ]}
@@ -237,6 +238,7 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
                   <td className={`${tdF} text-right tabular-nums`}>{fmtNum(lotes)}</td>
                   <td className={`${tdF} whitespace-nowrap text-right tabular-nums`}>{fmtNum(real)}</td>
                   <td className={`${tdF} whitespace-nowrap text-right tabular-nums`}>{fmtNum(esperado)}</td>
+                  <td className={`${tdF} text-right tabular-nums`}>{fmtLitrosPorPeca(litrosPorPeca(real, dados.reduce((s, r) => s + r.pecas, 0)))}</td>
                   <td className={`${tdF} text-right tabular-nums`}>{fmtPct(totalDesvio)}</td>
                   <td className={tdF}>
                     <StatusBadge status={statusDe(totalDesvio)} size="sm" />
@@ -377,8 +379,8 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
                   <table className="mt-8 w-full border-collapse text-left text-[14px]">
                     <thead>
                       <tr className="border-b-2 border-brand">
-                        {['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'Desvio', 'Situação'].map((h, i) => (
-                          <th key={h} className={`py-2 text-[13px] font-medium text-ink-2 ${i > 0 && i < 5 ? 'text-right' : ''} ${i === 5 ? 'pl-6' : ''}`}>
+                        {['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'L/peça', 'Desvio', 'Situação'].map((h, i) => (
+                          <th key={h} className={`py-2 text-[13px] font-medium text-ink-2 ${i > 0 && i < 6 ? 'text-right' : ''} ${i === 6 ? 'pl-6' : ''}`}>
                             {h}
                           </th>
                         ))}
@@ -394,6 +396,7 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
                             <td className="py-3 text-right tabular-nums">{fmtNum(r.lotes)}</td>
                             <td className="py-3 text-right whitespace-nowrap tabular-nums">{fmtNum(r.real)}</td>
                             <td className="py-3 text-right whitespace-nowrap tabular-nums">{fmtNum(r.esperado)}</td>
+                            <td className="py-3 text-right tabular-nums">{fmtLitrosPorPeca(r.litrosPorPeca)}</td>
                             <td className="py-3 text-right font-semibold tabular-nums">{fmtPct(dv)}</td>
                             <td className={`py-3 pl-6 ${m.text}`}>
                               <span className="inline-flex items-center gap-1.5 font-semibold">
@@ -410,13 +413,14 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
                         <td className="py-3 text-right font-semibold tabular-nums">{fmtNum(lotes)}</td>
                         <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">{fmtNum(real)}</td>
                         <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">{fmtNum(esperado)}</td>
+                        <td className="py-3 text-right font-semibold tabular-nums">{fmtLitrosPorPeca(litrosPorPeca(real, dados.reduce((s, r) => s + r.pecas, 0)))}</td>
                         <td className="py-3 text-right font-semibold tabular-nums">{fmtPct(desvioDe(real, esperado))}</td>
                         <td className="py-3 pl-6" />
                       </tr>
                     </tfoot>
                   </table>
                   <p className="mt-4 text-[12px] text-ink-2">
-                    Desvio = (consumido − esperado) ÷ esperado. Valores em litros.
+                    Desvio = (consumido − esperado) ÷ esperado. L/peça = consumido ÷ peças. {textoDaReferencia}. Valores em litros.
                   </p>
                 </>
               )}

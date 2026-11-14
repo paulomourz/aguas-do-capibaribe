@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Relatórios (pegada hídrica)
+
+- **Pegada hídrica por peça** (issue #116, RF34). O resumo mensal da API (`GET /relatorios/resumo`) passa a trazer
+  `pecas` e `litrosPorPeca` (litros ÷ peças, 2 casas; null sem peças). O Dashboard ganha o indicador **Água por
+  peça**, com a média do mês e a referência de 49 a 70 L por peça da lavanderia completa, e a coluna **L/peça** aparece
+  no resumo do Dashboard, no Relatório, na pré-visualização e no PDF. Testes: `PegadaHidricaTest`, integração do
+  resumo mensal e `pegada.test.ts`.
+
 ### Relatórios (exportação em CSV pela API)
 
 - **`GET /api/relatorios/csv?inicio=&fim=&processoId=`** (issue #99, RF33), só gestor: todos os lotes de um período

@@ -32,5 +32,5 @@ export type Alerta = {
   status: AlertaStatus
 }
 
-/** Consumo de um processo no mês. */
-export type Resumo = { processoId: string; real: number; esperado: number; lotes: number }
+/** Consumo de um processo no mês, com o total de peças e a pegada hídrica (litros por peça, #116). */
+export type Resumo = { processoId: string; real: number; esperado: number; lotes: number; pecas: number; litrosPorPeca: number | null }
