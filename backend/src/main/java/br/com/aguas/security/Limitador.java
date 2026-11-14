@@ -32,9 +32,18 @@ class Limitador {
         this.relogioNanos = relogioNanos;
     }
 
+    /** Chave do balde dividido pelas chaves novas quando a memória está cheia de chaves em uso. */
+    static final String EXCESSO = "\u0000excesso";
+
     /** Devolve 0 se a requisição pode seguir; senão, quantos segundos esperar (pelo menos 1). */
     long consumir(String chave) {
-        if (entradas.size() >= MAX_CHAVES && !entradas.containsKey(chave)) limpar();
+        if (entradas.size() >= MAX_CHAVES && !entradas.containsKey(chave)) {
+            limpar();
+            // Continua cheio: todas as chaves foram usadas no último minuto. As novas dividem um balde só,
+            // em vez de apagar os limites de quem já está na memória. Apagar deixaria um ataque com muitos
+            // IPs zerar o limite de todo mundo, inclusive o próprio.
+            if (entradas.size() >= MAX_CHAVES) chave = EXCESSO;
+        }
         Entrada entrada = entradas.computeIfAbsent(chave, c -> new Entrada(novoBalde(), new long[1]));
         entrada.ultimoUso()[0] = relogioNanos.getAsLong();
         var resultado = entrada.balde().tryConsumeAndReturnRemaining(1);
@@ -50,7 +59,6 @@ class Limitador {
     private void limpar() {
         long agora = relogioNanos.getAsLong();
         entradas.values().removeIf(e -> agora - e.ultimoUso()[0] > JANELA.toNanos());
-        if (entradas.size() >= MAX_CHAVES) entradas.clear();
     }
 
     private Bucket novoBalde() {

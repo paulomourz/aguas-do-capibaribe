@@ -6,6 +6,28 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Segurança (revisão de 14/11/2026)
+
+- **Cabeçalhos de segurança no site do Docker** (`docker/cabecalhos-seguranca.conf`): Content-Security-Policy (só
+  scripts do próprio site; estilos e fontes também do Google Fonts), `frame-ancestors 'none'` e `X-Frame-Options:
+  DENY` contra clickjacking, `Referrer-Policy`, `Permissions-Policy` e `nosniff`, também no `sw.js` e no manifesto.
+  O Nginx não mostra mais a versão. O job `docker-compose` do CI confere os cabeçalhos. No Render, os mesmos
+  cabeçalhos vão nas configurações do site estático. Testado no Chrome com o site gerado: nenhuma violação, fontes e
+  service worker carregando.
+- **Limite de login por conta** (`LIMITE_LOGIN_POR_CONTA_POR_MINUTO`, padrão 10): soma as tentativas de cada conta
+  vindas de qualquer IP, contra a tentativa de senhas espalhada por muitos IPs. Responde o mesmo 429 com
+  `Retry-After`, então o contador do site continua funcionando.
+- **Limitador sem zerar a memória:** com 10.000 chaves em uso no mesmo minuto, as novas dividem um balde só, em vez de
+  apagar todos os limites. Antes, muitos IPs diferentes zeravam o limite de todo mundo, inclusive o de quem já estava
+  bloqueado.
+- **Testes:** `mesmaContaTentadaDeMuitosIpsRecebe429` e `memoriaCheiaNaoZeraOLimiteDeQuemJaEstaBloqueado`.
+
+## [1.1.0] - 2026-11-14
+
+Versão com as entregas dos pareceres das Weeks 01 e 02: perfis e auditoria, modo offline, avisos no Telegram com
+reenvio, token de API do sensor, pegada hídrica, gauge, LGPD, segurança do contêiner e do CI, e documentação nas
+normas ISO/IEC.
+
 ### Documentação da versão 1.1.0
 
 - **Auditoria nas normas e cronograma** (`docs/gestao/auditoria.md` e PDF): resultado por norma, 12 achados com o
@@ -375,5 +397,6 @@ Primeira versão preliminar: baseline das semanas 1 a 3 do cronograma do TAP.
 
 - README, guia em PDF, Termo de Abertura v2.1 e Especificação de Requisitos de Software (IEEE 830).
 
+[1.1.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.1.0
 [1.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.0.0
 [0.1.0-alpha]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v0.1.0-alpha

@@ -63,6 +63,7 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `ADMIN_SENHA` | só na 1ª inicialização | Senha (8 a 72 bytes) do administrador principal, usada apenas para criá-lo |
 | `ADMIN_LOGIN` / `ADMIN_NOME` | não | Login (`capibaribe.admin`) e nome do administrador principal |
 | `LIMITE_LOGIN_POR_MINUTO` / `LIMITE_LOTES_POR_MINUTO` | não (5 / 60) | Tentativas de login por IP e lotes por usuário, por minuto. Acima disso, a API responde 429 |
+| `LIMITE_LOGIN_POR_CONTA_POR_MINUTO` | não (10) | Tentativas de login de cada conta por minuto, somando todos os IPs (0 desliga). Acima disso, a API responde 429 |
 | `LIMITE_CABECALHO_IP` | atrás de proxy | Cabeçalho com o IP real, que o proxy sempre sobrescreve: `X-Real-IP` no Docker, `CF-Connecting-IP` no Render. Sem ele, todos os usuários dividem o mesmo limite de login |
 | `TELEGRAM_TOKEN` / `TELEGRAM_CHAT_ID` | não | Token do bot e id da conversa que recebe o aviso de alerta aberto. Sem os dois, o aviso fica desligado. Como criar o bot: [`../docs/tecnico/telegram.md`](../docs/tecnico/telegram.md) |
 | `SITE_URL` | não | Endereço do site; com ele, o aviso do Telegram leva o link do alerta |
@@ -88,8 +89,8 @@ Todas as rotas ficam sob o prefixo `/api` (ex.: `http://localhost:8080/api/auth/
 ```bash
 cd backend
 mvn spring-boot:run            # desenvolvimento
-mvn clean package              # gera target/aguas-api-<versão>.jar (ex.: aguas-api-1.0.0.jar)
-java -jar target/aguas-api-1.0.0.jar
+mvn clean package              # gera target/aguas-api-<versão>.jar (ex.: aguas-api-1.1.0.jar)
+java -jar target/aguas-api-1.1.0.jar
 ```
 
 Com o `java -jar`, rode o comando dentro de `backend/` para o `.env` ser encontrado, ou defina as
