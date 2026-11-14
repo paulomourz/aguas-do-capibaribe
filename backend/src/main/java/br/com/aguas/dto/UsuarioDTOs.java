@@ -41,7 +41,7 @@ public final class UsuarioDTOs {
             String senha,
             String senhaAtual) {}
 
-    /** Gestor define uma nova senha para outra pessoa (quem esqueceu a própria). */
+    /** Administrador define uma nova senha para outra pessoa (quem esqueceu a própria). */
     public record RedefinirSenhaDTO(
             @NotNull(message = "Crie a nova senha.")
             @Size(min = 8, max = 72, message = "A senha precisa ter entre 8 e 72 caracteres.")
@@ -54,4 +54,7 @@ public final class UsuarioDTOs {
             @NotBlank(message = "Informe a senha.") String senha) {}
 
     public record SessaoDTO(String token, UsuarioDTO usuario) {}
+
+    /** Resposta da rotação: a chave nova (64 caracteres alfanuméricos) aparece só aqui, uma única vez. */
+    public record TokenDeApiDTO(String token, UsuarioDTO usuario) {}
 }

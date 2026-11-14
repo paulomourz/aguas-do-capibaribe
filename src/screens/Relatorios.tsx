@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   Banner,
   Button,
@@ -12,15 +12,20 @@ import {
   LoadingBlock,
   LogoMark,
   PageHeader,
+  Skeleton,
   StatePreview,
   Select,
   StatusBadge,
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
-import { desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
-import { periodoAtual, useApp, useEstadoTela, useResumo } from '../store'
+import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
+
+// A biblioteca de gráficos só é carregada quando a tela precisa dela.
+const GraficoMetaReal = lazy(() => import('../components/GraficoMetaReal'))
+const GraficoDiario = lazy(() => import('../components/GraficoDiario'))
 
 /** Gera o PDF de verdade e baixa. A biblioteca só é carregada no primeiro uso. */
 function useBaixarPdf() {
@@ -54,6 +59,8 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
   const [mes, setMes] = useState(mesInicial ?? atual.mes)
   const [ano, setAno] = useState(anoInicial ?? atual.ano)
   const consulta = useResumo(mes, ano)
+  const lotesDoMes = useLotesDoMes(mes, ano)
+  const [processoGrafico, setProcessoGrafico] = useState('')
   const [estado, setEstado] = useEstadoTela(consulta)
   const { baixar, gerando, falha: falhaPdf } = useBaixarPdf()
 
@@ -67,6 +74,10 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
   const semLotes = carregado && dados.length === 0
 
   const totalDesvio = esperado ? desvioDe(real, esperado) : 0
+  // O processo escolhido pode não ter lotes no mês novo: nesse caso, volta para todos.
+  const filtro = dados.some((r) => r.processoId === processoGrafico) ? processoGrafico : ''
+  const noGrafico = filtro ? dados.filter((r) => r.processoId === filtro) : dados
+  const lotesNoGrafico = filtro ? lotesDoMes.dados.filter((l) => l.processoId === filtro) : lotesDoMes.dados
   const tdF = 'border-t-2 border-line-strong bg-page px-4 py-4 font-semibold text-ink first:pl-6 last:pr-6'
 
   return (
@@ -141,6 +152,50 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
         )}
       </Card>
 
+      {podeExportar && (
+        <section aria-labelledby="graficos-titulo">
+          <Card className="flex flex-col">
+            <CardHeader
+              id="graficos-titulo"
+              title="Gráficos do período"
+              subtitle={periodo}
+              action={
+                <Field id="processo-grafico" label="Processo">
+                  <Select id="processo-grafico" value={filtro} onChange={(e) => setProcessoGrafico(e.target.value)}>
+                    <option value="">Todos os processos</option>
+                    {dados.map((r) => (
+                      <option key={r.processoId} value={r.processoId}>
+                        {nomeProcesso(r.processoId)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              }
+            />
+            <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
+              <div className="min-w-0">
+                <h3 className="mb-3 font-display text-[16px] font-semibold text-ink">Real x esperado</h3>
+                <Suspense fallback={<Skeleton className="h-[280px] w-full" />}>
+                  <GraficoMetaReal dados={noGrafico.map((r) => ({ nome: nomeProcesso(r.processoId), real: r.real, esperado: r.esperado }))} />
+                </Suspense>
+              </div>
+              <div className="min-w-0">
+                <h3 className="mb-3 font-display text-[16px] font-semibold text-ink">Consumo por dia</h3>
+                {lotesDoMes.carregando ? (
+                  <Skeleton className="h-[260px] w-full" />
+                ) : lotesDoMes.erro ? (
+                  <ErrorState title="Gráfico indisponível" onRetry={lotesDoMes.recarregar} />
+                ) : (
+                  <Suspense fallback={<Skeleton className="h-[260px] w-full" />}>
+                    <GraficoDiario dias={consumoPorDia(lotesNoGrafico, mes, ano)} periodo={periodo} />
+                  </Suspense>
+                )}
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
+
       <Card as="section" className="overflow-hidden">
         <CardHeader
           title="Consumo por tipo de processo"
@@ -173,6 +228,7 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
                 { key: 'l', header: 'Lotes', num: true, render: (r) => fmtNum(r.lotes) },
                 { key: 'c', header: 'Consumido (L)', num: true, render: (r) => fmtNum(r.real) },
                 { key: 'e', header: 'Esperado (L)', num: true, render: (r) => fmtNum(r.esperado) },
+                { key: 'lp', header: 'L/peça', num: true, render: (r) => fmtLitrosPorPeca(r.litrosPorPeca) },
                 { key: 'd', header: 'Desvio', num: true, mobile: 'value', render: (r) => <span className="font-semibold">{fmtPct(desvioDe(r.real, r.esperado))}</span> },
                 { key: 's', header: 'Status', mobile: 'badge', render: (r) => <StatusBadge status={statusDe(desvioDe(r.real, r.esperado))} size="sm" /> },
               ]}
@@ -182,6 +238,7 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
                   <td className={`${tdF} text-right tabular-nums`}>{fmtNum(lotes)}</td>
                   <td className={`${tdF} whitespace-nowrap text-right tabular-nums`}>{fmtNum(real)}</td>
                   <td className={`${tdF} whitespace-nowrap text-right tabular-nums`}>{fmtNum(esperado)}</td>
+                  <td className={`${tdF} text-right tabular-nums`}>{fmtLitrosPorPeca(litrosPorPeca(real, dados.reduce((s, r) => s + r.pecas, 0)))}</td>
                   <td className={`${tdF} text-right tabular-nums`}>{fmtPct(totalDesvio)}</td>
                   <td className={tdF}>
                     <StatusBadge status={statusDe(totalDesvio)} size="sm" />
@@ -275,7 +332,7 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
         <div className="mx-auto" style={{ width: A4_W * escala, height: A4_H * escala }}>
           <article
             aria-label={`Relatório de consumo de água, ${periodo}`}
-            className="origin-top-left bg-white text-ink shadow-xl"
+            className="tema-claro origin-top-left bg-white text-ink shadow-xl"
             style={{ width: A4_W, height: A4_H, transform: `scale(${escala})` }}
           >
             <div className="h-1 bg-terracota" />
@@ -322,8 +379,8 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
                   <table className="mt-8 w-full border-collapse text-left text-[14px]">
                     <thead>
                       <tr className="border-b-2 border-brand">
-                        {['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'Desvio', 'Situação'].map((h, i) => (
-                          <th key={h} className={`py-2 text-[13px] font-medium text-ink-2 ${i > 0 && i < 5 ? 'text-right' : ''} ${i === 5 ? 'pl-6' : ''}`}>
+                        {['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'L/peça', 'Desvio', 'Situação'].map((h, i) => (
+                          <th key={h} className={`py-2 text-[13px] font-medium text-ink-2 ${i > 0 && i < 6 ? 'text-right' : ''} ${i === 6 ? 'pl-6' : ''}`}>
                             {h}
                           </th>
                         ))}
@@ -339,6 +396,7 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
                             <td className="py-3 text-right tabular-nums">{fmtNum(r.lotes)}</td>
                             <td className="py-3 text-right whitespace-nowrap tabular-nums">{fmtNum(r.real)}</td>
                             <td className="py-3 text-right whitespace-nowrap tabular-nums">{fmtNum(r.esperado)}</td>
+                            <td className="py-3 text-right tabular-nums">{fmtLitrosPorPeca(r.litrosPorPeca)}</td>
                             <td className="py-3 text-right font-semibold tabular-nums">{fmtPct(dv)}</td>
                             <td className={`py-3 pl-6 ${m.text}`}>
                               <span className="inline-flex items-center gap-1.5 font-semibold">
@@ -355,13 +413,14 @@ export function RelatorioPdf({ mes, ano }: { mes: number; ano: number }) {
                         <td className="py-3 text-right font-semibold tabular-nums">{fmtNum(lotes)}</td>
                         <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">{fmtNum(real)}</td>
                         <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">{fmtNum(esperado)}</td>
+                        <td className="py-3 text-right font-semibold tabular-nums">{fmtLitrosPorPeca(litrosPorPeca(real, dados.reduce((s, r) => s + r.pecas, 0)))}</td>
                         <td className="py-3 text-right font-semibold tabular-nums">{fmtPct(desvioDe(real, esperado))}</td>
                         <td className="py-3 pl-6" />
                       </tr>
                     </tfoot>
                   </table>
                   <p className="mt-4 text-[12px] text-ink-2">
-                    Desvio = (consumido − esperado) ÷ esperado. Valores em litros.
+                    Desvio = (consumido − esperado) ÷ esperado. L/peça = consumido ÷ peças. {textoDaReferencia}. Valores em litros.
                   </p>
                 </>
               )}

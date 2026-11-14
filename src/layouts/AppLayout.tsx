@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AvisoModoSimulado, cx } from '../components/ui'
+import { cx } from '../components/ui'
+import { AvisoOffline, IndicadorConexao } from '../components/FilaOffline'
+import SeletorTema from '../components/SeletorTema'
 import logoUrl from '../assets/logo.png'
 import pacote from '../../package.json'
 import {
@@ -11,7 +13,7 @@ import {
   IconHistory,
   IconLogout,
   IconSettings,
-  IconReport,
+  IconReport, IconSearchCheck,
   IconTarget,
   IconUsers,
 } from '../components/icons'
@@ -19,18 +21,19 @@ import { Link, navigate } from '../router'
 import { homeDe, periodoAtual, useApp } from '../store'
 import { meses, perfilLabel, type Perfil } from '../domain'
 
-export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'alertas' | 'relatorios' | 'usuarios'
+export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'alertas' | 'relatorios' | 'auditoria' | 'usuarios'
 
 export type MenuGrupo = 'Acompanhamento' | 'Lotes' | 'Cadastros'
 
 export const menu: { id: MenuId; label: string; to: string; Icon: typeof IconDashboard; perfis: Perfil[]; grupo: MenuGrupo }[] = [
-  { id: 'dashboard', label: 'Dashboard', to: '/dashboard', Icon: IconDashboard, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'alertas', label: 'Alertas', to: '/alertas', Icon: IconBell, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'relatorios', label: 'Relatórios', to: '/relatorios', Icon: IconReport, perfis: ['gestor'], grupo: 'Acompanhamento' },
-  { id: 'registro', label: 'Registro de lotes', to: '/registro', Icon: IconClipboard, perfis: ['gestor', 'operador'], grupo: 'Lotes' },
-  { id: 'historico', label: 'Histórico de lotes', to: '/historico', Icon: IconHistory, perfis: ['gestor', 'operador'], grupo: 'Lotes' },
-  { id: 'processos', label: 'Processos e metas', to: '/processos', Icon: IconTarget, perfis: ['gestor'], grupo: 'Cadastros' },
-  { id: 'usuarios', label: 'Usuários', to: '/usuarios', Icon: IconUsers, perfis: ['gestor'], grupo: 'Cadastros' },
+  { id: 'dashboard', label: 'Dashboard', to: '/dashboard', Icon: IconDashboard, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'alertas', label: 'Alertas', to: '/alertas', Icon: IconBell, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'relatorios', label: 'Relatórios', to: '/relatorios', Icon: IconReport, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'auditoria', label: 'Auditoria', to: '/auditoria', Icon: IconSearchCheck, perfis: ['admin'], grupo: 'Acompanhamento' },
+  { id: 'registro', label: 'Registro de lotes', to: '/registro', Icon: IconClipboard, perfis: ['admin', 'gestor', 'operador'], grupo: 'Lotes' },
+  { id: 'historico', label: 'Histórico de lotes', to: '/historico', Icon: IconHistory, perfis: ['admin', 'gestor', 'operador'], grupo: 'Lotes' },
+  { id: 'processos', label: 'Processos e metas', to: '/processos', Icon: IconTarget, perfis: ['admin', 'gestor'], grupo: 'Cadastros' },
+  { id: 'usuarios', label: 'Usuários', to: '/usuarios', Icon: IconUsers, perfis: ['admin'], grupo: 'Cadastros' },
 ]
 const grupos: MenuGrupo[] = ['Acompanhamento', 'Lotes', 'Cadastros']
 
@@ -49,17 +52,16 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
           e.preventDefault()
           document.getElementById('conteudo')?.focus()
         }}
-        className="sr-only z-[70] rounded-md bg-white px-4 py-3 font-semibold text-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        className="sr-only z-[70] rounded-md bg-surface px-4 py-3 font-semibold text-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
       >
         Pular para o conteúdo
       </a>
 
-      <AvisoModoSimulado />
       <header className="on-dark sticky top-0 z-30 bg-brand text-white">
         <NuvensDoTopo />
         <div className="relative flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">
           <Link to={homeDe(usuario.perfil)} className="flex items-center gap-3 rounded-lg" aria-label="Águas do Capibaribe, ir para a tela inicial">
-            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-sertao ring-2 ring-areia/60">
+            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-logo-bg ring-2 ring-areia/60">
               <img src={logoUrl} alt="" className="h-[44px] w-[44px] object-contain" />
             </span>
             <span className="leading-tight">
@@ -67,7 +69,8 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
               <span className="hidden text-[13px] text-areia sm:block">Gestão de água por lote</span>
             </span>
           </Link>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <IndicadorConexao />
             <div className="hidden items-center gap-5 md:flex">
               <div className="flex items-center gap-2.5 leading-tight">
                 <IconCalendar size={18} className="text-areia" />
@@ -80,6 +83,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
               </div>
               <span aria-hidden="true" className="h-8 w-px bg-white/15" />
             </div>
+            <SeletorTema sobreFundoEscuro />
             <UserMenu nome={usuario.nome} perfil={perfilLabel[usuario.perfil]} perfilId={usuario.perfil} onSair={() => { sair(); navigate('/login') }} />
           </div>
         </div>
@@ -95,7 +99,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
                     aria-current={sel ? 'page' : undefined}
                     className={cx(
                       'flex min-h-11 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-[15px] font-medium transition-colors',
-                      sel ? 'bg-white text-brand' : 'text-on-dark hover:bg-brand-hover hover:text-white',
+                      sel ? 'bg-surface text-brand' : 'text-on-dark hover:bg-brand-hover hover:text-white',
                     )}
                   >
                     <Icon size={18} />
@@ -133,7 +137,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
                               aria-current={sel ? 'page' : undefined}
                               className={cx(
                                 'flex min-h-11 w-full items-center rounded-lg pr-3 text-[15px] font-medium transition-colors',
-                                sel ? 'font-semibold' : 'text-ink-2 hover:bg-white/70 hover:text-ink',
+                                sel ? 'font-semibold' : 'text-ink-2 hover:bg-surface/70 hover:text-ink',
                               )}
                             >
                               <span
@@ -167,6 +171,7 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
 
         <div className="flex min-w-0 flex-1 flex-col">
           <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-[1176px] flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+            <AvisoOffline />
             {children}
           </main>
           <div className="lg:hidden">
@@ -184,7 +189,12 @@ export function Footer() {
       <hr className="mb-6 border-line" />
       <div className="flex flex-col gap-1 text-[13px] text-ink-2 sm:flex-row sm:items-center sm:justify-between">
         <span>Águas do Capibaribe · Gestão de consumo de água por lote</span>
-        <span>Versão {pacote.version}</span>
+        <span>
+          <Link to="/privacidade" className="underline underline-offset-2 hover:text-ink">
+            Aviso de privacidade
+          </Link>{' '}
+          · Versão {pacote.version}
+        </span>
       </div>
     </footer>
   )
@@ -274,7 +284,7 @@ function Avatar({ perfil }: { perfil: Perfil }) {
     <svg viewBox="0 0 40 40" className="block h-full w-full">
       <path d="M7 41 C7 31 13 26.5 20 26.5 C27 26.5 33 31 33 41 Z" fill="var(--color-areia)" />
       <circle cx="20" cy="17.5" r="6.5" fill="var(--color-areia)" />
-      {perfil === 'gestor' ? (
+      {perfil !== 'operador' ? (
         <>
           <path d="M15.5 27.4 L20 31.5 L24.5 27.4" fill="none" stroke="var(--color-brand)" strokeWidth="1.4" strokeLinejoin="round" />
           <path d="M20 31 L18.4 33.2 L20 39.5 L21.6 33.2 Z" fill="var(--color-terracota)" />
@@ -327,7 +337,7 @@ function UserMenu({ nome, perfil, perfilId, onSair }: { nome: string; perfil: st
         <IconChevronDown size={18} />
       </button>
       {aberto && (
-        <div role="menu" className="rise absolute right-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-[8px] border border-line bg-white text-ink shadow-xl">
+        <div role="menu" className="rise absolute right-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-[8px] border border-line bg-surface text-ink shadow-xl">
           <div className="border-b border-line px-4 py-3">
             <p className="text-[15px] font-semibold">{nome}</p>
             <p className="text-[13px] text-ink-2">Perfil: {perfil}</p>

@@ -1,0 +1,44 @@
+%% C4 nível 3 — Componentes da API REST (pacote br.com.aguas), com segurança, limite de requisições e avisos.
+flowchart TB
+  clientes["Site e sensor ESP32<br/><i>[Clientes HTTP]</i>"]
+  banco[("PostgreSQL 18<br/><i>[Contêiner]</i>")]
+  telegram["Telegram Bot API<br/><i>[Sistema externo]</i>"]
+
+  subgraph api["API REST — Spring Boot 3.5"]
+    direction TB
+    subgraph seguranca["Segurança (pacote security, config)"]
+      jwt["Filtro JWT<br/><i>[Spring Security + JwtService, ConversorJwt]</i><br/>Valida o token; lê o perfil no banco a cada requisição"]
+      limite["FiltroDeLimite + Limitador<br/><i>[Token bucket, Bucket4j]</i><br/>5 logins/min por IP; 60 lotes/min por usuário; 429 com Retry-After"]
+    end
+    subgraph web["Entrada (pacote controller)"]
+      ctrl["Controllers REST<br/><i>[Auth, Usuário, Processo, Lote, Alerta, Relatório, Auditoria]</i><br/>JSON, validação e erros {codigo, mensagem, campos}"]
+      actuator["Actuator<br/><i>[Spring Boot Actuator]</i><br/>/health aberto; /metrics só admin"]
+    end
+    subgraph negocio["Regras (pacote service)"]
+      lote["LoteService<br/><i>[Serviço]</i><br/>Registra o lote com bloqueio do processo e chave de envio"]
+      regra["RegraDeAlerta<br/><i>[Serviço]</i><br/>3 lotes seguidos acima da meta abrem alerta"]
+      outros["Processo, Usuário, Auditoria e Relatório<br/><i>[Serviços]</i><br/>Cache da lista de processos"]
+    end
+    subgraph aviso["Avisos (pacote notificacao)"]
+      evento["AlertaAberto<br/><i>[Evento do Spring]</i>"]
+      avisoAlerta["AvisoDeAlerta<br/><i>[@TransactionalEventListener + @Async]</i><br/>Só depois do commit, em outra thread (1 a 2 threads, fila de 50)"]
+      tg["Telegram<br/><i>[RestClient]</i><br/>Falha vira só log, sem o token"]
+    end
+    repo["Repositórios<br/><i>[Spring Data JPA, pacote repository]</i>"]
+  end
+
+  clientes -- "HTTPS" --> jwt
+  jwt --> limite --> ctrl
+  clientes -. "saúde e métricas" .-> actuator
+  ctrl --> lote & outros
+  lote --> regra
+  regra -- "publica" --> evento
+  evento -. "após o commit" .-> avisoAlerta --> tg -- "HTTPS 443" --> telegram
+  lote & regra & outros --> repo -- "JDBC (aguas_api)" --> banco
+
+  classDef comp fill:#85bbf0,color:#000,stroke:#5d82a8
+  classDef cont fill:#438dd5,color:#fff,stroke:#2e6295
+  classDef ext fill:#999,color:#fff,stroke:#6b6b6b
+  class jwt,limite,ctrl,actuator,lote,regra,outros,evento,avisoAlerta,tg,repo comp
+  class banco cont
+  class clientes,telegram ext

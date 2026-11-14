@@ -1,0 +1,26 @@
+name: Base do PR
+
+# PR para a main só vindo de release/ ou hotfix/. O resto vai para a develop.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  base-do-pr:
+    name: base-do-pr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confere a branch de origem
+        env:
+          ORIGEM: ${{ github.head_ref }}
+        run: |
+          case "$ORIGEM" in
+            release/*|hotfix/*) echo "Branch $ORIGEM pode ir para a main." ;;
+            *)
+              echo "::error title=Base errada::Este PR precisa ir para a develop. Clique em Edit, ao lado do título do PR, e troque a base para develop. NÃO dê merge."
+              exit 1
+              ;;
+          esac

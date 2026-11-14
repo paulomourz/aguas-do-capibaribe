@@ -31,7 +31,8 @@
   --color-zebra: #fbfaf7;
   --color-nav-hover: #f3f0ea;
   --color-track: #f1ede5;
-  --color-meta: #bbd5e6;
+  /* Barra "esperado pela meta" do gráfico meta x real: 3:1 (WCAG 1.4.11) sobre branco, areia e o cursor do gráfico */
+  --color-meta: #5b8db0;
   --color-water-meta: #7dc8ed;
   --color-water-meta-highlight: #d7f3ff;
   --color-water-real: #123f61;
@@ -40,6 +41,8 @@
   --color-glass-edge: #6d9db8;
   --color-glass-shine: #ffffff;
   --color-crit-line: #f2c2be;
+  /* Linha do consumo real nos gráficos (validada com a terracota da linha do esperado) */
+  --color-grafico-real: #1673b0;
   --color-skeleton: #efebe3;
   --color-skeleton-hi: #f8f6f1;
 
@@ -55,8 +58,138 @@
   --color-crit: #a3201a;
   --color-crit-bg: #fbe4e2;
 
+  /* Superfície de cartões, campos e janelas (era o bg-white). No tema escuro vira azul-escuro. */
+  --color-surface: #ffffff;
+  /* Fundo do círculo atrás da logo: a logo é escura, então o círculo é claro nos dois temas. */
+  --color-logo-bg: #f3ecdf;
+  /* Véu atrás das janelas (modal). */
+  --color-scrim: #1f2933;
+  /* Rótulo de valor das colunas de água e sombra dos gráficos. */
+  --color-pill-ink: #12344d;
+  --color-shadow-ink: #12344d;
+
   --radius-card: 8px;
   --shadow-card: 0 1px 2px rgb(18 52 77 / 0.05), 0 2px 8px rgb(18 52 77 / 0.04);
+}
+
+/* Só na tela: ao imprimir, a página sai sempre com as cores do tema claro (papel branco, texto escuro). */
+@media screen {
+/* =========================================================
+   Tema escuro
+   O site escolhe o tema pelo atributo data-tema do <html> (src/services/tema.ts).
+   Só os VALORES mudam; os nomes das cores são os mesmos, então as telas não precisam saber qual tema está ativo.
+   Contraste conferido (WCAG 2.1 AA): texto a 4.5:1; barras, linhas dos gráficos e bordas de campo a 3:1.
+   ========================================================= */
+:root {
+  color-scheme: light;
+}
+
+:root[data-tema='escuro'] {
+  color-scheme: dark;
+
+  --color-brand: #1d4f73;
+  --color-brand-hover: #25587d;
+  --color-link: #7dbbe6;
+  --color-brand-soft: #1c3a52;
+
+  --color-ink: #e8eef4;
+  --color-ink-2: #aab9c7;
+  --color-page: #0f1b26;
+  --color-surface: #172736;
+  --color-line: #2a3d4d;
+  --color-line-strong: #3f566a;
+
+  --color-neutral-bg: #263847;
+  --color-neutral-ink: #c5d2dd;
+  --color-disabled-bg: #2b3d4c;
+  --color-disabled-ink: #8da0b1;
+  --color-disabled-field: #13202b;
+  --color-field-border: #6f879c;
+  --color-field-border-hover: #8aa0b3;
+  --color-zebra: #1a2d3d;
+  --color-nav-hover: #1f3446;
+  --color-track: #223648;
+  --color-meta: #7fb0d0;
+  --color-water-meta: #7dc8ed;
+  --color-water-meta-highlight: #bfeaff;
+  --color-water-real: #3b8fcf;
+  --color-water-real-deep: #2a6fa8;
+  --color-glass: #1f3d52;
+  --color-glass-edge: #5b8fb0;
+  --color-crit-line: #8a3b36;
+  --color-grafico-real: #5db4ec;
+  --color-skeleton: #1e3140;
+  --color-skeleton-hi: #2a4153;
+
+  --color-terracota: #e0805f;
+  --color-couro: #d4a574;
+  --color-sertao: #12212d;
+
+  --color-ok: #6bd69b;
+  --color-ok-bg: #10301f;
+  --color-warn: #f0c050;
+  --color-warn-bg: #3a2d0a;
+  --color-crit: #ff8f87;
+  --color-crit-bg: #3d1614;
+
+  --color-scrim: #000000;
+  --color-pill-ink: #e8eef4;
+  --color-shadow-ink: #000000;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 2px 8px rgb(0 0 0 / 0.25);
+
+  /* Cor de marca usada como TEXTO ou BORDA sobre fundo escuro precisa ser clara; como FUNDO (botão, cabeçalho) fica escura. */
+  --color-brand-ink: #9ccbed;
+}
+
+:root[data-tema='escuro'] .text-brand,
+:root[data-tema='escuro'] .hover\:text-brand:hover {
+  color: var(--color-brand-ink);
+}
+
+:root[data-tema='escuro'] .border-brand {
+  border-color: var(--color-brand-ink);
+}
+
+:root[data-tema='escuro'] .accent-brand {
+  accent-color: var(--color-link);
+}
+
+/*
+ * Área que deve continuar clara mesmo no tema escuro, como a pré-visualização do relatório em PDF (papel branco).
+ * Basta pôr a classe "tema-claro" no elemento: tudo dentro dele volta às cores do tema claro.
+ */
+:root[data-tema='escuro'] .tema-claro {
+  color-scheme: light;
+  --color-brand: #12344d;
+  --color-brand-hover: #1b4965;
+  --color-link: #1f6a96;
+  --color-brand-soft: #e3eef5;
+  --color-ink: #1f2933;
+  --color-ink-2: #52606d;
+  --color-page: #f7f4ee;
+  --color-surface: #ffffff;
+  --color-line: #e5dfd3;
+  --color-line-strong: #c9c1b1;
+  --color-zebra: #fbfaf7;
+  --color-neutral-bg: #e4e7eb;
+  --color-neutral-ink: #3e4c59;
+  --color-terracota: #b5543a;
+  --color-ok: #14633a;
+  --color-ok-bg: #e3f3e9;
+  --color-warn: #7a5200;
+  --color-warn-bg: #fff1cc;
+  --color-crit: #a3201a;
+  --color-crit-bg: #fbe4e2;
+  color: var(--color-ink);
+}
+
+:root[data-tema='escuro'] .tema-claro .text-brand {
+  color: var(--color-brand);
+}
+
+:root[data-tema='escuro'] .tema-claro .border-brand {
+  border-color: var(--color-brand);
+}
 }
 
 @layer base {
@@ -131,9 +264,9 @@ h1, h2, h3, h4 {
   pointer-events: none;
   padding: 1px 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, #fff 94%, transparent);
-  color: var(--color-brand, #12344D);
-  box-shadow: 0 1px 4px color-mix(in srgb, #12344D 28%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  color: var(--color-pill-ink);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-shadow-ink) 28%, transparent);
 }
 
 .water-ripple {
@@ -315,7 +448,17 @@ h1, h2, h3, h4 {
   100% { opacity: 0; transform: translateY(-90px) scale(1.15); }
 }
 
+/* Gauge de tolerância (#98): o ponteiro gira suave até o desvio novo e a faixa crítica pulsa quando ativa. */
+.gauge-ponteiro { transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes gauge-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.gauge-pulso { animation: gauge-pulso 1.2s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .skeleton, .rise, .animate-spin, .water-fill, .water-surface, .water-ripple, .water-bubble { animation: none !important; }
+  .skeleton, .rise, .animate-spin, .water-fill, .water-surface, .water-ripple, .water-bubble, .gauge-pulso { animation: none !important; }
   .water-fill { clip-path: inset(0); }
+  .gauge-ponteiro { transition: none; }
 }

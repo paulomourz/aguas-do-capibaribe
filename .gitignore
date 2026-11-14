@@ -23,3 +23,14 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+# Testes do site
+test-results/
+playwright-report/
+dev-dist/
+
+# Backups do banco (database/backup.sh): têm dados reais
+database/backups/
+
+# Resultados do teste de carga
+testes-carga/resultados/

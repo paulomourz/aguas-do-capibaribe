@@ -63,7 +63,71 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
+      - run: pnpm test
       - run: pnpm build
+
+      # Modo offline: Wi-Fi caindo e voltando no site de produção (service worker + IndexedDB)
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+
+      # Prints de cada passo do fluxo do operador (e2e/fluxo-operador.spec.ts), para conferir a tela sem rodar o teste.
+      - name: Guarda os prints do teste de ponta a ponta
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-e2e
+          path: test-results/**/*.png
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # Vulnerabilidades conhecidas (CVEs) nas dependências do back-end (pom.xml) e do site (pnpm-lock.yaml),
+  # pela base pública OSV.dev, sem token. Bloqueia com gravidade alta ou crítica (CVSS 7.0 ou mais).
+  dependencias:
+    name: dependencias
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OSV_VERSAO: v2.7.0
+      OSV_SHA256: 160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b
+      CVSS_LIMITE: '7.0'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Instala o OSV-Scanner (versão fixa, com checksum)
+        run: |
+          curl -fsSL -o osv-scanner "https://github.com/google/osv-scanner/releases/download/${OSV_VERSAO}/osv-scanner_linux_amd64"
+          echo "${OSV_SHA256}  osv-scanner" | sha256sum -c -
+          chmod +x osv-scanner
+
+      - name: Procura vulnerabilidades
+        run: |
+          set +e
+          ./osv-scanner scan source --config osv-scanner.toml --format json -L backend/pom.xml -L pnpm-lock.yaml > osv.json
+          codigo=$?
+          set -e
+          # 0 = nada encontrado; 1 = vulnerabilidades encontradas; outro código = o scanner falhou.
+          if [ "$codigo" -gt 1 ]; then
+            echo "::error::O OSV-Scanner falhou (código $codigo)."
+            exit "$codigo"
+          fi
+
+      - name: Resultado e bloqueio por gravidade
+        run: |
+          jq -r --argjson limite "$CVSS_LIMITE" '
+            [.results[]? as $r | $r.packages[]? as $p | $p.groups[]? |
+              {arquivo: $r.source.path, pacote: $p.package.name, versao: $p.package.version,
+               ids: (.aliases // .ids | join(", ")), cvss: ((.max_severity // "") | tonumber? // 0)}]
+            | sort_by(-.cvss)
+            | if length == 0 then "Nenhuma vulnerabilidade conhecida nas dependências."
+              else (["| Gravidade (CVSS) | Pacote | Versão | Identificadores | Arquivo |", "|---|---|---|---|---|"]
+                + map("| \(if .cvss >= $limite then "**\(.cvss)** ⛔" elif .cvss > 0 then "\(.cvss)" else "sem nota" end) | \(.pacote) | \(.versao) | \(.ids) | \(.arquivo | split("/") | .[-1]) |"))
+                | join("\n") end
+          ' osv.json | tee -a "$GITHUB_STEP_SUMMARY"
+          graves=$(jq --argjson limite "$CVSS_LIMITE" '[.results[]?.packages[]?.groups[]? | select(((.max_severity // "") | tonumber? // 0) >= $limite)] | length' osv.json)
+          if [ "$graves" -gt 0 ]; then
+            echo "::error::$graves vulnerabilidade(s) com gravidade alta ou crítica (CVSS >= $CVSS_LIMITE). Atualize a dependência ou registre a exceção em osv-scanner.toml, com motivo."
+            exit 1
+          fi
 
   docker-compose:
     name: docker-compose
@@ -81,7 +145,8 @@ jobs:
             # O Nginx pode levar alguns segundos para aceitar a primeira conexão.
             curl -fsS --retry 15 --retry-delay 2 --retry-all-errors http://localhost:3000/ | grep -q 'id="root"'
             curl -fsS -o /dev/null http://localhost:3000/api/swagger-ui/index.html
-            senha=$(docker compose exec -T backend cat /segredos/admin)
+            # A API é distroless (sem cat): a senha é lida do contêiner do banco, que monta os segredos.
+            senha=$(docker compose exec -T db cat /segredos/admin)
             corpo=$(jq -n --arg s "$senha" '{usuario: "capibaribe.admin", senha: $s}')
             token=$(curl -fsS -H 'Content-Type: application/json' -d "$corpo" http://localhost:3000/api/auth/login | jq -r .token)
             curl -fsS -H "Authorization: Bearer $token" http://localhost:3000/api/processos > processos.json
@@ -94,6 +159,34 @@ jobs:
           docker compose down
           docker compose up -d
           testar
+
+      - name: Nenhuma senha nas variáveis de ambiente da API
+        run: |
+          id=$(docker compose ps -q backend)
+          docker inspect "$id" --format '{{json .Config.Env}}' > env-container.txt
+          # Sem shell na imagem: o ambiente do processo da API é lido pelo host do runner.
+          sudo cat "/proc/$(docker inspect "$id" --format '{{.State.Pid}}')/environ" | tr '\0' '\n' > env-processo.txt
+          test -s env-processo.txt
+          for s in api postgres jwt admin gestor sensor; do
+            valor=$(docker compose exec -T db cat "/segredos/$s")
+            if grep -qF "$valor" env-container.txt env-processo.txt; then
+              echo "::error::O segredo $s aparece nas variáveis de ambiente da API."
+              exit 1
+            fi
+          done
+          echo "Nenhum segredo nas variáveis de ambiente da API."
+
+      - name: Imagem da API (distroless, sem shell)
+        run: |
+          imagem=$(docker inspect "$(docker compose ps -q backend)" --format '{{.Image}}')
+          tamanho=$(docker image inspect "$imagem" --format '{{.Size}}')
+          mb=$((tamanho / 1000000))
+          echo "Imagem da API: $mb MB" | tee -a "$GITHUB_STEP_SUMMARY"
+          if docker compose exec -T backend sh -c true 2>/dev/null; then
+            echo "::error::A imagem da API tem shell; devia ser distroless."
+            exit 1
+          fi
+          test "$(docker inspect "$(docker compose ps -q backend)" --format '{{.State.Health.Status}}')" = healthy
 
       - name: Logs em caso de falha
         if: failure()

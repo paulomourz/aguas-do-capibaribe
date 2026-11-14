@@ -14,13 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.aguas.config.AdminProperties;
 import br.com.aguas.dto.UsuarioDTOs.AtualizarUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
+import br.com.aguas.dto.UsuarioDTOs.TokenDeApiDTO;
 import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
 import br.com.aguas.entity.AcaoAuditoria;
 import br.com.aguas.entity.AuditoriaUsuario;
+import br.com.aguas.entity.Perfil;
 import br.com.aguas.entity.Usuario;
 import br.com.aguas.exception.ApiException;
 import br.com.aguas.repository.AuditoriaUsuarioRepository;
 import br.com.aguas.repository.UsuarioRepository;
+import br.com.aguas.security.EventosDeSeguranca;
+import br.com.aguas.security.TokenDeApi;
 import br.com.aguas.security.UsuarioAutenticado;
 
 @Service
@@ -35,18 +39,29 @@ public class UsuarioService {
     private final PasswordEncoder senhas;
     private final AdminProperties admin;
     private final AuditoriaUsuarioRepository auditoria;
+    private final EventosDeSeguranca eventos;
 
     public UsuarioService(UsuarioRepository usuarios, PasswordEncoder senhas, AdminProperties admin,
-                          AuditoriaUsuarioRepository auditoria) {
+                          AuditoriaUsuarioRepository auditoria, EventosDeSeguranca eventos) {
         this.usuarios = usuarios;
         this.senhas = senhas;
         this.admin = admin;
         this.auditoria = auditoria;
+        this.eventos = eventos;
     }
 
+    /**
+     * O administrador recebe os logins inteiros (cria e cuida das contas). O gestor usa a lista só para mostrar
+     * quem registrou cada lote: recebe os nomes inteiros e os logins dos outros mascarados (LGPD, RNF27).
+     */
     @Transactional(readOnly = true)
-    public List<UsuarioDTO> listar() {
-        return usuarios.findAll(Sort.by("id")).stream().map(UsuarioDTO::de).toList();
+    public List<UsuarioDTO> listar(UsuarioAutenticado quem) {
+        List<UsuarioDTO> todos = usuarios.findAll(Sort.by("id")).stream().map(UsuarioDTO::de).toList();
+        if (quem.perfil() == Perfil.admin) return todos;
+        return todos.stream()
+                .map(u -> u.id().equals(quem.id()) ? u
+                        : new UsuarioDTO(u.id(), u.nome(), Privacidade.mascararLogin(u.usuario()), u.perfil(), u.ativo()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -56,14 +71,16 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioDTO criar(NovoUsuarioDTO dados) {
+    public UsuarioDTO criar(UsuarioAutenticado quem, NovoUsuarioDTO dados) {
         String login = dados.usuario().trim().toLowerCase();
         if (usuarios.existsByLoginIgnoreCase(login)) {
             throw ApiException.conflito("USUARIO_DUPLICADO", "Este usuário já existe. Escolha outro.", "usuario");
         }
         checarBytes("senha", dados.senha());
         Usuario u = new Usuario(dados.nome().trim(), login, senhas.encode(dados.senha()), dados.perfil());
-        return UsuarioDTO.de(usuarios.save(u));
+        Usuario criado = usuarios.save(u);
+        auditar(quem, criado, AcaoAuditoria.CRIACAO_USUARIO);
+        return UsuarioDTO.de(criado);
     }
 
     /** Cada pessoa altera apenas a própria conta (tela Configurações). */
@@ -93,11 +110,12 @@ public class UsuarioService {
             u.setSenhaHash(senhas.encode(dados.senha()));
         }
         usuarios.flush();
+        if (dados.senha() != null) eventos.senhaTrocadaPeloProprio();
         return UsuarioDTO.de(u);
     }
 
     /**
-     * O gestor redefine a senha de outra pessoa que a esqueceu. A própria senha se troca em
+     * O administrador redefine a senha de outra pessoa que a esqueceu. A própria senha se troca em
      * Configurações (com a senha atual), e a do administrador principal só ele mesmo troca.
      */
     @Transactional
@@ -115,6 +133,7 @@ public class UsuarioService {
         u.setSenhaHash(senhas.encode(novaSenha));
         usuarios.flush();
         auditar(quem, u, AcaoAuditoria.REDEFINICAO_SENHA);
+        eventos.senhaRedefinidaPeloAdmin();
         return UsuarioDTO.de(u);
     }
 
@@ -136,12 +155,31 @@ public class UsuarioService {
     }
 
     /**
-     * Registra a ação do gestor na mesma transação da mudança: se uma falhar, as duas são desfeitas.
+     * O administrador troca o token de API de uma conta de sensor. O hash novo substitui o anterior na
+     * mesma transação: a chave antiga deixa de valer assim que a rotação é gravada. A chave nova só
+     * existe na resposta; o banco, a auditoria e o log ficam sem ela.
+     */
+    @Transactional
+    public TokenDeApiDTO rotacionarToken(UsuarioAutenticado quem, Integer id) {
+        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+        if (u.getPerfil() != Perfil.sensor) {
+            throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
+                    "Só contas de sensor usam token de API. As pessoas entram com usuário e senha.", null);
+        }
+        String chave = TokenDeApi.gerar();
+        u.setTokenHash(TokenDeApi.hash(chave));
+        usuarios.flush();
+        auditar(quem, u, AcaoAuditoria.ROTACAO_TOKEN);
+        return new TokenDeApiDTO(chave, UsuarioDTO.de(u));
+    }
+
+    /**
+     * Registra a ação na mesma transação da mudança: se uma falhar, as duas são desfeitas.
      * Só ids e o tipo da ação; senha e hash nunca entram na auditoria nem no log.
      */
     private void auditar(UsuarioAutenticado quem, Usuario afetado, AcaoAuditoria acao) {
         auditoria.saveAndFlush(new AuditoriaUsuario(quem.id(), afetado.getId(), acao));
-        log.info("Auditoria: {} por gestor id={} no usuario id={}", acao, quem.id(), afetado.getId());
+        log.info("Auditoria: {} por usuario id={} no usuario id={}", acao, quem.id(), afetado.getId());
     }
 
     private static void checarBytes(String campo, String senha) {

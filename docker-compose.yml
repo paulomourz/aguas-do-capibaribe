@@ -8,6 +8,7 @@ services:
     image: postgres:18-alpine
     volumes:
       - segredos:/segredos
+      - segredos-api:/segredos-api
       - db-init:/db-init
     entrypoint:
       - sh
@@ -20,8 +21,17 @@ services:
         [ -f api ] || novo 32 > api
         [ -f jwt ] || novo 64 > jwt
         [ -f admin ] || novo 16 > admin
+        [ -f gestor ] || novo 16 > gestor
         [ -f sensor ] || novo 16 > sensor
-        chmod 644 postgres api jwt admin sensor
+        chmod 644 postgres api jwt admin gestor sensor
+        # Segredos da API, um arquivo por variável, num volume que só a API monta (em /run/secrets/aguas).
+        cp postgres /segredos-api/FLYWAY_PASSWORD
+        cp api /segredos-api/DB_PASSWORD
+        cp jwt /segredos-api/JWT_SECRET
+        cp admin /segredos-api/ADMIN_SENHA
+        cp gestor /segredos-api/GESTOR_SENHA
+        cp sensor /segredos-api/SENSOR_SENHA
+        chmod 444 /segredos-api/FLYWAY_PASSWORD /segredos-api/DB_PASSWORD /segredos-api/JWT_SECRET /segredos-api/ADMIN_SENHA /segredos-api/GESTOR_SENHA /segredos-api/SENSOR_SENHA
         # Usuário restrito da API, antes do Flyway: as migrações dão a ele as permissões de cada tabela.
         cat > /db-init/01-usuario-api.sql <<FIM
         CREATE ROLE aguas_api LOGIN PASSWORD '$$(cat api)'
@@ -32,6 +42,8 @@ services:
         chmod 644 /db-init/01-usuario-api.sql
         echo "Administrador: capibaribe.admin"
         echo "Senha inicial: $$(cat admin)"
+        echo "Gestor: capibaribe.gestor"
+        echo "Senha do gestor: $$(cat gestor)"
         echo "Sensor: sensor.wokwi"
         echo "Senha do sensor: $$(cat sensor)"
 
@@ -69,20 +81,14 @@ services:
       DB_SSLMODE: disable
       FLYWAY_USER: postgres
       CORS_ORIGINS: http://localhost:3000
+      LIMITE_CABECALHO_IP: X-Real-IP
+    # Segredos como arquivos só de leitura, no padrão do Docker Secrets: nenhuma senha aparece nas variáveis de
+    # ambiente do contêiner (docker inspect) nem do processo (/proc/1/environ).
     volumes:
-      - segredos:/segredos:ro
-    entrypoint:
-      - sh
-      - -c
-      - |
-        export DB_PASSWORD="$$(cat /segredos/api)"
-        export FLYWAY_PASSWORD="$$(cat /segredos/postgres)"
-        export JWT_SECRET="$$(cat /segredos/jwt)"
-        export ADMIN_SENHA="$$(cat /segredos/admin)"
-        export SENSOR_SENHA="$$(cat /segredos/sensor)"
-        exec java -jar /app/app.jar
+      - segredos-api:/run/secrets/aguas:ro
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8080"]
+      # A imagem distroless não tem shell: o healthcheck é uma classe Java que chama /api/actuator/health.
+      test: ["CMD", "java", "-Xmx16m", "-XX:TieredStopAtLevel=1", "-cp", "/app/saude", "Saude"]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -100,7 +106,17 @@ services:
     ports:
       - "3000:80"
 
+  # Opcional: liga o site local à internet, para o projeto local do Wokwi. Só sobe com --profile tunel.
+  # Enquanto estiver ligado, o site e a API locais ficam acessíveis pelo endereço que aparece nos logs.
+  tunel:
+    image: cloudflare/cloudflared:2026.10.1
+    profiles: ["tunel"]
+    depends_on:
+      - frontend
+    command: tunnel --no-autoupdate --url http://frontend:80
+
 volumes:
   segredos:
+  segredos-api:
   db-init:
   db-dados:

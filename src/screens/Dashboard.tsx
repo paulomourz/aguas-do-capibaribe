@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import BarChart from '../components/BarChart'
 import {
   AlertBadge,
@@ -15,20 +16,25 @@ import {
   StatusBadge,
 } from '../components/ui'
 import { IconBell, IconChevron, IconDroplet, IconReport, IconTarget, IconTrend } from '../components/icons'
-import { desvioDe, desvioMedio, fmtDataHora, fmtL, fmtNum, fmtPct, meses, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, desvioMedio, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, textoDaReferencia, type Resumo } from '../domain'
 import { statusDe } from '../domain'
 import { Link, navigate } from '../router'
-import { periodoAtual, useApp, useEstadoTela, useResumo } from '../store'
+import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
+
+// A biblioteca de gráficos só é carregada quando a tela precisa dela.
+const GraficoDiario = lazy(() => import('../components/GraficoDiario'))
 
 export default function Dashboard() {
   const { alertas, nomeProcesso } = useApp()
   const { mes, ano } = periodoAtual()
   const consulta = useResumo(mes, ano)
+  const lotesDoMes = useLotesDoMes(mes, ano)
   const [estado, setEstado] = useEstadoTela(consulta)
   const resumo = estado === 'vazio' ? [] : consulta.dados
   const real = resumo.reduce((s, r) => s + r.real, 0)
   const esperado = resumo.reduce((s, r) => s + r.esperado, 0)
   const desvio = esperado ? desvioDe(real, esperado) : 0
+  const pegada = litrosPorPeca(real, resumo.reduce((s, r) => s + r.pecas, 0))
   const ativos = alertas.filter((a) => a.status !== 'resolvido')
   const periodo = `${meses[mes - 1]} de ${ano}`
 
@@ -93,9 +99,9 @@ export default function Dashboard() {
       </Card>
 
       {/* Indicadores */}
-      <section aria-label="Indicadores do mês" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+      <section aria-label="Indicadores do mês" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 lg:gap-6">
         {estado === 'carregando' ? (
-          [0, 1, 2].map((i) => (
+          [0, 1, 2, 3].map((i) => (
             <Card key={i} className="flex flex-col gap-4 p-6">
               <Skeleton className="h-4 w-1/2" />
               <Skeleton className="h-8 w-3/4" />
@@ -103,7 +109,7 @@ export default function Dashboard() {
             </Card>
           ))
         ) : estado === 'erro' ? (
-          <Card className="sm:col-span-2 lg:col-span-3">
+          <Card className="sm:col-span-2 xl:col-span-4">
             <ErrorState title="Não foi possível carregar os indicadores" onRetry={() => setEstado('dados')} />
           </Card>
         ) : (
@@ -139,6 +145,13 @@ export default function Dashboard() {
                 )
               }
             />
+            <KpiCard
+              label="Água por peça"
+              value={pegada == null ? '—' : fmtLitrosPorPeca(pegada)}
+              unit={pegada == null ? undefined : 'L'}
+              icon={<IconDroplet size={20} />}
+              footer={pegada == null ? 'Sem lotes para calcular' : `Média do mês. ${textoDaReferencia}.`}
+            />
           </>
         )}
       </section>
@@ -173,6 +186,7 @@ export default function Dashboard() {
                   { key: 'p', header: 'Processo', mobile: 'title', render: (r) => <span className="font-semibold">{nomeProcesso(r.processoId)}</span> },
                   { key: 'r', header: 'Real (L)', num: true, render: (r) => fmtNum(r.real) },
                   { key: 'e', header: 'Esperado (L)', num: true, render: (r) => fmtNum(r.esperado) },
+                  { key: 'lp', header: 'L/peça', num: true, render: (r) => fmtLitrosPorPeca(r.litrosPorPeca) },
                   { key: 'd', header: 'Desvio', num: true, mobile: 'value', render: (r) => <span className="font-semibold">{fmtPct(desvioDe(r.real, r.esperado))}</span> },
                   { key: 's', header: 'Status', mobile: 'badge', render: (r) => <StatusBadge status={statusDe(desvioDe(r.real, r.esperado))} size="sm" /> },
                 ]}
@@ -192,6 +206,32 @@ export default function Dashboard() {
               <EmptyState title="Sem dados para o gráfico" />
             ) : (
               <BarChart data={resumo.map((r) => ({ label: nomeProcesso(r.processoId), meta: r.esperado, real: r.real }))} />
+            )}
+          </div>
+        </Card>
+      </section>
+
+      {/* Consumo diário */}
+      <section aria-labelledby="diario-titulo">
+        <Card className="flex flex-col">
+          <CardHeader id="diario-titulo" title="Consumo por dia" subtitle={periodo} />
+          <div className="p-4 sm:p-6">
+            {estado === 'carregando' || lotesDoMes.carregando ? (
+              <Skeleton className="h-[260px] w-full" />
+            ) : estado === 'erro' || lotesDoMes.erro ? (
+              <ErrorState
+                title="Gráfico indisponível"
+                onRetry={() => {
+                  setEstado('dados')
+                  lotesDoMes.recarregar()
+                }}
+              />
+            ) : resumo.length === 0 ? (
+              <EmptyState title="Sem dados para o gráfico" />
+            ) : (
+              <Suspense fallback={<Skeleton className="h-[260px] w-full" />}>
+                <GraficoDiario dias={consumoPorDia(lotesDoMes.dados, mes, ano)} periodo={periodo} />
+              </Suspense>
             )}
           </div>
         </Card>

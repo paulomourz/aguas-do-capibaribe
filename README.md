@@ -54,6 +54,8 @@ espere um pouco e tente de novo.
 📘 **Guia completo em PDF** (como o sistema funciona e como rodar):
 [`docs/guia/guia-aguas-do-capibaribe.pdf`](docs/guia/guia-aguas-do-capibaribe.pdf)
 
+🎤 **Para apresentar ou testar:** [roteiro com os planos A e B](docs/guia/roteiro-apresentacao.md)
+
 ## ✨ Funcionalidades
 
 | | Funcionalidade | Como funciona |
@@ -62,23 +64,28 @@ espere um pouco e tente de novo.
 | 📝 | **Registro de lotes** | Digitado pelo operador ou enviado pelo sensor; o banco calcula o esperado |
 | 📊 | **Desvio automático** | Realizado × meta em %, com faixas dentro da meta, atenção e crítico |
 | 🚨 | **Alertas** | Abertos quando 3 lotes seguidos do mesmo processo passam da meta |
-| 📈 | **Dashboard e relatório mensal** | Meta × real por processo, com download do relatório em PDF |
-| 👥 | **Perfis** | Gestor (configura e acompanha tudo) e operador (registra lotes) |
-| 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API, em HTTPS |
+| 📈 | **Dashboard e relatório mensal** | Gráficos de meta e consumo por processo e por dia, e relatório mensal com download em PDF |
+| 🔔 | **Aviso no Telegram** | Quando um alerta abre, chega uma mensagem no grupo da lavanderia, com o link do alerta |
+| 📤 | **Exportação em CSV** | O histórico filtrado vira uma planilha para auditoria externa (CPRH) |
+| 👥 | **Perfis** | Administrador (tudo, mais usuários e auditoria), gestor (operação), operador (registra lotes) e sensor (só envia lotes) |
+| 🔍 | **Auditoria** | Quem criou, desativou, reativou ou redefiniu a senha de cada conta, sem poder ser apagado |
+| 📶 | **Funciona com a Wi-Fi oscilando** | O site é um PWA: abre sem conexão, guarda os lotes no aparelho (IndexedDB) e envia sozinho quando a conexão volta, sem duplicar |
+| 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API. Há um projeto público, em HTTPS, e um local, para o Docker |
 
 ## 🧱 Arquitetura
 
 ```mermaid
 flowchart LR
-    W["🖥️ Front-end<br/>React + Vite"] -- "REST / JSON" --> A["⚙️ API<br/>Spring Boot"]
+    W["🖥️ Front-end<br/>React + TypeScript + Vite"] -- "REST / JSON" --> A["⚙️ API<br/>Spring Boot"]
     S["📡 ESP32 (Wokwi)<br/>sensor de vazão"] -- "HTTPS" --> A
     A -- "JPA + Flyway" --> B[("🐘 PostgreSQL")]
+    A -. "aviso de alerta (opcional)" .-> T["💬 Telegram"]
 ```
 
 - O front-end **nunca** acessa o banco: tudo passa pela API.
 - O ESP32 simulado é só mais um cliente da API: faz login e envia o lote.
-- Publicado com site e API no [Render](https://render.com) e banco no [Neon](https://neon.com). Para rodar tudo
-  no próprio PC, use o Docker.
+- Publicado com site e API no [Render](https://render.com) e banco no [Neon](https://neon.com). O Render só publica
+  depois que o CI passa e confere a saúde da API em `/api/actuator/health`. Para rodar tudo no próprio PC, use o Docker.
 - O esquema é versionado com Flyway: as migrações em
   [`backend/src/main/resources/db/migration/`](backend/src/main/resources/db/migration/) são aplicadas
   pela API ao subir ([`database/LEIA-ME.md`](database/LEIA-ME.md)).
@@ -87,11 +94,13 @@ flowchart LR
 
 | Pasta | Conteúdo |
 |---|---|
-| `/` (raiz) | Front-end React 19 + Vite + Tailwind (estrutura exigida pelo Figma Make) |
+| `/` (raiz) | Front-end React 19 com TypeScript + Vite + Tailwind (estrutura exigida pelo Figma Make) |
 | [`backend/`](backend/README.md) | API REST em Java 25 LTS + Spring Boot 3.5 |
-| [`database/`](database/LEIA-ME.md) | Guia do banco PostgreSQL e script do usuário `aguas_api` (as migrações Flyway ficam no `backend/`) |
+| [`database/`](database/LEIA-ME.md) | Guia do banco, script do usuário `aguas_api`, backup e restauração, e scripts de desempenho (as migrações Flyway ficam no `backend/`) |
 | [`iot/`](iot/LEIA-ME.md) | Sensor de vazão simulado no Wokwi (ESP32): código, circuito e guia |
-| [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md) e [gestão](docs/gestao/LEIA-ME.md) |
+| [`docs/`](docs/README.md) | [Guia em PDF](docs/guia/), [endpoints da API](docs/tecnico/api.md), [banco e servidor](docs/tecnico/banco-remoto.md), [validação com usuário](docs/validacao/LEIA-ME.md), [arquitetura](docs/tecnico/arquitetura.md), [testes](docs/tecnico/testes.md) e [gestão: TAP, ERS, segurança e ciclo de vida](docs/gestao/LEIA-ME.md), cada um na sua norma ISO/IEC |
+| `e2e/` | Teste de ponta a ponta do modo offline (Playwright) |
+| [`testes-carga/`](docs/tecnico/teste-carga.md) | Teste de carga do registro de lotes (k6) |
 | `public/` | Arquivos servidos como estão (favicon) |
 | `.figma/` | Configuração do Figma Make. Não editar |
 | [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
@@ -99,13 +108,12 @@ flowchart LR
 ## 🚀 Como rodar
 
 > [!IMPORTANT]
-> **Num PC novo, comece pela `develop`.** O GitHub abre na `main`, que só recebe as versões entregues;
-> o trabalho do dia a dia está na `develop`.
+> **Trabalhe na `develop`.** Ela é a branch padrão do repositório, então o `git clone` já traz a `develop`; a `main`
+> só recebe as versões entregues.
 >
 > ```bash
 > git clone https://github.com/paulomourz/aguas-do-capibaribe.git
 > cd aguas-do-capibaribe
-> git checkout develop
 > ```
 >
 > Depois siga os passos abaixo: requisitos, banco, API e front-end. O banco do seu PC começa só com a
@@ -118,16 +126,19 @@ Precisa apenas do Docker com o Docker Compose. Na raiz do projeto:
 
 ```bash
 docker compose up -d --build
-docker compose logs segredos   # mostra o login e a senha inicial do administrador
+docker compose logs segredos   # mostra os logins e as senhas do administrador, do gestor e do sensor
 ```
 
 O site abre em <http://localhost:3000> e o Swagger em <http://localhost:3000/api/swagger-ui.html>. A primeira
 subida baixa as imagens e compila tudo, então precisa de internet e demora alguns minutos.
 
 - **Banco próprio:** é separado do PostgreSQL instalado no PC e já vem com os processos iniciais.
-- **Senhas:** são sorteadas na primeira subida e ficam só em um volume do Docker, fora do Git.
+- **Senhas:** são sorteadas na primeira subida e ficam só em volumes do Docker, fora do Git. A API as lê como
+  arquivos só de leitura em `/run/secrets/aguas` (padrão do Docker Secrets), então nenhuma senha aparece nas
+  variáveis de ambiente do contêiner; o CI confere isso a cada mudança.
 - **Parar:** `docker compose down` mantém os dados. Com `docker compose down -v`, os dados e as senhas são **apagados**.
-- **Conta do sensor:** a senha também é sorteada e aparece no mesmo comando. Para usar o Wokwi com o Docker, veja [`iot/LEIA-ME.md`](iot/LEIA-ME.md#usar-com-a-api-do-seu-pc).
+- **Contas prontas:** `capibaribe.admin` (administrador), `capibaribe.gestor` (gestor) e `sensor.wokwi` (sensor).
+- **Wokwi com o Docker:** `docker compose --profile tunel up -d --build` liga também o túnel, e `docker compose --profile tunel stop tunel` desliga. Veja o [roteiro de apresentação](docs/guia/roteiro-apresentacao.md).
 
 Para rodar sem Docker, siga os passos abaixo.
 
@@ -140,7 +151,7 @@ Para rodar sem Docker, siga os passos abaixo.
 | PostgreSQL | 18 | banco |
 | Node.js | 22 ou mais novo | front-end |
 | pnpm | 10 | front-end (`npx pnpm@10` também serve) |
-| cloudflared | qualquer | só para ligar o IoT simulado à API do seu PC |
+| cloudflared | qualquer | só para ligar o IoT simulado à API do seu PC, sem Docker |
 
 ### 1. Banco de dados
 
@@ -165,8 +176,8 @@ O banco começa sem usuários. Na primeira inicialização, a API cria o adminis
 `capibaribe.admin` com a senha de `ADMIN_SENHA` ([detalhes](backend/README.md#administrador-principal));
 os outros usuários são criados na tela **Usuários**.
 
-> **Banco oficial:** o `aguas` tem dois usuários fixos, `capibaribe.admin` (administrador do site) e
-> `sensor.wokwi` (sensor). Os processos reais são cadastrados pelo site. As senhas ficam fora do Git.
+> **Contas fixas:** `capibaribe.admin` (administrador), `capibaribe.gestor` (gestor, criada se `GESTOR_SENHA` estiver
+> definida) e `sensor.wokwi` (sensor, criada se `SENSOR_SENHA` estiver definida). Os processos reais são cadastrados pelo site. As senhas ficam fora do Git.
 > Situação atual: [`docs/tecnico/banco-remoto.md`](docs/tecnico/banco-remoto.md#6-situação-atual).
 
 ### 2. API
@@ -178,7 +189,7 @@ mvn spring-boot:run      # http://localhost:8080/api
 ```
 
 Com a API no ar, a documentação interativa (Swagger) fica em
-**http://localhost:8080/api/swagger-ui.html**: lista as 16 rotas e permite testá-las no navegador.
+**http://localhost:8080/api/swagger-ui.html**: lista as 19 rotas e permite testá-las no navegador.
 Configuração completa, regras implementadas e testes: [`backend/README.md`](backend/README.md).
 
 ### 3. Front-end
@@ -199,9 +210,25 @@ VITE_NOME_LAVANDERIA=Nome da lavanderia
 
 Com a API desligada, o site avisa "Não foi possível conectar ao servidor." em vez de quebrar.
 
-> **Modo simulado (só para demonstração sem back-end):** com `VITE_USAR_MOCK=true` no `.env.local`, o
-> site usa dados de exemplo em memória, nada é gravado, e uma faixa amarela no topo avisa isso. Logins:
-> `gestor.demo` ou `operador01`, senha `capibaribe`. Não use em entregas.
+#### Sem conexão (PWA)
+
+No build de produção (`pnpm build`, Docker, Render) o site instala um service worker
+([`vite-plugin-pwa`](https://vite-pwa-org.netlify.app/)) e passa a abrir mesmo com a Wi-Fi da lavanderia fora:
+
+- **Lote registrado sem conexão** fica guardado no aparelho (IndexedDB, `src/services/filaOffline.ts`) e aparece em
+  **Registro de lotes → Guardados neste aparelho** e no aviso amarelo do cabeçalho.
+- **A conexão voltou?** O site envia sozinho (evento `online`, a cada 20 s e ao voltar para a aba), do mais antigo
+  ao mais novo, ou na hora pelo botão **Enviar agora** (`src/services/sincronizacao.ts`).
+- **Sem duplicar:** cada lote leva uma chave (UUID) no cabeçalho `Idempotency-Key`; se a resposta se perder e o site
+  reenviar, a API devolve o lote já gravado. Ver [`docs/tecnico/api.md`](docs/tecnico/api.md#reenvio-sem-duplicar-idempotency-key).
+- **Página recarregada sem conexão:** abre com a sessão, os processos e os lotes da última carga. Ao sair, esses dados
+  são apagados do aparelho; os lotes ainda não enviados ficam e vão quando a mesma pessoa entrar de novo.
+- **Lote recusado** pela API (ex.: processo inválido) fica marcado em vermelho para o operador tentar de novo ou descartar.
+- No `pnpm dev` o service worker fica desligado; a fila em IndexedDB funciona igual.
+- Uma versão nova do site só assume quando todas as abas forem fechadas, para nunca recarregar no meio de um registro.
+
+> **Sem modo simulado:** o site sempre usa a API. Para mostrar o sistema sem internet, suba tudo no computador com o
+> Docker (plano B do [roteiro de apresentação](docs/guia/roteiro-apresentacao.md#plano-b-docker-no-computador)).
 
 ### 4. IoT simulado (opcional)
 
@@ -218,53 +245,92 @@ mvn test
 | Conjunto | Precisa de banco? | Cobre |
 |---|---|---|
 | `RegraDeAlertaTest`, `RegrasSimplesTest` | não | regra dos 3 lotes, transições de status, desvio, CORS, JWT |
-| `SegurancaWebTest` | não | 401/403 por perfil, validações, formato de erro |
-| `ProcessoControllerTest` | não | meta zero ou negativa e nome repetido no cadastro de processos |
-| `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real |
+| `SegurancaWebTest`, `LimiteDeRequisicoesTest` | não | 401/403 por perfil, validações, formato de erro, limite de requisições (429) |
+| `ProcessoControllerTest`, `ProcessoServiceCacheTest` | não | cadastro de processos e cache da lista |
+| `AuditoriaUsuarioTest`, `AuditoriaServiceTest` | não | registro e consulta da auditoria |
+| `AdminInicialTest`, `GestorInicialTest`, `SensorInicialTest` | não | contas criadas na inicialização |
+| `AvisoDeAlertaTest` | não | mensagem do Telegram e falha no envio sem afetar o lote |
+| `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real, perfis, auditoria, Actuator e aviso no Telegram (com um servidor falso) |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 64 testes: 45 unitários e de web + 19 de integração com PostgreSQL 18 (o banco começa vazio e o
+São 169 testes: 132 unitários e de web + 37 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
 
+**Site:**
+
+```bash
+pnpm test        # Vitest (199 testes): fila em IndexedDB, sincronização, CSV, tema, glossário, números, gauge, pegada e limites
+pnpm test:e2e    # Playwright (10 testes): modo offline, fluxo do operador, privacidade e números
+```
+
+O teste ponta a ponta (`e2e/offline.spec.ts`) derruba a conexão do navegador, registra lotes, recarrega a página
+ainda sem conexão, devolve a conexão e confere que a API recebeu cada lote uma vez só, na ordem. Também simula a
+resposta perdida (a API grava, o site não recebe) e confere que o reenvio não duplica. Na primeira vez, rode
+`pnpm exec playwright install chromium`.
+
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
-`develop`: `backend-test` (os 64 testes, no Java 25) e `frontend-build` (`tsc --noEmit` e `pnpm build`).
-Não faça merge com check vermelho.
+`develop`: `backend-test` (no Java 25), `frontend-build` (`tsc --noEmit`, `pnpm test`, `pnpm build` e `pnpm test:e2e`) e
+`docker-compose` (sobe o Docker e testa login, processos e registro de lote pelo Nginx) e `dependencias` (procura
+vulnerabilidades conhecidas no `pom.xml` e no `pnpm-lock.yaml` com o [OSV-Scanner](https://google.github.io/osv-scanner/)
+e bloqueia as de gravidade alta ou crítica, CVSS 7,0 ou mais; exceções, sempre com motivo e data, ficam em
+[`osv-scanner.toml`](osv-scanner.toml)). O Render só publica depois
+que esses checks passam. **Não faça merge com check vermelho.**
+
+### Se uma publicação der problema (voltar versão)
+
+1. **Na hora, no Render:** abra o serviço (`aguas-api` ou o site), vá em **Events**, escolha o último deploy que
+   funcionava e clique em **Rollback**. A versão anterior volta ao ar em poucos minutos.
+2. **Depois, no Git:** desfaça o merge com problema por um PR de `git revert` na `develop` (no GitHub, botão
+   **Revert** do PR). Sem isso, o próximo merge publica o erro de novo, e o Render pode desligar o Auto-Deploy
+   depois de um rollback: confira em **Settings > Auto-Deploy** que continua em **After CI Checks Pass**.
+3. **Banco:** o rollback não desfaz migração do Flyway. Se o problema veio de uma migração, corrija com uma
+   migração nova (próximo número livre), nunca editando a que já rodou.
+
+[Teste de carga](docs/tecnico/teste-carga.md) (k6, 50 sensores ao mesmo tempo) e [análise de índices](docs/tecnico/desempenho-indices.md)
+(EXPLAIN ANALYZE) ficam fora da CI e são rodados à mão.
 
 ## 📌 Status
 
-Versão atual: **v1.0.0** (02/11/2026). O que entrou em cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
+Última versão: **v1.1.0** (14/11/2026). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
-- ✅ Login, perfis (gestor/operador), gestão de usuários e da própria conta, sempre contra a API real
-- ✅ Gestor redefine a senha de outra pessoa, com registro de auditoria (quem fez, em quem e quando)
+- ✅ Login com limite de tentativas, quatro perfis (administrador, gestor, operador e sensor), gestão de usuários e da própria conta
+- ✅ Auditoria das ações sobre contas, com tela própria para o administrador
 - ✅ Processos e metas
-- ✅ Registro de lote com desvio e histórico por perfil
-- ✅ Alertas (3 lotes seguidos acima da meta) com status
-- ✅ Dashboard e relatório mensal, com download direto em PDF
+- ✅ Registro de lote com desvio e histórico por perfil, inclusive sem conexão (PWA), e exportação em CSV
+- ✅ Alertas (3 lotes seguidos acima da meta) com status e aviso no Telegram
+- ✅ Dashboard com gráficos e relatório mensal, com download direto em PDF
 - ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS, encontrando o processo pelo nome e renovando o login sozinho
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
-- ✅ Versionamento do banco com migrações Flyway (V1 a V4), aplicadas ao subir a API
+- ✅ Versionamento do banco com migrações Flyway (V1 a V11), aplicadas ao subir a API
+- ✅ Desempenho medido: teste de carga, índices com EXPLAIN ANALYZE e cache da lista de processos
+- ✅ Monitoramento (Actuator) e backup do banco com restauração verificada
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
 - ✅ Sistema publicado na internet, com endereço fixo e HTTPS
 - ✅ Docker Compose: banco, API e site com um comando
-- ✅ CI no GitHub Actions e 64 testes automatizados, incluindo o ciclo completo da lavanderia
+- ✅ CI no GitHub Actions com testes da API, do site e do Docker; o Render só publica depois do CI
 
 **Limitações conhecidas**
 
-- **Senha do sensor:** fica no código do projeto do Wokwi, que é público. O simulador não tem armazenamento
-  protegido, e a conta do sensor é de operador.
+- **Senha do sensor:** é colada no projeto do Wokwi, que é público, na hora de usar, e não deve ser salva lá. A
+  conta tem o perfil sensor, que só consulta processos e registra lotes.
 - **Certificado do sensor:** a impressão digital vale até 20/12/2026 e precisa ser atualizada quando o Render
   renovar o certificado ([como fazer](iot/LEIA-ME.md#se-der-errado)).
 - **Limites do status:** estão na API e no site, para classificar totais e médias. Se mudarem, mude nos dois.
 - **Inativar processo:** ainda não existe.
-- **Plano grátis:** a API dorme sem uso, e o banco pode ser apagado depois de 90 dias parado.
+- **Plano grátis:** a API dorme sem uso, e o banco pode ser apagado depois de 90 dias parado. O Render grátis bloqueia
+  e-mail, por isso o aviso de alerta vai pelo Telegram.
+- **Em desenvolvimento:** vários sensores por linha de lavagem (#47), glossário têxtil (#55) e validação com um
+  operador real (#50).
 - **Bancada física:** não foi montada. A entrega usa a simulação; a especificação está em
   [`docs/tecnico/hardware-bancada.md`](docs/tecnico/hardware-bancada.md).
+
+O que ainda falta alinhar com o orientador está na seção 11.1 do [TAP](docs/gestao/TAP.pdf).
 
 ## 🌿 Fluxo de trabalho (GitFlow)
 
@@ -290,7 +356,7 @@ gitGraph
 | Branch | Para quê | Sai de | Volta para |
 |---|---|---|---|
 | `main` | versão entregue/apresentável. Ninguém faz commit direto | — | — |
-| `develop` | integração do que está pronto | `main` | — |
+| `develop` | integração do que está pronto; branch padrão do repositório | `main` | — |
 | `feature/<nome>` | uma funcionalidade ou ajuste (ex.: `feature/inativar-processo`) | `develop` | `develop` (pull request) |
 | `release/<versão>` | preparar uma entrega (ex.: `release/1.0`) | `develop` | `main` e `develop` |
 | `hotfix/<nome>` | correção urgente no que já foi entregue | `main` | `main` e `develop` |
@@ -303,15 +369,17 @@ git push -u origin feature/minha-funcionalidade
 # abra um pull request para develop no GitHub
 ```
 
-Antes do pull request, rode `mvn test` (back-end) e `pnpm build` (front-end).
+Antes do pull request, rode `mvn test` (back-end) e `pnpm build` (front-end). O pull request já abre com um modelo:
+preencha o que mudou, como testou e a issue. Um PR para a `main` que não venha de `release/` ou `hotfix/` fica com
+o check `base-do-pr` vermelho.
 
 **Trabalhando numa issue:**
 
 1. Crie a branch a partir da `develop` (ex.: `feature/status-na-api`) e escreva `Closes #N` na
    descrição do pull request.
-2. Como o pull request entra na `develop` (e não na `main`), o GitHub **não fecha a issue sozinho**.
-   Depois do merge, feche a issue com um comentário apontando o PR.
-3. **Mudou o banco?** Crie uma migração nova (`V5__descricao.sql`, o próximo número) em
+2. Como a `develop` é a branch padrão, o GitHub fecha a issue sozinho no merge. Use `Refs #N` se a issue
+   ainda não terminou.
+3. **Mudou o banco?** Crie uma migração nova (`V9__descricao.sql`, o próximo número) em
    `backend/src/main/resources/db/migration/`. **Nunca edite uma migração que já está na `develop`**:
    o Flyway confere o checksum e a API não sobe. Registre a mudança no [`CHANGELOG.md`](CHANGELOG.md).
    Passo a passo no [`database/LEIA-ME.md`](database/LEIA-ME.md#mudou-o-banco-crie-uma-migração-nova).
@@ -319,8 +387,8 @@ Antes do pull request, rode `mvn test` (back-end) e `pnpm build` (front-end).
    ao subir.
 
 > [!WARNING]
-> **Nunca suba segredos.** `backend/.env`, `.env.local` e `docs/privado/` estão no `.gitignore`.
-> Senhas, `JWT_SECRET` e dados do banco ficam só nesses arquivos.
+> **Nunca suba segredos.** `backend/.env`, `.env.local`, `database/.env.backup` e `docs/privado/` estão no
+> `.gitignore`. Senhas, `JWT_SECRET`, o token do Telegram e dados do banco ficam só nesses arquivos e nas variáveis do Render.
 
 ## 👥 Equipe
 

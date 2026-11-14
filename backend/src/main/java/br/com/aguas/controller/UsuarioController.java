@@ -18,6 +18,7 @@ import br.com.aguas.dto.UsuarioDTOs.AtivoDTO;
 import br.com.aguas.dto.UsuarioDTOs.AtualizarUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.NovoUsuarioDTO;
 import br.com.aguas.dto.UsuarioDTOs.RedefinirSenhaDTO;
+import br.com.aguas.dto.UsuarioDTOs.TokenDeApiDTO;
 import br.com.aguas.dto.UsuarioDTOs.UsuarioDTO;
 import br.com.aguas.security.UsuarioAutenticado;
 import br.com.aguas.service.UsuarioService;
@@ -38,22 +39,24 @@ public class UsuarioController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar usuários", description = "Só gestor.")
+    @Operation(summary = "Listar usuários",
+            description = "Administrador e gestor. Só o administrador recebe o login inteiro de outras pessoas; "
+                    + "para o gestor, o login dos outros vem mascarado (ex.: ca****in) e o nome vem inteiro.")
     @RespostasDoc.Ok
     @RespostasDoc.SoGestor
-    public List<UsuarioDTO> listar() {
-        return usuarios.listar();
+    public List<UsuarioDTO> listar(@AuthenticationPrincipal UsuarioAutenticado quem) {
+        return usuarios.listar(quem);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Criar usuário", description = "Só gestor. Não existe autocadastro.")
+    @Operation(summary = "Criar usuário", description = "Só administrador. Não existe autocadastro.")
     @ApiResponse(responseCode = "201", description = "Usuário criado.")
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
-    public UsuarioDTO criar(@Valid @RequestBody NovoUsuarioDTO dados) {
-        return usuarios.criar(dados);
+    public UsuarioDTO criar(@AuthenticationPrincipal UsuarioAutenticado quem, @Valid @RequestBody NovoUsuarioDTO dados) {
+        return usuarios.criar(quem, dados);
     }
 
     @PatchMapping("/{id}")
@@ -72,10 +75,10 @@ public class UsuarioController {
 
     @PatchMapping("/{id}/senha")
     @Operation(summary = "Redefinir a senha de outra pessoa",
-            description = "Só gestor, para quem esqueceu a senha. A senha antiga deixa de valer na hora. "
+            description = "Só administrador, para quem esqueceu a senha. A senha antiga deixa de valer na hora. "
                     + "Não vale para a própria senha nem para a do administrador principal.")
     @RespostasDoc.Ok
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.NaoEncontrado
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
@@ -86,15 +89,28 @@ public class UsuarioController {
 
     @PatchMapping("/{id}/ativo")
     @Operation(summary = "Desativar ou reativar acesso",
-            description = "Só gestor. Quem é desativado perde o acesso na hora; os lotes dele continuam no histórico. "
+            description = "Só administrador. Quem é desativado perde o acesso na hora; os lotes dele continuam no histórico. "
                     + "Não vale para a própria conta nem para o administrador principal.")
     @RespostasDoc.Ok
-    @RespostasDoc.SoGestor
+    @RespostasDoc.SoAdmin
     @RespostasDoc.NaoEncontrado
     @RespostasDoc.Validacao
     @RespostasDoc.Conflito
     public UsuarioDTO definirAtivo(@AuthenticationPrincipal UsuarioAutenticado quem, @PathVariable Integer id,
                                    @Valid @RequestBody AtivoDTO dados) {
         return usuarios.definirAtivo(quem, id, dados.ativo());
+    }
+
+    @PostMapping("/{id}/token/rotacao")
+    @Operation(summary = "Rotacionar o token de API do sensor",
+            description = "Só administrador, e só para contas de perfil `sensor`. Gera uma chave nova de 64 caracteres "
+                    + "alfanuméricos e revoga a anterior na hora. A chave aparece só nesta resposta: a API guarda apenas o "
+                    + "hash dela. O sensor a envia em `Authorization: Bearer <chave>`, sem passar pelo login.")
+    @RespostasDoc.Ok
+    @RespostasDoc.SoAdmin
+    @RespostasDoc.NaoEncontrado
+    @RespostasDoc.Conflito
+    public TokenDeApiDTO rotacionarToken(@AuthenticationPrincipal UsuarioAutenticado quem, @PathVariable Integer id) {
+        return usuarios.rotacionarToken(quem, id);
     }
 }

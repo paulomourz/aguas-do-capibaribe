@@ -1,8 +1,11 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
-import { AvisoModoSimulado, Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
+import SeletorTema from '../components/SeletorTema'
+import { AvisoLimite, textoEspera, useEsperaLimite } from '../components/LimiteRequisicoes'
+import { Banner, Button, Card, DiamondDivider, DiamondIllustration, Field, Logo, PasswordInput, TextInput } from '../components/ui'
 import { IconCloudOff, IconCompass, IconLock, IconRefresh } from '../components/icons'
-import { navigate } from '../router'
+import { Link, navigate } from '../router'
 import { errosDaApi, homeDe, useApp } from '../store'
+import { ApiError } from '../services'
 import waveReference from '../assets/wave-minimal-reference.jpg'
 import AppLayout, { Footer } from '../layouts/AppLayout'
 import logoUrl from '../assets/logo.png'
@@ -47,9 +50,12 @@ export function Login({ next }: { next?: string }) {
   const [erro, setErro] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+  // 429: mais de 5 tentativas por minuto deste IP. O botão fica parado até o Retry-After acabar.
+  const espera = useEsperaLimite('login')
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
+    if (espera > 0) return
     setErro(false)
     setFalha(null)
     setCarregando(true)
@@ -60,25 +66,24 @@ export function Login({ next }: { next?: string }) {
         setSenha("")
         return
       }
-      const destino = next && (u.perfil === 'gestor' || ['/registro', '/historico'].some((p) => next.startsWith(p))) ? next : homeDe(u.perfil)
+      const destino = next && (u.perfil !== 'operador' || ['/registro', '/historico'].some((p) => next.startsWith(p))) ? next : homeDe(u.perfil)
       navigate(destino, { replace: true })
     } catch (err) {
-      setFalha(errosDaApi(err).mensagem)
+      // O 429 aparece na faixa de espera, com a contagem.
+      if (!(err instanceof ApiError && err.status === 429)) setFalha(errosDaApi(err).mensagem)
     } finally {
       setCarregando(false)
     }
   }
 
   return (
-    <>
-    <AvisoModoSimulado />
     <div className="flex min-h-screen flex-col bg-page lg:flex-row">
       {/* Painel de marca */}
       <section className="on-dark relative hidden overflow-hidden bg-brand text-white lg:flex lg:w-[46%] lg:flex-col">
         <WavePattern />
         <div className="relative flex flex-1 flex-col justify-between px-14 pt-14 pb-20">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-sertao ring-2 ring-areia/60">
+            <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-logo-bg ring-2 ring-areia/60">
               <img src={logoUrl} alt="" className="h-[44px] w-[44px] object-contain" />
             </span>
             <span className="leading-tight">
@@ -103,17 +108,25 @@ export function Login({ next }: { next?: string }) {
 
       {/* Formulário */}
       <section className="relative flex flex-1 flex-col overflow-hidden bg-sertao">
+        <div className="absolute right-3 top-3 z-10">
+          <SeletorTema />
+        </div>
         <div className="relative flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
           <div className="w-full max-w-[400px]">
             <div className="mb-10 lg:hidden">
               <Logo />
             </div>
             <h2 className="text-[34px] font-bold leading-tight tracking-tight text-ink">Acesse sua lavanderia</h2>
-            <p className="mt-2 text-[16px] text-ink-2">Use o usuário e a senha criados pelo gestor.</p>
+            <p className="mt-2 text-[16px] text-ink-2">Use o usuário e a senha criados pelo administrador.</p>
 
             <form onSubmit={enviar} noValidate className="mt-8 flex flex-col gap-5">
               {erro && <Banner tone="crit" title="Não foi possível entrar">Usuário ou senha incorretos. Confira os dados e tente novamente.</Banner>}
               {falha && <Banner tone="crit" title="Não foi possível entrar">{falha}</Banner>}
+              {espera > 0 && (
+                <AvisoLimite segundos={espera} titulo="Muitas tentativas de entrar">
+                  Por segurança, o sistema aceita até 5 tentativas por minuto.
+                </AvisoLimite>
+              )}
 
               <Field id="usuario" label="Usuário">
                 <TextInput
@@ -140,17 +153,22 @@ export function Login({ next }: { next?: string }) {
                 />
               </Field>
 
-              <Button type="submit" size="lg" full loading={carregando} className="mt-2">
-                {carregando ? 'Entrando…' : 'Entrar'}
+              <Button type="submit" size="lg" full loading={carregando} disabled={espera > 0} className="mt-2">
+                {carregando ? 'Entrando…' : espera > 0 ? `Aguarde ${textoEspera(espera)}` : 'Entrar'}
               </Button>
             </form>
 
-            <p className="mt-6 text-[14px] text-ink-2">Esqueceu a senha? Peça ao gestor para redefinir.</p>
+            <p className="mt-6 text-[14px] text-ink-2">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+            <p className="mt-3 text-[14px] text-ink-2">
+              <Link to="/privacidade" className="font-semibold text-brand underline underline-offset-2">
+                Aviso de privacidade
+              </Link>
+              : quais dados guardamos, para quê e por quanto tempo.
+            </p>
           </div>
         </div>
       </section>
     </div>
-    </>
   )
 }
 
@@ -247,7 +265,7 @@ export function AcessoNegado() {
         <Aviso
           icon={<IconLock size={30} />}
           title="Acesso negado"
-          text="Seu perfil não tem permissão para abrir esta tela. Se precisar desse acesso, fale com o gestor da lavanderia."
+          text="Seu perfil não tem permissão para abrir esta tela. Se precisar desse acesso, fale com o administrador da lavanderia."
           action={
             <Button size="lg" full onClick={() => navigate(homeDe(usuario.perfil))}>
               Voltar para a tela inicial

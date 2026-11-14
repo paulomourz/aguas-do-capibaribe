@@ -15,7 +15,8 @@ import {
   TextInput,
 } from '../components/ui'
 import { IconEdit, IconPlus, IconTarget } from '../components/icons'
-import { fmtNum, unidadeCurta, unidadeLabel, type Processo, type Unidade } from '../domain'
+import DicaGlossario from '../components/DicaGlossario'
+import { fmtNum, lerNumeroBR, nomeSugerido, unidadeCurta, unidadeLabel, type Processo, type Unidade } from '../domain'
 import { navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
 
@@ -33,7 +34,7 @@ export default function Processos({ modal, editarId, destaque }: { modal?: 'novo
       <StatePreview value={estado} onChange={setEstado} />
       <PageHeader
         title="Processos e metas"
-        description="A meta de cada processo é a referência para calcular o desvio dos lotes."
+        description="A meta de cada processo é a referência para calcular o desvio dos lotes. Use o ícone de informação para ver o que cada processo faz."
         actions={
           <>
             <Button icon={<IconPlus size={20} />} onClick={() => navigate('/processos/novo')}>
@@ -67,7 +68,13 @@ export default function Processos({ modal, editarId, destaque }: { modal?: 'novo
             minWidth={600}
             highlight={(p) => p.id === destaque || p.id === editarId}
             cols={[
-              { key: 'n', header: 'Processo', mobile: 'title', render: (p) => <span className="font-semibold">{p.nome}</span> },
+              { key: 'n', header: 'Processo', mobile: 'title', render: (p) => (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="font-semibold">{p.nome}</span>
+                    <DicaGlossario processo={p.nome} />
+                  </span>
+                ),
+              },
               {
                 key: 'm',
                 header: 'Valor da meta',
@@ -105,7 +112,8 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
   const { processos, salvarProcesso, notificar } = useApp()
   const [nome, setNome] = useState(processo?.nome ?? '')
   const [unidade, setUnidade] = useState<Unidade | ''>(processo?.unidade ?? '')
-  const [meta, setMeta] = useState(processo ? String(processo.meta) : '')
+  // Vírgula decimal, como o campo espera ("12,5", não "12.5").
+  const [meta, setMeta] = useState(processo ? String(processo.meta).replace('.', ',') : '')
   const [erros, setErros] = useState<Erros>({})
   const [salvando, setSalvando] = useState(false)
   const [aberto, setAberto] = useState(false)
@@ -118,9 +126,10 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
     if (!n) novo.nome = 'Informe o nome do processo.'
     else if (processos.some((p) => p.nome.toLowerCase() === n.toLowerCase() && p.id !== processo?.id)) novo.nome = 'Já existe um processo com esse nome.'
     if (!unidade) novo.unidade = 'Escolha a unidade da meta.'
-    const v = Number(meta.replace(',', '.'))
+    // "1.500" é mil e quinhentos (issue #139); antes virava 1,5.
+    const v = lerNumeroBR(meta)
     if (meta.trim() === '') novo.meta = 'Informe o valor da meta.'
-    else if (Number.isNaN(v)) novo.meta = 'Use apenas números no valor da meta.'
+    else if (Number.isNaN(v)) novo.meta = 'Use apenas números no valor da meta, por exemplo 12,5 ou 1.500.'
     else if (v <= 0) novo.meta = 'A meta deve ser maior que zero. Valores zero ou negativos não são aceitos.'
     setErros(novo)
     const primeiro = Object.keys(novo)[0]
@@ -143,6 +152,7 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
   }
 
   const temErro = Object.keys(erros).length > 0
+  const sugerido = nomeSugerido(nome)
 
   return (
     <Modal
@@ -164,7 +174,23 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
     >
       <form id="form-processo" onSubmit={salvar} noValidate className="flex flex-col gap-6">
         {temErro && <Banner tone="crit">Corrija os campos destacados para salvar.</Banner>}
-        <Field id="p-nome" label="Nome do processo" error={erros.nome}>
+        <Field
+          id="p-nome"
+          label="Nome do processo"
+          error={erros.nome}
+          hint={
+            sugerido ? (
+              <>
+                Nome padrão do glossário: <strong className="font-semibold text-ink">{sugerido}</strong>.{' '}
+                <button type="button" className="font-semibold text-link underline underline-offset-2" onClick={() => setNome(sugerido)}>
+                  Usar {sugerido}
+                </button>
+              </>
+            ) : (
+              'Use o nome padrão: Estonagem, Amaciamento, Alvejamento ou Tingimento.'
+            )
+          }
+        >
           <TextInput
             id="p-nome"
             value={nome}
@@ -197,8 +223,9 @@ function ProcessoForm({ processo, onClose }: { processo?: Processo; onClose: () 
         >
           <TextInput
             id="p-meta"
-            type="number"
+            type="text"
             inputMode="decimal"
+            autoComplete="off"
             value={meta}
             invalid={!!erros.meta}
             suffix={unidade ? unidadeCurta[unidade] : 'litros'}

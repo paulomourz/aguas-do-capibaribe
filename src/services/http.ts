@@ -1,8 +1,7 @@
+import { ESPERA_PADRAO_S, escopoDaRota, lerRetryAfter, registrarBloqueio, segundosRestantes } from './limite'
 import type { ErroApiDTO } from './tipos'
 
 export const API_URL: string = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api'
-/** Padrão: API real. O modo simulado (dados em memória) só liga com VITE_USAR_MOCK=true. */
-export const USAR_MOCK = import.meta.env.VITE_USAR_MOCK?.trim().toLowerCase() === 'true'
 
 export const CHAVE_TOKEN = 'ac-token'
 export const obterToken = () => sessionStorage.getItem(CHAVE_TOKEN)
@@ -16,23 +15,40 @@ export class ApiError extends Error {
   readonly status: number
   readonly codigo: string
   readonly campos: Record<string, string>
-  constructor(status: number, erro: ErroApiDTO) {
+  /** No 429: quantos segundos esperar antes de tentar de novo (cabeçalho Retry-After). */
+  readonly esperarSegundos: number | null
+  constructor(status: number, erro: ErroApiDTO, esperarSegundos: number | null = null) {
     super(erro.mensagem)
     this.name = 'ApiError'
     this.status = status
     this.codigo = erro.codigo
     this.campos = erro.campos ?? {}
+    this.esperarSegundos = esperarSegundos
   }
 }
 
-type Opcoes = Omit<RequestInit, 'body'> & { corpo?: unknown; query?: Record<string, string | number | undefined> }
+/** O 429 que a API daria: usado quando a ação ainda está bloqueada e o pedido nem sai do aparelho. */
+export const erroLimite = (segundos: number) =>
+  new ApiError(429, { codigo: 'LIMITE_EXCEDIDO', mensagem: `Muitas tentativas. Aguarde ${segundos} segundos e tente de novo.` }, segundos)
+
+type Opcoes = Omit<RequestInit, 'body'> & {
+  corpo?: unknown
+  query?: Record<string, string | number | undefined>
+  /** Desiste depois deste tempo (ms) e trata como sem conexão. Na Wi-Fi instável, um fetch pode ficar pendurado por minutos. */
+  timeoutMs?: number
+}
 
 const ROTA_LOGIN = '/auth/login'
 /** Disparado quando o servidor recusa o token (expirado ou usuário desativado); o store limpa a sessão. */
 export const EVENTO_SESSAO_EXPIRADA = 'ac-sessao-expirada'
 
-export async function requisicao<T>(caminho: string, { corpo, query, headers, ...init }: Opcoes = {}): Promise<T> {
+export async function requisicao<T>(caminho: string, { corpo, query, headers, timeoutMs, ...init }: Opcoes = {}): Promise<T> {
   // A base só vale para endereço relativo (/api, no Docker, com o Nginx na mesma origem).
+  // Passou do limite há pouco (429): não dispara de novo até o Retry-After acabar.
+  const escopo = escopoDaRota(caminho, init.method)
+  const restante = escopo ? segundosRestantes(escopo) : 0
+  if (restante > 0) throw erroLimite(restante)
+
   const url = new URL(API_URL.replace(/\/+$/, '') + caminho, window.location.origin)
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v))
 
@@ -42,9 +58,10 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ..
   if (corpo !== undefined) h.set('Content-Type', 'application/json')
   if (token) h.set('Authorization', `Bearer ${token}`)
 
+  const sinal = timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
   let resp: Response
   try {
-    resp = await fetch(url, { ...init, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) })
+    resp = await fetch(url, { ...init, signal: init.signal ?? sinal, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) })
   } catch {
     throw new ApiError(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' })
   }
@@ -62,6 +79,12 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ..
       if (j && typeof j.mensagem === 'string') erro = { codigo: j.codigo ?? erro.codigo, mensagem: j.mensagem, campos: j.campos }
     } catch {
       /* corpo vazio ou não JSON */
+    }
+    if (resp.status === 429) {
+      // Sem o cabeçalho (ou com CORS escondendo-o), espera a janela inteira do limite.
+      const segundos = lerRetryAfter(resp.headers.get('Retry-After')) ?? ESPERA_PADRAO_S
+      if (escopo) registrarBloqueio(escopo, segundos)
+      throw new ApiError(429, erro, segundos)
     }
     throw new ApiError(resp.status, erro)
   }

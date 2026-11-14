@@ -17,16 +17,21 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconClipboard, IconClock, IconDroplet, IconHistory, IconPlus } from '../components/icons'
-import { esperadoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
+import { esperadoDe, lerNumeroBR, termoDe, fmtDataHora, fmtL, fmtNum, fmtPct, unidadeCurta, unidadeLabel, type Lote } from '../domain'
 import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
+import { PainelPendentes, ResultadoPendenteCard } from '../components/FilaOffline'
+import DicaGlossario from '../components/DicaGlossario'
+import ToleranceGauge from '../components/ToleranceGauge'
+import { AvisoLimite, textoEspera, useEsperaLimite } from '../components/LimiteRequisicoes'
+import type { LotePendente } from '../services'
 
 type Erros = Partial<Record<'processo' | 'pecas' | 'litros', string>>
 
 /* ---------- O1 Registro de lote (com O2 embutido após o envio) ---------- */
 
 export default function RegistroLote() {
-  const { processos, registrarLote } = useApp()
+  const { processos, registrarLote, conectado, modoOffline, enviadosAgora } = useApp()
   const [estado, setEstado] = useEstadoTela()
   const [processoId, setProcessoId] = useState('')
   const [pecas, setPecas] = useState('')
@@ -35,21 +40,31 @@ export default function RegistroLote() {
   const [confirmar, setConfirmar] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
+  // 429: passou de 60 lotes por minuto. Novos registros esperam o Retry-After; o que já entrou fica na fila.
+  const espera = useEsperaLimite('lotes')
   const [resultado, setResultado] = useState<Lote | null>(null)
+  /** Lote que ficou guardado no aparelho; quando a fila o enviar, vira `enviadosAgora[chave]`. */
+  const [guardado, setGuardado] = useState<LotePendente | null>(null)
+  const loteDoGuardado = guardado ? enviadosAgora[guardado.chave] : undefined
+  const temResultado = !!resultado || !!guardado
   const resultadoRef = useRef<HTMLDivElement>(null)
 
   const processo = processos.find((p) => p.id === processoId)
-  const nPecas = Number(pecas)
-  const nLitros = Number(String(litros).replace(',', '.'))
+  // Padrão brasileiro: "1.590" é mil quinhentos e noventa (issue #139); formato ambíguo vira NaN e cai na validação.
+  const nPecas = lerNumeroBR(pecas)
+  const nLitros = lerNumeroBR(litros)
   const esperadoPrevio = processo && nPecas > 0 ? esperadoDe(processo, nPecas) : null
 
   function validar(e: FormEvent) {
     e.preventDefault()
+    if (espera > 0) return
     const novo: Erros = {}
     if (!processo) novo.processo = 'Selecione o processo do lote.'
     if (pecas.trim() === '') novo.pecas = 'Informe a quantidade de peças.'
+    else if (Number.isNaN(nPecas)) novo.pecas = 'Digite só o número de peças, por exemplo 50 ou 1.200.'
     else if (!(nPecas > 0) || !Number.isInteger(nPecas)) novo.pecas = 'A quantidade de peças deve ser um número inteiro maior que zero.'
     if (String(litros).trim() === '') novo.litros = 'Informe os litros utilizados.'
+    else if (Number.isNaN(nLitros)) novo.litros = 'Digite só o número de litros, por exemplo 920 ou 1.590.'
     else if (!(nLitros > 0)) novo.litros = 'Os litros utilizados devem ser maiores que zero.'
     setErros(novo)
     setFalha(null)
@@ -65,8 +80,14 @@ export default function RegistroLote() {
     setEnviando(true)
     try {
       // O esperado e o desvio vêm do servidor (calculados pelo banco).
-      const l = await registrarLote({ processoId: processo!.id, pecas: nPecas, litros: Math.round(nLitros) })
-      setResultado(l)
+      const r = await registrarLote({ processoId: processo!.id, pecas: nPecas, litros: Math.round(nLitros) })
+      if (r.tipo === 'enviado') {
+        setResultado(r.lote)
+        setGuardado(null)
+      } else {
+        setResultado(null)
+        setGuardado(r.pendente)
+      }
       setPecas('')
       setLitros('')
       requestAnimationFrame(() => {
@@ -85,6 +106,7 @@ export default function RegistroLote() {
 
   function novoLote() {
     setResultado(null)
+    setGuardado(null)
     requestAnimationFrame(() => document.getElementById('processo')?.focus())
   }
 
@@ -98,7 +120,7 @@ export default function RegistroLote() {
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Formulário: no mobile/tablet some enquanto o resultado é exibido */}
-        <Card as="section" className={cx('p-4 sm:p-8 lg:col-span-5', resultado && 'hidden lg:block')}>
+        <Card as="section" className={cx('p-4 sm:p-8 lg:col-span-5', temResultado && 'hidden lg:block')}>
           {estado === 'carregando' ? (
             <div role="status" className="flex flex-col gap-6">
               <span className="sr-only">Carregando formulário…</span>
@@ -130,7 +152,12 @@ export default function RegistroLote() {
               <hr className="my-6 border-line" />
 
               <form onSubmit={validar} noValidate className="flex flex-col gap-6">
-                {falha && (
+                {espera > 0 && (
+                  <AvisoLimite segundos={espera} titulo="Muitos lotes em pouco tempo">
+                    O sistema aceita até 60 lotes por minuto para cada usuário. Os dados preenchidos ficam no formulário.
+                  </AvisoLimite>
+                )}
+                {falha && espera <= 0 && (
                   <Banner tone="crit" title="Não foi possível registrar o lote">
                     {falha} Os dados preenchidos foram mantidos.
                   </Banner>
@@ -173,15 +200,21 @@ export default function RegistroLote() {
                     ))}
                   </Select>
                 </Field>
+                {processo && termoDe(processo.nome) && (
+                  <p className="-mt-3 flex items-start gap-1 text-[13px] leading-snug text-ink-2">
+                    <DicaGlossario processo={processo.nome} className="-ml-1.5 -mt-1.5 shrink-0" />
+                    <span>{termoDe(processo.nome)!.definicao}</span>
+                  </p>
+                )}
 
-                <div className="grid grid-cols-2 items-start gap-4 sm:gap-6">
+                {/* Uma coluna no celular: em duas, o campo de litros ficava estreito e cortava o número (issue #139). */}
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-6">
                   <Field id="pecas" label="Peças" error={erros.pecas} hint="Quantidade total de peças do lote.">
                     <TextInput
                       id="pecas"
-                      type="number"
+                      type="text"
                       inputMode="numeric"
-                      min={1}
-                      step={1}
+                      autoComplete="off"
                       value={pecas}
                       invalid={!!erros.pecas}
                       suffix="peças"
@@ -195,9 +228,9 @@ export default function RegistroLote() {
                   <Field id="litros" label="Litros utilizados" error={erros.litros} hint="Total de litros usados no lote.">
                     <TextInput
                       id="litros"
-                      type="number"
+                      type="text"
                       inputMode="decimal"
-                      min={1}
+                      autoComplete="off"
                       value={litros}
                       invalid={!!erros.litros}
                       suffix="litros"
@@ -215,8 +248,8 @@ export default function RegistroLote() {
                   <dd className="text-lg font-semibold tabular-nums text-ink">{esperadoPrevio ? fmtL(esperadoPrevio) : '—'}</dd>
                 </dl>
 
-                <Button type="submit" size="lg" full loading={enviando} icon={<IconDroplet size={22} />} className="min-h-16 text-lg">
-                  Registrar lote
+                <Button type="submit" size="lg" full loading={enviando} disabled={espera > 0} icon={<IconDroplet size={22} />} className="min-h-16 text-lg">
+                  {espera > 0 ? `Aguarde ${textoEspera(espera)}` : 'Registrar lote'}
                 </Button>
               </form>
             </>
@@ -224,8 +257,12 @@ export default function RegistroLote() {
         </Card>
 
         <section aria-label="Resultado do registro" className="lg:col-span-7">
-          {resultado ? (
-            <ResultadoCard lote={resultado} refEl={resultadoRef} onNovo={novoLote} />
+          {resultado || loteDoGuardado ? (
+            <ResultadoCard lote={(resultado ?? loteDoGuardado)!} refEl={resultadoRef} onNovo={novoLote} />
+          ) : guardado ? (
+            <div ref={resultadoRef} tabIndex={-1} className="h-full outline-none">
+              <ResultadoPendenteCard pendente={guardado} onNovo={novoLote} />
+            </div>
           ) : (
             <Card className="hidden h-full min-h-[360px] flex-col p-6 sm:p-8 lg:flex">
               <div className="flex items-center gap-3">
@@ -243,18 +280,24 @@ export default function RegistroLote() {
         </section>
       </div>
 
+      <PainelPendentes />
+
       <Modal
         open={confirmar}
         onClose={() => !enviando && setConfirmar(false)}
         size="sm"
         title="Confirmar registro do lote"
-        description="Depois de registrado, o lote não pode ser editado."
+        description={
+          !conectado || modoOffline
+            ? 'Depois de registrado, o lote não pode ser editado. Sem conexão agora: o lote fica guardado neste aparelho e é enviado sozinho quando a conexão voltar.'
+            : 'Depois de registrado, o lote não pode ser editado.'
+        }
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirmar(false)} disabled={enviando}>
               Voltar e corrigir
             </Button>
-            <Button onClick={enviar} loading={enviando} data-autofocus>
+            <Button onClick={enviar} loading={enviando} disabled={espera > 0} data-autofocus>
               {enviando ? 'Registrando…' : 'Confirmar registro'}
             </Button>
           </>
@@ -305,10 +348,16 @@ export function ResultadoCard({ lote, refEl, onNovo }: { lote: Lote; refEl?: Ref
           </h2>
           <StatusBadge status={st} size="lg" />
         </div>
-        <p className={cx('mt-6 text-[15px] font-medium', m.text)}>Desvio em relação à meta</p>
-        <p className={cx('font-display text-[64px] font-bold leading-none tracking-tight tabular-nums sm:text-[80px]', m.text)}>
-          {fmtPct(lote.desvio)}
-        </p>
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className={cx('text-[15px] font-medium', m.text)}>Desvio em relação à meta</p>
+            <p className={cx('font-display text-[64px] font-bold leading-none tracking-tight tabular-nums sm:text-[80px]', m.text)}>
+              {fmtPct(lote.desvio)}
+            </p>
+          </div>
+          {/* O desvio e a faixa já estão em texto ao lado (selo e número): o gauge é só o reforço visual. */}
+          <ToleranceGauge desvio={lote.desvio} status={st} legenda={false} decorativo className="w-full max-w-[200px] self-center sm:self-end" />
+        </div>
         <p className={cx('mt-4 flex items-start gap-2 text-base font-medium', m.text)}>
           <m.Icon size={20} strokeWidth={2.2} className="mt-0.5 shrink-0" />
           {mensagens[st]}

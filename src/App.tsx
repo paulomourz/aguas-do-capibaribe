@@ -4,7 +4,8 @@ import type { AlertaStatus, Perfil } from './domain'
 import { navigate, useRoute } from './router'
 import { AppProvider, homeDe, periodoAtual, useApp } from './store'
 import AppLayout, { type MenuId } from './layouts/AppLayout'
-import { AcessoNegado, Login, NaoEncontrada, SemConexao, SessaoExpirada } from './screens/Acesso'
+import { AcessoNegado, Login, NaoEncontrada, PublicShell, SemConexao, SessaoExpirada } from './screens/Acesso'
+import Privacidade from './screens/Privacidade'
 import RegistroLote, { ResultadoLote } from './screens/RegistroLote'
 import Historico from './screens/Historico'
 import Dashboard from './screens/Dashboard'
@@ -13,11 +14,13 @@ import { AlertaDetalhe, Alertas } from './screens/Alertas'
 import { RelatorioPdf, Relatorios } from './screens/Relatorios'
 import { UsuarioNovo, Usuarios } from './screens/Usuarios'
 import Configuracoes from './screens/Configuracoes'
+import Auditoria from './screens/Auditoria'
 
 type Rota = { titulo: string; perfis: Perfil[]; menu?: MenuId; el: ReactNode }
 
-const TODOS: Perfil[] = ['gestor', 'operador']
-const GESTOR: Perfil[] = ['gestor']
+const TODOS: Perfil[] = ['admin', 'gestor', 'operador']
+const GESTOR: Perfil[] = ['admin', 'gestor']
+const ADMIN: Perfil[] = ['admin']
 
 function resolver(path: string, q: URLSearchParams, perfil?: Perfil): Rota | null {
   let m: RegExpMatchArray | null
@@ -25,7 +28,7 @@ function resolver(path: string, q: URLSearchParams, perfil?: Perfil): Rota | nul
   if ((m = path.match(/^\/registro\/resultado\/([\w-]+)$/)))
     return { titulo: 'O2 Resultado do lote', perfis: TODOS, menu: 'registro', el: <ResultadoLote id={m[1]} /> }
   if (path === '/historico')
-    return { titulo: `${perfil === 'gestor' ? 'G6' : 'O3'} Histórico de lotes`, perfis: TODOS, menu: 'historico', el: <Historico /> }
+    return { titulo: `${perfil === 'operador' ? 'O3' : 'G6'} Histórico de lotes`, perfis: TODOS, menu: 'historico', el: <Historico /> }
   if (path === '/dashboard') return { titulo: 'G1 Dashboard', perfis: GESTOR, menu: 'dashboard', el: <Dashboard /> }
   if (path === '/processos')
     return { titulo: 'G2 Processos e metas', perfis: GESTOR, menu: 'processos', el: <Processos destaque={q.get('salvo') ?? undefined} /> }
@@ -51,8 +54,9 @@ function resolver(path: string, q: URLSearchParams, perfil?: Perfil): Rota | nul
       el: <RelatorioPdf mes={Number(q.get('mes')) || periodoAtual().mes} ano={Number(q.get('ano')) || periodoAtual().ano} />,
     }
   if (path === '/usuarios')
-    return { titulo: 'G9 Usuários', perfis: GESTOR, menu: 'usuarios', el: <Usuarios destaque={q.get('novo') ?? undefined} /> }
-  if (path === '/usuarios/novo') return { titulo: 'G10 Novo usuário', perfis: GESTOR, menu: 'usuarios', el: <UsuarioNovo /> }
+    return { titulo: 'G9 Usuários', perfis: ADMIN, menu: 'usuarios', el: <Usuarios destaque={q.get('novo') ?? undefined} /> }
+  if (path === '/usuarios/novo') return { titulo: 'G10 Novo usuário', perfis: ADMIN, menu: 'usuarios', el: <UsuarioNovo /> }
+  if (path === '/auditoria') return { titulo: 'G11 Auditoria', perfis: ADMIN, menu: 'auditoria', el: <Auditoria /> }
   if (path === '/configuracoes') return { titulo: 'C1 Configurações da conta', perfis: TODOS, el: <Configuracoes /> }
   return null
 }
@@ -69,6 +73,18 @@ function Roteador() {
   } else if (path === '/login') {
     titulo = 'A1 Login'
     tela = <Login next={query.get('next') ?? undefined} />
+  } else if (path === '/privacidade') {
+    // Público: quem ainda não entrou lê o aviso antes do login.
+    titulo = 'A6 Aviso de privacidade'
+    tela = usuario ? (
+      <AppLayout>
+        <Privacidade />
+      </AppLayout>
+    ) : (
+      <PublicShell>
+        <Privacidade />
+      </PublicShell>
+    )
   } else if (path === '/sessao-expirada') {
     titulo = 'A2 Faça login para continuar'
     tela = <SessaoExpirada />

@@ -2,6 +2,7 @@ package br.com.aguas.entity;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.Immutable;
@@ -44,6 +45,10 @@ public class Lote {
     @Column(nullable = false, precision = 14, scale = 2, insertable = false, updatable = false)
     private BigDecimal esperado;
 
+    /** UUID gerado pelo site para reenviar sem duplicar (V5). Nulo para o sensor e lotes antigos. */
+    @Column(name = "chave_envio", updatable = false)
+    private UUID chaveEnvio;
+
     @Generated(event = EventType.INSERT)
     @Column(name = "registrado_em", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime registradoEm;
@@ -51,10 +56,15 @@ public class Lote {
     protected Lote() {}
 
     public Lote(Integer processoId, Integer usuarioId, Integer pecas, BigDecimal litros) {
+        this(processoId, usuarioId, pecas, litros, null);
+    }
+
+    public Lote(Integer processoId, Integer usuarioId, Integer pecas, BigDecimal litros, UUID chaveEnvio) {
         this.processoId = processoId;
         this.usuarioId = usuarioId;
         this.pecas = pecas;
         this.litros = litros;
+        this.chaveEnvio = chaveEnvio;
     }
 
     public Integer getId() { return id; }
@@ -64,6 +74,7 @@ public class Lote {
     public BigDecimal getLitros() { return litros; }
     public BigDecimal getEsperado() { return esperado; }
     public OffsetDateTime getRegistradoEm() { return registradoEm; }
+    public UUID getChaveEnvio() { return chaveEnvio; }
 
     /** Regra de alerta: acima da meta = litros estritamente maior que o esperado, sem tolerância. */
     public boolean acimaDoEsperado() {

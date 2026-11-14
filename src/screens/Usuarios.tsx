@@ -17,7 +17,7 @@ import {
   TextInput,
   cx,
 } from '../components/ui'
-import { IconArrowLeft, IconInfo, IconLock, IconUserCheck, IconUserOff, IconUserPlus, IconUsers } from '../components/icons'
+import { IconArrowLeft, IconCheckCircle, IconInfo, IconLock, IconRefresh, IconUserCheck, IconUserOff, IconUserPlus, IconUsers } from '../components/icons'
 import { perfilLabel, type Perfil, type Usuario } from '../domain'
 import { Link, navigate } from '../router'
 import { errosDaApi, useApp, useEstadoTela } from '../store'
@@ -27,7 +27,7 @@ function PerfilTag({ p }: { p: Perfil }) {
     <span
       className={cx(
         'inline-flex items-center rounded-md px-2.5 py-1 text-[13px] font-semibold',
-        p === 'gestor' ? 'bg-brand text-white' : 'bg-brand-soft text-brand',
+        p === 'operador' ? 'bg-brand-soft text-brand' : 'bg-brand text-white',
       )}
     >
       {perfilLabel[p]}
@@ -58,6 +58,7 @@ export function Usuarios({ destaque }: { destaque?: string }) {
   const [desativar, setDesativar] = useState<Usuario | null>(null)
   const [reativar, setReativar] = useState<Usuario | null>(null)
   const [novaSenha, setNovaSenha] = useState<Usuario | null>(null)
+  const [novoToken, setNovoToken] = useState<Usuario | null>(null)
   const [alterando, setAlterando] = useState(false)
   const lista = estado === 'vazio' ? [] : usuarios
 
@@ -80,7 +81,7 @@ export function Usuarios({ destaque }: { destaque?: string }) {
       <StatePreview value={estado} onChange={setEstado} />
       <PageHeader
         title="Usuários"
-        description="Somente o gestor cria acessos. Não existe cadastro público."
+        description="Somente o administrador cria acessos. Não existe cadastro público."
         actions={
           <>
             <Button icon={<IconUserPlus size={20} />} onClick={() => navigate('/usuarios/novo')}>
@@ -140,6 +141,11 @@ export function Usuarios({ destaque }: { destaque?: string }) {
                       <Button variant="text" size="sm" icon={<IconLock size={18} />} onClick={() => setNovaSenha(u)}>
                         Redefinir senha<span className="sr-only"> de {u.nome}</span>
                       </Button>
+                      {u.perfil === 'sensor' && (
+                        <Button variant="text" size="sm" icon={<IconRefresh size={18} />} onClick={() => setNovoToken(u)}>
+                          Rotacionar token<span className="sr-only"> de {u.nome}</span>
+                        </Button>
+                      )}
                       {u.ativo ? (
                         <Button variant="text" size="sm" icon={<IconUserOff size={18} />} onClick={() => setDesativar(u)}>
                           Desativar acesso<span className="sr-only"> de {u.nome}</span>
@@ -194,7 +200,94 @@ export function Usuarios({ destaque }: { destaque?: string }) {
       />
 
       {novaSenha && <RedefinirSenha key={novaSenha.id} pessoa={novaSenha} onClose={() => setNovaSenha(null)} />}
+      {novoToken && <RotacionarToken key={novoToken.id} sensor={novoToken} onClose={() => setNovoToken(null)} />}
     </div>
+  )
+}
+
+/* ---------- Rotacionar o token de API de um sensor ---------- */
+
+function RotacionarToken({ sensor, onClose }: { sensor: Usuario; onClose: () => void }) {
+  const { rotacionarToken, notificar } = useApp()
+  // A chave vive só neste estado: ao fechar a janela, ela some do site e não dá para ver de novo.
+  const [chave, setChave] = useState<string | null>(null)
+  const [gerando, setGerando] = useState(false)
+  const [copiada, setCopiada] = useState(false)
+
+  async function gerar() {
+    setGerando(true)
+    try {
+      setChave(await rotacionarToken(sensor.id))
+    } catch (err) {
+      notificar(errosDaApi(err).mensagem, 'erro')
+    } finally {
+      setGerando(false)
+    }
+  }
+
+  async function copiar() {
+    if (!chave) return
+    try {
+      await navigator.clipboard.writeText(chave)
+      setCopiada(true)
+    } catch {
+      notificar('Não foi possível copiar. Selecione a chave e copie manualmente.', 'erro')
+    }
+  }
+
+  if (!chave) {
+    return (
+      <Modal
+        open
+        onClose={() => !gerando && onClose()}
+        size="sm"
+        title="Rotacionar o token de API?"
+        description={`Uma chave nova será gerada para ${sensor.nome}. A chave atual deixa de valer na hora: o sensor que ainda a usa para de enviar lotes até receber a nova.`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={onClose} disabled={gerando}>
+              Cancelar
+            </Button>
+            <Button loading={gerando} icon={<IconRefresh size={18} />} onClick={gerar}>
+              Rotacionar token
+            </Button>
+          </>
+        }
+      />
+    )
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="sm"
+      title="Token novo gerado"
+      description={`Copie a chave agora e configure-a em ${sensor.nome}. A chave anterior já foi revogada.`}
+      footer={
+        <>
+          <Button variant="secondary" icon={copiada ? <IconCheckCircle size={18} /> : undefined} onClick={copiar}>
+            {copiada ? 'Chave copiada' : 'Copiar chave'}
+          </Button>
+          <Button onClick={onClose}>Já guardei a chave</Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <Field id="token-api" label="Token de API (64 caracteres)">
+          <TextInput
+            id="token-api"
+            value={chave}
+            readOnly
+            autoComplete="off"
+            spellCheck={false}
+            className="font-mono text-[13px]"
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        </Field>
+        <Banner tone="warn">Esta chave aparece só agora. Ao fechar esta janela, não dá para vê-la de novo: será preciso rotacionar outra vez.</Banner>
+      </div>
+    </Modal>
   )
 }
 
@@ -352,7 +445,8 @@ export function UsuarioNovo() {
               onChange={(p) => { setPerfil(p); limpar('perfil') }}
               options={[
                 { value: 'operador', label: 'Operador', hint: 'Registra lotes e vê o próprio histórico' },
-                { value: 'gestor', label: 'Gestor', hint: 'Acesso completo, inclusive usuários e metas' },
+                { value: 'gestor', label: 'Gestor', hint: 'Acompanha consumo, alertas e relatórios, e define as metas' },
+                { value: 'admin', label: 'Administrador', hint: 'Acesso completo, inclusive usuários e auditoria' },
               ]}
             />
 
@@ -377,7 +471,7 @@ export function UsuarioNovo() {
             <div>
               <h2 className="text-[18px] font-semibold">Quem pode criar acessos?</h2>
               <p className="mt-2 text-[15px] text-ink-2">
-                Somente gestores cadastram usuários. Não há autocadastro: cada operador recebe o acesso diretamente do gestor.
+                Somente administradores cadastram usuários. Não há autocadastro: cada pessoa recebe o acesso diretamente do administrador.
               </p>
             </div>
           </div>

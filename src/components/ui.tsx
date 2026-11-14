@@ -1,5 +1,4 @@
 import { MOSTRAR_SELETOR_DE_ESTADOS } from '../config'
-import { USAR_MOCK } from '../services/http'
 import {
   useEffect,
   useId,
@@ -136,7 +135,7 @@ export function DiamondIllustration({ size = 112, children }: { size?: number; c
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }} aria-hidden="true">
       <svg viewBox="0 0 112 112" className="absolute inset-0 h-full w-full">
         <path d="M56 2 110 56 56 110 2 56Z" fill="none" style={{ stroke: 'var(--color-areia)' }} strokeWidth="1" />
-        <path d="M56 16 96 56 56 96 16 56Z" fill="#FFFFFF" style={{ stroke: 'var(--color-areia)' }} strokeWidth="1" />
+        <path d="M56 16 96 56 56 96 16 56Z" style={{ fill: 'var(--color-surface)', stroke: 'var(--color-areia)' }} strokeWidth="1" />
         <path d="M56 30 82 56 56 82 30 56Z" style={{ fill: 'var(--color-brand-soft)' }} />
         <path d="M56 2v14M56 96v14M2 56h14M96 56h14" style={{ stroke: 'var(--color-terracota)' }} strokeOpacity="0.5" />
         <circle cx="56" cy="9" r="2" style={{ fill: 'var(--color-terracota)' }} fillOpacity="0.6" />
@@ -178,7 +177,7 @@ export function Button({ variant = 'primary', size = 'md', loading, icon, full, 
             ? 'bg-brand-hover text-white'
             : 'bg-brand text-white shadow-sm hover:bg-brand-hover disabled:bg-disabled-bg disabled:text-neutral-ink disabled:shadow-none'),
         variant === 'secondary' &&
-          'border-[1.5px] border-brand bg-white text-brand hover:bg-brand-soft disabled:border-disabled-bg disabled:bg-white disabled:text-disabled-ink',
+          'border-[1.5px] border-brand bg-surface text-brand hover:bg-brand-soft disabled:border-disabled-bg disabled:bg-surface disabled:text-disabled-ink',
         variant === 'text' && 'px-2 text-link hover:bg-brand-soft hover:text-brand disabled:text-disabled-ink disabled:hover:bg-transparent',
         full && 'w-full',
         className,
@@ -238,7 +237,7 @@ export function FieldError({ id, children }: { id?: string; children: ReactNode 
 }
 
 const inputBase =
-  'min-h-12 w-full rounded-lg border bg-white px-4 text-base text-ink transition-colors hover:border-field-border-hover focus-visible:border-link focus-visible:outline-offset-0 disabled:cursor-not-allowed disabled:border-neutral-bg disabled:bg-disabled-field disabled:text-disabled-ink'
+  'min-h-12 w-full rounded-lg border bg-surface px-4 text-base text-ink transition-colors hover:border-field-border-hover focus-visible:border-link focus-visible:outline-offset-0 disabled:cursor-not-allowed disabled:border-neutral-bg disabled:bg-disabled-field disabled:text-disabled-ink'
 
 export function TextInput({
   invalid,
@@ -339,8 +338,8 @@ export function ChoiceGroup<T extends string>({
               value === o.value
                 ? 'border-[1.5px] border-brand bg-brand-soft text-brand'
                 : error
-                  ? 'border-[1.5px] border-crit bg-white'
-                  : 'border-field-border bg-white text-ink hover:border-field-border-hover',
+                  ? 'border-[1.5px] border-crit bg-surface'
+                  : 'border-field-border bg-surface text-ink hover:border-field-border-hover',
             )}
           >
             <input
@@ -422,7 +421,7 @@ export function Tag({ children }: { children: ReactNode }) {
    ========================================================= */
 
 export function Card({ children, className, as: As = 'div' }: { children: ReactNode; className?: string; as?: 'div' | 'section' | 'article' }) {
-  return <As className={cx('rounded-[8px] border border-line bg-white shadow-[var(--shadow-card)]', className)}>{children}</As>
+  return <As className={cx('rounded-[8px] border border-line bg-surface shadow-[var(--shadow-card)]', className)}>{children}</As>
 }
 
 export function CardHeader({ title, subtitle, action, id }: { title: string; subtitle?: ReactNode; action?: ReactNode; id?: string }) {
@@ -741,17 +740,6 @@ export function ErrorState({
   )
 }
 
-/** Faixa visível só no modo simulado (VITE_USAR_MOCK=true), para ninguém confundir com dados reais. */
-export function AvisoModoSimulado() {
-  if (!USAR_MOCK) return null
-  return (
-    <div role="status" className="flex items-center justify-center gap-2 bg-warn-bg px-4 py-1.5 text-center text-[13px] font-semibold text-warn">
-      <IconAlertTriangle size={16} strokeWidth={2.2} className="shrink-0" />
-      Modo simulado: dados de exemplo, nada é gravado no banco. Não use em entregas.
-    </div>
-  )
-}
-
 export function Banner({ tone, title, children }: { tone: Status | 'info'; title?: string; children: ReactNode }) {
   const styles = { ok: 'bg-ok-bg text-ok', warn: 'bg-warn-bg text-warn', crit: 'bg-crit-bg text-crit', info: 'bg-brand-soft text-brand' }[tone]
   const Icon = tone === 'info' ? IconCheckCircle : statusMeta[tone].Icon
@@ -791,7 +779,7 @@ export function PageHeader({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           {code && (
-            <span className="mb-2 inline-flex items-center rounded border border-line-strong bg-white px-2 py-0.5 text-[13px] font-semibold tracking-wide text-ink-2">
+            <span className="mb-2 inline-flex items-center rounded border border-line-strong bg-surface px-2 py-0.5 text-[13px] font-semibold tracking-wide text-ink-2">
               {code}
             </span>
           )}
@@ -819,7 +807,7 @@ export function StatePreview({
 }) {
   if (!MOSTRAR_SELETOR_DE_ESTADOS) return null
   return (
-    <fieldset className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-line-strong bg-white/70 px-3 py-1">
+    <fieldset className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-line-strong bg-surface/70 px-3 py-1">
       <legend className="sr-only">Pré-visualizar estado da tela</legend>
       <span className="text-[13px] font-medium text-ink-2">Estado (protótipo):</span>
       <div className="flex flex-wrap">
@@ -907,7 +895,7 @@ export function Modal({
 
   if (!open) return null
   return (
-    <div className={cx('fixed inset-0 z-50 flex justify-center bg-ink/50', fullscreenMobile ? 'items-stretch sm:items-center sm:p-6' : 'items-center p-4 sm:p-6')}>
+    <div className={cx('fixed inset-0 z-50 flex justify-center bg-scrim/50', fullscreenMobile ? 'items-stretch sm:items-center sm:p-6' : 'items-center p-4 sm:p-6')}>
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
       <div
         ref={ref}
@@ -916,7 +904,7 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cx(
-          'rise relative flex w-full flex-col bg-white shadow-2xl',
+          'rise relative flex w-full flex-col bg-surface shadow-2xl',
           size === 'sm' ? 'sm:max-w-[480px]' : 'sm:max-w-[560px]',
           fullscreenMobile ? 'min-h-full sm:min-h-0 sm:rounded-[8px]' : 'max-h-[90vh] rounded-[8px]',
         )}
@@ -968,7 +956,7 @@ export function Toast({ toast, onClose, inline = false }: { toast: ToastData | n
       aria-live={erro ? 'assertive' : 'polite'}
       className={cx(
         'rise flex max-w-[440px] items-start gap-3 rounded-lg border py-2 pl-4 pr-2 text-[15px] shadow-lg',
-        erro ? 'border-crit-line bg-white text-ink' : 'border-brand bg-brand text-white',
+        erro ? 'border-crit-line bg-surface text-ink' : 'border-brand bg-brand text-white',
       )}
     >
       <span className={cx('mt-2.5 shrink-0', erro && 'text-crit')}>

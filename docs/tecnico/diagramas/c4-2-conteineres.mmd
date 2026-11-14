@@ -1,0 +1,24 @@
+%% C4 nível 2 — Contêineres: as partes que rodam separadas e como conversam.
+flowchart LR
+  pessoas["👷 Operador, gestor e administrador<br/><i>[Pessoas]</i>"]
+  sensor["📟 Sensor ESP32<br/><i>[Wokwi]</i>"]
+  telegram["✉️ Telegram<br/><i>[Sistema externo]</i>"]
+
+  subgraph sistema["💧 Águas do Capibaribe"]
+    site["Site (PWA)<br/><i>[React 19, TypeScript, Vite]</i><br/>Telas; guarda lotes no aparelho sem conexão"]
+    api["API REST<br/><i>[Java 25, Spring Boot 3.5; imagem distroless]</i><br/>Regras, perfis, alertas, limites e avisos"]
+    banco[("Banco de dados<br/><i>[PostgreSQL 18, Flyway V1 a V8]</i><br/>Lotes e auditoria imutáveis (triggers)")]
+  end
+
+  pessoas -- "usa (navegador)" --> site
+  site -- "JSON / HTTPS<br/>JWT, Idempotency-Key" --> api
+  sensor -- "JSON / HTTPS<br/>perfil sensor" --> api
+  api -- "SQL / JDBC<br/>usuário aguas_api" --> banco
+  api -- "HTTPS (assíncrono)" --> telegram
+
+  classDef pessoa fill:#08427b,color:#fff,stroke:#052e56
+  classDef cont fill:#438dd5,color:#fff,stroke:#2e6295
+  classDef ext fill:#999,color:#fff,stroke:#6b6b6b
+  class pessoas pessoa
+  class site,api,banco cont
+  class sensor,telegram ext

@@ -32,6 +32,10 @@ public class Usuario {
     @Column(name = "senha_hash", nullable = false, length = 60)
     private String senhaHash;
 
+    /** SHA-256 (hexadecimal) do token de API da conta de sensor; null se a conta não tem token. */
+    @Column(name = "token_hash", length = 64, unique = true)
+    private String tokenHash;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Perfil perfil;
@@ -58,8 +62,12 @@ public class Usuario {
     public String getLogin() { return login; }
     public String getSenhaHash() { return senhaHash; }
     public void setSenhaHash(String senhaHash) { this.senhaHash = senhaHash; }
+    public String getTokenHash() { return tokenHash; }
+    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public Perfil getPerfil() { return perfil; }
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
+
+    public void setPerfil(Perfil perfil) { this.perfil = perfil; }
     public OffsetDateTime getCriadoEm() { return criadoEm; }
 }

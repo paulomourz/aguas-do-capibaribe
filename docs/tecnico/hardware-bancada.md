@@ -57,7 +57,8 @@ gravidade de um reservatório mais alto ou use uma bomba maior.
 | Amarelo (sinal) | R1 de 10 kΩ, depois GPIO 27 | R2 de 20 kΩ vai do GPIO 27 ao GND |
 
 O pino 27 é o que o [`iot/sketch.ino`](../../iot/sketch.ino) já usa para contar os pulsos. Botão e LED
-continuam nos pinos 4 e 2. R2 pode ser feito com dois resistores de 10 kΩ em série. A bomba fica ligada só
+continuam nos pinos 4 e 2. O aviso de lote crítico usa um LED vermelho com resistor de 220 Ω no pino 33 e um
+buzzer passivo no pino 26, como no Wokwi; eles não estão na lista de compras acima (cerca de R$ 3 a 6, estimado). R2 pode ser feito com dois resistores de 10 kΩ em série. A bomba fica ligada só
 na fonte de 12 V, sem nenhum fio em comum com o ESP32.
 
 ### Por que o divisor de tensão
@@ -93,8 +94,11 @@ O sensor gera pulsos conforme a hélice gira. A especificação é:
 frequência (Hz)  = 7,5 x vazão (L/min)
 vazão (L/min)    = frequência (Hz) / 7,5
 pulsos por litro = 7,5 x 60 = 450
-litros do lote   = total de pulsos / PULSOS_POR_LITRO
+litros do lote   = total de pulsos / K   (K = PULSOS_POR_LITRO no sketch)
 ```
+
+O **coeficiente K** (pulsos por litro) é do sensor físico: outro modelo tem outro K, e cada unidade do YF-S201
+varia em torno de 450. Por isso ele fica configurável no topo do sketch, e não no banco.
 
 | Vazão | Frequência |
 |---|---|
@@ -104,20 +108,22 @@ litros do lote   = total de pulsos / PULSOS_POR_LITRO
 
 A contagem também muda com a vazão, a pressão e a posição do sensor. Calibre com a montagem final:
 
-1. Encha um recipiente graduado com um volume conhecido, de pelo menos 5 L, passando pelo sensor. Com a
-   bomba R385, isso leva cerca de 3 minutos.
-2. Anote o **Acumulado** que o sketch mostra no monitor serial.
-3. Calcule e repita pelo menos 3 vezes, usando a média:
+1. No sketch, use `MODO_CALIBRACAO = true` e coloque o volume do recipiente em `LITROS_CALIBRACAO`. Nesse
+   modo, o lote **não é enviado à API**, então a calibração não deixa consumo falso no histórico (lotes não
+   podem ser apagados).
+2. Clique no botão verde, encha um recipiente graduado com um volume conhecido, de pelo menos 5 L, passando
+   pelo sensor, e clique de novo. Com a bomba R385, 5 L levam cerca de 3 minutos.
+3. O monitor serial mostra os pulsos contados e o K calculado:
 
 ```text
-PULSOS_POR_LITRO novo = PULSOS_POR_LITRO atual x litros mostrados / litros reais
+K = pulsos contados / litros do recipiente
 ```
 
-Exemplo: o sketch com 450 mostrou 5,20 L e o recipiente marcou 5,00 L. O novo valor é
-450 x 5,20 / 5,00 = **468**.
+4. Repita pelo menos 3 vezes, coloque a média em `PULSOS_POR_LITRO` e volte para `MODO_CALIBRACAO = false`.
 
-**Cuidado:** ao encerrar um lote, o sketch envia o lote para a API, e lotes não podem ser apagados. Faça
-a calibração com um banco temporário, nunca com o banco oficial `aguas`.
+Exemplo: com um recipiente de 5 L, o sensor contou 2.340 pulsos. O K é 2.340 / 5 = **468**. Com o 450 do padrão,
+o sketch teria medido 5,20 L, 4% a mais. O passo a passo, com o teste no Wokwi, está em
+[`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#calibrar-o-coeficiente-k).
 
 ## 4. O que muda do Wokwi para a bancada
 
@@ -129,6 +135,8 @@ a calibração com um banco temporário, nunca com o banco oficial `aguas`.
 | `WIFI_SSID` e `WIFI_SENHA` | Usar a rede do local | o valor atual é a rede do simulador |
 | `WiFi.begin(WIFI_SSID, WIFI_SENHA, 6)` | Tirar o `6` | ele fixa o canal usado no Wokwi, e a rede real pode estar em outro |
 | `PULSOS_POR_LITRO` | Usar o valor calibrado | seção 3 |
+| `MODO_CALIBRACAO` | `true` só durante a calibração | nesse modo, o lote não vai para a API |
+| `PULSOS_POR_LITRO_SIMULADO` | Nada | só o gerador de pulsos usa, e ele sai da montagem |
 | `PROCESSO_NOME` e `PECAS` | Usar um processo de bancada | ver abaixo |
 
 **Meta da demonstração:** uma bancada mede poucos litros, enquanto as metas reais são de lavanderia. Se

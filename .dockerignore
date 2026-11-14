@@ -8,3 +8,5 @@ database
 docs
 iot
 *.md
+testes-carga
+docker-compose*.yml
