@@ -36,7 +36,7 @@ export type NovoLoteDTO = { processoId: Id; pecas: number; litros: number }
 export type AlertaDTO = { id: Id; processoId: Id; loteIds: Id[]; detectado: string; status: StatusAlerta }
 
 /** Consumo de um processo no mês (mês definido no fuso America/Recife pelo servidor). */
-export type ResumoDTO = { processoId: Id; real: number; esperado: number; lotes: number }
+export type ResumoDTO = { processoId: Id; real: number; esperado: number; lotes: number; pecas: number; litrosPorPeca: number | null }
 
 export type AcaoAuditoria = 'CRIACAO_USUARIO' | 'REDEFINICAO_SENHA' | 'DESATIVACAO_USUARIO' | 'REATIVACAO_USUARIO' | 'ROTACAO_TOKEN'
 export type PessoaDTO = { id: Id; nome: string | null; usuario: string | null }

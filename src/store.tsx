@@ -108,7 +108,14 @@ const deLote = (l: api.LoteDTO): Lote => ({
   status: statusDaApi[l.statusConformidade],
   data: new Date(l.data),
 })
-const deResumo = (r: api.ResumoDTO): Resumo => ({ processoId: txt(r.processoId), real: Number(r.real), esperado: Number(r.esperado), lotes: Number(r.lotes) })
+const deResumo = (r: api.ResumoDTO): Resumo => ({
+  processoId: txt(r.processoId),
+  real: Number(r.real),
+  esperado: Number(r.esperado),
+  lotes: Number(r.lotes),
+  pecas: Number(r.pecas ?? 0),
+  litrosPorPeca: r.litrosPorPeca == null ? null : Number(r.litrosPorPeca),
+})
 
 /** Mensagem e erros por campo de uma falha da API; `mapa` renomeia campos da API para os do formulário. */
 export function errosDaApi(e: unknown, mapa: Record<string, string> = {}) {

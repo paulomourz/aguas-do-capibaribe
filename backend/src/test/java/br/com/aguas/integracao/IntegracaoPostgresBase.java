@@ -886,6 +886,9 @@ abstract class IntegracaoPostgresBase {
         assertThat(agosto.get("lotes").asLong()).isEqualTo(1);
         assertThat(agosto.get("real").decimalValue()).isEqualByComparingTo("80");
         assertThat(agosto.get("esperado").decimalValue()).isEqualByComparingTo("100");
+        // Pegada hídrica (#116): 1 peça com 80 L = 80 L por peça.
+        assertThat(agosto.get("pecas").asLong()).isEqualTo(1);
+        assertThat(agosto.get("litrosPorPeca").decimalValue()).isEqualByComparingTo("80");
 
         JsonNode setembro = filtrar(ler(chamar(get("/relatorios/resumo?mes=9&ano=2026"), g)), p);
         assertThat(setembro.get("lotes").asLong()).isEqualTo(1);

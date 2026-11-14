@@ -5,7 +5,7 @@ import { autoTable } from 'jspdf-autotable'
 import logoUrl from '../assets/logo.png'
 import { statusMeta } from '../components/ui'
 import { NOME_LAVANDERIA } from '../config'
-import { desvioDe, fmtDataHora, fmtL, fmtNum, fmtPct, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
+import { desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoRelatorio, statusDe, type Resumo } from '../domain'
 
 export type DadosRelatorio = {
   mes: number
@@ -139,16 +139,17 @@ export async function gerarRelatorioPdf(d: DadosRelatorio): Promise<jsPDF> {
   autoTable(doc, {
     startY: 93,
     margin: { left: MARGEM, right: MARGEM, bottom: 22 },
-    head: [['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'Desvio', 'Situação']],
+    head: [['Processo', 'Lotes', 'Consumido (L)', 'Esperado (L)', 'L/peça', 'Desvio', 'Situação']],
     body: d.linhas.map((r, i) => [
       d.nomeProcesso(r.processoId),
       fmtNum(r.lotes),
       fmtNum(r.real),
       fmtNum(r.esperado),
+      txt(fmtLitrosPorPeca(r.litrosPorPeca)),
       txt(fmtPct(desvioDe(r.real, r.esperado))),
       statusMeta[statusLinha[i]].label,
     ]),
-    foot: [['Total', fmtNum(lotes), fmtNum(real), fmtNum(esperado), txt(fmtPct(desvioGeral)), statusMeta[statusDe(desvioGeral)].label]],
+    foot: [['Total', fmtNum(lotes), fmtNum(real), fmtNum(esperado), txt(fmtLitrosPorPeca(litrosPorPeca(real, d.linhas.reduce((s, r) => s + r.pecas, 0)))), txt(fmtPct(desvioGeral)), statusMeta[statusDe(desvioGeral)].label]],
     showFoot: 'lastPage',
     theme: 'plain',
     styles: { font: 'helvetica', fontSize: 9.5, textColor: [...COR.ink], cellPadding: { top: 2.6, bottom: 2.6, left: 2.5, right: 2.5 }, lineColor: [...COR.linha] },
@@ -161,12 +162,13 @@ export async function gerarRelatorioPdf(d: DadosRelatorio): Promise<jsPDF> {
       1: { halign: 'right' },
       2: { halign: 'right' },
       3: { halign: 'right' },
-      4: { halign: 'right', fontStyle: 'bold' },
+      4: { halign: 'right' },
+      5: { halign: 'right', fontStyle: 'bold' },
     },
     didParseCell: (c) => {
       // columnStyles só vale para o corpo; cabeçalho e total seguem o mesmo alinhamento.
-      if (c.column.index >= 1 && c.column.index <= 4 && c.section !== 'body') c.cell.styles.halign = 'right'
-      if (c.column.index !== 5) return
+      if (c.column.index >= 1 && c.column.index <= 5 && c.section !== 'body') c.cell.styles.halign = 'right'
+      if (c.column.index !== 6) return
       const st = c.section === 'body' ? statusLinha[c.row.index] : c.section === 'foot' ? statusDe(desvioGeral) : null
       if (st) {
         c.cell.styles.textColor = [...corStatus[st]]

@@ -96,7 +96,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 
 | ID | Necessidade | Stakeholder | Atendida por |
 |---|---|---|---|
-| NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24 |
+| NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24, RF34 |
 | NB-02 | Descobrir cedo quando um processo passa a gastar demais. | Gestor da lavanderia | RF11, RF12, RF30 |
 | NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14 |
@@ -560,6 +560,19 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Situação | Implementado (GET /relatorios/csv). |
 | Verificação | Teste: CsvDeLotesTest; csvDoPeriodoUsaFusoDeRecifeFiltraPorProcessoEProtegeTextos, csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum (50.000 lotes) e csvConfereOPeriodoEOProcessoAntesDeComecarESoParaGestor (integração). |
 
+#### RF34 — Mostrar a pegada hídrica por peça
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O sistema deve mostrar quantos litros de água cada peça consumiu, em média, por processo e no total do mês, ao lado da referência da literatura. |
+| Entradas | Lotes do mês (litros e peças). |
+| Processamento | A API soma litros e peças por processo no resumo mensal e calcula litros por peça = litros ÷ peças, com 2 casas (sem peças, não há valor). O site calcula o total do mês da mesma forma e compara com a referência de 49 a 70 L por peça da lavanderia completa (docs/tecnico/glossario-textil.md). |
+| Saídas | Indicador "Água por peça" no Dashboard; coluna "L/peça" no resumo do Dashboard, no Relatório, na pré-visualização e no PDF. |
+| Prioridade | Desejável |
+| Origem | Issue #116 (backlog do parecer Week 02) · NB-01 |
+| Situação | Implementado (campos pecas e litrosPorPeca em GET /relatorios/resumo). |
+| Verificação | Teste: PegadaHidricaTest; resumoMensalUsaFusoDeRecife (integração); pegada.test.ts. |
+
 ### 3.1.8 Indicação visual de status
 
 #### RF24 — Classificar o lote por faixa de desvio
@@ -865,8 +878,9 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF31 | US-15 | — | — | Não se aplica | Adiado (Apêndice B) |
 | RF32 | Issue #109 | GET /auditoria/seguranca | Auditoria (Eventos de segurança) | Teste | Implementado |
 | RF33 | Issue #99 | GET /relatorios/csv | — (API) | Teste | Implementado |
+| RF34 | Issue #116 | GET /relatorios/resumo | Dashboard, Relatórios, PDF | Teste | Implementado |
 
-Resumo: 33 requisitos funcionais, 32 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 34 requisitos funcionais, 33 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 

@@ -26,7 +26,7 @@ public interface LoteRepository extends JpaRepository<Lote, Integer>, JpaSpecifi
     List<Lote> findTop2ByProcessoIdAndIdNotOrderByRegistradoEmDescIdDesc(Integer processoId, Integer id);
 
     @Query("""
-            select new br.com.aguas.dto.ResumoProcessoDTO(l.processoId, sum(l.litros), sum(l.esperado), count(l))
+            select new br.com.aguas.dto.ResumoProcessoDTO(l.processoId, sum(l.litros), sum(l.esperado), count(l), sum(l.pecas))
             from Lote l
             where l.registradoEm >= :inicio and l.registradoEm < :fim
             group by l.processoId

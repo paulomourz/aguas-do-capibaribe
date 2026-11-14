@@ -16,7 +16,7 @@ import {
   StatusBadge,
 } from '../components/ui'
 import { IconBell, IconChevron, IconDroplet, IconReport, IconTarget, IconTrend } from '../components/icons'
-import { consumoPorDia, desvioDe, desvioMedio, fmtDataHora, fmtL, fmtNum, fmtPct, meses, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, desvioMedio, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, textoDaReferencia, type Resumo } from '../domain'
 import { statusDe } from '../domain'
 import { Link, navigate } from '../router'
 import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const real = resumo.reduce((s, r) => s + r.real, 0)
   const esperado = resumo.reduce((s, r) => s + r.esperado, 0)
   const desvio = esperado ? desvioDe(real, esperado) : 0
+  const pegada = litrosPorPeca(real, resumo.reduce((s, r) => s + r.pecas, 0))
   const ativos = alertas.filter((a) => a.status !== 'resolvido')
   const periodo = `${meses[mes - 1]} de ${ano}`
 
@@ -98,9 +99,9 @@ export default function Dashboard() {
       </Card>
 
       {/* Indicadores */}
-      <section aria-label="Indicadores do mês" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+      <section aria-label="Indicadores do mês" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 lg:gap-6">
         {estado === 'carregando' ? (
-          [0, 1, 2].map((i) => (
+          [0, 1, 2, 3].map((i) => (
             <Card key={i} className="flex flex-col gap-4 p-6">
               <Skeleton className="h-4 w-1/2" />
               <Skeleton className="h-8 w-3/4" />
@@ -108,7 +109,7 @@ export default function Dashboard() {
             </Card>
           ))
         ) : estado === 'erro' ? (
-          <Card className="sm:col-span-2 lg:col-span-3">
+          <Card className="sm:col-span-2 xl:col-span-4">
             <ErrorState title="Não foi possível carregar os indicadores" onRetry={() => setEstado('dados')} />
           </Card>
         ) : (
@@ -144,6 +145,13 @@ export default function Dashboard() {
                 )
               }
             />
+            <KpiCard
+              label="Água por peça"
+              value={pegada == null ? '—' : fmtLitrosPorPeca(pegada)}
+              unit={pegada == null ? undefined : 'L'}
+              icon={<IconDroplet size={20} />}
+              footer={pegada == null ? 'Sem lotes para calcular' : `Média do mês. ${textoDaReferencia}.`}
+            />
           </>
         )}
       </section>
@@ -178,6 +186,7 @@ export default function Dashboard() {
                   { key: 'p', header: 'Processo', mobile: 'title', render: (r) => <span className="font-semibold">{nomeProcesso(r.processoId)}</span> },
                   { key: 'r', header: 'Real (L)', num: true, render: (r) => fmtNum(r.real) },
                   { key: 'e', header: 'Esperado (L)', num: true, render: (r) => fmtNum(r.esperado) },
+                  { key: 'lp', header: 'L/peça', num: true, render: (r) => fmtLitrosPorPeca(r.litrosPorPeca) },
                   { key: 'd', header: 'Desvio', num: true, mobile: 'value', render: (r) => <span className="font-semibold">{fmtPct(desvioDe(r.real, r.esperado))}</span> },
                   { key: 's', header: 'Status', mobile: 'badge', render: (r) => <StatusBadge status={statusDe(desvioDe(r.real, r.esperado))} size="sm" /> },
                 ]}
