@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,6 +18,7 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenResolv
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -45,6 +47,16 @@ public class SecurityConfig {
             .csrf(c -> c.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Cabeçalhos de segurança escritos no início da requisição, e não quando a resposta é confirmada:
+            // no CSV em streaming (GET /relatorios/csv), a confirmação acontece em outra thread, ao mesmo tempo
+            // que a requisição termina, e os dois mexeriam nos cabeçalhos juntos (ConcurrentModificationException).
+            .headers(h -> h.addObjectPostProcessor(new ObjectPostProcessor<HeaderWriterFilter>() {
+                @Override
+                public <O extends HeaderWriterFilter> O postProcess(O filtro) {
+                    filtro.setShouldWriteHeadersEagerly(true);
+                    return filtro;
+                }
+            }))
             .authorizeHttpRequests(a -> a
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers("/error").permitAll()

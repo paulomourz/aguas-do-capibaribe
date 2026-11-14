@@ -81,6 +81,7 @@ por função:
 | Relatório (RF13, RF14) | `resumoMensalUsaFusoDeRecife`, `mesInvalidoNoRelatorioRetorna422` | Mês fecha no fuso de Recife; mês inválido devolve 422. |
 | Auditoria (RF27) | `AuditoriaUsuarioTest`, `auditoriaListaAsAcoesComFiltrosEPaginacao` | Cada ação gera registro, sem senha, que não pode ser apagado. |
 | CSV (RF29) | `historicoCsv.test.ts` | Arquivo com BOM, ";" e CRLF, hora de Recife, ordem cronológica e fórmulas neutralizadas. |
+| CSV da API (RF33) | `CsvDeLotesTest`, `csvDoPeriodoUsaFusoDeRecifeFiltraPorProcessoEProtegeTextos`, `csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum`, `csvConfereOPeriodoEOProcessoAntesDeComecarESoParaGestor` | Mesmo formato do site; período fecha no fuso de Recife; 50.000 lotes na mesma hora saem todos, uma vez, em ordem; período inválido devolve 422 e operador recebe 403. |
 | Faixas (RF24) | `faixaDeConformidadeRespeitaAsFronteiras` | 0% = dentro; 8% = atenção; acima de 8% = crítico. |
 | Monitoramento (RNF20) | `saudeAbertaMostraSoOStatusSemToken`, `metricasSoParaOAdmin` | Saúde aberta; métricas só para o administrador. |
 | Migrações | `flywayAplicouTodasAsMigracoesEmOrdem`, `reinicioValidaChecksumsENaoRecriaNada` | V1 a V8 aplicadas uma vez, na ordem. |

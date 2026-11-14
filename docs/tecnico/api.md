@@ -1,7 +1,7 @@
 # API REST: endpoints
 
 > **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
-> Lá estão as 20 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> Lá estão as 21 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
 > `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
 
 Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://localhost:8080/api` no computador. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
@@ -57,6 +57,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
+| `GET /relatorios/csv?inicio=&fim=&processoId=` | gestor | `inicio` e `fim` em `AAAA-MM-DD` (inclusivos, fuso America/Recife), no máximo 1 ano; `processoId` opcional | arquivo `text/csv` em streaming, no formato do CSV do Histórico (ver [Exportação em CSV](#exportação-em-csv-issue-99)); período invertido, maior que 1 ano ou processo inexistente → `422` |
 | `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /auditoria/seguranca` | admin | — | `{desde, loginsAceitos, loginsRecusados, bloqueiosLogin, bloqueiosLotes, senhasTrocadas, senhasRedefinidas, bloqueios: [{rota, ip, primeiro, ultimo, tentativas}]}`; contado em memória desde `desde` (o último início da API), zera quando ela reinicia; `rota` é `login` ou `lotes`; `ip` mascarado (ex.: `200.17.33.***`, LGPD); no máximo 100 linhas em `bloqueios`, do bloqueio mais recente ao mais antigo; sem senha (issue #109) |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
@@ -92,6 +93,30 @@ curl -H "Authorization: Bearer <token do admin>" \
 **Memória:** medida num contêiner limitado a 512 MB, como no plano grátis do Render (05/11/2026). Sem o Actuator, a
 API usava 287,7 MiB depois de 1.000 requisições; com ele, 291,5 MiB. A diferença fica dentro da variação entre uma
 execução e outra.
+
+### Exportação em CSV (issue #99)
+
+`GET /relatorios/csv` devolve todos os lotes do período num arquivo CSV, para auditoria fiscal e ambiental (CPRH). O
+formato é o mesmo do botão "Exportar CSV" do Histórico (RF29, `src/services/historicoCsv.ts`): UTF-8 com BOM,
+separador `;`, quebra de linha CRLF, vírgula decimal sem separador de milhar, data e hora de Recife e também em UTC,
+e as mesmas 12 colunas. Textos digitados (nome do processo e de quem registrou) começando com `=`, `+`, `-` ou `@`
+ganham um apóstrofo na frente, para a planilha não executar como fórmula. De quem registrou, vai só o nome, sem login
+(LGPD, RNF27).
+
+- **Streaming:** o BOM e o cabeçalho saem antes da primeira consulta, então o download começa na hora. Os lotes são
+  lidos de 1.000 em 1.000 e cada página é enviada assim que fica pronta; a memória da API não cresce com o tamanho
+  do período.
+- **Paginação por cursor:** cada página continua depois do último lote enviado (data e hora de registro, desempatada
+  pelo id), em vez de `OFFSET`. Assim a página 50 custa o mesmo que a primeira, nenhum lote se repete ou fica de fora
+  entre as páginas, e a consulta usa o índice `ix_lote_data`.
+- **Medido no teste de integração** (`csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum`, PostgreSQL 18 no
+  Docker, 13/11/2026): 50.000 lotes, todos no mesmo instante, saíram completos e em ordem; o arquivo inteiro
+  (cerca de 6 MB) ficou pronto em 2,5 s.
+- **Tempo limite:** respostas em streaming podem durar até 2 minutos (`spring.mvc.async.request-timeout`).
+
+```bash
+curl -H "Authorization: Bearer <token do gestor>" -o lotes-2026.csv   "https://aguas-api-a0vq.onrender.com/api/relatorios/csv?inicio=2026-01-01&fim=2026-12-31"
+```
 
 ### Reenvio sem duplicar (`Idempotency-Key`)
 

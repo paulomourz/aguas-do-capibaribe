@@ -25,6 +25,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 2.0 | 09/11/2026 | Migração da IEEE 830 para a ISO/IEC/IEEE 29148: estrutura nova, requisitos de negócio e dos stakeholders, conceito de operação, método de verificação em cada requisito, seção de verificação, conformidade com normas e matriz de rastreabilidade com a verificação. Glossário têxtil (RNF26) e aviso de lote crítico no sensor (RF26) implementados. RF31 (vários sensores por linha de lavagem) adiado (issue #47). | Equipe Águas do Capibaribe |
 | 2.1 | 10/11/2026 | Adequação à LGPD (RNF27, issue #117): aviso de privacidade na tela de login, login de outras pessoas mascarado na API (auditoria e lista de usuários do gestor) e conferência dos dados pessoais do CSV e do PDF. Necessidade NS-05. | Equipe Águas do Capibaribe |
 | 2.2 | 11/11/2026 | Painel de eventos de segurança na Auditoria (RF32, issue #109): logins aceitos e recusados, bloqueios por limite com o IP mascarado e trocas de senha, com exportação em JSON. | Equipe Águas do Capibaribe |
+| 2.3 | 13/11/2026 | Exportação dos lotes de um período em CSV pela API (RF33, issue #99), em streaming e paginada, para a auditoria da CPRH. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -97,7 +98,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 |---|---|---|---|
 | NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24 |
 | NB-02 | Descobrir cedo quando um processo passa a gastar demais. | Gestor da lavanderia | RF11, RF12, RF30 |
-| NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RNF09 |
+| NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14 |
 | NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27, RF32 |
 | NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26; RF31 adiado (Apêndice B) |
@@ -546,6 +547,19 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Situação | Implementado. |
 | Verificação | Teste: historicoCsv.test.ts. |
 
+#### RF33 — Exportar os lotes de um período em CSV pela API
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O gestor deve poder baixar da API todos os lotes de um período, de até 1 ano, em CSV, para a auditoria fiscal e ambiental (CPRH). |
+| Entradas | Data inicial e final (inclusivas, no fuso America/Recife) e, opcionalmente, o processo. |
+| Processamento | A API confere o período e o processo antes de responder (422 se inválidos). Depois envia o arquivo em streaming: BOM e cabeçalho na hora, e os lotes de 1.000 em 1.000, por paginação por cursor (data e hora de registro e id), sem guardar o arquivo inteiro na memória. Mesmo formato do RF29. |
+| Saídas | Arquivo CSV com id, data, hora, data e hora em UTC, processo, peças, litros, esperado, diferença, desvio, status e quem registrou (só o nome). |
+| Prioridade | Desejável |
+| Origem | Issue #99 (conformidade com a CPRH) |
+| Situação | Implementado (GET /relatorios/csv). |
+| Verificação | Teste: CsvDeLotesTest; csvDoPeriodoUsaFusoDeRecifeFiltraPorProcessoEProtegeTextos, csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum (50.000 lotes) e csvConfereOPeriodoEOProcessoAntesDeComecarESoParaGestor (integração). |
+
 ### 3.1.8 Indicação visual de status
 
 #### RF24 — Classificar o lote por faixa de desvio
@@ -850,8 +864,9 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF30 | US-13 | — (Bot API do Telegram) | — (grupo do Telegram) | Teste e Demonstração | Implementado |
 | RF31 | US-15 | — | — | Não se aplica | Adiado (Apêndice B) |
 | RF32 | Issue #109 | GET /auditoria/seguranca | Auditoria (Eventos de segurança) | Teste | Implementado |
+| RF33 | Issue #99 | GET /relatorios/csv | — (API) | Teste | Implementado |
 
-Resumo: 32 requisitos funcionais, 31 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 33 requisitos funcionais, 32 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 
