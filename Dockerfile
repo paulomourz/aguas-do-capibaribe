@@ -12,4 +12,5 @@ RUN pnpm build
 # Estágio final: Nginx serve o site e encaminha /api para a API.
 FROM nginx:1.28-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/cabecalhos-seguranca.conf /etc/nginx/snippets/cabecalhos-seguranca.conf
 COPY --from=build /build/dist /usr/share/nginx/html

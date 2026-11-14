@@ -78,6 +78,8 @@ app:
   # CF-Connecting-IP no Render). Vazio = IP da conexão.
   limite:
     login-por-minuto: ${LIMITE_LOGIN_POR_MINUTO:5}
+    # Tentativas de login de cada conta por minuto, somando todos os IPs (0 desliga).
+    login-por-conta-por-minuto: ${LIMITE_LOGIN_POR_CONTA_POR_MINUTO:10}
     lotes-por-minuto: ${LIMITE_LOTES_POR_MINUTO:60}
     cabecalho-ip: ${LIMITE_CABECALHO_IP:}
   # Conta do gestor (capibaribe.gestor). Criada na inicialização se GESTOR_SENHA estiver definida.

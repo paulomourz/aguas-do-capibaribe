@@ -7,6 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * cabecalhoIp é o cabeçalho com o IP real do cliente, preenchido pelo proxy na frente da API
  * (ex.: X-Real-IP no Docker). Vazio = usa o IP da conexão. Só configure um cabeçalho que o proxy sempre
  * sobrescreve: se o cliente puder escolher o valor, ele escapa do limite.
+ * loginPorContaPorMinuto conta as tentativas de login de cada conta, vindas de qualquer IP (contra
+ * tentativas espalhadas por muitos IPs). 0 desliga esse limite.
  */
 @ConfigurationProperties("app.limite")
-public record LimiteProperties(int loginPorMinuto, int lotesPorMinuto, String cabecalhoIp) {}
+public record LimiteProperties(int loginPorMinuto, int lotesPorMinuto, String cabecalhoIp, int loginPorContaPorMinuto) {}
