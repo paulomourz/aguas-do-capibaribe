@@ -325,8 +325,9 @@ que esses checks passam. **Não faça merge com check vermelho.**
 - **Inativar processo:** ainda não existe.
 - **Plano grátis:** a API dorme sem uso, e o banco pode ser apagado depois de 90 dias parado. O Render grátis bloqueia
   e-mail, por isso o aviso de alerta vai pelo Telegram.
-- **Em desenvolvimento:** vários sensores por linha de lavagem (#47), glossário têxtil (#55) e validação com um
-  operador real (#50).
+- **Vários sensores por linha de lavagem:** adiado, com o motivo no Apêndice B da ERS (#47).
+- **Validação com operador real:** não houve acesso a uma lavanderia no prazo. A validação foi feita com pessoas de
+  fora da equipe e por avaliação simulada (#50); o kit em [`docs/validacao/`](docs/validacao/LEIA-ME.md) está pronto.
 - **Bancada física:** não foi montada. A entrega usa a simulação; a especificação está em
   [`docs/tecnico/hardware-bancada.md`](docs/tecnico/hardware-bancada.md).
 

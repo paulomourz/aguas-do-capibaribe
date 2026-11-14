@@ -8,7 +8,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 
 | Campo | Descrição |
 |---|---|
-| Versão | 2.4 |
+| Versão | 2.5 |
 | Data | 14 de novembro de 2026 |
 | Base | Termo de Abertura do Projeto v3.2 (14/11/2026), pareceres técnicos do orientador (27/10, 03/11 e 10/11/2026) e código do repositório em 14/11/2026 (branch develop, versão 1.1.0) |
 | Equipe | Pedro (Full Stack / PO), Abraão Filipe (Back-end), João Bezerra (Back-end), Matheus Andrade (Front-end), Mateus Basilio (Banco de dados) e Paulo Moura (DevOps) |
@@ -27,6 +27,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 2.2 | 11/11/2026 | Painel de eventos de segurança na Auditoria (RF32, issue #109): logins aceitos e recusados, bloqueios por limite com o IP mascarado e trocas de senha, com exportação em JSON. | Equipe Águas do Capibaribe |
 | 2.3 | 13/11/2026 | Exportação dos lotes de um período em CSV pela API (RF33, issue #99), em streaming e paginada, para a auditoria da CPRH. | Equipe Águas do Capibaribe |
 | 2.4 | 14/11/2026 | Consolidação para a versão 1.1.0: pegada hídrica por peça (RF34, #116), token de API do sensor (RF35, #103 e #129), reenvio dos avisos pendentes do Telegram (RF30, #97), gauge de tolerância no resultado do lote (RF24, #98), buffer do sensor sem Wi-Fi (RF26, #108), contador do erro 429 (RNF19, #101), contraste WCAG AA (RNF13, #106), carga com 100 sensores e pool de 20 conexões (RNF17, #113), vulnerabilidades e testes de mutação no CI (RNF24, #112 e #102), proteção do ambiente de execução (RNF28, #105 e #118), migrações V1 a V11 e números de testes atuais. | Equipe Águas do Capibaribe |
+| 2.5 | 14/11/2026 | Validação de usabilidade (RNF25, issue #50 encerrada): avaliação simulada por inspeção e teste com pessoas de fora da equipe; o teste com operador real de lavanderia fica registrado como limitação. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -658,7 +659,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 |---|---|---|
 | RNF12 | Interface em português do Brasil, com linguagem do chão de fábrica, mensagens de erro junto ao campo e poucos passos por registro. | Implementado |
 | RNF13 | Acessibilidade: status nunca indicado só por cor (sempre cor, ícone e texto); campos com rótulo; navegação por teclado; respeito à preferência de reduzir animações; tema claro, escuro ou automático, com contraste de texto de pelo menos 4,5:1 (WCAG AA) medido nos dois temas (issue #106). | Implementado |
-| RNF25 | Validação com um operador real, com o roteiro e o questionário SUS de docs/validacao/. | **Pendente** (issue #50) |
+| RNF25 | Validação de usabilidade com o roteiro e o questionário SUS de docs/validacao/, de preferência com um operador real de lavanderia. | **Parcial** (issue #50): avaliação simulada por inspeção (PR #140), que achou e corrigiu o problema #139, e teste com pessoas de fora da equipe, que usaram o sistema do começo ao fim sem dificuldades relevantes. O teste com operador real fica como limitação, por falta de acesso a lavanderias no prazo; o kit está pronto para ser aplicado. |
 | RNF26 | Glossário dos termos têxteis (estonagem, amaciamento, alvejamento, tingimento) disponível na interface, com dica acessível por teclado e sugestão do nome padrão no cadastro de processo. | Implementado (issue #55) |
 
 ## 3.4 Interfaces externas
@@ -828,7 +829,7 @@ A ISO/IEC/IEEE 29148 pede que cada requisito tenha um meio de verificação defi
 | RNF19 | Teste | LimiteDeRequisicoesTest; limite.test.ts (contagem regressiva no site). |
 | RNF20 | Teste | saudeAbertaMostraSoOStatusSemToken, metricasSoParaOAdmin, outrosEndpointsDoActuatorFicamFechados. |
 | RNF21 | Demonstração | database/backup.sh, que restaura o backup num banco temporário e confere as tabelas. |
-| RNF25 | Teste de usabilidade | Roteiro e questionário SUS de docs/validacao/ (pendente). |
+| RNF25 | Teste de usabilidade e inspeção | Avaliação simulada (docs/validacao/resultados/) e teste com pessoas de fora da equipe; operador real pendente (limitação registrada). |
 | RNF26 | Teste | glossario.test.ts. |
 | RNF27 | Teste e inspeção | e2e/privacidade.spec.ts (critério de aceitação: o aviso abre a partir do login), privacidade.test.ts, PrivacidadeTest, AuditoriaServiceTest e auditoriaListaAsAcoesComFiltrosEPaginacao (integração); conferência do CSV e do PDF na seção 6.4 de docs/gestao/seguranca.md. |
 | RNF28 | Teste | Job docker-compose do CI: confere que a imagem não tem shell e que nenhum segredo aparece no docker inspect nem no ambiente do processo. |
@@ -897,7 +898,7 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF34 | Issue #116 | GET /relatorios/resumo | Dashboard, Relatórios, PDF | Teste | Implementado |
 | RF35 | Issues #103 e #129 | POST /usuarios/{id}/token/rotacao; Authorization: Bearer (sensor) | Usuários; sensor no Wokwi | Teste e Demonstração | Implementado |
 
-Resumo: 35 requisitos funcionais, 34 implementados e 1 adiado (RF31); 28 requisitos não funcionais, 27 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 35 requisitos funcionais, 34 implementados e 1 adiado (RF31); 28 requisitos não funcionais, 27 implementados, adotados ou medidos e 1 parcial (RNF25, sem operador real).
 
 ## Apêndice D — Regras de negócio
 

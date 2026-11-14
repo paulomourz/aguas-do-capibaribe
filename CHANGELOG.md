@@ -6,6 +6,15 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Documentação (validação e auditoria)
+
+- **ERS v2.5:** RNF25 passa a parcial. A validação foi feita por avaliação simulada (PR #140) e com pessoas de fora da
+  equipe, sem dificuldades relevantes; o teste com operador real de lavanderia fica como limitação (issue #50
+  encerrada). Testes e README com a mesma situação.
+- **Auditoria v1.1:** equipe em ordem alfabética, achado A13 (revisão de segurança, PR #153) e cronograma novo:
+  17 a 19/11 últimas entregas, issues novas e feedbacks do professor; 20 e 21/11 revisão final e correções; 22/11
+  congelar, limpeza do banco e ensaio; 23/11 prazo final, com o formato a confirmar com o professor. PDFs gerados de novo.
+
 ### Segurança (revisão de 14/11/2026)
 
 - **Cabeçalhos de segurança no site do Docker** (`docker/cabecalhos-seguranca.conf`): Content-Security-Policy (só
