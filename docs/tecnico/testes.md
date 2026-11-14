@@ -132,7 +132,7 @@ banco local, que não roda no CI.
 
 | Item | Situação |
 |---|---|
-| Teste de usabilidade com operador real (RNF25) | Roteiro, questionário SUS e kit prontos; aplicação pendente (issue #50). |
+| Teste de usabilidade com operador real (RNF25) | Não feito por falta de acesso a lavanderias no prazo. Foram feitos a avaliação simulada por inspeção (PR #140) e o teste com pessoas de fora da equipe, sem dificuldades relevantes; o kit está pronto para o teste real (issue #50 encerrada). |
 | Desempenho do sistema publicado | Não medido, por ser plano grátis. |
 
 ### 4.4 Requisitos adiados
