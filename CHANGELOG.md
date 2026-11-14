@@ -6,6 +6,20 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Relatórios (exportação em CSV pela API)
+
+- **`GET /api/relatorios/csv?inicio=&fim=&processoId=`** (issue #99, RF33), só gestor: todos os lotes de um período
+  de até 1 ano, no mesmo formato do CSV do Histórico (UTF-8 com BOM, `;`, vírgula decimal, hora de Recife e UTC,
+  textos protegidos contra fórmula, só o nome de quem registrou). Período invertido, maior que 1 ano ou processo
+  inexistente → 422 antes de o arquivo começar.
+  - **Streaming:** cabeçalho enviado na hora e lotes lidos de 1.000 em 1.000 por paginação por cursor
+    (`registrado_em`, `id`), com flush a cada página; a memória não cresce com o período. 50.000 lotes em 2,5 s no
+    teste de integração.
+  - **Segurança:** os cabeçalhos de segurança do Spring Security passam a ser escritos no início da requisição, e não
+    quando a resposta é confirmada; com o streaming, a confirmação acontece em outra thread e os dois disputavam os
+    cabeçalhos (`ConcurrentModificationException`). As respostas continuam com os mesmos cabeçalhos.
+  - Respostas em streaming podem durar até 2 minutos (`spring.mvc.async.request-timeout`).
+
 ### Testes e IoT (complementos)
 
 - **Prints do teste de ponta a ponta no CI:** o job `frontend-build` guarda os prints de cada passo do fluxo do

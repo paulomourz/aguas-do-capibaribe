@@ -47,6 +47,11 @@ spring:
   sql:
     init:
       mode: never
+  # Respostas em streaming (CSV de GET /relatorios/csv, issue #99): o arquivo de 1 ano pode passar dos 30 s
+  # padrão do Tomcat no servidor lento do Render.
+  mvc:
+    async:
+      request-timeout: 2m
 
 server:
   port: ${SERVER_PORT:8080}

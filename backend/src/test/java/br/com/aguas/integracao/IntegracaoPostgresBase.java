@@ -2,13 +2,18 @@ package br.com.aguas.integracao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +38,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -883,6 +890,87 @@ abstract class IntegracaoPostgresBase {
         JsonNode setembro = filtrar(ler(chamar(get("/relatorios/resumo?mes=9&ano=2026"), g)), p);
         assertThat(setembro.get("lotes").asLong()).isEqualTo(1);
         assertThat(setembro.get("real").decimalValue()).isEqualByComparingTo("130");
+    }
+
+    /** Baixa o CSV (resposta em streaming: precisa do asyncDispatch) e devolve o texto, com o BOM. */
+    String baixarCsv(String query, Conta c) throws Exception {
+        MvcResult inicio = chamar(get("/relatorios/csv?" + query), c)
+                .andExpect(request().asyncStarted()).andReturn();
+        MockHttpServletResponse resp = mvc.perform(asyncDispatch(inicio))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "text/csv;charset=UTF-8"))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+                .andReturn().getResponse();
+        return new String(resp.getContentAsByteArray(), StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void csvDoPeriodoUsaFusoDeRecifeFiltraPorProcessoEProtegeTextos() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "100");
+        int outro = processo(g, "lote", "100");
+        jdbc.update("update processo set nome = ? where id = ?", "=Estonagem; teste", p);
+        // 31/08/2026 23:30 em Recife: fora de setembro
+        jdbc.update("insert into lote (processo_id, usuario_id, pecas, litros, registrado_em) values (?, ?, 1, 80, '2026-09-01T02:30:00Z')", p, g.id());
+        // 01/09/2026 00:30 em Recife
+        jdbc.update("insert into lote (processo_id, usuario_id, pecas, litros, registrado_em) values (?, ?, 10, 108, '2026-09-01T03:30:00Z')", p, g.id());
+        // 30/09/2026 23:59:59 em Recife: último segundo do período
+        jdbc.update("insert into lote (processo_id, usuario_id, pecas, litros, registrado_em) values (?, ?, 1, 90, '2026-10-01T02:59:59Z')", p, g.id());
+        // 01/10/2026 00:00 em Recife: fora
+        jdbc.update("insert into lote (processo_id, usuario_id, pecas, litros, registrado_em) values (?, ?, 1, 90, '2026-10-01T03:00:00Z')", p, g.id());
+        jdbc.update("insert into lote (processo_id, usuario_id, pecas, litros, registrado_em) values (?, ?, 1, 90, '2026-09-15T12:00:00Z')", outro, g.id());
+
+        String csv = baixarCsv("inicio=2026-09-01&fim=2026-09-30&processoId=" + p, g);
+        assertThat(csv).startsWith("\uFEFFID do lote;Data;Hora;");
+        String[] linhas = csv.substring(1).split("\r\n");
+        assertThat(linhas).hasSize(3);
+        assertThat(linhas[1]).matches("\\d+;01/09/2026;00:30:00;2026-09-01T03:30:00Z;\"'=Estonagem; teste\";10;"
+                + "108,00;100,00;8,00;8,00;Atenção;Pessoa " + g.login());
+        assertThat(linhas[2]).contains(";30/09/2026;23:59:59;").endsWith(";Dentro da meta;Pessoa " + g.login());
+
+        // Sem o filtro de processo, entra o lote do outro processo, em ordem de registro
+        String[] todos = baixarCsv("inicio=2026-09-01&fim=2026-09-30", g).split("\r\n");
+        assertThat(java.util.Arrays.stream(todos).filter(l -> l.contains(";15/09/2026;")).count()).isEqualTo(1);
+    }
+
+    @Test
+    void csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "peca", "50");
+        // 50.000 lotes (o volume da issue #99), todos no mesmo instante: o desempate pelo id é que separa as páginas
+        jdbc.update("""
+                insert into lote (processo_id, usuario_id, pecas, litros, registrado_em)
+                select ?, ?, 2, 100, '2025-03-10T15:00:00Z' from generate_series(1, 50000)
+                """, p, g.id());
+        List<Integer> ids = jdbc.queryForList("select id from lote where processo_id = ? order by id", Integer.class, p);
+
+        String[] linhas = baixarCsv("inicio=2025-03-10&fim=2025-03-10&processoId=" + p, g).split("\r\n");
+        assertThat(linhas).hasSize(50_001);
+        List<Integer> doCsv = java.util.Arrays.stream(linhas).skip(1)
+                .map(l -> Integer.valueOf(l.substring(0, l.indexOf(';')))).toList();
+        assertThat(doCsv).isEqualTo(ids);
+    }
+
+    @Test
+    void csvConfereOPeriodoEOProcessoAntesDeComecarESoParaGestor() throws Exception {
+        Conta g = conta("gestor");
+        Conta op = conta("operador");
+        chamar(get("/relatorios/csv?inicio=2026-09-30&fim=2026-09-01"), g)
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.fim").exists());
+        chamar(get("/relatorios/csv?inicio=2026-01-01&fim=2027-01-01"), g)
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.fim").value("Escolha um período de até 1 ano."));
+        chamar(get("/relatorios/csv?inicio=2026-01-01&fim=2026-12-31&processoId=999999"), g)
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.processoId").exists());
+        chamar(get("/relatorios/csv?inicio=2026-01-01&fim=2026-12-31"), op).andExpect(status().isForbidden());
+
+        // O ano inteiro cabe, e o nome do arquivo diz o período
+        MvcResult r = chamar(get("/relatorios/csv?inicio=2026-01-01&fim=2026-12-31"), g)
+                .andExpect(request().asyncStarted()).andReturn();
+        mvc.perform(asyncDispatch(r)).andExpect(status().isOk()).andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"aguas-do-capibaribe-lotes-2026-01-01-a-2026-12-31.csv\""));
     }
 
     static JsonNode filtrar(JsonNode lista, int processoId) {
