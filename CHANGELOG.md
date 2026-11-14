@@ -8,6 +8,8 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Documentação da versão 1.1.0
 
+- **Auditoria nas normas e cronograma** (`docs/gestao/auditoria.md` e PDF): resultado por norma, 12 achados com o
+  ajuste e a evidência, participação por integrante e cronograma até 23/11/2026, para a aula de 16/11.
 - **ERS v2.4, TAP v3.2, guia 2.2, arquitetura 1.2, testes 1.1 e segurança 1.2**, com as entregas de 10 a 14/11/2026:
   RF35 (token de API do sensor), reenvio dos avisos (RF30), gauge (RF24), buffer do sensor (RF26), contador do 429
   (RNF19), contraste WCAG AA (RNF13), carga com 100 sensores (RNF17), CI com vulnerabilidades e mutação (RNF24),
