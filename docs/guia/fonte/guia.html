@@ -116,7 +116,7 @@
   <h1>Guia do Águas do Capibaribe</h1>
   <p class="chamada">Como o sistema funciona no dia a dia da lavanderia e como colocá-lo para rodar, do banco de dados ao sensor.</p>
   <div class="rodape">
-    <span><strong>Versão 2.1</strong> · 9 de novembro de 2026</span>
+    <span><strong>Versão 2.2</strong> · 14 de novembro de 2026</span>
     <span>Toritama · Caruaru · Santa Cruz do Capibaribe</span>
   </div>
 </section>
@@ -161,7 +161,7 @@
     <li>No sistema, o ícone de informação ao lado do nome de um processo explica o termo têxtil (estonagem, amaciamento, alvejamento, tingimento).</li>
   </ul>
 
-  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve o sistema da branch <code>develop</code> em 9 de novembro de 2026. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
+  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve a versão 1.1.0 do sistema, de 14 de novembro de 2026. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
 </section>
 
 <!-- ============ 1 ============ -->
@@ -261,14 +261,14 @@
 
   <table>
     <tr><th style="width:26%">Tela</th><th>Para que serve</th><th style="width:13%">Gestor</th><th style="width:13%">Operador</th></tr>
-    <tr><td><strong>Dashboard</strong></td><td>Consumo do mês, meta, desvio geral, alertas ativos e gráficos de meta e consumo por processo e por dia</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Dashboard</strong></td><td>Consumo do mês, meta, desvio geral, água por peça (pegada hídrica), alertas ativos e gráficos de meta e consumo por processo e por dia</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Alertas</strong></td><td>Alertas abertos, em análise e resolvidos; mudança de status</td><td>sim</td><td>—</td></tr>
-    <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido; impressão ou PDF</td><td>sim</td><td>—</td></tr>
-    <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado e desvio. Sem conexão, o lote fica guardado no aparelho</td><td>sim</td><td>sim</td></tr>
-    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtro por processo e exportação em CSV</td><td>todos</td><td>os próprios</td></tr>
+    <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido, com litros por peça; impressão ou PDF</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado, desvio e um gauge com a faixa do lote. Sem conexão, o lote fica guardado no aparelho</td><td>sim</td><td>sim</td></tr>
+    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtros por período, processo e quem registrou, e exportação em CSV</td><td>todos</td><td>os próprios</td></tr>
     <tr><td><strong>Processos e metas</strong></td><td>Cadastrar processos e ajustar metas</td><td>sim</td><td>—</td></tr>
-    <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas</td><td>só o administrador</td><td>—</td></tr>
-    <tr><td><strong>Auditoria</strong></td><td>Quem criou, desativou, reativou ou redefiniu a senha de cada conta, e quando</td><td>só o administrador</td><td>—</td></tr>
+    <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas e trocar o token do sensor</td><td>só o administrador</td><td>—</td></tr>
+    <tr><td><strong>Auditoria</strong></td><td>Quem criou, desativou, reativou ou redefiniu a senha de cada conta, e quando; painel de eventos de segurança (logins e bloqueios)</td><td>só o administrador</td><td>—</td></tr>
     <tr><td><strong>Configurações</strong></td><td>Trocar o próprio nome e a própria senha</td><td>sim</td><td>sim</td></tr>
   </table>
 
@@ -277,7 +277,8 @@
     <li>O login dura <strong>8 horas</strong>. Depois disso, o sistema pede para entrar de novo.</li>
     <li>Quem é desativado perde o acesso <strong>na hora</strong>, mesmo com a tela aberta.</li>
     <li>O administrador principal, <code>capibaribe.admin</code>, não pode ser desativado.</li>
-    <li>O login também tem limite: depois de 5 tentativas em um minuto, é preciso esperar um pouco.</li>
+    <li>O login também tem limite: depois de 5 tentativas em um minuto, o botão Entrar mostra uma contagem regressiva até poder tentar de novo.</li>
+    <li>A tela de login tem o link do <strong>aviso de privacidade</strong> (LGPD): quais dados o sistema guarda, para quê e por quanto tempo.</li>
     <li>A API cria sozinha as <strong>contas fixas</strong> em um banco novo: <code>capibaribe.admin</code> (administrador) e, se as senhas estiverem definidas, <code>capibaribe.gestor</code> (gestor) e <code>sensor.wokwi</code> (sensor). Os processos iniciais vêm das migrações. As senhas ficam fora do Git, em <code>docs/privado/</code>, e no Docker aparecem em <code>docker compose logs segredos</code>.</li>
     <li>Quem esquecer a senha pede ao administrador, que usa <strong>Redefinir senha</strong> na tela Usuários e entrega a nova senha à pessoa. A antiga deixa de valer na hora.</li>
     <li>A própria senha se troca em <strong>Configurações</strong>, informando a senha atual. A senha do administrador principal só ele mesmo troca.</li>
@@ -302,7 +303,8 @@
   <ol class="passos">
     <li><strong>Abra Registro de lotes</strong>É a primeira tela do operador ao entrar.</li>
     <li><strong>Preencha os três campos</strong>Escolha o processo executado na máquina, informe a quantidade de peças e os litros usados.</li>
-    <li><strong>Registre e confira</strong>O resultado aparece na hora: esperado, real, desvio e status. O lote fica no histórico.</li>
+    <li><strong>Registre e confira</strong>O resultado aparece na hora: esperado, real, desvio e status, com um gauge mostrando a faixa do lote. O lote fica no histórico.</li>
+    <li><strong>Números grandes</strong>Pode escrever os litros com ponto de milhar, como 1.590, e decimais com vírgula, como 12,5.</li>
     <li><strong>Dúvida sobre o processo?</strong>Toque no ícone de informação ao lado do nome: ele explica o que a etapa faz e por que gasta água.</li>
   </ol>
   <div class="nota agua"><p><strong>A Wi-Fi caiu?</strong> Registre normalmente. O lote fica guardado no aparelho, aparece como pendente no topo da tela e é enviado sozinho quando a conexão volta, sem duplicar. O site também pode ser instalado como aplicativo.</p></div>
@@ -311,7 +313,8 @@
   <ul>
     <li>O <strong>Dashboard</strong> mostra o mês de referência, que também aparece no topo da tela.</li>
     <li>Os gráficos mostram a meta e o consumo de cada processo no mês e o consumo de cada dia.</li>
-    <li>No <strong>Histórico de lotes</strong>, <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa.</li>
+    <li><strong>Água por peça</strong> mostra quantos litros cada peça gastou, em média, comparado com a referência de 49 a 70 L por peça da lavanderia completa.</li>
+    <li>No <strong>Histórico de lotes</strong>, dá para filtrar por período, processo e quem registrou; <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa.</li>
     <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. Mês sem lotes não gera relatório.</li>
   </ul>
 </section>
@@ -333,7 +336,7 @@
   <ol class="passos">
     <li><strong>Abrir a água</strong>O potenciômetro faz o papel da vazão: girar abre mais ou menos água.</li>
     <li><strong>Iniciar o lote</strong>O botão verde liga a medição; o LED azul acende e o monitor serial mostra vazão e litros.</li>
-    <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 faz login na API, procura o processo pelo nome e envia peças e litros. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
+    <li><strong>Encerrar e enviar</strong>Um novo clique encerra o lote: o ESP32 se identifica com o token de API do sensor (sem senha), procura o processo pelo nome e envia peças e litros. Sem Wi-Fi, guarda até 100 lotes e envia quando a conexão volta, sem duplicar. O lote aparece no histórico, registrado por “Sensor de vazão (Wokwi)”.</li>
     <li><strong>Ver o resultado</strong>O monitor serial mostra o status que a API deu ao lote. Se for <strong>crítico</strong> (desvio acima de 8%), o buzzer apita 3 vezes e o LED vermelho fica aceso até o próximo lote.</li>
   </ol>
 
@@ -455,7 +458,7 @@ Abra <code>http://localhost:8443</code> e entre com <code>capibaribe.admin</code
   <div class="nota agua"><p><strong>Sem modo simulado.</strong> O site sempre usa a API. Para mostrar o sistema sem internet, suba tudo no computador com o Docker (plano B do roteiro de apresentação).</p></div>
 
   <h3>Testes automáticos</h3>
-  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 98 testes da API: 68 de regras, segurança e validação, e 30 de integração, que usam o Docker (ou um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora). Na raiz, <code>pnpm test</code> roda os 47 testes do site e <code>pnpm test:e2e</code>, os 3 de ponta a ponta do modo offline. Em 06/11/2026 (CI nº 88), todos passaram. O plano e o relatório de testes estão em <code>docs/tecnico/testes.md</code>. O passo a passo está no <code>backend/README.md</code>.</p>
+  <p>Em <code>backend/</code>, <code>mvn test</code> roda os 169 testes da API: 132 de regras, segurança e validação, e 37 de integração e de sistema, que usam o Docker (ou um banco <strong>temporário</strong> com nome terminado em <code>_teste</code>, criado vazio e apagado na hora). Na raiz, <code>pnpm test</code> roda os 199 testes do site e <code>pnpm test:e2e</code>, os 10 de ponta a ponta. Em 14/11/2026, todos passaram. O plano e o relatório de testes estão em <code>docs/tecnico/testes.md</code>. O passo a passo está no <code>backend/README.md</code>.</p>
 
   <h3>Documentação interativa da API</h3>
   <p>Com a API no ar, abra <code>http://localhost:8080/api/swagger-ui.html</code>. A página (Swagger) lista as 19 rotas por grupo e permite testá-las: faça o login em <strong>POST /auth/login</strong>, copie o <code>token</code>, clique em <strong>Authorize</strong> e cole. Para desligar, use <code>SWAGGER_ATIVO=false</code> no <code>backend/.env</code>.</p>

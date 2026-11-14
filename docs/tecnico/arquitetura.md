@@ -7,7 +7,7 @@ os pontos de vista usados e as visões do sistema, com as decisões e a justific
 | Campo | Descrição |
 |---|---|
 | Sistema | Águas do Capibaribe — gestão de consumo de água por lote em lavanderias de jeans |
-| Versão | 1.1, 10 de novembro de 2026 (branch `develop`) |
+| Versão | 1.2, 14 de novembro de 2026 (versão 1.1.0 do sistema) |
 | Requisitos | [ERS v2.0](../gestao/ERS.md) (ISO/IEC/IEEE 29148) |
 | Responsáveis | Equipe Águas do Capibaribe |
 
@@ -90,8 +90,8 @@ aparelho e são enviados com a mesma chave de envio (`Idempotency-Key`) até a A
 | `service` | Regras de negócio: cálculo do desvio, regra de alerta (`RegraDeAlerta`), relatórios, usuários e auditoria. |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `entity`, `dto` | Modelo de dados e formatos de entrada e saída da API. |
-| `security` | JWT, perfis, limite de requisições (`FiltroDeLimite`, `Limitador`) e respostas 401/403 no formato da API. |
-| `notificacao` | Aviso de alerta no Telegram, enviado depois do commit e em outra thread. |
+| `security` | JWT, token de API do sensor (`FiltroTokenDeApi`, `TokenDeApi`), perfis, limite de requisições (`FiltroDeLimite`, `Limitador`) e respostas 401/403 no formato da API. |
+| `notificacao` | Aviso de alerta no Telegram, enviado depois do commit e em outra thread, com até 3 tentativas; o que não chega fica em `aviso_pendente` e é reenviado pelo `ReenvioDeAvisos` a cada 5 minutos. |
 | `exception` | Formato único de erro `{codigo, mensagem, campos}`. |
 | `config` | Segurança, cache, documentação (Swagger) e criação das contas iniciais. |
 
@@ -106,13 +106,15 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
   `Retry-After`.
 - **Avisos:** a `RegraDeAlerta` publica o evento `AlertaAberto`. O `AvisoDeAlerta` só o recebe depois do commit e
   manda a mensagem ao Telegram em outra thread, então o registro do lote nunca espera nem depende do Telegram.
-- **IoT:** o sensor ESP32 é um cliente igual ao site e passa pelos mesmos filtros, com o perfil `sensor`.
+- **IoT:** o sensor ESP32 é um cliente igual ao site e passa pelos mesmos filtros, com o perfil `sensor`. Ele se identifica por um token de API (`FiltroTokenDeApi`), cujo SHA-256 fica no banco; o administrador troca o token em Usuários. O diagrama acima é de 10/11/2026 e ainda não mostra esse filtro nem o reenvio dos avisos.
 
 ## 5. Visão de dados
 
 | Elemento | Regra |
 |---|---|
 | `usuario`, `processo`, `lote`, `alerta`, `alerta_lote`, `auditoria_usuario` | Tabelas principais (detalhe na ERS, seção 3.5). |
+| `aviso_pendente` | Avisos do Telegram que não chegaram; o `aguas_api` só lê, insere e atualiza as colunas do reenvio (V10 e V11). |
+| `usuario.token_hash` | SHA-256 do token de API das contas de sensor, único (V9). |
 | `trg_lote_esperado` | O banco calcula o esperado de cada lote pela meta do momento. |
 | `trg_lote_imutavel`, `trg_auditoria_imutavel` | Lote e auditoria não podem ser alterados nem apagados, nem pela API. |
 | `v_historico_lotes`, `v_alertas` | Visões que entregam o desvio já calculado. |

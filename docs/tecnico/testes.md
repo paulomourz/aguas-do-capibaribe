@@ -5,7 +5,7 @@ Plano, casos, procedimentos e relatório de testes do Águas do Capibaribe, orga
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.0, 9 de novembro de 2026 |
+| Versão | 1.1, 14 de novembro de 2026 (versão 1.1.0 do sistema) |
 | Objeto de teste | Site (React), API (Spring Boot), banco (PostgreSQL 18), Docker Compose e sensor simulado (Wokwi), na branch `develop` |
 | Base | [ERS v2.0](../gestao/ERS.md): cada requisito tem o método de verificação na seção 4 e no Apêndice C |
 | Responsáveis | Equipe Águas do Capibaribe; revisão e teste das entregas com o DevOps |
@@ -103,18 +103,18 @@ por função:
 
 ### 4.1 Testes automáticos
 
-Última execução da `develop`: **CI nº 88, em 06/11/2026, commit `fd3bc33`, todos os jobs verdes.**
+Última execução da `develop`: **14/11/2026, commit `659a3c6` (merge do PR #150), todos os jobs verdes.**
 
 | Conjunto | Executados | Falhas |
 |---|---|---|
-| Back-end: unidade e web | 68 | 0 |
-| Back-end: integração e sistema com PostgreSQL 18 | 30 | 0 |
-| Site: unidade (Vitest) | 47 | 0 |
-| Site: ponta a ponta (Playwright) | 3 | 0 |
+| Back-end: unidade e web | 132 | 0 |
+| Back-end: integração e sistema com PostgreSQL 18 | 37 | 0 |
+| Site: unidade (Vitest) | 199 | 0 |
+| Site: ponta a ponta (Playwright) | 10 | 0 |
 | Docker Compose | 1 job | 0 |
-| **Total** | **148 testes + Docker** | **0** |
+| **Total** | **378 testes + Docker, vulnerabilidades e mutação** | **0** |
 
-No log do Maven aparecem 128 testes, com 30 ignorados: são os mesmos testes de integração na variante que usa um
+No log do Maven aparecem 206 testes, com 37 ignorados: são os mesmos testes de integração na variante que usa um
 banco local, que não roda no CI.
 
 ### 4.2 Testes manuais e medições

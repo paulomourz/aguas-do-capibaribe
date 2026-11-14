@@ -76,7 +76,7 @@ espere um pouco e tente de novo.
 
 ```mermaid
 flowchart LR
-    W["🖥️ Front-end<br/>React + Vite"] -- "REST / JSON" --> A["⚙️ API<br/>Spring Boot"]
+    W["🖥️ Front-end<br/>React + TypeScript + Vite"] -- "REST / JSON" --> A["⚙️ API<br/>Spring Boot"]
     S["📡 ESP32 (Wokwi)<br/>sensor de vazão"] -- "HTTPS" --> A
     A -- "JPA + Flyway" --> B[("🐘 PostgreSQL")]
     A -. "aviso de alerta (opcional)" .-> T["💬 Telegram"]
@@ -94,7 +94,7 @@ flowchart LR
 
 | Pasta | Conteúdo |
 |---|---|
-| `/` (raiz) | Front-end React 19 + Vite + Tailwind (estrutura exigida pelo Figma Make) |
+| `/` (raiz) | Front-end React 19 com TypeScript + Vite + Tailwind (estrutura exigida pelo Figma Make) |
 | [`backend/`](backend/README.md) | API REST em Java 25 LTS + Spring Boot 3.5 |
 | [`database/`](database/LEIA-ME.md) | Guia do banco, script do usuário `aguas_api`, backup e restauração, e scripts de desempenho (as migrações Flyway ficam no `backend/`) |
 | [`iot/`](iot/LEIA-ME.md) | Sensor de vazão simulado no Wokwi (ESP32): código, circuito e guia |
@@ -253,7 +253,7 @@ mvn test
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real, perfis, auditoria, Actuator e aviso no Telegram (com um servidor falso) |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 98 testes: 68 unitários e de web + 30 de integração com PostgreSQL 18 (o banco começa vazio e o
+São 169 testes: 132 unitários e de web + 37 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
@@ -261,8 +261,8 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 **Site:**
 
 ```bash
-pnpm test        # Vitest (47 testes): fila em IndexedDB, sincronização, CSV, tema e glossário
-pnpm test:e2e    # Playwright (3 testes): site de produção com service worker, Wi-Fi caindo e voltando
+pnpm test        # Vitest (199 testes): fila em IndexedDB, sincronização, CSV, tema, glossário, números, gauge, pegada e limites
+pnpm test:e2e    # Playwright (10 testes): modo offline, fluxo do operador, privacidade e números
 ```
 
 O teste ponta a ponta (`e2e/offline.spec.ts`) derruba a conexão do navegador, registra lotes, recarrega a página
@@ -293,8 +293,7 @@ que esses checks passam. **Não faça merge com check vermelho.**
 
 ## 📌 Status
 
-Última versão: **v1.0.0** (02/11/2026). O que entrou depois está na `develop` e na seção "Não lançado" do
-[`CHANGELOG.md`](CHANGELOG.md).
+Última versão: **v1.1.0** (14/11/2026). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
@@ -308,7 +307,7 @@ que esses checks passam. **Não faça merge com check vermelho.**
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
-- ✅ Versionamento do banco com migrações Flyway (V1 a V8), aplicadas ao subir a API
+- ✅ Versionamento do banco com migrações Flyway (V1 a V11), aplicadas ao subir a API
 - ✅ Desempenho medido: teste de carga, índices com EXPLAIN ANALYZE e cache da lista de processos
 - ✅ Monitoramento (Actuator) e backup do banco com restauração verificada
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%

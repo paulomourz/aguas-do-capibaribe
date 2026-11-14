@@ -33,6 +33,9 @@ Regras que moram no próprio banco:
 | V6 | `V6__perfis_admin_e_sensor.sql` | perfis `admin` e `sensor`; a conta `sensor.wokwi` passa para o perfil sensor (issue #66) |
 | V7 | `V7__cria_chave_envio_do_lote.sql` | coluna `chave_envio` do lote, única, para reenvio sem duplicar (issue #54) |
 | V8 | `V8__cria_indices_performance.sql` | índices da regra de alerta e dos lotes de um alerta (issue #59, ver [`desempenho/`](desempenho/)) |
+| V9 | `V9__cria_token_de_api.sql` | coluna `token_hash` do usuário (SHA-256 do token de API do sensor) e ação `ROTACAO_TOKEN` na auditoria (issue #103) |
+| V10 | `V10__cria_aviso_pendente.sql` | `aviso_pendente`: aviso do Telegram que não chegou depois de 3 tentativas (issue #97) |
+| V11 | `V11__aviso_pendente_enviado_em.sql` | coluna `enviado_em` e permissão de UPDATE só nas colunas do reenvio (issue #97) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.
@@ -80,7 +83,7 @@ tentar recriá-las.
 
 ## Mudou o banco? Crie uma migração nova
 
-1. Crie `V9__descricao_curta.sql` (o próximo número livre, dois sublinhados) na pasta de migrações. Confira a
+1. Crie `V12__descricao_curta.sql` (o próximo número livre, dois sublinhados) na pasta de migrações. Confira a
    `develop` antes: se outra pessoa usar o mesmo número primeiro, troque o seu para o próximo.
 2. **Nunca edite uma migração que já foi para a `develop`.** O Flyway guarda o checksum de cada uma e a
    API não sobe se o arquivo mudar. Para corrigir, crie outra migração.

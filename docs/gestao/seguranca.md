@@ -8,7 +8,7 @@ pede, adaptada ao porte de um projeto acadêmico, sem certificação formal.
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.1, 10 de novembro de 2026 (aviso de privacidade e LGPD, seção 6) |
+| Versão | 1.2, 14 de novembro de 2026 (versão 1.1.0 do sistema: token de API do sensor, imagem distroless e segredos como arquivos) |
 | Escopo | Site, API, banco publicado (Render e Neon), ambiente Docker, sensor simulado, repositório no GitHub e aviso no Telegram |
 | Responsável | Paulo Moura (DevOps), com apoio da equipe |
 | Revisão | A cada versão do sistema ou depois de qualquer incidente |

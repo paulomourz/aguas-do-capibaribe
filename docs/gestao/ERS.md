@@ -8,9 +8,9 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 
 | Campo | Descrição |
 |---|---|
-| Versão | 2.1 |
-| Data | 10 de novembro de 2026 |
-| Base | Termo de Abertura do Projeto v3.1 (09/11/2026), parecer técnico do orientador (27/10/2026) e código do repositório em 09/11/2026 (branch develop) |
+| Versão | 2.4 |
+| Data | 14 de novembro de 2026 |
+| Base | Termo de Abertura do Projeto v3.2 (14/11/2026), pareceres técnicos do orientador (27/10, 03/11 e 10/11/2026) e código do repositório em 14/11/2026 (branch develop, versão 1.1.0) |
 | Equipe | Pedro (Full Stack / PO), Abraão Filipe (Back-end), João Bezerra (Back-end), Matheus Andrade (Front-end), Mateus Basilio (Banco de dados) e Paulo Moura (DevOps) |
 | Orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
 | Instituição | Senac · Projeto Integrador |
@@ -26,6 +26,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 2.1 | 10/11/2026 | Adequação à LGPD (RNF27, issue #117): aviso de privacidade na tela de login, login de outras pessoas mascarado na API (auditoria e lista de usuários do gestor) e conferência dos dados pessoais do CSV e do PDF. Necessidade NS-05. | Equipe Águas do Capibaribe |
 | 2.2 | 11/11/2026 | Painel de eventos de segurança na Auditoria (RF32, issue #109): logins aceitos e recusados, bloqueios por limite com o IP mascarado e trocas de senha, com exportação em JSON. | Equipe Águas do Capibaribe |
 | 2.3 | 13/11/2026 | Exportação dos lotes de um período em CSV pela API (RF33, issue #99), em streaming e paginada, para a auditoria da CPRH. | Equipe Águas do Capibaribe |
+| 2.4 | 14/11/2026 | Consolidação para a versão 1.1.0: pegada hídrica por peça (RF34, #116), token de API do sensor (RF35, #103 e #129), reenvio dos avisos pendentes do Telegram (RF30, #97), gauge de tolerância no resultado do lote (RF24, #98), buffer do sensor sem Wi-Fi (RF26, #108), contador do erro 429 (RNF19, #101), contraste WCAG AA (RNF13, #106), carga com 100 sensores e pool de 20 conexões (RNF17, #113), vulnerabilidades e testes de mutação no CI (RNF24, #112 e #102), proteção do ambiente de execução (RNF28, #105 e #118), migrações V1 a V11 e números de testes atuais. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -101,9 +102,10 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 | NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14 |
 | NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27, RF32 |
-| NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26; RF31 adiado (Apêndice B) |
+| NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26, RF35; RF31 adiado (Apêndice B) |
 | NS-04 | Entender os termos técnicos dos processos de lavagem. | Operador e gestor | RNF26 |
 | NS-05 | Saber quais dados pessoais o sistema guarda e não ter o próprio login exposto a quem não precisa dele (LGPD). | Operador, gestor e administrador | RNF27 |
+| RNF28 | Proteção do ambiente de execução: a imagem da API é distroless (só o Java 25 e o jar, sem shell e sem root, issue #105), e no Docker as senhas e a chave JWT são lidas como arquivos só de leitura, nunca como variáveis de ambiente (issue #118). O CI falha se a imagem tiver shell ou se um segredo aparecer no ambiente. | Implementado |
 
 ### 1.3.6 Conceito de operação
 
@@ -352,12 +354,12 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 |---|---|
 | Descrição | Quando um alerta for aberto, o sistema deve avisar num grupo do Telegram, sem atrasar nem colocar em risco o registro do lote. |
 | Entradas | Alerta aberto; variáveis TELEGRAM_TOKEN, TELEGRAM_CHAT_ID e, opcionalmente, SITE_URL. |
-| Processamento | O envio acontece depois que o lote foi gravado, em outra thread e com fila limitada. Uma falha do Telegram só fica no log, sem o token. Sem token e chat configurados, o aviso fica desligado. |
+| Processamento | O envio acontece depois que o lote foi gravado, em outra thread e com fila limitada. Se falhar, a API tenta até 3 vezes, com espera crescente; persistindo a falha, o aviso fica em aviso_pendente, e uma rotina a cada 5 minutos o reenvia enquanto o alerta estiver aberto, por até 24 horas, marcando enviado_em quando chega (issue #97). Nenhum log leva o token. Sem token e chat configurados, o aviso fica desligado. |
 | Saídas | Mensagem com o processo, os 3 lotes, o número do alerta e o link para ele. |
 | Prioridade | Desejável |
 | Origem | US-13 · parecer, item #24 · issue #52 |
 | Situação | Implementado e testado com o sistema publicado. |
-| Verificação | Teste e Demonstração: AvisoDeAlertaTest; alertaAbertoAvisaNoTelegramDepoisDeGravar e telegramForaDoArNaoAtrapalhaORegistroDoLote (integração). Demonstrado no sistema publicado em 05/11/2026. |
+| Verificação | Teste e Demonstração: AvisoDeAlertaTest, ReenvioDeAvisosTest; alertaAbertoAvisaNoTelegramDepoisDeGravar e telegramForaDoArNaoAtrapalhaORegistroDoLote (integração). Demonstrado no sistema publicado em 05/11/2026. |
 
 ### 3.1.5 Relatórios e acompanhamento
 
@@ -582,7 +584,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Descrição | Cada lote deve ser classificado como "dentro da meta" (verde), "atenção" (amarelo) ou "crítico" (vermelho), sempre com cor, ícone e texto juntos. |
 | Entradas | Desvio do lote. |
 | Processamento | Até 0% = dentro da meta; acima de 0% e até 8% = atenção; acima de 8% = crítico (decisão P1). |
-| Saídas | Status exibido no resultado do registro, no histórico, nos alertas e no CSV. |
+| Saídas | Status exibido no resultado do registro, com um gauge semicircular das faixas (issue #98), no histórico, nos alertas e no CSV. |
 | Prioridade | Importante |
 | Origem | TAP, seção 4.1 · decisão P1 |
 | Situação | Implementado: a API classifica cada lote (statusConformidade); totais e médias são classificados no site, com os mesmos limites. |
@@ -596,12 +598,25 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 |---|---|
 | Descrição | A API deve aceitar lotes enviados por um dispositivo de medição, pelo mesmo caminho do registro manual. |
 | Entradas | Login da conta do dispositivo (sensor.wokwi, perfil sensor) e lote com processo, peças e litros medidos. |
-| Processamento | O dispositivo entra, recebe o token, consulta os processos e chama POST /lotes. Valem as mesmas regras de RF07 a RF11. |
+| Processamento | O dispositivo manda o token de API da conta de sensor em cada requisição (RF35), consulta os processos e chama POST /lotes. Valem as mesmas regras de RF07 a RF11. |
 | Saídas | Lote gravado e identificado no histórico como registrado por "Sensor de vazão (Wokwi)". |
 | Prioridade | Desejável |
 | Origem | US-09 · TAP, seção 6 |
 | Situação | Implementado. |
 | Verificação | Teste e Demonstração: SensorInicialTest; cadaPerfilAcessaSoOQueLheCabe. Lotes enviados pelo Wokwi à API publicada. |
+
+#### RF35 — Autenticar o sensor por token de API
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O dispositivo deve se identificar por um token de API da conta de sensor, sem login nem senha, e o administrador deve poder trocar esse token a qualquer momento. |
+| Entradas | Token de 64 letras e números no cabeçalho Authorization: Bearer; rotação pelo administrador em Usuários. |
+| Processamento | A API guarda só o SHA-256 do token (V9). Cada requisição procura a conta pelo hash e só autentica conta de sensor ativa. A rotação gera outro token com sorteio seguro, mostra-o uma única vez e invalida o anterior na hora, com registro ROTACAO_TOKEN na auditoria (issue #103). O sketch do Wokwi usa o token em vez da senha (issue #129). |
+| Saídas | Token novo exibido uma vez na tela Usuários; 401 para token antigo, desconhecido ou de conta desativada. |
+| Prioridade | Desejável |
+| Origem | Issues #103 e #129 (parecer Week 02) · NS-02, NS-03 |
+| Situação | Implementado (POST /usuarios/{id}/token/rotacao). |
+| Verificação | Teste: TokenDeApiTest, RotacaoTokenTest e SegurancaWebTest. Demonstração: sensor no Wokwi com o token. |
 
 #### RF26 — Medir o lote no dispositivo
 
@@ -610,11 +625,11 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Descrição | O dispositivo simulado deve medir a água de um lote e enviá-lo ao final. |
 | Entradas | Vazão (potenciômetro, 0 a 30 L/min) e botão de iniciar/encerrar. |
 | Processamento | O 1º toque no botão inicia o lote e acende o LED; o dispositivo conta os pulsos e calcula os litros pelo coeficiente K configurado no sketch (referência YF-S201, cerca de 450 pulsos por litro). No modo de calibração, o dispositivo mostra os pulsos e o K calculado e não envia o lote (issue #114). O 2º toque encerra; se a água medida for maior que zero, o dispositivo localiza o processo pelo nome e envia o lote. |
-| Saídas | Monitor serial com a vazão, o total acumulado, o resultado do envio (HTTP 201) e o status do lote devolvido pela API. Se o status for crítico (desvio acima de 8%), o buzzer apita 3 vezes e o LED vermelho pisca e fica aceso até o próximo lote. |
+| Saídas | Monitor serial com a vazão, o total acumulado, o resultado do envio (HTTP 201) e o status do lote devolvido pela API. Se o status for crítico (desvio acima de 8%), o buzzer apita 3 vezes e o LED vermelho pisca e fica aceso até o próximo lote. Sem Wi-Fi, cada lote encerrado fica num buffer de até 100 leituras na memória e é enviado quando a conexão volta, com chave Idempotency-Key própria, sem duplicar (issue #108). |
 | Prioridade | Desejável |
 | Origem | US-09 · TAP, seção 6 |
 | Situação | Implementado (pasta iot/). |
-| Verificação | Demonstração: Wokwi em 06/11/2026: lote de 19,55 L classificado como crítico (LED vermelho aceso) e lote de 3,74 L dentro da meta. |
+| Verificação | Demonstração: Wokwi em 06/11/2026: lote de 19,55 L classificado como crítico (LED vermelho aceso) e lote de 3,74 L dentro da meta. Buffer sem Wi-Fi: comando Q no monitor serial (iot/LEIA-ME.md). |
 
 #### RF31 — Identificar a linha de lavagem de cada sensor
 
@@ -633,7 +648,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 
 | ID | Requisito | Situação |
 |---|---|---|
-| RNF17 | Registro de lote rápido com vários sensores ao mesmo tempo. Medido em 03/11/2026, no ambiente local: com 50 sensores simultâneos, p95 de 68 ms, cerca de 1.000 lotes por segundo e nenhuma falha. O sistema publicado, com menos recursos, não foi medido. | Medido (local) |
+| RNF17 | Registro de lote rápido com vários sensores ao mesmo tempo. Medido em 03/11/2026, no ambiente local: com 50 sensores simultâneos, p95 de 68 ms, cerca de 1.000 lotes por segundo e nenhuma falha. Em 10/11/2026, no GitHub Actions (2 CPUs): com 100 sensores, nenhuma falha e p95 de 262 ms com o pool de 20 conexões (377 ms com 10), que passou a ser o padrão (issue #113). O sistema publicado, com menos recursos, não foi medido. | Medido |
 | RNF22 | Índices medidos com EXPLAIN ANALYZE (migração V8): a regra de alerta caiu de 73,5 ms para 0,19 ms com 200.000 lotes; o fechamento mensal usa Index Scan. | Implementado |
 | RNF23 | A lista de processos fica em cache na API e é atualizada depois de cada cadastro ou edição. | Implementado |
 
@@ -642,7 +657,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | ID | Requisito | Situação |
 |---|---|---|
 | RNF12 | Interface em português do Brasil, com linguagem do chão de fábrica, mensagens de erro junto ao campo e poucos passos por registro. | Implementado |
-| RNF13 | Acessibilidade: status nunca indicado só por cor (sempre cor, ícone e texto); campos com rótulo; navegação por teclado; respeito à preferência de reduzir animações; tema claro, escuro ou automático. | Implementado |
+| RNF13 | Acessibilidade: status nunca indicado só por cor (sempre cor, ícone e texto); campos com rótulo; navegação por teclado; respeito à preferência de reduzir animações; tema claro, escuro ou automático, com contraste de texto de pelo menos 4,5:1 (WCAG AA) medido nos dois temas (issue #106). | Implementado |
 | RNF25 | Validação com um operador real, com o roteiro e o questionário SUS de docs/validacao/. | **Pendente** (issue #50) |
 | RNF26 | Glossário dos termos têxteis (estonagem, amaciamento, alvejamento, tingimento) disponível na interface, com dica acessível por teclado e sugestão do nome padrão no cadastro de processo. | Implementado (issue #55) |
 
@@ -711,7 +726,7 @@ Os dados de consumo são permanentes: não há exclusão de lotes, de registros 
 ## 3.6 Restrições de projeto
 
 - Pilha tecnológica definida pela equipe: React, Java com Spring Boot e PostgreSQL (TAP, seção 5).
-- O esquema do banco é versionado com migrações Flyway (V1 a V8), aplicadas por um usuário dono do banco. O Hibernate não cria nem altera tabelas: ao iniciar, a API apenas confere se elas batem com as entidades e não sobe se divergirem.
+- O esquema do banco é versionado com migrações Flyway (V1 a V11), aplicadas por um usuário dono do banco. O Hibernate não cria nem altera tabelas: ao iniciar, a API apenas confere se elas batem com as entidades e não sobe se divergirem.
 - O front-end segue a estrutura exigida pelo Figma Make e roda na porta 8443 em desenvolvimento.
 - RNF18 — Padrões de dados: datas trafegam em ISO 8601 (UTC); o mês dos relatórios segue o fuso America/Recife; litros e metas com 2 casas decimais. **Implementado.**
 
@@ -757,7 +772,7 @@ Os documentos seguem a estrutura e o conteúdo pedidos por cada norma, adaptados
 | RNF05 | Segredos (backend/.env, .env.local, database/.env.backup, docs/privado/ e variáveis do Render) ficam fora do controle de versão. | Implementado |
 | RNF06 | A API publicada e o dispositivo usam HTTPS. O HTTP só é aceito no projeto local de testes, por túnel temporário. A conta do sensor tem perfil próprio e a senha não fica salva no projeto público do Wokwi. | Implementado |
 | RNF07 | A API conecta ao banco com um usuário próprio (aguas_api), sem permissão de DELETE, TRUNCATE ou de alterar o esquema. | Implementado |
-| RNF19 | Limite de requisições por minuto: 5 tentativas de login por IP e 60 lotes por usuário; acima disso, 429 (LIMITE_EXCEDIDO) com o cabeçalho Retry-After. | Implementado |
+| RNF19 | Limite de requisições por minuto: 5 tentativas de login por IP e 60 lotes por usuário; acima disso, 429 (LIMITE_EXCEDIDO) com o cabeçalho Retry-After. O site desabilita a ação e mostra a contagem regressiva até poder tentar de novo (issue #101). | Implementado |
 | RNF27 | Privacidade (LGPD, Lei nº 13.709/2018): (a) a tela de login tem um link para o aviso de privacidade, aberto sem entrar, que diz quais dados pessoais são guardados, para quê, por quanto tempo, quem vê e com quem falar; (b) o login de outra pessoa só sai inteiro da API para o administrador na lista de usuários; na auditoria e na lista de usuários pedida pelo gestor, vai mascarado (no máximo metade dos caracteres e sempre quatro asteriscos, ex.: ca****in), com o nome inteiro; (c) o CSV e o PDF levam só o nome, sem login, senha ou perfil. | Implementado (issue #117) |
 
 A política de segurança, a análise de riscos e o plano de continuidade estão em docs/gestao/seguranca.md.
@@ -766,9 +781,9 @@ A política de segurança, a análise de riscos e o plano de continuidade estão
 
 | ID | Requisito | Situação |
 |---|---|---|
-| RNF15 | Código em camadas (controller, service, repository, entity, DTO) e testes automatizados: 98 no back-end (unidade, web e integração com PostgreSQL 18), 47 de unidade e 3 de ponta a ponta no site. Os testes nunca usam o banco oficial. | Implementado |
+| RNF15 | Código em camadas (controller, service, repository, entity, DTO) e testes automatizados: 169 no back-end (unidade, web e integração com PostgreSQL 18), 199 de unidade e 10 de ponta a ponta no site, em 14/11/2026. Os testes nunca usam o banco oficial. | Implementado |
 | RNF16 | GitFlow: develop como branch padrão; mudanças por pull request, com modelo de descrição e aviso quando um PR aponta para a main fora de release ou hotfix. | Adotado |
-| RNF24 | Integração contínua: a cada pull request, testes do back-end, build e testes do site e teste do Docker. Entrega contínua: o Render só publica depois que o CI passa. | Implementado |
+| RNF24 | Integração contínua: a cada pull request, testes do back-end, build e testes do site, teste do Docker, vulnerabilidades conhecidas nas dependências (OSV-Scanner, bloqueia CVSS 7 ou mais, issue #112) e testes de mutação (PIT, mínimo de 81% dos mutantes mortos, issue #102). Entrega contínua: o Render só publica depois que o CI passa. | Implementado |
 
 ### 3.7.5 Portabilidade
 
@@ -810,12 +825,13 @@ A ISO/IEC/IEEE 29148 pede que cada requisito tenha um meio de verificação defi
 | RNF15, RNF16, RNF24 | Inspeção | Estrutura do código, histórico de pull requests e execuções do CI. |
 | RNF17, RNF22 | Análise | docs/tecnico/teste-carga.md e docs/tecnico/desempenho-indices.md. |
 | RNF18, RNF23 | Teste | resumoMensalUsaFusoDeRecife, fusoPadraoDosRelatoriosERecife; ProcessoServiceCacheTest. |
-| RNF19 | Teste | LimiteDeRequisicoesTest. |
+| RNF19 | Teste | LimiteDeRequisicoesTest; limite.test.ts (contagem regressiva no site). |
 | RNF20 | Teste | saudeAbertaMostraSoOStatusSemToken, metricasSoParaOAdmin, outrosEndpointsDoActuatorFicamFechados. |
 | RNF21 | Demonstração | database/backup.sh, que restaura o backup num banco temporário e confere as tabelas. |
 | RNF25 | Teste de usabilidade | Roteiro e questionário SUS de docs/validacao/ (pendente). |
 | RNF26 | Teste | glossario.test.ts. |
 | RNF27 | Teste e inspeção | e2e/privacidade.spec.ts (critério de aceitação: o aviso abre a partir do login), privacidade.test.ts, PrivacidadeTest, AuditoriaServiceTest e auditoriaListaAsAcoesComFiltrosEPaginacao (integração); conferência do CSV e do PDF na seção 6.4 de docs/gestao/seguranca.md. |
+| RNF28 | Teste | Job docker-compose do CI: confere que a imagem não tem shell e que nenhum segredo aparece no docker inspect nem no ambiente do processo. |
 
 **Ambiente e resultado.** Os testes automatizados rodam no GitHub Actions em toda mudança: 98 testes do back-end (com PostgreSQL 18 em contêiner), 47 de unidade e 3 de ponta a ponta do site, e o teste do Docker Compose. Na última execução da develop (CI nº 88, 06/11/2026), todos passaram. O plano, os casos e o relatório completos estão em docs/tecnico/testes.md, conforme a ISO/IEC/IEEE 29119.
 
@@ -879,8 +895,9 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF32 | Issue #109 | GET /auditoria/seguranca | Auditoria (Eventos de segurança) | Teste | Implementado |
 | RF33 | Issue #99 | GET /relatorios/csv | — (API) | Teste | Implementado |
 | RF34 | Issue #116 | GET /relatorios/resumo | Dashboard, Relatórios, PDF | Teste | Implementado |
+| RF35 | Issues #103 e #129 | POST /usuarios/{id}/token/rotacao; Authorization: Bearer (sensor) | Usuários; sensor no Wokwi | Teste e Demonstração | Implementado |
 
-Resumo: 34 requisitos funcionais, 33 implementados e 1 adiado (RF31); 27 requisitos não funcionais, 26 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 35 requisitos funcionais, 34 implementados e 1 adiado (RF31); 28 requisitos não funcionais, 27 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 

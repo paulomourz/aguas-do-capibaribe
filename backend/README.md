@@ -301,6 +301,6 @@ para as migrações em `TESTE_FLYWAY_USER` / `TESTE_FLYWAY_PASSWORD`.
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
 temporário também funciona (na segunda, o Flyway só valida). Resultado em 05/11/2026, com JDK 25 e o Docker
-ligado: **98 testes, todos passando** (68 unitários e de web + 30 de integração). Os 30 de
+ligado: **169 testes, todos passando** (132 unitários e de web + 37 de integração e de sistema), na CI de 14/11/2026. Os 37 de
 `IntegracaoPostgresLocalTest` aparecem como *skipped* quando `TESTE_PG_URL` não está definida: são os mesmos testes
 de integração, na versão com banco local.
