@@ -17,6 +17,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   do texto visível (WCAG 2.5.3, `label-content-name-mismatch`). Agora o nome começa pelo texto que aparece na tela.
 - O teste espera as animações de entrada terminarem antes de medir, para o contraste ser o das cores finais.
 
+### Segurança da cadeia de suprimentos (SBOM)
+
+- **SBOM CycloneDX 1.6 da API e do site** (issue #169). O `cyclonedx-maven-plugin` 2.9.3 gera `backend/target/bom.json`
+  e `bom.xml` no `mvn package`, só com as dependências que vão para a imagem: 99 componentes, todos com hash e
+  licença. O workflow novo "SBOM" gera também o do site (`cdxgen`, só dependências de produção), confere os dois,
+  mostra o resumo no CI, guarda como artefato por 90 dias e, quando uma release é publicada, anexa `bom-api.json`,
+  `bom-api.xml` e `bom-site.json` a ela. Só o job da release tem permissão de escrita.
+
 ### Docker com privilégios mínimos
 
 - **Contêineres sem root** (issue #171). O site passa para `nginxinc/nginx-unprivileged:1.30-alpine` (uid 101, porta
