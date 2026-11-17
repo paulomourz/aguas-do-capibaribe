@@ -114,6 +114,28 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Cobertura de testes (issue #168): o JaCoCo mede, no mvn test, quais linhas e decisões os testes executam.
+                 Relatório em target/site/jacoco (index.html para ler, jacoco.xml para o SonarQube). -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.16</version>
+                <executions>
+                    <execution>
+                        <id>agente</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>relatorio</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Migrações sem subir a API: mvn flyway:info / flyway:migrate (conexão em FLYWAY_URL,
                  FLYWAY_USER e FLYWAY_PASSWORD; ver database/LEIA-ME.md). Versão do Spring Boot. -->
             <plugin>
