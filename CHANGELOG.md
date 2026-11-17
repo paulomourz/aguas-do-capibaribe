@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Segurança da cadeia de suprimentos (SBOM)
+
+- **SBOM CycloneDX 1.6 da API e do site** (issue #169). O `cyclonedx-maven-plugin` 2.9.3 gera `backend/target/bom.json`
+  e `bom.xml` no `mvn package`, só com as dependências que vão para a imagem: 99 componentes, todos com hash e
+  licença. O workflow novo "SBOM" gera também o do site (`cdxgen`, só dependências de produção), confere os dois,
+  mostra o resumo no CI, guarda como artefato por 90 dias e, quando uma release é publicada, anexa `bom-api.json`,
+  `bom-api.xml` e `bom-site.json` a ela. Só o job da release tem permissão de escrita.
+
 ### Documentação (validação e auditoria)
 
 - **ERS v2.5:** RNF25 passa a parcial. A validação foi feita por avaliação simulada (PR #140) e com pessoas de fora da
