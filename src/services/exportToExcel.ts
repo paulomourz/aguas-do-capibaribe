@@ -316,7 +316,8 @@ export function montarPlanilha(d: DadosPlanilha): ExcelJS.Workbook {
   if (d.lotes.length === 0) throw new Error('Período sem lotes: não há planilha para gerar.')
   const geradoEm = d.geradoEm ?? new Date()
   const periodo = `${meses[d.mes - 1]} de ${d.ano}`
-  const emissao = `Gerado em ${horaDeEmissao(geradoEm)}${d.responsavel ? ` por ${d.responsavel}` : ''} · Águas do Capibaribe`
+  const autor = d.responsavel ? ` por ${d.responsavel}` : ''
+  const emissao = `Gerado em ${horaDeEmissao(geradoEm)}${autor} · Águas do Capibaribe`
 
   const wb = new ExcelJS.Workbook()
   wb.creator = d.responsavel ?? 'Águas do Capibaribe'
