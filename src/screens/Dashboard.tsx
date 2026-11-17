@@ -113,9 +113,7 @@ export default function Dashboard() {
       <section aria-label="Indicadores do mês" aria-busy={estado === 'carregando'} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 lg:gap-6">
         {estado === 'carregando' ? (
           <>
-            <p role="status" className="sr-only">
-              Carregando indicadores…
-            </p>
+            <output className="sr-only">Carregando indicadores…</output>
             <SkeletonCard label={ROTULO.consumo} rodape={<TextoFantasma>00 lotes em {periodo.toLowerCase()}</TextoFantasma>} />
             <SkeletonCard label={ROTULO.esperado} rodape={<TextoFantasma>Soma das metas dos lotes registrados</TextoFantasma>} />
             <SkeletonCard
@@ -267,7 +265,7 @@ export default function Dashboard() {
  */
 function SkeletonAlertas() {
   return (
-    <div role="status">
+    <output className="block">
       <span className="sr-only">Carregando alertas…</span>
       <ul aria-hidden="true" className="divide-y divide-line border-t border-line">
         {[0, 1].map((i) => (
@@ -297,6 +295,6 @@ function SkeletonAlertas() {
           </li>
         ))}
       </ul>
-    </div>
+    </output>
   )
 }

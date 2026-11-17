@@ -70,7 +70,8 @@ describe('SkeletonCard', () => {
 describe('SkeletonChart', () => {
   it('anuncia o carregamento para o leitor de tela e esconde o desenho', () => {
     const saida = html(h(SkeletonChart, { formato: 'agua', label: 'Carregando gráfico meta x real…' }))
-    expect(saida).toMatch(/^<div role="status"/)
+    // <output> tem role="status" implícito: o leitor de tela anuncia o texto quando ele aparece.
+    expect(saida).toMatch(/^<output class="block w-full"/)
     expect(saida).toContain('<span class="sr-only">Carregando gráfico meta x real…</span>')
     expect(saida).toContain('<div aria-hidden="true">')
     expect(saida).toContain('data-testid="skeleton-chart"')
@@ -92,7 +93,7 @@ describe('SkeletonChart', () => {
 
   it('sem nomes, usa três processos genéricos', () => {
     const saida = html(h(SkeletonChart, { formato: 'agua' }))
-    expect(contar(saida, '>Processo<')).toBe(3)
+    for (const nome of ['Processo A', 'Processo B', 'Processo C']) expect(saida).toContain(nome)
     expect(contar(saida, 'rounded-b-none')).toBe(6)
   })
 

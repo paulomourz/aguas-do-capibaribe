@@ -12,7 +12,7 @@ import { Card, Skeleton, TextoFantasma } from './ui'
  *
  * É decorativo: quem anuncia o carregamento para o leitor de tela é a região que agrupa os cards.
  */
-export default function SkeletonCard({ label, rodape }: { label: string; rodape?: ReactNode }) {
+export default function SkeletonCard({ label, rodape }: Readonly<{ label: string; rodape?: ReactNode }>) {
   return (
     <Card className="flex flex-col gap-4 p-6">
       <div aria-hidden="true" data-testid="skeleton-card" className="contents">

@@ -686,7 +686,7 @@ export function Tabs<T extends string>({
    Estados
    ========================================================= */
 
-export function Skeleton({ className, style }: { className?: string; style?: CSSProperties }) {
+export function Skeleton({ className, style }: Readonly<{ className?: string; style?: CSSProperties }>) {
   return <div aria-hidden="true" className={cx('skeleton rounded-md', className)} style={style} />
 }
 
@@ -694,12 +694,12 @@ export function Skeleton({ className, style }: { className?: string; style?: CSS
  * Texto invisível sobre o fundo do esqueleto: ocupa exatamente o espaço (e as quebras de linha) que um texto
  * parecido vai ocupar quando os dados chegarem. Usado nos esqueletos para não deslocar a tela (issue #161).
  */
-export function TextoFantasma({ children, className }: { children: ReactNode; className?: string }) {
+export function TextoFantasma({ children, className }: Readonly<{ children: ReactNode; className?: string }>) {
   return <span className={cx('skeleton rounded text-transparent', className)}>{children}</span>
 }
 
 /** Esqueleto de um selo pequeno (StatusBadge ou AlertBadge com size="sm"), com o mesmo tamanho. */
-export function SeloFantasma({ children, forma = 'pilula' }: { children: ReactNode; forma?: 'pilula' | 'etiqueta' }) {
+export function SeloFantasma({ children, forma = 'pilula' }: Readonly<{ children: ReactNode; forma?: 'pilula' | 'etiqueta' }>) {
   return (
     <span
       className={cx(

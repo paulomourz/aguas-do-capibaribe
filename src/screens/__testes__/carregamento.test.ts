@@ -59,7 +59,7 @@ describe('Dashboard carregando', () => {
   it('anuncia o carregamento dos indicadores e marca a região como ocupada', () => {
     const saida = renderToStaticMarkup(h(Dashboard))
     expect(saida).toContain('aria-label="Indicadores do mês" aria-busy="true"')
-    expect(saida).toContain('<p role="status" class="sr-only">Carregando indicadores…</p>')
+    expect(saida).toContain('<output class="sr-only">Carregando indicadores…</output>')
   })
 
   it('mostra os esqueletos dos dois gráficos no lugar deles', () => {

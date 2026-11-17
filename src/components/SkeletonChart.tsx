@@ -17,6 +17,9 @@ import { cx, SeloFantasma, Skeleton, TextoFantasma } from './ui'
  */
 export type FormatoGrafico = 'agua' | 'metaReal' | 'diario'
 
+/** Um processo no esqueleto: o nome (também a chave da lista) e as alturas de exemplo das barras de meta e real. */
+type Grupo = { nome: string; meta: number; real: number }
+
 /** Alturas relativas das barras de exemplo (meta, real) de cada grupo. */
 const BARRAS: [number, number][] = [
   [62, 54],
@@ -25,78 +28,102 @@ const BARRAS: [number, number][] = [
   [70, 58],
 ]
 
-export default function SkeletonChart({ formato, nomes = [], label = 'Carregando gráfico…' }: { formato: FormatoGrafico; nomes?: string[]; label?: string }) {
-  const rotulos = nomes.length ? nomes : ['Processo', 'Processo', 'Processo']
-  const barras = rotulos.map((_, i) => BARRAS[i % BARRAS.length])
+const SEM_NOMES = ['Processo A', 'Processo B', 'Processo C']
+
+const CONTEUDO: Record<FormatoGrafico, (props: Readonly<{ grupos: Grupo[] }>) => ReactNode> = {
+  agua: EsqueletoAgua,
+  metaReal: EsqueletoMetaReal,
+  diario: EsqueletoDiario,
+}
+
+export default function SkeletonChart({ formato, nomes = [], label = 'Carregando gráfico…' }: Readonly<{ formato: FormatoGrafico; nomes?: string[]; label?: string }>) {
+  const grupos = (nomes.length ? nomes : SEM_NOMES).map((nome, i) => {
+    const [meta, real] = BARRAS[i % BARRAS.length]
+    return { nome, meta, real }
+  })
+  const Conteudo = CONTEUDO[formato]
+  // <output> já é anunciado pelo leitor de tela como região de status (role="status", aria-live="polite").
   return (
-    <div role="status" className="w-full" data-testid="skeleton-chart">
+    <output className="block w-full" data-testid="skeleton-chart">
       <span className="sr-only">{label}</span>
       <div aria-hidden="true">
-        {formato === 'agua' ? (
-          <>
-            <div className="mb-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
-              <ItemLegenda>Meta</ItemLegenda>
-              <ItemLegenda>Real</ItemLegenda>
-              <span className="ml-auto">
-                <TextoFantasma>Valores em mil L</TextoFantasma>
-              </span>
-            </div>
-            <div className="flex gap-4">
-              <EixoY largura="w-8" altura={240} />
-              <AreaBarras altura={240} barras={barras} largura="w-8 sm:w-9" gap="gap-1.5 sm:gap-2" className="justify-around px-4" />
-            </div>
-            <div className="ml-12 mt-3 flex justify-around px-4 text-[13px] font-medium">
-              {rotulos.map((nome, i) => (
-                <TextoFantasma key={i} className="text-center">
-                  {nome}
-                </TextoFantasma>
-              ))}
-            </div>
-          </>
-        ) : formato === 'metaReal' ? (
-          <>
-            <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
-              <ItemLegenda>Esperado pela meta</ItemLegenda>
-              <ItemLegenda>Real, dentro da meta</ItemLegenda>
-              <ItemLegenda>Real, em atenção</ItemLegenda>
-              <ItemLegenda>Real, crítico</ItemLegenda>
-            </div>
-            {/* Recharts: 8 px de margem no topo e 30 px do eixo X embaixo, dentro dos 280 px. */}
-            <div className="flex h-[280px] w-full pt-2">
-              <EixoY largura="w-16" altura={242} />
-              <AreaBarras altura={242} barras={barras} largura="w-[min(40px,6vw)]" gap="gap-0.5" className="justify-around" />
-            </div>
-            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
-              {rotulos.map((nome, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <TextoFantasma className="font-semibold">{nome}</TextoFantasma>
-                  <SeloFantasma>Em atenção</SeloFantasma>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <>
-            <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
-              <ItemLegenda traco>Real</ItemLegenda>
-              <ItemLegenda traco>Esperado pela meta</ItemLegenda>
-            </div>
-            {/* Recharts: 8 px de margem no topo e 30 px do eixo X embaixo, dentro dos 260 px. */}
-            <div className="flex h-[260px] w-full pt-2">
-              <EixoY largura="w-16" altura={222} />
-              <AreaLinhas altura={222} />
-            </div>
-            <div className="mt-3 text-[14px] font-semibold">
-              <TextoFantasma>Ver os valores por dia</TextoFantasma>
-            </div>
-          </>
-        )}
+        <Conteudo grupos={grupos} />
       </div>
-    </div>
+    </output>
   )
 }
 
-function ItemLegenda({ children, traco }: { children: ReactNode; traco?: boolean }) {
+function EsqueletoAgua({ grupos }: Readonly<{ grupos: Grupo[] }>) {
+  return (
+    <>
+      <div className="mb-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+        <ItemLegenda>Meta</ItemLegenda>
+        <ItemLegenda>Real</ItemLegenda>
+        <span className="ml-auto">
+          <TextoFantasma>Valores em mil L</TextoFantasma>
+        </span>
+      </div>
+      <div className="flex gap-4">
+        <EixoY largura="w-8" altura={240} />
+        <AreaBarras altura={240} grupos={grupos} largura="w-8 sm:w-9" gap="gap-1.5 sm:gap-2" className="justify-around px-4" />
+      </div>
+      <div className="ml-12 mt-3 flex justify-around px-4 text-[13px] font-medium">
+        {grupos.map((g) => (
+          <TextoFantasma key={g.nome} className="text-center">
+            {g.nome}
+          </TextoFantasma>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function EsqueletoMetaReal({ grupos }: Readonly<{ grupos: Grupo[] }>) {
+  return (
+    <>
+      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+        <ItemLegenda>Esperado pela meta</ItemLegenda>
+        <ItemLegenda>Real, dentro da meta</ItemLegenda>
+        <ItemLegenda>Real, em atenção</ItemLegenda>
+        <ItemLegenda>Real, crítico</ItemLegenda>
+      </div>
+      {/* Recharts: 8 px de margem no topo e 30 px do eixo X embaixo, dentro dos 280 px. */}
+      <div className="flex h-[280px] w-full pt-2">
+        <EixoY largura="w-16" altura={242} />
+        <AreaBarras altura={242} grupos={grupos} largura="w-[min(40px,6vw)]" gap="gap-0.5" className="justify-around" />
+      </div>
+      <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
+        {grupos.map((g) => (
+          <li key={g.nome} className="flex items-center gap-2">
+            <TextoFantasma className="font-semibold">{g.nome}</TextoFantasma>
+            <SeloFantasma>Em atenção</SeloFantasma>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
+function EsqueletoDiario() {
+  return (
+    <>
+      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+        <ItemLegenda traco>Real</ItemLegenda>
+        <ItemLegenda traco>Esperado pela meta</ItemLegenda>
+      </div>
+      {/* Recharts: 8 px de margem no topo e 30 px do eixo X embaixo, dentro dos 260 px. */}
+      <div className="flex h-[260px] w-full pt-2">
+        <EixoY largura="w-16" altura={222} />
+        <AreaLinhas altura={222} />
+      </div>
+      <div className="mt-3 text-[14px] font-semibold">
+        <TextoFantasma>Ver os valores por dia</TextoFantasma>
+      </div>
+    </>
+  )
+}
+
+function ItemLegenda({ children, traco }: Readonly<{ children: ReactNode; traco?: boolean }>) {
   return (
     <span className="flex items-center gap-2">
       {traco ? <Skeleton className="h-0.5 w-5 rounded-none" /> : <Skeleton className="h-3 w-3 rounded-sm" />}
@@ -106,11 +133,11 @@ function ItemLegenda({ children, traco }: { children: ReactNode; traco?: boolean
 }
 
 /** Marcas do eixo Y: cinco valores, do topo à base. */
-function EixoY({ largura, altura }: { largura: string; altura: number }) {
+function EixoY({ largura, altura }: Readonly<{ largura: string; altura: number }>) {
   return (
     <div className={cx('flex shrink-0 flex-col justify-between pr-2', largura)} style={{ height: altura }}>
-      {[0, 1, 2, 3, 4].map((i) => (
-        <Skeleton key={i} className="ml-auto h-2.5 w-3/4" />
+      {[0, 1, 2, 3, 4].map((marca) => (
+        <Skeleton key={marca} className="ml-auto h-2.5 w-3/4" />
       ))}
     </div>
   )
@@ -127,15 +154,15 @@ function Grade() {
   )
 }
 
-function AreaBarras({ altura, barras, largura, gap, className }: { altura: number; barras: [number, number][]; largura: string; gap: string; className?: string }) {
+function AreaBarras({ altura, grupos, largura, gap, className }: Readonly<{ altura: number; grupos: Grupo[]; largura: string; gap: string; className?: string }>) {
   return (
     <div className="relative min-w-0 flex-1" style={{ height: altura }}>
       <Grade />
       <div className={cx('absolute inset-0 flex items-end', className)}>
-        {barras.map(([meta, real], i) => (
-          <div key={i} className={cx('flex h-full items-end', gap)}>
-            <Skeleton className={cx('rounded-b-none rounded-t', largura)} style={{ height: `${meta}%` }} />
-            <Skeleton className={cx('rounded-b-none rounded-t', largura)} style={{ height: `${real}%` }} />
+        {grupos.map((g) => (
+          <div key={g.nome} className={cx('flex h-full items-end', gap)}>
+            <Skeleton className={cx('rounded-b-none rounded-t', largura)} style={{ height: `${g.meta}%` }} />
+            <Skeleton className={cx('rounded-b-none rounded-t', largura)} style={{ height: `${g.real}%` }} />
           </div>
         ))}
       </div>
@@ -144,7 +171,7 @@ function AreaBarras({ altura, barras, largura, gap, className }: { altura: numbe
 }
 
 /** Uma linha quebrada genérica, desenhada com a cor do esqueleto (pulsa na opacidade, ver .skeleton-linha). */
-function AreaLinhas({ altura }: { altura: number }) {
+function AreaLinhas({ altura }: Readonly<{ altura: number }>) {
   return (
     <div className="relative min-w-0 flex-1" style={{ height: altura }}>
       <Grade />
