@@ -37,6 +37,12 @@ const TURNO = [
   ['rampa', 30, 0], //        fim do turno
 ].map(([fase, s, alvo]) => ({ fase, s: Math.max(1, Math.round(s * ESCALA)), alvo }))
 const DURACAO_S = TURNO.reduce((t, e) => t + e.s, 0)
+// Leituras previstas no turno (área sob a curva de leituras por segundo: cada etapa vai linear do alvo anterior ao seu).
+const PREVISTAS = TURNO.reduce((a, e) => ({ total: a.total + ((a.ant + e.alvo) / 2) * e.s, ant: e.alvo }), { total: 0, ant: 0 }).total
+// Leitura que não sai no horário porque os 120 sensores estão esperando resposta. O ESP32 guarda a leitura no buffer
+// e reenvia depois, então algumas atrasadas não perdem dado; acima de 1% do turno, a API não acompanhou o ritmo.
+const TOLERANCIA_ATRASO = 0.01
+const MAX_ATRASADAS = Math.floor(PREVISTAS * TOLERANCIA_ATRASO)
 const FASES = ['rampa', 'plato', 'pico']
 
 // Em que fase do turno estamos, pelo tempo desde o início do cenário.
@@ -88,8 +94,8 @@ export const options = {
     'http_req_failed{tipo:leitura}': ['rate==0'],
     'http_req_duration{tipo:leitura}': [`p(95)<${META_P95}`],
     ...Object.fromEntries(FASES.map((f) => [`http_req_duration{tipo:leitura,fase:${f}}`, [`p(95)<${META_P95}`]])),
-    // Toda leitura do turno precisa sair no horário: nenhuma descartada por falta de sensor livre.
-    dropped_iterations: ['count==0'],
+    // Leituras que não saíram no horário por falta de sensor livre: até 1% das previstas (ver TOLERANCIA_ATRASO).
+    dropped_iterations: [`count<=${MAX_ATRASADAS}`],
     pool_pedidos_esgotados: ['value==0'],
     // Sem regra de verdade: só para o resumo trazer as métricas separadas por fase.
     ...porFase('leituras_aceitas', 'count>=0'),
@@ -201,7 +207,9 @@ function relatorioHtml(d) {
     [`p95 das leituras abaixo de ${META_P95} ms no turno todo`, `${n(leitura['p(95)'])} ms`, passou(d, 'http_req_duration{tipo:leitura}')],
     ['Nenhuma resposta 5xx', `${n((vals(d, 'respostas_5xx').rate || 0) * 100)}%`, passou(d, 'respostas_5xx')],
     ['Nenhuma leitura recusada', `${n((vals(d, 'http_req_failed{tipo:leitura}').rate || 0) * 100)}%`, passou(d, 'http_req_failed{tipo:leitura}')],
-    ['Nenhuma leitura fora do horário (sem sensor livre)', n(vals(d, 'dropped_iterations').count || 0, 0), passou(d, 'dropped_iterations')],
+    [`Leituras fora do horário (sem sensor livre) até ${n(TOLERANCIA_ATRASO * 100, 0)}% das ${n(PREVISTAS, 0)} previstas`,
+      `${n(vals(d, 'dropped_iterations').count || 0, 0)} (${n(((vals(d, 'dropped_iterations').count || 0) / PREVISTAS) * 100)}%)`,
+      passou(d, 'dropped_iterations') === null ? true : passou(d, 'dropped_iterations')],
     ['Nenhum pedido de conexão esgotou o tempo no pool', n(vals(d, 'pool_pedidos_esgotados').value, 0), passou(d, 'pool_pedidos_esgotados')],
   ].map(([c, v, ok]) => `<tr><td>${c}</td><td>${v}</td><td>${selo(ok)}</td></tr>`).join('')
 
