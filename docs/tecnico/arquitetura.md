@@ -114,11 +114,12 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 |---|---|
 | `usuario`, `processo`, `lote`, `alerta`, `alerta_lote`, `auditoria_usuario` | Tabelas principais (detalhe na ERS, seção 3.5). |
 | `aviso_pendente` | Avisos do Telegram que não chegaram; o `aguas_api` só lê, insere e atualiza as colunas do reenvio (V10 e V11). |
+| `efluentes_descarte` | Descarte de efluentes de cada lote (volume, pH, turbidez, % reaproveitado) para a CPRH e a ISO 14001; o `aguas_api` só lê e insere (V12). |
 | `usuario.token_hash` | SHA-256 do token de API das contas de sensor, único (V9). |
 | `trg_lote_esperado` | O banco calcula o esperado de cada lote pela meta do momento. |
 | `trg_lote_imutavel`, `trg_auditoria_imutavel` | Lote e auditoria não podem ser alterados nem apagados, nem pela API. |
 | `v_historico_lotes`, `v_alertas` | Visões que entregam o desvio já calculado. |
-| Migrações Flyway V1 a V10 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. |
+| Migrações Flyway V1 a V12 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. |
 | Usuário `aguas_api` | Lê e grava, mas não pode apagar dados nem mudar o esquema. |
 
 ## 6. Visão de implantação

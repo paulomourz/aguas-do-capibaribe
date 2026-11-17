@@ -170,7 +170,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -185,7 +185,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(11);
+           assertThat(flyway.info().applied()).hasSize(12);
     }
 
     @Test
@@ -197,6 +197,40 @@ abstract class IntegracaoPostgresBase {
         assertThat(indices).contains("ix_lote_processo_data", "ix_alerta_lote_alerta", "ix_lote_data", "ix_lote_usuario")
                 // substituído pelo ix_lote_processo_data, que começa pela mesma coluna
                 .doesNotContain("ix_lote_processo");
+    }
+
+    @Test
+    void v12CriaEfluentesDescarteComRegrasDeIntegridade() throws Exception {
+        // Issue #162: auditoria do descarte de efluentes por lote (CPRH / ISO 14001).
+        Conta g = conta("gestor");
+        int loteId = lote(g, processo(g, "lote", "100"), 1, "90").get("id").asInt();
+        String sql = "insert into efluentes_descarte (lote_id, volume_litros, ph, turbidez_ntu, reutilizado_percentual) "
+                + "values (?, ?, ?, ?, ?)";
+
+        jdbc.update(sql, loteId, new BigDecimal("85.50"), new BigDecimal("7.20"), new BigDecimal("12.0"), new BigDecimal("40"));
+        assertThat(jdbc.queryForObject("select count(*) from efluentes_descarte where lote_id = ?", Integer.class, loteId))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject("select data_descarte > now() - interval '1 minute' from efluentes_descarte "
+                + "where lote_id = ?", Boolean.class, loteId)).isTrue();
+
+        // pH fora de 0 a 14, volume zero, turbidez negativa, reaproveitamento acima de 100% e lote inexistente.
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, new BigDecimal("14.01"), BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, new BigDecimal("-0.01"), BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.ZERO, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, BigDecimal.TEN, new BigDecimal("-1"), BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, new BigDecimal("100.01")))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, -1, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+
+        List<String> indices = jdbc.queryForList(
+                "select indexname from pg_indexes where schemaname = 'public' and tablename = 'efluentes_descarte'",
+                String.class);
+        assertThat(indices).contains("ix_efluentes_descarte_lote", "ix_efluentes_descarte_data");
     }
 
     // ---------- monitoramento (issue #51) ----------

@@ -307,7 +307,7 @@ que esses checks passam. **Não faça merge com check vermelho.**
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
-- ✅ Versionamento do banco com migrações Flyway (V1 a V11), aplicadas ao subir a API
+- ✅ Versionamento do banco com migrações Flyway (V1 a V12), aplicadas ao subir a API
 - ✅ Desempenho medido: teste de carga, índices com EXPLAIN ANALYZE e cache da lista de processos
 - ✅ Monitoramento (Actuator) e backup do banco com restauração verificada
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
