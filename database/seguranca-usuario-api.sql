@@ -28,8 +28,17 @@
 SET password_encryption = 'scram-sha-256';
 
 -- 1. O usuário: só faz login. Não é superusuário, não cria bancos nem outros usuários.
+--    Se ele já existir (restore num banco novo do Docker, que o recria na subida; ver
+--    docs/tecnico/runbook-disaster-recovery.md), só confirma as restrições e a senha. Assim o script
+--    pode rodar de novo depois de um restore.
+SELECT NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'papel') AS criar_papel \gset
+\if :criar_papel
 CREATE ROLE :"papel" LOGIN PASSWORD :'senha'
   NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+\else
+ALTER ROLE :"papel" LOGIN PASSWORD :'senha'
+  NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+\endif
 
 -- 2. Pode conectar neste banco e enxergar o esquema public, mas não criar objetos nele.
 GRANT CONNECT ON DATABASE :"banco" TO :"papel";
