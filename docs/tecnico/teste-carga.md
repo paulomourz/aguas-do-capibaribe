@@ -136,6 +136,30 @@ Ficam em `testes-carga/resultados/` (no GitHub Actions, no artefato `carga-turno
 **Limites:** os 120 sensores usam uma só conta de sensor, com o limite de lotes por minuto desligado, e o teste roda
 no ambiente descartável do Docker, sem Nginx e sem HTTPS. O site publicado não é testado.
 
+### Resultado em 17/11/2026 (GitHub Actions)
+
+Runner do GitHub com 2 CPUs, com k6, API e banco na mesma máquina, pool de 20 conexões. O mesmo turno rodou três
+vezes (a primeira, antes do ajuste no relatório HTML; a segunda, com a regra antiga de nenhuma leitura atrasada):
+
+| Rodada | p95 no platô | p95 no pico | p95 no turno | Maior tempo | Respostas 5xx | Leituras atrasadas |
+|---|---|---|---|---|---|---|
+| 1 | 6,42 ms | 16,02 ms | 8,25 ms | 470 ms | 0 | 0 |
+| 2 | 7,69 ms | 177,96 ms | 52,56 ms | 1.006 ms | 0 | 32 (0,06%) |
+| 3 | 72,61 ms | **150,73 ms** | 112,36 ms | 956 ms | 0 | 0 |
+
+- **Volume:** 50.699 leituras por turno (as 50.700 previstas, menos a última, cortada no fim), cerca de 83 por segundo
+  em média, todas com `201`.
+- **Critérios da issue:** atingidos nas três: p95 abaixo de 250 ms no pico e 0% de 5xx.
+- **Pool (HikariCP):** na maior parte do turno, menos de 1 conexão ativa em média (p95 de 4). Mas nas rodadas 2 e 3 o
+  pool chegou às 20 conexões, com até 49 pedidos esperando, e algumas leituras levaram perto de 1 s. A espera média
+  por conexão ficou entre 2 e 3 ms, a maior em ~820 ms, e nenhum pedido esgotou o tempo.
+
+**Conclusão.** A API aguenta o turno de 120 sensores com folga na média, mas tem picos curtos em que o pool enche. É o
+mesmo gargalo do teste de 100 sensores (seção anterior): o registro de lote segura uma conexão enquanto espera o
+bloqueio do processo (RNF10), e os 120 sensores se dividem em só 4 processos, então muitos esperam pelo mesmo bloqueio
+ao mesmo tempo. Como o runner é compartilhado, a mesma configuração variou bastante entre as rodadas (p95 do pico de
+16 a 178 ms); o critério de 250 ms passou em todas.
+
 ## Observação sobre os alertas
 
 O teste terminou com 12.499 alertas abertos nos 4 processos. Isso segue a regra atual: cada nova sequência de 3 lotes
