@@ -2,10 +2,23 @@
 # Site em http://localhost:3000. Senha inicial do administrador: docker compose logs segredos
 name: aguas-do-capibaribe
 
+# Privilégios mínimos em todos os serviços (issue #171): nenhuma capability do Linux, sem ganhar privilégio
+# depois de iniciar (setuid) e sistema de arquivos só de leitura. Cada serviço escreve só nos volumes e nos
+# tmpfs que declara. O job docker-compose do CI confere isso e que nenhum processo em execução é root.
+x-privilegios-minimos: &privilegios-minimos
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  read_only: true
+
 services:
   # Na primeira subida, sorteia as senhas e o segredo do JWT e guarda num volume. Nenhuma senha fica no Git.
+  # É o único que roda como root: os volumes novos pertencem ao root. Mesmo assim, sem nenhuma capability, e o
+  # contêiner termina logo depois de gravar os arquivos.
   segredos:
     image: postgres:18-alpine
+    <<: *privilegios-minimos
+    tmpfs:
+      - /tmp
     volumes:
       - segredos:/segredos
       - segredos-api:/segredos-api
@@ -25,12 +38,12 @@ services:
         [ -f sensor ] || novo 16 > sensor
         chmod 644 postgres api jwt admin gestor sensor
         # Segredos da API, um arquivo por variável, num volume que só a API monta (em /run/secrets/aguas).
-        cp postgres /segredos-api/FLYWAY_PASSWORD
-        cp api /segredos-api/DB_PASSWORD
-        cp jwt /segredos-api/JWT_SECRET
-        cp admin /segredos-api/ADMIN_SENHA
-        cp gestor /segredos-api/GESTOR_SENHA
-        cp sensor /segredos-api/SENSOR_SENHA
+        cp -f postgres /segredos-api/FLYWAY_PASSWORD
+        cp -f api /segredos-api/DB_PASSWORD
+        cp -f jwt /segredos-api/JWT_SECRET
+        cp -f admin /segredos-api/ADMIN_SENHA
+        cp -f gestor /segredos-api/GESTOR_SENHA
+        cp -f sensor /segredos-api/SENSOR_SENHA
         chmod 444 /segredos-api/FLYWAY_PASSWORD /segredos-api/DB_PASSWORD /segredos-api/JWT_SECRET /segredos-api/ADMIN_SENHA /segredos-api/GESTOR_SENHA /segredos-api/SENSOR_SENHA
         # Usuário restrito da API, antes do Flyway: as migrações dão a ele as permissões de cada tabela.
         cat > /db-init/01-usuario-api.sql <<FIM
@@ -50,6 +63,12 @@ services:
   db:
     image: postgres:18-alpine
     restart: unless-stopped
+    # Direto como o usuário postgres (uid 70), sem passar pelo root: o volume de dados já pertence a ele.
+    user: postgres
+    <<: *privilegios-minimos
+    tmpfs:
+      - /var/run/postgresql
+      - /tmp
     depends_on:
       segredos:
         condition: service_completed_successfully
@@ -71,6 +90,10 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    # A imagem distroless já roda como nonroot (uid 65532).
+    <<: *privilegios-minimos
+    tmpfs:
+      - /tmp
     depends_on:
       db:
         condition: service_healthy
@@ -100,20 +123,25 @@ services:
       args:
         VITE_API_URL: /api
     restart: unless-stopped
+    # Nginx sem root (uid 101), escutando na porta 8080 dentro do contêiner.
+    <<: *privilegios-minimos
+    tmpfs:
+      - /tmp
     depends_on:
       backend:
         condition: service_healthy
     ports:
-      - "3000:80"
+      - "3000:8080"
 
   # Opcional: liga o site local à internet, para o projeto local do Wokwi. Só sobe com --profile tunel.
   # Enquanto estiver ligado, o site e a API locais ficam acessíveis pelo endereço que aparece nos logs.
   tunel:
     image: cloudflare/cloudflared:2026.10.1
     profiles: ["tunel"]
+    <<: *privilegios-minimos
     depends_on:
       - frontend
-    command: tunnel --no-autoupdate --url http://frontend:80
+    command: tunnel --no-autoupdate --url http://frontend:8080
 
 volumes:
   segredos:
