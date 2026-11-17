@@ -10,3 +10,8 @@ reason = "Spring Framework 6.2.x sem correção (só na 7.0.9, Spring Boot 4). A
 id = "GHSA-pc63-qcmh-9cmg"
 ignoreUntil = 2026-12-31
 reason = "Spring Framework 6.2.x sem correção (só na 7.0.9, Spring Boot 4). Afeta XsltView; a API não usa XsltView nem renderiza views. Rever ao migrar para o Spring Boot 4."
+
+[[IgnoredVulns]]
+id = "GHSA-fc5q-39xc-vjpf"
+ignoreUntil = 2026-12-31
+reason = "picomatch <= 4.0.7 sem versão corrigida (17/11/2026). ReDoS com padrões glob maliciosos; só é usada no build do site (Vite, Rollup e Workbox), com padrões fixos do projeto, e não vai para o site publicado nem para a API. Rever quando sair a correção."
