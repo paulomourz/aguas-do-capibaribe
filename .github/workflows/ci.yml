@@ -80,6 +80,17 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+      # Relatório do axe-core de cada tela e tema (e2e/acessibilidade.spec.ts, issue #172), com todas as violações,
+      # inclusive as moderadas e leves, que não bloqueiam o merge.
+      - name: Guarda o relatório de acessibilidade
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acessibilidade
+          path: test-results/**/axe-*.json
+          retention-days: 14
+          if-no-files-found: ignore
+
   # Vulnerabilidades conhecidas (CVEs) nas dependências do back-end (pom.xml) e do site (pnpm-lock.yaml),
   # pela base pública OSV.dev, sem token. Bloqueia com gravidade alta ou crítica (CVSS 7.0 ou mais).
   dependencias:

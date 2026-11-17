@@ -18,6 +18,17 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   segurança, cobertura de pelo menos 80% e duplicação abaixo de 3%. Precisa do segredo `SONAR_TOKEN`; sem ele, o job
   só avisa.
 
+### Acessibilidade (axe-core no CI)
+
+- **Auditoria automática WCAG 2.1 A e AA** (issue #172, `e2e/acessibilidade.spec.ts`, `@axe-core/playwright` 4.14.0).
+  Roda nos testes de ponta a ponta, nos temas claro e escuro, nas telas de acesso, aviso de privacidade, registro de
+  lote, resultado com o gauge, histórico, dashboard e relatórios. Violação séria ou crítica falha o job
+  `frontend-build`; o relatório de cada tela fica no artefato `acessibilidade`. A API falsa dos testes ganhou o
+  perfil de gestor, com resumo, alertas e usuários.
+- **Correção achada na primeira execução:** o link do logo no cabeçalho tinha um nome para leitor de tela diferente
+  do texto visível (WCAG 2.5.3, `label-content-name-mismatch`). Agora o nome começa pelo texto que aparece na tela.
+- O teste espera as animações de entrada terminarem antes de medir, para o contraste ser o das cores finais.
+
 ### Continuidade (runbook de recuperação de desastres)
 
 - **Runbook** em `docs/tecnico/runbook-disaster-recovery.md` (issue #170): árvore de decisão, matriz de escalonamento
