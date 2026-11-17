@@ -6,6 +6,17 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Continuidade (runbook de recuperação de desastres)
+
+- **Runbook** em `docs/tecnico/runbook-disaster-recovery.md` (issue #170): árvore de decisão, matriz de escalonamento
+  e procedimentos para API ou site fora no Render, banco do Neon apagado ou com dados errados (restauração por ponto
+  no tempo ou pelo último backup), plano B no Docker e troca de cada senha e token vazado. Metas RTO < 10 min e
+  RPO < 1 min, com a situação de cada uma por ambiente.
+- **Ensaio no Docker em 17/11/2026:** backup, banco apagado, restauração e sistema de pé em **23 segundos**, com os
+  20 lotes de volta.
+- **`database/seguranca-usuario-api.sql` pode rodar de novo:** se o `aguas_api` já existir (banco novo do Docker
+  depois de um restore), ele só confirma as restrições e a senha, em vez de falhar no `CREATE ROLE`.
+
 ### Segurança da cadeia de suprimentos (SBOM)
 
 - **SBOM CycloneDX 1.6 da API e do site** (issue #169). O `cyclonedx-maven-plugin` 2.9.3 gera `backend/target/bom.json`
