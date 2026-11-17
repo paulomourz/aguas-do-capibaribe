@@ -19,6 +19,10 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   esqueletos no dashboard e nos relatórios e exige CLS < 0,1, no computador e no celular. Antes → depois:
   dashboard 0,065 → 0,026 (computador) e 0,075 → 0,004 (celular); relatórios 0,132 → 0,003 (computador) e
   0,288 → 0 (celular).
+- **Testes de unidade** (`src/components/__testes__/esqueletos.test.ts` e `src/screens/__testes__/carregamento.test.ts`,
+  26 testes): renderizam os esqueletos e as telas em HTML com o `react-dom/server`, sem dependência nova, e conferem
+  o que o leitor de tela anuncia, os textos fantasmas e a troca pelos dados. Cobrem 96,6% das linhas e todas as
+  condições do código novo, acima dos 80% do Quality Gate.
 - Com movimento reduzido, os esqueletos ficam parados, como os outros efeitos do site.
 
 ### Qualidade (Quality Gate com SonarQube)
