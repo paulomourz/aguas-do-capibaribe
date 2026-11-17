@@ -1,9 +1,8 @@
 name: Teste de carga
 
-# Roda os testes de carga (k6) num ambiente descartável do Docker: o de lotes sem pausa (de 10 a 100 sensores) e o
-# do turno industrial (120 sensores com picos, #165), no
-# próprio GitHub Actions. Não toca no site publicado. Sob demanda (Actions > Teste de carga > Run workflow) e em todo
-# PR que mude o teste. Ver docs/tecnico/teste-carga.md.
+# Roda os testes de carga (k6) num ambiente descartável do Docker, no próprio GitHub Actions: o de lotes sem pausa
+# (de 10 a 100 sensores) e o do turno industrial (120 sensores com picos, #165). Não toca no site publicado.
+# Sob demanda (Actions > Teste de carga > Run workflow) e em todo PR que mude os testes. Ver docs/tecnico/teste-carga.md.
 on:
   workflow_dispatch:
     inputs:
