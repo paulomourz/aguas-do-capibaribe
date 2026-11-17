@@ -36,6 +36,7 @@ Regras que moram no próprio banco:
 | V9 | `V9__cria_token_de_api.sql` | coluna `token_hash` do usuário (SHA-256 do token de API do sensor) e ação `ROTACAO_TOKEN` na auditoria (issue #103) |
 | V10 | `V10__cria_aviso_pendente.sql` | `aviso_pendente`: aviso do Telegram que não chegou depois de 3 tentativas (issue #97) |
 | V11 | `V11__aviso_pendente_enviado_em.sql` | coluna `enviado_em` e permissão de UPDATE só nas colunas do reenvio (issue #97) |
+| V12 | `V12__cria_tabela_efluentes_descarte.sql` | `efluentes_descarte`: volume, pH, turbidez e reaproveitamento de cada descarte do lote, só leitura e inserção para o `aguas_api` (issue #162) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.
