@@ -14,6 +14,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   mostra o resumo no CI, guarda como artefato por 90 dias e, quando uma release é publicada, anexa `bom-api.json`,
   `bom-api.xml` e `bom-site.json` a ela. Só o job da release tem permissão de escrita.
 
+### Docker com privilégios mínimos
+
+- **Contêineres sem root** (issue #171). O site passa para `nginxinc/nginx-unprivileged:1.30-alpine` (uid 101, porta
+  8080 dentro do contêiner; continua em `localhost:3000`), e o banco roda direto como `postgres` (uid 70), sem passar
+  pelo root. A API já rodava como `nonroot`.
+- **Privilégios mínimos em todos os serviços:** `cap_drop: [ALL]`, `no-new-privileges` e sistema de arquivos só de
+  leitura, com `tmpfs` só onde precisa escrever. O serviço `segredos`, que cria os arquivos nos volumes novos, é o
+  único que roda como root, sem nenhuma capability, e termina em seguida.
+- **CI:** o job `docker-compose` confere, pelo host, que nenhum processo do banco, da API e do site roda como root e
+  que as três opções estão ativas, com uma tabela no resumo. Testado localmente: subida, login, cabeçalhos do site e
+  nova subida com os mesmos volumes.
+
 ### Documentação (validação e auditoria)
 
 - **ERS v2.5:** RNF25 passa a parcial. A validação foi feita por avaliação simulada (PR #140) e com pessoas de fora da
