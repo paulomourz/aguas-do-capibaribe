@@ -27,12 +27,23 @@ type Lote = {
 }
 
 const OPERADOR = { id: 3, nome: 'Operadora Teste', usuario: 'operador.teste', perfil: 'operador', ativo: true }
+const GESTOR = { id: 2, nome: 'Gestora Teste', usuario: 'gestor.teste', perfil: 'gestor', ativo: true }
 const PROCESSOS = [
   { id: 1, nome: 'Amaciamento', unidade: 'lote', meta: 800 },
   { id: 2, nome: 'Estonagem', unidade: 'peca', meta: 12 },
 ]
+/** Resumo do mês para as telas do gestor (Dashboard e Relatórios), no formato do GET /relatorios/resumo. */
+const RESUMO = [
+  { processoId: 1, real: 7600, esperado: 8000, lotes: 10, pecas: 1200, litrosPorPeca: 6.33 },
+  { processoId: 2, real: 13500, esperado: 12000, lotes: 9, pecas: 1000, litrosPorPeca: 13.5 },
+]
 
-export async function instalarApiFalsa(context: BrowserContext) {
+/**
+ * `perfil: 'gestor'` faz o login devolver uma gestora e libera as rotas das telas dela (resumo, alertas e usuários),
+ * usadas na auditoria de acessibilidade (e2e/acessibilidade.spec.ts).
+ */
+export async function instalarApiFalsa(context: BrowserContext, opcoes: { perfil?: 'operador' | 'gestor' } = {}) {
+  const pessoa = opcoes.perfil === 'gestor' ? GESTOR : OPERADOR
   const estado = {
     rede: 'ok' as Rede,
     lotes: [] as Lote[],
@@ -65,9 +76,14 @@ export async function instalarApiFalsa(context: BrowserContext) {
       estado.loginsRecebidos++
       if (estado.limite.login) return limiteExcedido(route, estado.limite.login)
     }
-    if (caminho === '/auth/login' && req.method() === 'POST') return json(route, 200, { token: 'token-de-teste', usuario: OPERADOR })
-    if (caminho === '/auth/me') return json(route, 200, OPERADOR)
+    if (caminho === '/auth/login' && req.method() === 'POST') return json(route, 200, { token: 'token-de-teste', usuario: pessoa })
+    if (caminho === '/auth/me') return json(route, 200, pessoa)
     if (caminho === '/processos') return json(route, 200, PROCESSOS)
+    if (pessoa === GESTOR) {
+      if (caminho === '/relatorios/resumo') return json(route, 200, RESUMO)
+      if (caminho === '/alertas') return json(route, 200, [])
+      if (caminho === '/usuarios') return json(route, 200, [GESTOR, OPERADOR])
+    }
     if (caminho === '/lotes' && req.method() === 'GET') return json(route, 200, [...estado.lotes].reverse())
 
     if (caminho === '/lotes' && req.method() === 'POST') {
