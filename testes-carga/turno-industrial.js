@@ -167,7 +167,16 @@ export function teardown({ admin }) {
 
 // ---------- relatório ----------
 
-const n = (v, casas = 2) => (v === undefined || v === null || Number.isNaN(v) ? '-' : Number(v).toLocaleString('pt-BR', { maximumFractionDigits: casas }))
+// Número no formato brasileiro (1.234,5). O k6 (goja) não tem Intl: toLocaleString não aceita 'pt-BR'.
+function n(v, casas = 2) {
+  if (v === undefined || v === null || Number.isNaN(Number(v))) return '-'
+  const [inteiro, dec] = Number(v).toFixed(casas).split('.')
+  const milhar = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  const fracao = (dec || '').replace(/0+$/, '')
+  return fracao ? `${milhar},${fracao}` : milhar
+}
+// Data e hora de Recife (UTC-3, sem horário de verão), também sem Intl.
+const agoraRecife = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ')
 const vals = (d, nome) => (d.metrics[nome] || {}).values || {}
 const passou = (d, nome) => {
   const t = (d.metrics[nome] || {}).thresholds
@@ -216,7 +225,7 @@ function relatorioHtml(d) {
 </style></head><body><main>
 <h1>Turno industrial: teste de carga</h1>
 <p class="sub">Issue #165 · ${SENSORES} sensores, uma leitura a cada ${INTERVALO_S} s, com rampa, platô e 2 picos de lavagem química ·
-${new Date().toLocaleString('pt-BR', { timeZone: 'America/Recife' })}</p>
+${agoraRecife()} (horário de Recife)</p>
 <div class="cards">
   <div class="card">p95 das leituras<b>${n(leitura['p(95)'])} ms</b></div>
   <div class="card">Requisições por segundo<b>${n(aceitas / duracaoS, 1)}</b></div>
