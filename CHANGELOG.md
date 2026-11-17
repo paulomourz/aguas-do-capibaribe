@@ -6,6 +6,26 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Relatório em planilha Excel (.xlsx)
+
+- **Botão "Exportar para Excel (.xlsx)"** na tela de Relatórios (issue #159, RF18), ao lado do PDF. Baixa
+  `aguas-do-capibaribe-relatorio-AAAA-MM.xlsx` do período escolhido, gerado no navegador com o ExcelJS 4.4.0, que só
+  é carregado no primeiro clique (pedaço separado do site, 260 KB comprimido).
+- **Aba "Lotes"**: um lote por linha, em ordem cronológica (código, data e hora de Recife, processo, peças, meta,
+  consumo real, diferença, desvio, status e água por peça), com a linha de total. **Aba "Resumo por processo"**: os
+  totais de cada tipo de processo. As duas têm o cabeçalho da empresa (lavanderia, período, emissão e responsável),
+  filtro e cabeçalho congelado.
+- **Fórmulas de verdade** na planilha: soma do volume, das peças e das metas, diferença, desvio e pegada hídrica
+  (litros por peça), com o resultado já guardado para quem abre sem recalcular.
+- **Desvio colorido pelas faixas de status** do sistema (formatação condicional): verde até 0%, âmbar até 8% e
+  vermelho acima. O status de cada lote usa as cores do site.
+- **Dependências:** a `xlsx` (SheetJS) do npm foi descartada por ter vulnerabilidades altas sem correção, que o job
+  `dependencias` bloqueia. O `uuid` usado pelo ExcelJS foi forçado para a 11.1.1 (override do pnpm), que corrige o
+  GHSA-w5hq-g745-h8pq; o `pnpm audit` fica sem nenhum aviso.
+- **Testes:** `src/services/__testes__/exportToExcel.test.ts` gera o arquivo e lê de volta célula por célula;
+  `src/screens/__testes__/relatorios.test.ts` confere quando o botão fica habilitado; `e2e/planilha.spec.ts` clica
+  no botão, baixa e abre o .xlsx.
+
 ### Qualidade (Quality Gate com SonarQube)
 
 - **Cobertura de testes medida** (issue #168): JaCoCo 0.8.16 no `mvn test` (`backend/target/site/jacoco`) e

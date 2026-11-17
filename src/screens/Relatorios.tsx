@@ -19,7 +19,7 @@ import {
   statusMeta,
 } from '../components/ui'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
-import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Resumo } from '../domain'
+import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoPlanilha, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Lote, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
 import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '../store'
 
@@ -27,27 +27,57 @@ import { periodoAtual, useApp, useEstadoTela, useLotesDoMes, useResumo } from '.
 const GraficoMetaReal = lazy(() => import('../components/GraficoMetaReal'))
 const GraficoDiario = lazy(() => import('../components/GraficoDiario'))
 
-/** Gera o PDF de verdade e baixa. A biblioteca só é carregada no primeiro uso. */
-function useBaixarPdf() {
-  const { nomeProcesso, usuario, notificar } = useApp()
+/**
+ * Gera um arquivo (PDF ou planilha) e avisa o nome do que baixou. Devolve false se deu erro, para a tela mostrar
+ * a falha; o erro vai para o console.
+ */
+export async function gerarComAviso(criar: () => Promise<string>, notificar: (mensagem: string) => void): Promise<boolean> {
+  try {
+    notificar(`${await criar()} baixado.`)
+    return true
+  } catch (e) {
+    console.error(e)
+    return false
+  }
+}
+
+/** Estado de geração de um arquivo: gerando agora e se a última tentativa falhou. */
+function useGerarArquivo() {
+  const { notificar } = useApp()
   const [gerando, setGerando] = useState(false)
   const [falha, setFalha] = useState(false)
 
-  async function baixar(mes: number, ano: number, linhas: Resumo[]) {
+  async function gerar(criar: () => Promise<string>) {
     setFalha(false)
     setGerando(true)
-    try {
-      const { baixarRelatorioPdf } = await import('../services/relatorioPdf')
-      const nome = await baixarRelatorioPdf({ mes, ano, linhas, nomeProcesso, responsavel: usuario?.nome })
-      notificar(`${nome} baixado.`)
-    } catch (e) {
-      console.error(e)
-      setFalha(true)
-    } finally {
-      setGerando(false)
-    }
+    setFalha(!(await gerarComAviso(criar, notificar)))
+    setGerando(false)
   }
 
+  return { gerar, gerando, falha }
+}
+
+/** Gera o PDF de verdade e baixa. A biblioteca só é carregada no primeiro uso. */
+function useBaixarPdf() {
+  const { nomeProcesso, usuario } = useApp()
+  const { gerar, gerando, falha } = useGerarArquivo()
+  const baixar = (mes: number, ano: number, linhas: Resumo[]) =>
+    gerar(async () => {
+      const { baixarRelatorioPdf } = await import('../services/relatorioPdf')
+      return baixarRelatorioPdf({ mes, ano, linhas, nomeProcesso, responsavel: usuario?.nome })
+    })
+  return { baixar, gerando, falha }
+}
+
+/** Gera a planilha Excel (issue #159) e baixa. O ExcelJS (~1 MB) só é carregado no primeiro uso. */
+function useBaixarPlanilha() {
+  const { nomeProcesso, usuario } = useApp()
+  const { gerar, gerando, falha } = useGerarArquivo()
+  const baixar = (mes: number, ano: number, lotes: Lote[], resumo: Resumo[]) =>
+    gerar(async () => {
+      const { baixarRelatorioXlsx } = await import('../services/exportToExcel')
+      return baixarRelatorioXlsx({ mes, ano, lotes, resumo, nomeProcesso, responsavel: usuario?.nome })
+    })
   return { baixar, gerando, falha }
 }
 
@@ -62,7 +92,9 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
   const lotesDoMes = useLotesDoMes(mes, ano)
   const [processoGrafico, setProcessoGrafico] = useState('')
   const [estado, setEstado] = useEstadoTela(consulta)
-  const { baixar, gerando, falha: falhaPdf } = useBaixarPdf()
+  const { baixar, gerando: gerandoPdf, falha: falhaPdf } = useBaixarPdf()
+  const { baixar: baixarPlanilha, gerando: gerandoPlanilha, falha: falhaPlanilha } = useBaixarPlanilha()
+  const gerando = gerandoPdf || gerandoPlanilha
 
   const dados = estado === 'vazio' ? [] : consulta.dados
   const real = dados.reduce((s, r) => s + r.real, 0)
@@ -108,7 +140,8 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
               ))}
             </Select>
           </Field>
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          {/* Com três formatos, os botões não cabem ao lado dos filtros: ficam numa linha própria, à direita. */}
+          <div className="flex flex-col gap-2 sm:col-span-3 sm:flex-row sm:flex-wrap sm:justify-end">
             <Button
               variant="text"
               icon={<IconPrinter size={20} />}
@@ -122,19 +155,30 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
               variant="secondary"
               icon={<IconDownload size={20} />}
               onClick={() => baixar(mes, ano, dados)}
-              loading={gerando}
-              disabled={!podeExportar}
+              loading={gerandoPdf}
+              disabled={!podeExportar || gerandoPlanilha}
               aria-describedby={semLotes ? 'aviso-sem-lotes' : undefined}
               className="w-full sm:w-auto"
             >
-              {gerando ? 'Gerando PDF…' : 'Baixar PDF'}
+              {gerandoPdf ? 'Gerando PDF…' : 'Baixar PDF'}
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<IconDownload size={20} />}
+              onClick={() => baixarPlanilha(mes, ano, lotesDoMes.dados, dados)}
+              loading={gerandoPlanilha}
+              disabled={!podeExportar || lotesDoMes.carregando || lotesDoMes.erro || gerandoPdf}
+              aria-describedby={semLotes ? 'aviso-sem-lotes' : undefined}
+              className="w-full sm:w-auto"
+            >
+              {gerandoPlanilha ? 'Gerando planilha…' : 'Exportar para Excel (.xlsx)'}
             </Button>
           </div>
         </div>
         {gerando && (
-          <p role="status" className="mt-4 text-[15px] text-ink-2">
-            Gerando {nomeArquivoRelatorio(mes, ano)}…
-          </p>
+          <output className="mt-4 block text-[15px] text-ink-2">
+            Gerando {gerandoPlanilha ? nomeArquivoPlanilha(mes, ano) : nomeArquivoRelatorio(mes, ano)}…
+          </output>
         )}
         {semLotes && (
           <div id="aviso-sem-lotes" className="mt-4">
@@ -143,9 +187,9 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
             </Banner>
           </div>
         )}
-        {falhaPdf && (
+        {(falhaPdf || falhaPlanilha) && (
           <div className="mt-4">
-            <Banner tone="crit" title="Não foi possível gerar o PDF">
+            <Banner tone="crit" title={falhaPlanilha ? 'Não foi possível gerar a planilha' : 'Não foi possível gerar o PDF'}>
               Tente novamente em instantes. Os filtros escolhidos foram mantidos.
             </Banner>
           </div>

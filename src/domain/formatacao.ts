@@ -26,6 +26,9 @@ export const meses = [
 export const nomeArquivoRelatorio = (mes: number, ano: number) =>
   `aguas-do-capibaribe-relatorio-${ano}-${String(mes).padStart(2, '0')}.pdf`
 
+/** Mesmo nome do PDF, para a planilha Excel do relatório (issue #159). */
+export const nomeArquivoPlanilha = (mes: number, ano: number) => nomeArquivoRelatorio(mes, ano).replace(/\.pdf$/, '.xlsx')
+
 /**
  * Lê um número digitado no padrão brasileiro: ponto separa milhar e vírgula separa decimal ("1.590" = 1590,
  * "1.590,5" = 1590,5, "12,5" = 12,5). Um ponto fora de grupos de 3 dígitos ("1.5", "1.59") é ambíguo e dá NaN:
