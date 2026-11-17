@@ -21,6 +21,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   0,288 → 0 (celular).
 - Com movimento reduzido, os esqueletos ficam parados, como os outros efeitos do site.
 
+### Qualidade (Quality Gate com SonarQube)
+
+- **Cobertura de testes medida** (issue #168): JaCoCo 0.8.16 no `mvn test` (`backend/target/site/jacoco`) e
+  `pnpm test:cobertura` no site (`coverage/lcov.info`, `@vitest/coverage-v8`). Em 17/11/2026: API com 93,7% das
+  linhas e 80,3% das decisões cobertas; site com 13,8% nos testes de unidade (as telas são cobertas pelos testes de
+  ponta a ponta, que não entram nessa conta).
+- **Workflow "Qualidade"** com o SonarQube da disciplina (`https://sonar.fchicout.dev`, `sonar-project.properties`):
+  analisa a API e o site com a cobertura e espera o Quality Gate `SENAC-PI-Quality-Gate`; se ele reprovar, o PR fica
+  bloqueado. No código novo: nenhum problema bloqueante ou crítico, notas A em manutenção, confiabilidade e
+  segurança, cobertura de pelo menos 80% e duplicação abaixo de 3%. Precisa do segredo `SONAR_TOKEN`; sem ele, o job
+  só avisa.
+
 ### Acessibilidade (axe-core no CI)
 
 - **Auditoria automática WCAG 2.1 A e AA** (issue #172, `e2e/acessibilidade.spec.ts`, `@axe-core/playwright` 4.14.0).
