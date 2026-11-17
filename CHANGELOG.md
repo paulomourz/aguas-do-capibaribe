@@ -6,6 +6,21 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Carregamento sem saltos (skeleton screens)
+
+- **Esqueletos no formato do conteúdo** (issue #161): `SkeletonCard` (indicadores) e `SkeletonChart` (colunas de
+  água Meta x real, barras Real x esperado e linhas por dia) repetem a tipografia, os espaçamentos e a altura do
+  componente real. O rótulo de cada indicador já aparece de verdade e os textos de legenda e rodapé ficam
+  transparentes sobre o esqueleto, então quebram linha igual ao conteúdo carregado. A lista de alertas ativos do
+  dashboard também ganhou esqueleto no formato de cada item.
+- **Relatórios:** a seção de gráficos aparecia só depois dos dados e empurrava a tabela para baixo (CLS de 0,29
+  no celular com 3G simulado). Agora ela ocupa o seu lugar desde o carregamento, com os esqueletos.
+- **Teste de ponta a ponta** (`e2e/carregamento.spec.ts`): com rede 3G simulada e a API atrasada, confere os
+  esqueletos no dashboard e nos relatórios e exige CLS < 0,1, no computador e no celular. Antes → depois:
+  dashboard 0,065 → 0,026 (computador) e 0,075 → 0,004 (celular); relatórios 0,132 → 0,003 (computador) e
+  0,288 → 0 (celular).
+- Com movimento reduzido, os esqueletos ficam parados, como os outros efeitos do site.
+
 ### Acessibilidade (axe-core no CI)
 
 - **Auditoria automática WCAG 2.1 A e AA** (issue #172, `e2e/acessibilidade.spec.ts`, `@axe-core/playwright` 4.14.0).

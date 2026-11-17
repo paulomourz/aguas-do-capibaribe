@@ -12,12 +12,12 @@ import {
   LoadingBlock,
   LogoMark,
   PageHeader,
-  Skeleton,
   StatePreview,
   Select,
   StatusBadge,
   statusMeta,
 } from '../components/ui'
+import SkeletonChart from '../components/SkeletonChart'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
 import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
@@ -54,7 +54,7 @@ function useBaixarPdf() {
 /* ---------- G7 Relatórios ---------- */
 
 export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; anoInicial?: number }) {
-  const { nomeProcesso } = useApp()
+  const { nomeProcesso, processos } = useApp()
   const atual = periodoAtual()
   const [mes, setMes] = useState(mesInicial ?? atual.mes)
   const [ano, setAno] = useState(anoInicial ?? atual.ano)
@@ -72,6 +72,9 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
   const carregado = estado !== 'carregando' && estado !== 'erro'
   const podeExportar = carregado && dados.length > 0
   const semLotes = carregado && dados.length === 0
+  // Enquanto carrega, a seção de gráficos já ocupa o seu lugar com esqueletos: se ela só aparecesse com os dados,
+  // empurraria a tabela para baixo (CLS, issue #161).
+  const carregandoResumo = estado === 'carregando'
 
   const totalDesvio = esperado ? desvioDe(real, esperado) : 0
   // O processo escolhido pode não ter lotes no mês novo: nesse caso, volta para todos.
@@ -152,8 +155,8 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
         )}
       </Card>
 
-      {podeExportar && (
-        <section aria-labelledby="graficos-titulo">
+      {(podeExportar || carregandoResumo) && (
+        <section aria-labelledby="graficos-titulo" aria-busy={carregandoResumo || lotesDoMes.carregando}>
           <Card className="flex flex-col">
             <CardHeader
               id="graficos-titulo"
@@ -161,7 +164,7 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
               subtitle={periodo}
               action={
                 <Field id="processo-grafico" label="Processo">
-                  <Select id="processo-grafico" value={filtro} onChange={(e) => setProcessoGrafico(e.target.value)}>
+                  <Select id="processo-grafico" value={filtro} disabled={carregandoResumo} onChange={(e) => setProcessoGrafico(e.target.value)}>
                     <option value="">Todos os processos</option>
                     {dados.map((r) => (
                       <option key={r.processoId} value={r.processoId}>
@@ -175,18 +178,22 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
             <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
               <div className="min-w-0">
                 <h3 className="mb-3 font-display text-[16px] font-semibold text-ink">Real x esperado</h3>
-                <Suspense fallback={<Skeleton className="h-[280px] w-full" />}>
-                  <GraficoMetaReal dados={noGrafico.map((r) => ({ nome: nomeProcesso(r.processoId), real: r.real, esperado: r.esperado }))} />
-                </Suspense>
+                {carregandoResumo ? (
+                  <SkeletonChart formato="metaReal" nomes={processos.map((p) => p.nome)} label="Carregando gráfico real x esperado…" />
+                ) : (
+                  <Suspense fallback={<SkeletonChart formato="metaReal" nomes={noGrafico.map((r) => nomeProcesso(r.processoId))} label="Carregando gráfico real x esperado…" />}>
+                    <GraficoMetaReal dados={noGrafico.map((r) => ({ nome: nomeProcesso(r.processoId), real: r.real, esperado: r.esperado }))} />
+                  </Suspense>
+                )}
               </div>
               <div className="min-w-0">
                 <h3 className="mb-3 font-display text-[16px] font-semibold text-ink">Consumo por dia</h3>
-                {lotesDoMes.carregando ? (
-                  <Skeleton className="h-[260px] w-full" />
+                {carregandoResumo || lotesDoMes.carregando ? (
+                  <SkeletonChart formato="diario" label="Carregando consumo por dia…" />
                 ) : lotesDoMes.erro ? (
                   <ErrorState title="Gráfico indisponível" onRetry={lotesDoMes.recarregar} />
                 ) : (
-                  <Suspense fallback={<Skeleton className="h-[260px] w-full" />}>
+                  <Suspense fallback={<SkeletonChart formato="diario" label="Carregando consumo por dia…" />}>
                     <GraficoDiario dias={consumoPorDia(lotesNoGrafico, mes, ano)} periodo={periodo} />
                   </Suspense>
                 )}
