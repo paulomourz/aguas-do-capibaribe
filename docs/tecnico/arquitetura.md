@@ -119,7 +119,7 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 | `trg_lote_esperado` | O banco calcula o esperado de cada lote pela meta do momento. |
 | `trg_lote_imutavel`, `trg_auditoria_imutavel` | Lote e auditoria não podem ser alterados nem apagados, nem pela API. |
 | `v_historico_lotes`, `v_alertas` | Visões que entregam o desvio já calculado. |
-| Migrações Flyway V1 a V12 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. |
+| Migrações Flyway V1 a V13 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. |
 | Usuário `aguas_api` | Lê e grava, mas não pode apagar dados nem mudar o esquema. |
 
 ## 6. Visão de implantação

@@ -37,6 +37,7 @@ Regras que moram no próprio banco:
 | V10 | `V10__cria_aviso_pendente.sql` | `aviso_pendente`: aviso do Telegram que não chegou depois de 3 tentativas (issue #97) |
 | V11 | `V11__aviso_pendente_enviado_em.sql` | coluna `enviado_em` e permissão de UPDATE só nas colunas do reenvio (issue #97) |
 | V12 | `V12__cria_tabela_efluentes_descarte.sql` | `efluentes_descarte`: volume, pH, turbidez e reaproveitamento de cada descarte do lote, só leitura e inserção para o `aguas_api` (issue #162) |
+| V13 | `V13__ajusta_autovacuum_tabelas_quentes.sql` | autovacuum e analyze mais frequentes em `lote`, `alerta_lote` e `alerta` (issue #163, ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.
@@ -157,6 +158,7 @@ dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para 
 | `seguranca-usuario-api.sql` | cria o usuário `aguas_api`, que a API usa, só com ler, inserir e atualizar (sem apagar nem mudar a estrutura) |
 | `backup.sh` / `restore.sh` | backup com verificação e retenção de 7 dias, e restore só em banco vazio (veja acima) |
 | `env.backup.example` | modelo da conexão do backup, para copiar para `.env.backup` |
+| `manutencao/db-bloat-check.sql` | linhas mortas, inchaço e autovacuum de cada tabela, com o `VACUUM` sugerido (ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 
 Os testes automáticos usam bancos temporários terminados em `_teste`, criados e apagados na hora;
 nunca rode os testes no `aguas`.

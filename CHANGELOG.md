@@ -26,6 +26,25 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   `src/screens/__testes__/relatorios.test.ts` confere quando o botão fica habilitado; `e2e/planilha.spec.ts` clica
   no botão, baixa e abre o .xlsx.
 
+### Carregamento sem saltos (skeleton screens)
+
+- **Esqueletos no formato do conteúdo** (issue #161): `SkeletonCard` (indicadores) e `SkeletonChart` (colunas de
+  água Meta x real, barras Real x esperado e linhas por dia) repetem a tipografia, os espaçamentos e a altura do
+  componente real. O rótulo de cada indicador já aparece de verdade e os textos de legenda e rodapé ficam
+  transparentes sobre o esqueleto, então quebram linha igual ao conteúdo carregado. A lista de alertas ativos do
+  dashboard também ganhou esqueleto no formato de cada item.
+- **Relatórios:** a seção de gráficos aparecia só depois dos dados e empurrava a tabela para baixo (CLS de 0,29
+  no celular com 3G simulado). Agora ela ocupa o seu lugar desde o carregamento, com os esqueletos.
+- **Teste de ponta a ponta** (`e2e/carregamento.spec.ts`): com rede 3G simulada e a API atrasada, confere os
+  esqueletos no dashboard e nos relatórios e exige CLS < 0,1, no computador e no celular. Antes → depois:
+  dashboard 0,065 → 0,026 (computador) e 0,075 → 0,004 (celular); relatórios 0,132 → 0,003 (computador) e
+  0,288 → 0 (celular).
+- **Testes de unidade** (`src/components/__testes__/esqueletos.test.ts` e `src/screens/__testes__/carregamento.test.ts`,
+  26 testes): renderizam os esqueletos e as telas em HTML com o `react-dom/server`, sem dependência nova, e conferem
+  o que o leitor de tela anuncia, os textos fantasmas e a troca pelos dados. Cobrem 96,6% das linhas e todas as
+  condições do código novo, acima dos 80% do Quality Gate.
+- Com movimento reduzido, os esqueletos ficam parados, como os outros efeitos do site.
+
 ### Qualidade (Quality Gate com SonarQube)
 
 - **Cobertura de testes medida** (issue #168): JaCoCo 0.8.16 no `mvn test` (`backend/target/site/jacoco`) e

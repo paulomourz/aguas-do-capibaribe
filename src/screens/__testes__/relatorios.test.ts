@@ -17,7 +17,7 @@ const tela = vi.hoisted(() => ({
 
 vi.mock('../../store', () => ({
   periodoAtual: () => ({ mes: 11, ano: 2026 }),
-  useApp: () => ({ nomeProcesso: (id: string) => id, usuario: null, notificar: () => {} }),
+  useApp: () => ({ nomeProcesso: (id: string) => id, processos: [], usuario: null, notificar: () => {} }),
   useResumo: () => ({ dados: tela.resumo, carregando: tela.estado === 'carregando', erro: false, recarregar: () => {} }),
   useLotesDoMes: () => ({ dados: [], carregando: tela.lotes.carregando, erro: tela.lotes.erro, recarregar: () => {} }),
   useEstadoTela: () => [tela.estado, () => {}],

@@ -227,6 +227,13 @@ h1, h2, h3, h4 {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* Linha do esqueleto do gráfico por dia: SVG não recebe o gradiente do .skeleton, então pulsa na opacidade. */
+@keyframes pulso-esqueleto {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.skeleton-linha { animation: pulso-esqueleto 1.4s ease-in-out infinite; }
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -458,7 +465,7 @@ h1, h2, h3, h4 {
 .gauge-pulso { animation: gauge-pulso 1.2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton, .rise, .animate-spin, .water-fill, .water-surface, .water-ripple, .water-bubble, .gauge-pulso { animation: none !important; }
+  .skeleton, .skeleton-linha, .rise, .animate-spin, .water-fill, .water-surface, .water-ripple, .water-bubble, .gauge-pulso { animation: none !important; }
   .water-fill { clip-path: inset(0); }
   .gauge-ponteiro { transition: none; }
 }
