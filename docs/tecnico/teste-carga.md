@@ -85,6 +85,55 @@ de CPU, o pool continua definido por `DB_POOL_MAX` com um valor menor.
 Os números do GitHub Actions não se comparam direto com os do PC (seção anterior): a máquina é outra e mais fraca.
 A mesma configuração rodada duas vezes variou cerca de 15% no p95 de 100 sensores.
 
+## Turno industrial: 120 sensores com picos de lavagem (issue #165)
+
+O teste de lotes acima manda requisições sem pausa para achar o limite. Este, em
+[`testes-carga/turno-industrial.js`](../../testes-carga/turno-industrial.js), imita um turno da fábrica (RNF02):
+**120 sensores**, cada um mandando uma leitura a cada **2 segundos** (60 por segundo), com dois picos repentinos de
+lavagem química, em que o ritmo triplica (180 por segundo).
+
+| Etapa | Duração | Leituras por segundo |
+|---|---|---|
+| Rampa: sensores entram no turno | 1 min | 0 a 60 |
+| Platô | 3 min | 60 |
+| Pico de lavagem química (sobe em 10 s) | 1 min | 180 |
+| Platô | 2 min | 60 |
+| Segundo pico (sobe em 10 s) | 1 min | 180 |
+| Platô e rampa de saída | 1,5 min | 60 a 0 |
+
+- **Como o sensor de verdade:** cada leitura é um `POST /lotes` com o token de API da conta de sensor e uma
+  `Idempotency-Key`, sem login (o mesmo caminho do ESP32). O teste rotaciona o token da `sensor.wokwi` no início.
+  Cada sensor fica numa das 4 máquinas (processos); no pico, o consumo sobe e mais lotes passam da meta.
+- **Ritmo fixo:** as leituras saem no horário mesmo que a API demore (modelo aberto do k6), com no máximo 120 sensores
+  esperando resposta ao mesmo tempo. Se a API não der conta, o k6 conta as leituras que não saíram (`dropped_iterations`).
+- **Pool do banco durante o turno:** a cada 2 s, o teste lê no Actuator as conexões ativas e os pedidos esperando
+  conexão, separados por fase. No fim, lê a espera média, a maior e os pedidos que esgotaram o tempo.
+
+**Metas (critérios da issue):** p95 das leituras abaixo de **250 ms** no pico e no turno todo, **0% de respostas 5xx**,
+nenhuma leitura recusada ou atrasada e nenhum pedido de conexão esgotado. A meta é a mesma no PC e no GitHub Actions,
+porque a carga aqui é bem menor que a do teste sem pausa.
+
+### Como rodar
+
+```bash
+docker compose -p aguas-carga -f docker-compose.yml -f docker-compose.carga.yml --profile carga run --rm --no-TTY   -e K6_WEB_DASHBOARD=true -e K6_WEB_DASHBOARD_EXPORT=/resultados/turno-painel.html k6 run /scripts/turno-industrial.js
+docker compose -p aguas-carga -f docker-compose.yml -f docker-compose.carga.yml --profile carga down -v
+```
+
+Para um ensaio rápido, encurte o turno com `-e ESCALA_TEMPO=0.2` (2 minutos). No GitHub Actions, roda no mesmo
+workflow **Teste de carga**, no job *turno industrial*.
+
+### Relatórios
+
+Ficam em `testes-carga/resultados/` (no GitHub Actions, no artefato `carga-turno-industrial`):
+
+- `turno-industrial.html`: o relatório do teste, com os critérios de aceitação, p95 e requisições por segundo por fase e o pool de conexões.
+- `turno-painel.html`: o painel do próprio k6, com os gráficos ao longo do tempo (latência, requisições e VUs).
+- `turno-industrial.json`: todas as métricas, para comparar execuções.
+
+**Limites:** os 120 sensores usam uma só conta de sensor, com o limite de lotes por minuto desligado, e o teste roda
+no ambiente descartável do Docker, sem Nginx e sem HTTPS. O site publicado não é testado.
+
 ## Observação sobre os alertas
 
 O teste terminou com 12.499 alertas abertos nos 4 processos. Isso segue a regra atual: cada nova sequência de 3 lotes
