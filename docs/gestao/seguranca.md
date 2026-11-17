@@ -8,7 +8,7 @@ pede, adaptada ao porte de um projeto acadêmico, sem certificação formal.
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.2, 14 de novembro de 2026 (versão 1.1.0 do sistema: token de API do sensor, imagem distroless e segredos como arquivos) |
+| Versão | 1.3, 17 de novembro de 2026 (repositório público; antes, 1.2 com a versão 1.1.0 do sistema: token de API do sensor, imagem distroless e segredos como arquivos) |
 | Escopo | Site, API, banco publicado (Render e Neon), ambiente Docker, sensor simulado, repositório no GitHub e aviso no Telegram |
 | Responsável | Paulo Moura (DevOps), com apoio da equipe |
 | Revisão | A cada versão do sistema ou depois de qualquer incidente |
@@ -54,7 +54,7 @@ Probabilidade e impacto em três níveis (baixo, médio, alto). O risco residual
 
 | ID | Ameaça | Prob. | Impacto | Controles | Risco residual |
 |---|---|---|---|---|---|
-| R01 | Senha ou token vazar no repositório | Média | Alto | `.gitignore` para `.env`, `.env.local`, `.env.backup` e `docs/privado/`; revisão dos PRs; repositório privado | Baixo |
+| R01 | Senha ou token vazar no repositório | Média | Alto | `.gitignore` para `.env`, `.env.local`, `.env.backup` e `docs/privado/`; revisão dos PRs; segredos só no GitHub, no Render e no Docker. O repositório é **público desde 17/11/2026**: antes da abertura, o histórico inteiro foi varrido atrás de tokens, chaves e senhas, e só havia textos de exemplo | Baixo |
 | R02 | Tentativas de adivinhar senhas | Média | Médio | 5 tentativas de login por minuto por IP (429); mensagem genérica; BCrypt | Baixo |
 | R03 | Pessoa acessar função de outro perfil | Média | Alto | Autorização na API, com o perfil lido do banco a cada requisição; testes de cada perfil | Baixo |
 | R04 | Alguém alterar ou apagar registros de consumo | Baixa | Alto | Triggers que impedem UPDATE e DELETE; usuário `aguas_api` sem DELETE nem TRUNCATE | Baixo |

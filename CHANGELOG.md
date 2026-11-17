@@ -26,6 +26,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   `src/screens/__testes__/relatorios.test.ts` confere quando o botão fica habilitado; `e2e/planilha.spec.ts` clica
   no botão, baixa e abre o .xlsx.
 
+### Repositório público
+
+- **O repositório passou a ser público em 17/11/2026.** Privado, o plano grátis do GitHub dá 2.000 minutos por mês ao
+  GitHub Actions, e eles acabaram com o CI ampliado (SBOM, Sonar, mutação e carga): todo job falhava em 2 segundos
+  com aviso de cobrança, inclusive nos merges da `develop`. Público, os minutos são ilimitados. Antes da abertura, o
+  histórico inteiro foi varrido atrás de tokens, chaves e senhas (só havia textos de exemplo); os segredos continuam
+  só no GitHub, no Render e no Docker. Registrado no risco R01 de `docs/gestao/seguranca.md` (v1.3) e no TAP (v3.3).
+
 ### Carregamento sem saltos (skeleton screens)
 
 - **Esqueletos no formato do conteúdo** (issue #161): `SkeletonCard` (indicadores) e `SkeletonChart` (colunas de

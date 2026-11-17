@@ -4,7 +4,7 @@
 
 **Sistema de Gestão de Consumo Hídrico por Lote em Lavanderias de Jeans do Agreste Pernambucano**
 
-Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.2**, atualizada em 14 de
+Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuário · **Versão 3.3**, atualizada em 17 de
 novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (20/10/2026), 3.0 (05/11/2026) e 3.1 (09/11/2026).
 
 > **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. A versão 3.2 acompanha a versão 1.1.0 do sistema, com as entregas da sprint de 10 a 14/11/2026 (seção 11). Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
@@ -21,7 +21,7 @@ novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (
 | Responsável / aluno | Pedro |
 | Patrocinador / orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
 | Data de elaboração | 22 de setembro de 2026 (versão 1.0) |
-| Última atualização | 14 de novembro de 2026 (versão 3.2) |
+| Última atualização | 17 de novembro de 2026 (versão 3.3) |
 | Região de aplicação | Toritama, Caruaru e Santa Cruz do Capibaribe (PE) — Agreste Pernambucano |
 | Tipo de solução | Sistema web em arquitetura REST: front-end em React com TypeScript, acessado pelo navegador e instalável como aplicativo (PWA); back-end em Java com Spring Boot, que expõe uma API REST; banco de dados PostgreSQL. |
 | Endereço do sistema | Site: https://aguas-do-capibaribe.onrender.com · API: https://aguas-api-a0vq.onrender.com/api |
@@ -110,7 +110,7 @@ Tratamento definido em outro documento: o registro de volume de efluente e o ín
 | Hospedagem | Render (site e API) e Neon (banco) | Planos gratuitos. O Render só publica depois que o CI passa e confere a saúde da API. |
 | Execução local | Docker Compose | Sobe banco, API e site com um comando, com túnel opcional para o Wokwi (plano B de apresentação). |
 | Qualidade | GitHub Actions | A cada pull request: 169 testes do back-end, 199 de unidade e 10 de ponta a ponta do front-end, build, teste do Docker, vulnerabilidades nas dependências e testes de mutação. Teste de carga com até 100 sensores sob demanda. |
-| Versionamento | GitHub | Repositório privado com GitFlow (main, develop, feature, release, hotfix); develop é a branch padrão e a main só recebe versões. |
+| Versionamento | GitHub | Repositório público desde 17/11/2026 (o plano grátis limita o GitHub Actions a 2.000 minutos por mês em repositório privado), com GitFlow (main, develop, feature, release, hotfix); develop é a branch padrão e a main só recebe versões. |
 
 **Princípios de arquitetura.** O front-end nunca acessa o banco: toda operação passa pela API REST. O back-end concentra as regras de negócio (desvio, status, alertas, autorização por perfil); o banco calcula o esperado de cada lote e impede que um lote ou um registro de auditoria seja alterado ou apagado. Senhas são guardadas com hash BCrypt, e nenhuma senha ou token fica no repositório.
 
