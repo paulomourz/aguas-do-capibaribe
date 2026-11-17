@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -170,7 +171,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -185,7 +186,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(12);
+           assertThat(flyway.info().applied()).hasSize(13);
     }
 
     @Test
@@ -231,6 +232,21 @@ abstract class IntegracaoPostgresBase {
                 "select indexname from pg_indexes where schemaname = 'public' and tablename = 'efluentes_descarte'",
                 String.class);
         assertThat(indices).contains("ix_efluentes_descarte_lote", "ix_efluentes_descarte_data");
+    }
+
+    @Test
+    void v13DeixaOAutovacuumMaisFrequenteNasTabelasQuentes() {
+        // Issue #163: rotina em docs/tecnico/manutencao-banco.md.
+        Map<String, List<String>> opcoes = new HashMap<>();
+        jdbc.query("select relname, array_to_string(reloptions, ',') as op from pg_class "
+                + "where relnamespace = 'public'::regnamespace and relname in ('lote', 'alerta_lote', 'alerta')",
+                rs -> { opcoes.put(rs.getString("relname"), List.of(rs.getString("op").split(","))); });
+        List<String> soInsercao = List.of("autovacuum_vacuum_scale_factor=0.05", "autovacuum_vacuum_insert_scale_factor=0.05",
+                "autovacuum_analyze_scale_factor=0.02");
+        assertThat(opcoes.get("lote")).containsExactlyInAnyOrderElementsOf(soInsercao);
+        assertThat(opcoes.get("alerta_lote")).containsExactlyInAnyOrderElementsOf(soInsercao);
+        assertThat(opcoes.get("alerta")).containsExactlyInAnyOrder("autovacuum_vacuum_scale_factor=0.05",
+                "autovacuum_analyze_scale_factor=0.02");
     }
 
     // ---------- monitoramento (issue #51) ----------
