@@ -6,6 +6,15 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Validação da telemetria do sensor
+
+- **`POST /telemetria` recusa leitura inválida com 400** (issue #156, RNF04, ERS 4.1). O `TelemetriaRequestDTO` usa Bean
+  Validation: `processoId` obrigatório e maior que zero; `vazaoLitros` obrigatória, sem valor negativo, até 10000 e com
+  no máximo 2 casas decimais. O `@Valid` no controller barra a leitura antes da regra de negócio, e o
+  `TelemetriaExceptionHandler` devolve `400 TELEMETRIA_INVALIDA` com a mensagem em português de cada campo em `campos`.
+  As outras rotas continuam com o `422 VALIDACAO` de sempre. O perfil `sensor` pode chamar a rota.
+- **Testes:** `TelemetriaControllerTest` (vazão nula, ausente, negativa, acima do máximo, processo inválido e leitura válida).
+
 ### Limpeza apontada pelo SonarQube (back-end)
 
 - **6 code smells críticos e bloqueantes:** o BOM do CSV virou `\uFEFF` escrito por extenso (S2479); os métodos que tinham

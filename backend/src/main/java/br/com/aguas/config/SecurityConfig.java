@@ -83,9 +83,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/processos").hasAnyRole(ADMIN, GESTOR)
                 .requestMatchers(HttpMethod.PUT, "/processos/*").hasAnyRole(ADMIN, GESTOR)
                 .requestMatchers("/alertas/**", "/relatorios/**").hasAnyRole(ADMIN, GESTOR)
-                // O sensor só faz o que o envio precisa: consultar os processos e registrar lotes.
+                // O sensor só faz o que o envio precisa: consultar os processos, registrar lotes e enviar telemetria.
                 .requestMatchers(HttpMethod.GET, "/processos").hasAnyRole(ADMIN, GESTOR, OPERADOR, SENSOR)
                 .requestMatchers(HttpMethod.POST, "/lotes").hasAnyRole(ADMIN, GESTOR, OPERADOR, SENSOR)
+                .requestMatchers(HttpMethod.POST, "/telemetria").hasAnyRole(ADMIN, GESTOR, OPERADOR, SENSOR)
                 .anyRequest().hasAnyRole(ADMIN, GESTOR, OPERADOR))
             .oauth2ResourceServer(o -> o
                 .bearerTokenResolver(soJwt)
