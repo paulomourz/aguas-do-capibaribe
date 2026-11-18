@@ -6,6 +6,21 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Saúde do sensor Wokwi no Actuator
+
+- **`GET /actuator/health/sensor`** (issue #158, RNF03): o `SensorWokwiHealthIndicator` (componente `sensorWokwi`)
+  consulta a última telemetria gravada. `UP` se ela chegou há menos de 60 s, com a hora da leitura; `DOWN` (503) se
+  passou disso ou se nunca houve leitura, com os segundos decorridos. Os detalhes listam cada linha de lavagem ativa
+  (processo com leitura nas últimas 24 h) com a sua última leitura e o seu status. Para admin, gestor e operador; o
+  limite muda com `SENSOR_LIMITE_SEM_LEITURA` (padrão `60s`). Erro no banco deixa o sensor `DOWN`, sem quebrar o endpoint.
+- **A raiz `/actuator/health` não depende do sensor:** o `SaudeDoSensorForaDaRaiz` tira o `sensorWokwi` do grupo
+  principal. O Render e o healthcheck do Docker reiniciam a API quando a raiz dá 503, e um sensor parado não pode
+  causar isso.
+- **Testes:** `SensorWokwiHealthIndicatorTest` (relógio fixo: 10 s, 59 s, exatamente 60 s, 185 s, sem leitura, linhas
+  com status diferentes, janela de 24 h, banco fora do ar, limite configurável), `SaudeDoSensorForaDaRaizTest` e, na
+  integração com PostgreSQL, `saudeDoSensorWokwiPelaUltimaTelemetriaSemAfetarARaiz` (401, 403, UP com a hora gravada e
+  a raiz sem o componente).
+
 ### Telemetria gravada e testes da camada web
 
 - **`POST /telemetria` grava a leitura e responde `201`** (issue #157). Nova tabela `telemetria` (migração V14:

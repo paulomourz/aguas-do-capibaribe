@@ -71,6 +71,8 @@ public class SecurityConfig {
                 // Monitoramento (issue #51): a saúde é aberta e, sem token, só diz UP ou DOWN;
                 // as métricas mostram o uso da API e ficam só com o admin.
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                // Saúde do sensor (issue #158): mostra a hora das leituras, então só para quem acompanha a operação.
+                .requestMatchers(HttpMethod.GET, "/actuator/health/sensor").hasAnyRole(ADMIN, GESTOR, OPERADOR)
                 .requestMatchers(HttpMethod.GET, "/actuator/metrics", "/actuator/metrics/*").hasRole(ADMIN)
                 .requestMatchers("/actuator/**").denyAll()
                 // O gestor só lê a lista: o histórico mostra quem registrou cada lote.
