@@ -69,6 +69,8 @@ automaticamente. Variáveis definidas no sistema têm prioridade sobre ele.
 | `SITE_URL` | não | Endereço do site; com ele, o aviso do Telegram leva o link do alerta |
 | `GESTOR_SENHA` | não | Senha (8 a 72 bytes) da conta `capibaribe.gestor`, usada apenas para criá-la. Sem ela, a conta não é criada |
 | `SENSOR_SENHA` | não | Senha (8 a 72 bytes) da conta `sensor.wokwi`, usada apenas para criá-la. Sem ela, a conta não é criada |
+| `SENSOR_JANELA_TELEMETRIA` | não (`60s`) | Tempo sem lote do sensor até o componente `sensorWokwi` de `/actuator/health` ficar `DOWN` (issue #158). Em produção, use o turno da lavanderia (ex.: `6h`): em `DOWN`, a saúde da API toda responde 503 |
+| `SENSOR_SAUDE_ATIVO` | não (true) | `false` desliga o componente `sensorWokwi` da saúde, sem mexer no código |
 
 **Banco oficial.** O banco em uso é o `aguas` (veja a situação atual em
 [`../docs/tecnico/banco-remoto.md`](../docs/tecnico/banco-remoto.md#6-situação-atual)). A API
@@ -235,6 +237,10 @@ Para inserir outro administrador ou gestor sem passar pelo site:
 - **Cache:** a lista de processos (`GET /processos`) fica em memória e sai do cache depois de cada cadastro ou edição.
 - **Monitoramento:** `GET /actuator/health` é aberto e só diz `UP` ou `DOWN`; `GET /actuator/metrics` é só do admin.
   Nenhum outro endpoint do Actuator fica exposto.
+- **Saúde do sensor:** para o admin, `components.sensorWokwi` mostra se o sensor continua enviando lotes:
+  `UP` dentro da janela `SENSOR_JANELA_TELEMETRIA`, `DOWN` depois dela (com o tempo decorrido) e `UNKNOWN` se
+  nenhuma conta de sensor registrou lote ainda. Em `DOWN`, a saúde da API toda responde 503 — veja o aviso em
+  [`../docs/tecnico/api.md`](../docs/tecnico/api.md#monitoramento-actuator).
 - **Faixas ok / atenção / crítico:** cada lote sai da API com `statusConformidade`
   (`DENTRO_DA_META` se desvio ≤ 0%, `ATENCAO` se ≤ 8%, `CRITICO` acima), calculado por
   `StatusConformidade.de`. Totais e
@@ -259,6 +265,7 @@ mvn test
 | `ProcessoServiceCacheTest` | não | cache da lista de processos e saída do cache ao cadastrar ou editar |
 | `AuditoriaUsuarioTest`, `AuditoriaServiceTest` | não | registro das ações e consulta da auditoria |
 | `AdminInicialTest`, `GestorInicialTest`, `SensorInicialTest` | não | contas criadas na inicialização |
+| `SensorWokwiHealthIndicatorTest` | não (repositório simulado) | saúde do sensor no Actuator: UP dentro da janela, DOWN depois dela, limite exato e banco sem lote de sensor (UNKNOWN) |
 | `AvisoDeAlertaTest` | não | mensagem do Telegram e falha no envio sem afetar quem registrou o lote |
 | `IntegracaoPostgresContainerTest` | Docker | todos os testes de integração num PostgreSQL 18 descartável, que começa vazio: o Flyway aplica todas as migrações na subida |
 | `IntegracaoPostgresLocalTest` | PostgreSQL local descartável | os mesmos testes, sem Docker |
