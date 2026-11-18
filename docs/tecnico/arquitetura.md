@@ -79,8 +79,11 @@ Regras do contexto:
 | `domain/` | Tipos, regras de apresentação (faixas de status), formatação, gráficos e glossário. |
 | `store.tsx`, `router.tsx` | Estado da sessão e navegação entre telas. |
 
-O service worker (PWA) guarda o site para abrir sem conexão. Os lotes registrados sem conexão ficam na fila do
-aparelho e são enviados com a mesma chave de envio (`Idempotency-Key`) até a API confirmar.
+O service worker (PWA, `src/sw.ts`) guarda o site para abrir sem conexão. Os lotes registrados sem conexão ficam na
+fila do aparelho e são enviados com a mesma chave de envio (`Idempotency-Key`) até a API confirmar: pela página
+enquanto ela está aberta e, nos navegadores com Background Sync (Chrome, Edge, Android), pelo próprio service worker
+quando a rede volta, mesmo com a aba fechada (`services/envioSegundoPlano.ts`). Para isso o token fica no IndexedDB
+só enquanto houver lote esperando.
 
 ### 4.2 Back-end (pasta `backend/`, pacote `br.com.aguas`)
 

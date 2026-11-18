@@ -1,7 +1,15 @@
 import { ESPERA_PADRAO_S, escopoDaRota, lerRetryAfter, registrarBloqueio, segundosRestantes } from './limite'
+import { esquecerCredencial } from './filaOffline'
 import type { ErroApiDTO } from './tipos'
 
 export const API_URL: string = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api'
+
+/** Tira as barras do fim da URL base (sem regex: `/\/+$/` tem backtracking quadrático, Sonar S8786). */
+export function semBarraNoFim(url: string): string {
+  let fim = url.length
+  while (fim > 0 && url[fim - 1] === '/') fim--
+  return url.slice(0, fim)
+}
 
 export const CHAVE_TOKEN = 'ac-token'
 export const obterToken = () => sessionStorage.getItem(CHAVE_TOKEN)
@@ -9,6 +17,8 @@ export const salvarToken = (t: string) => sessionStorage.setItem(CHAVE_TOKEN, t)
 export const limparSessao = () => {
   sessionStorage.removeItem(CHAVE_TOKEN)
   sessionStorage.removeItem('ac-sessao')
+  // Logout, 401 ou sessão recusada: o token guardado para o envio em segundo plano sai junto (issue #160).
+  void esquecerCredencial()
 }
 
 export class ApiError extends Error {
@@ -38,6 +48,18 @@ type Opcoes = Omit<RequestInit, 'body'> & {
   timeoutMs?: number
 }
 
+/** Corpo de erro da API ({codigo, mensagem, campos}); sem corpo JSON, uma mensagem genérica com o status. */
+export async function lerErroDaResposta(resp: Response): Promise<ErroApiDTO> {
+  const generico: ErroApiDTO = { codigo: `HTTP_${resp.status}`, mensagem: 'Erro inesperado no servidor.' }
+  try {
+    const j = (await resp.json()) as Partial<ErroApiDTO>
+    if (j && typeof j.mensagem === 'string') return { codigo: j.codigo ?? generico.codigo, mensagem: j.mensagem, campos: j.campos }
+  } catch {
+    /* corpo vazio ou não JSON */
+  }
+  return generico
+}
+
 const ROTA_LOGIN = '/auth/login'
 /** Disparado quando o servidor recusa o token (expirado ou usuário desativado); o store limpa a sessão. */
 export const EVENTO_SESSAO_EXPIRADA = 'ac-sessao-expirada'
@@ -49,7 +71,7 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ti
   const restante = escopo ? segundosRestantes(escopo) : 0
   if (restante > 0) throw erroLimite(restante)
 
-  const url = new URL(API_URL.replace(/\/+$/, '') + caminho, window.location.origin)
+  const url = new URL(semBarraNoFim(API_URL) + caminho, window.location.origin)
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v))
 
   const token = obterToken()
@@ -73,13 +95,7 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ti
   }
 
   if (!resp.ok) {
-    let erro: ErroApiDTO = { codigo: `HTTP_${resp.status}`, mensagem: 'Erro inesperado no servidor.' }
-    try {
-      const j = (await resp.json()) as Partial<ErroApiDTO>
-      if (j && typeof j.mensagem === 'string') erro = { codigo: j.codigo ?? erro.codigo, mensagem: j.mensagem, campos: j.campos }
-    } catch {
-      /* corpo vazio ou não JSON */
-    }
+    const erro = await lerErroDaResposta(resp)
     if (resp.status === 429) {
       // Sem o cabeçalho (ou com CORS escondendo-o), espera a janela inteira do limite.
       const segundos = lerRetryAfter(resp.headers.get('Retry-After')) ?? ESPERA_PADRAO_S
