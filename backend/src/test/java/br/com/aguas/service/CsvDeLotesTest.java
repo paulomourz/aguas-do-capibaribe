@@ -18,7 +18,7 @@ class CsvDeLotesTest {
 
     @Test
     void cabecalhoIgualAoDoSite() {
-        assertThat(CsvDeLotes.cabecalho()).isEqualTo(
+        assertThat(CsvDeLotes.linhaDeCabecalho()).isEqualTo(
                 "ID do lote;Data;Hora;Data e hora (UTC);Processo;Peças;Consumo real (L);Consumo esperado (L);"
                         + "Diferença (L);Desvio (%);Status;Registrado por\r\n");
     }
