@@ -60,7 +60,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /relatorios/csv?inicio=&fim=&processoId=` | gestor | `inicio` e `fim` em `AAAA-MM-DD` (inclusivos, fuso America/Recife), no máximo 1 ano; `processoId` opcional | arquivo `text/csv` em streaming, no formato do CSV do Histórico (ver [Exportação em CSV](#exportação-em-csv-issue-99)); período invertido, maior que 1 ano ou processo inexistente → `422` |
 | `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /auditoria/seguranca` | admin | — | `{desde, loginsAceitos, loginsRecusados, bloqueiosLogin, bloqueiosLotes, senhasTrocadas, senhasRedefinidas, bloqueios: [{rota, ip, primeiro, ultimo, tentativas}]}`; contado em memória desde `desde` (o último início da API), zera quando ela reinicia; `rota` é `login` ou `lotes`; `ip` mascarado (ex.: `200.17.33.***`, LGPD); no máximo 100 linhas em `bloqueios`, do bloqueio mais recente ao mais antigo; sem senha (issue #109) |
-| `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
+| `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco e `sensorWokwi`) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |
 
@@ -72,6 +72,8 @@ Issue #51. O Spring Boot Actuator expõe só `health` e `metrics`. Os outros end
 - **Saúde:** `GET /api/actuator/health` responde `UP` quando a API e o banco estão no ar e `503 DOWN` se o banco
   cair. É aberto para o Render e serviços de monitoramento (como o UptimeRobot) consultarem sem token. Sem token, só
   diz o status.
+- **Saúde do sensor (issue #158):** o componente `sensorWokwi`, dentro de `components`, diz se o sensor continua
+  enviando leituras. Detalhado em [Saúde do sensor](#saúde-do-sensor-issue-158), abaixo.
 - **Métricas (só admin):**
 
 | Métrica | O que mostra |
@@ -93,6 +95,34 @@ curl -H "Authorization: Bearer <token do admin>" \
 **Memória:** medida num contêiner limitado a 512 MB, como no plano grátis do Render (05/11/2026). Sem o Actuator, a
 API usava 287,7 MiB depois de 1.000 requisições; com ele, 291,5 MiB. A diferença fica dentro da variação entre uma
 execução e outra.
+
+#### Saúde do sensor (issue #158)
+
+O componente `sensorWokwi` de `GET /api/actuator/health` diz se o sensor continua enviando leituras, para o operador
+descobrir que o dispositivo parou sem abrir o Histórico. Como o projeto não tem telemetria contínua (o sensor mede o
+lote no dispositivo e faz um `POST /lotes` ao encerrá-lo, ver [`../../iot/LEIA-ME.md`](../../iot/LEIA-ME.md)), a
+"última leitura" é o último lote registrado por uma conta de perfil `sensor`.
+
+| Status | Quando | Detalhes |
+|---|---|---|
+| `UP` | a última leitura está dentro da janela `app.sensor.janela-telemetria` (`SENSOR_JANELA_TELEMETRIA`, padrão `60s`) | `ultimaLeitura`, `segundosSemEnviar`, `janelaSegundos`, `processoId`, `loteId` |
+| `DOWN` | a última leitura passou da janela | os mesmos campos, com o tempo decorrido |
+| `UNKNOWN` | nenhuma conta de sensor registrou lote ainda (banco novo) | `motivo`, `janelaSegundos` |
+
+No limite exato da janela o componente fica `UP`: a issue pede `DOWN` quando o tempo *excede* a janela, a mesma
+convenção do desvio de 8% do lote. Os detalhes só aparecem para o administrador, como no resto da saúde; sem token,
+a resposta continua sendo apenas o status. Não há endpoint novo: `/actuator/health/sensorWokwi` continua bloqueado,
+como todo sub-caminho do Actuator.
+
+> [!WARNING]
+> Um componente em `DOWN` derruba o total de `/actuator/health`, que responde 503 — e é esse endpoint que o Render e
+> o healthcheck do contêiner (`backend/docker/Saude.java`) usam para saber se a API está no ar. Com a janela de
+> 60 s, qualquer período sem lote (à noite, no fim de semana, ou com a simulação do Wokwi desligada) deixa a API
+> publicada como fora do ar. Em produção, use uma janela compatível com o turno da lavanderia
+> (`SENSOR_JANELA_TELEMETRIA=6h`) ou desligue o componente (`SENSOR_SAUDE_ATIVO=false`). A separação definitiva — um
+> grupo de saúde só com banco e disco para a plataforma, deixando o sensor fora da checagem de infraestrutura —
+> depende de mudar também a `SecurityConfig`, o `docker/Saude.java` e a configuração do Render, e está pendente de
+> decisão da equipe.
 
 ### Exportação em CSV (issue #99)
 
