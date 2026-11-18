@@ -38,6 +38,7 @@ Regras que moram no próprio banco:
 | V11 | `V11__aviso_pendente_enviado_em.sql` | coluna `enviado_em` e permissão de UPDATE só nas colunas do reenvio (issue #97) |
 | V12 | `V12__cria_tabela_efluentes_descarte.sql` | `efluentes_descarte`: volume, pH, turbidez e reaproveitamento de cada descarte do lote, só leitura e inserção para o `aguas_api` (issue #162) |
 | V13 | `V13__ajusta_autovacuum_tabelas_quentes.sql` | autovacuum e analyze mais frequentes em `lote`, `alerta_lote` e `alerta` (issue #163, ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
+| V14 | `V14__reforca_integridade_no_banco.sql` | login e processo únicos sem diferenciar maiúsculas, nomes preenchidos, usuário sem exclusão, lote sem data futura, alerta com lotes do próprio processo, caminho do status, efluente imutável e bloqueio de `TRUNCATE` nos registros imutáveis |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.

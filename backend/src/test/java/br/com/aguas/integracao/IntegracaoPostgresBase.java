@@ -171,7 +171,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -186,7 +186,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(13);
+           assertThat(flyway.info().applied()).hasSize(14);
     }
 
     @Test
@@ -247,6 +247,50 @@ abstract class IntegracaoPostgresBase {
         assertThat(opcoes.get("alerta_lote")).containsExactlyInAnyOrderElementsOf(soInsercao);
         assertThat(opcoes.get("alerta")).containsExactlyInAnyOrder("autovacuum_vacuum_scale_factor=0.05",
                 "autovacuum_analyze_scale_factor=0.02");
+    }
+
+    @Test
+    void v14ReforcaAsRegrasDeIntegridadeNoBanco() throws Exception {
+        Conta g = conta("gestor");
+        Conta semLotes = conta("operador");
+        int p = processo(g, "lote", "100");
+        int outro = processo(g, "lote", "100");
+        String nomeProcesso = jdbc.queryForObject("select nome from processo where id = ?", String.class, p);
+        String novoUsuario = "insert into usuario (nome, login, senha_hash, perfil) values (?, ?, ?, 'operador')";
+        String hash = encoder.encode(SENHA);
+
+        // Três lotes acima da meta pela API: o alerta nasce com os lotes na mesma transação.
+        int loteId = lote(g, p, 1, "150").get("id").asInt();
+        lote(g, p, 1, "150");
+        lote(g, p, 1, "150");
+        int alertaId = jdbc.queryForObject("select alerta_id from alerta_lote where lote_id = ?", Integer.class, loteId);
+        int loteDeOutroProcesso = lote(g, outro, 1, "90").get("id").asInt();
+        jdbc.update("insert into efluentes_descarte (lote_id, volume_litros, ph, turbidez_ntu) values (?, 10, 7, 1)", loteId);
+
+        List<org.assertj.core.api.ThrowableAssert.ThrowingCallable> recusados = List.of(
+                () -> jdbc.update(novoUsuario, "Outra pessoa", g.login().toUpperCase(), hash),
+                () -> jdbc.update(novoUsuario, "   ", "nome.em.branco", hash),
+                () -> jdbc.update("insert into processo (nome, unidade, meta) values (?, 'lote', 10)", nomeProcesso.toUpperCase()),
+                () -> jdbc.update("insert into processo (nome, unidade, meta) values ('   ', 'lote', 10)"),
+                () -> jdbc.update("delete from usuario where id = ?", semLotes.id()),
+                () -> jdbc.update("insert into lote (processo_id, usuario_id, pecas, litros, registrado_em) "
+                        + "values (?, ?, 1, 10, now() + interval '1 hour')", p, g.id()),
+                () -> jdbc.update("insert into alerta_lote (lote_id, alerta_id) values (?, ?)", loteDeOutroProcesso, alertaId),
+                () -> jdbc.update("insert into alerta (processo_id) values (?)", p),
+                () -> jdbc.update("update efluentes_descarte set ph = 8 where lote_id = ?", loteId),
+                () -> jdbc.update("delete from efluentes_descarte where lote_id = ?", loteId),
+                () -> jdbc.execute("truncate table lote cascade"),
+                () -> jdbc.execute("truncate table auditoria_usuario"),
+                () -> jdbc.execute("truncate table efluentes_descarte"));
+        recusados.forEach(comando -> assertThatThrownBy(comando).isInstanceOf(DataAccessException.class));
+
+        // O status só anda para a frente, e resolvido é final.
+        jdbc.update("update alerta set status = 'analise' where id = ?", alertaId);
+        assertThatThrownBy(() -> jdbc.update("update alerta set status = 'aberto' where id = ?", alertaId))
+                .isInstanceOf(DataAccessException.class);
+        jdbc.update("update alerta set status = 'resolvido' where id = ?", alertaId);
+        assertThatThrownBy(() -> jdbc.update("update alerta set status = 'analise' where id = ?", alertaId))
+                .isInstanceOf(DataAccessException.class);
     }
 
     // ---------- monitoramento (issue #51) ----------

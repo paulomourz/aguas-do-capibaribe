@@ -6,6 +6,12 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Regras de integridade no banco
+
+- **Migração V14:** o próprio banco passa a recusar login ou processo repetido com maiúsculas diferentes, nome em
+  branco, exclusão de usuário, lote com data futura, alerta sem lotes ou com lote de outro processo, volta no status do
+  alerta, alteração de descarte de efluentes e `TRUNCATE` nas tabelas de registros imutáveis.
+
 ### Envio da fila offline em segundo plano (Background Sync)
 
 - **O service worker envia os lotes guardados sozinho** quando a conexão volta, mesmo com a aba fechada ou em
