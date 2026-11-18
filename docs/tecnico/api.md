@@ -11,7 +11,7 @@ Autenticação: `Authorization: Bearer <token>`, com o token obtido em `POST /au
 8 horas e não é renovado automaticamente.
 
 **Perfis:** `admin` (tudo, mais usuários e auditoria), `gestor` (operação; só lê a lista de usuários), `operador`
-(registra lotes e vê os próprios) e `sensor` (só `GET /processos` e `POST /lotes`). Na tabela, "gestor" quer dizer
+(registra lotes e vê os próprios) e `sensor` (só `GET /processos`, `POST /lotes` e `POST /telemetria`). Na tabela, "gestor" quer dizer
 gestor ou admin.
 
 ## Erros
@@ -25,6 +25,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | HTTP | `codigo` | Quando |
 |---|---|---|
 | 400 | `REQUISICAO_INVALIDA` | JSON malformado ou tipo de parâmetro inválido |
+| 400 | `TELEMETRIA_INVALIDA` | leitura de `POST /telemetria` com campo nulo, negativo ou fora da faixa (detalhes em `campos`) |
 | 401 | `CREDENCIAIS_INVALIDAS` | login com usuário ou senha errados, ou usuário desativado |
 | 401 | `NAO_AUTENTICADO` | sem token, token inválido ou expirado, ou usuário desativado depois do login |
 | 403 | `ACESSO_NEGADO` | perfil sem permissão, ou tentativa de alterar a conta de outra pessoa |
@@ -54,6 +55,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /lotes?processoId=&usuarioId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais, combináveis (`inicio`/`fim` em ISO 8601 com fuso); `usuarioId` (quem registrou) vale para gestor e administrador, e para o operador é ignorado: ele continua vendo só os próprios (issue #107) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
 | `POST /lotes` | autenticado, inclusive o sensor | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
+| `POST /telemetria` | autenticado, inclusive o sensor | `{processoId, vazaoLitros}` (`processoId` ≥ 1; `vazaoLitros` de 0 a 10000, até 2 casas decimais) | `202` com a leitura aceita; campo nulo, negativo ou fora da faixa → `400 TELEMETRIA_INVALIDA` com o problema de cada campo em `campos` (issue #156, RNF04) |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |

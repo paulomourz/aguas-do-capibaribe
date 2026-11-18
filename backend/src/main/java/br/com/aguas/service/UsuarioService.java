@@ -35,6 +35,8 @@ public class UsuarioService {
     /** Limite do BCrypt: bytes além de 72 seriam ignorados. */
     private static final int MAX_BYTES_SENHA = 72;
 
+    private static final String USUARIO_NAO_ENCONTRADO = "Usuário não encontrado.";
+
     private final UsuarioRepository usuarios;
     private final PasswordEncoder senhas;
     private final AdminProperties admin;
@@ -67,7 +69,7 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public UsuarioDTO buscar(Integer id) {
         return usuarios.findById(id).map(UsuarioDTO::de)
-                .orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+                .orElseThrow(() -> ApiException.naoEncontrado(USUARIO_NAO_ENCONTRADO));
     }
 
     @Transactional
@@ -87,7 +89,7 @@ public class UsuarioService {
     @Transactional
     public UsuarioDTO atualizar(UsuarioAutenticado quem, Integer id, AtualizarUsuarioDTO dados) {
         if (!quem.id().equals(id)) throw ApiException.proibido("Você só pode alterar a própria conta.");
-        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado(USUARIO_NAO_ENCONTRADO));
 
         if (dados.nome() == null && dados.senha() == null) {
             throw ApiException.validacao("nome", "Informe o nome ou a nova senha.");
@@ -124,7 +126,7 @@ public class UsuarioService {
             throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
                     "Para trocar a sua própria senha, use a tela Configurações.", null);
         }
-        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado(USUARIO_NAO_ENCONTRADO));
         if (admin.ehAdmin(u.getLogin())) {
             throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
                     "A senha do administrador principal só pode ser trocada por ele.", null);
@@ -143,7 +145,7 @@ public class UsuarioService {
             throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
                     "Você não pode desativar ou reativar a própria conta.", null);
         }
-        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado(USUARIO_NAO_ENCONTRADO));
         if (admin.ehAdmin(u.getLogin())) {
             throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
                     "O administrador principal não pode ser desativado.", null);
@@ -161,7 +163,7 @@ public class UsuarioService {
      */
     @Transactional
     public TokenDeApiDTO rotacionarToken(UsuarioAutenticado quem, Integer id) {
-        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado("Usuário não encontrado."));
+        Usuario u = usuarios.findById(id).orElseThrow(() -> ApiException.naoEncontrado(USUARIO_NAO_ENCONTRADO));
         if (u.getPerfil() != Perfil.sensor) {
             throw new ApiException(HttpStatus.CONFLICT, "OPERACAO_NAO_PERMITIDA",
                     "Só contas de sensor usam token de API. As pessoas entram com usuário e senha.", null);

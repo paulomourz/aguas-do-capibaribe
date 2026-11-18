@@ -36,6 +36,12 @@ import br.com.aguas.security.RespostasDeSeguranca;
 @EnableConfigurationProperties({ AppProperties.class, AdminProperties.class, LimiteProperties.class })
 public class SecurityConfig {
 
+    // Perfis do Spring Security (o prefixo ROLE_ vem do ConversorJwt e do FiltroTokenDeApi).
+    private static final String ADMIN = "ADMIN";
+    private static final String GESTOR = "GESTOR";
+    private static final String OPERADOR = "OPERADOR";
+    private static final String SENSOR = "SENSOR";
+
     @Bean
     SecurityFilterChain filtros(HttpSecurity http, ConversorJwt conversor, RespostasDeSeguranca respostas,
             LimiteProperties limite, UsuarioRepository usuarios, EventosDeSeguranca eventos) throws Exception {
@@ -65,22 +71,23 @@ public class SecurityConfig {
                 // Monitoramento (issue #51): a saúde é aberta e, sem token, só diz UP ou DOWN;
                 // as métricas mostram o uso da API e ficam só com o admin.
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
-                .requestMatchers(HttpMethod.GET, "/actuator/metrics", "/actuator/metrics/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/actuator/metrics", "/actuator/metrics/*").hasRole(ADMIN)
                 .requestMatchers("/actuator/**").denyAll()
                 // O gestor só lê a lista: o histórico mostra quem registrou cada lote.
-                .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMIN", "GESTOR")
-                .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/ativo").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/senha").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/usuarios/*/token/rotacao").hasRole("ADMIN")
-                .requestMatchers("/auditoria/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/processos").hasAnyRole("ADMIN", "GESTOR")
-                .requestMatchers(HttpMethod.PUT, "/processos/*").hasAnyRole("ADMIN", "GESTOR")
-                .requestMatchers("/alertas/**", "/relatorios/**").hasAnyRole("ADMIN", "GESTOR")
-                // O sensor só faz o que o envio precisa: consultar os processos e registrar lotes.
-                .requestMatchers(HttpMethod.GET, "/processos").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
-                .requestMatchers(HttpMethod.POST, "/lotes").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
-                .anyRequest().hasAnyRole("ADMIN", "GESTOR", "OPERADOR"))
+                .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole(ADMIN, GESTOR)
+                .requestMatchers(HttpMethod.POST, "/usuarios").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/ativo").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.PATCH, "/usuarios/*/senha").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.POST, "/usuarios/*/token/rotacao").hasRole(ADMIN)
+                .requestMatchers("/auditoria/**").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.POST, "/processos").hasAnyRole(ADMIN, GESTOR)
+                .requestMatchers(HttpMethod.PUT, "/processos/*").hasAnyRole(ADMIN, GESTOR)
+                .requestMatchers("/alertas/**", "/relatorios/**").hasAnyRole(ADMIN, GESTOR)
+                // O sensor só faz o que o envio precisa: consultar os processos, registrar lotes e enviar telemetria.
+                .requestMatchers(HttpMethod.GET, "/processos").hasAnyRole(ADMIN, GESTOR, OPERADOR, SENSOR)
+                .requestMatchers(HttpMethod.POST, "/lotes").hasAnyRole(ADMIN, GESTOR, OPERADOR, SENSOR)
+                .requestMatchers(HttpMethod.POST, "/telemetria").hasAnyRole(ADMIN, GESTOR, OPERADOR, SENSOR)
+                .anyRequest().hasAnyRole(ADMIN, GESTOR, OPERADOR))
             .oauth2ResourceServer(o -> o
                 .bearerTokenResolver(soJwt)
                 .jwt(j -> j.jwtAuthenticationConverter(conversor))

@@ -12,6 +12,22 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   branco, exclusão de usuário, lote com data futura, alerta sem lotes ou com lote de outro processo, volta no status do
   alerta, alteração de descarte de efluentes e `TRUNCATE` nas tabelas de registros imutáveis.
 
+### Validação da telemetria do sensor
+
+- **`POST /telemetria` recusa leitura inválida com 400** (issue #156, RNF04, ERS 4.1). O `TelemetriaRequestDTO` usa Bean
+  Validation: `processoId` obrigatório e maior que zero; `vazaoLitros` obrigatória, sem valor negativo, até 10000 e com
+  no máximo 2 casas decimais. O `@Valid` no controller barra a leitura antes da regra de negócio, e o
+  `TelemetriaExceptionHandler` devolve `400 TELEMETRIA_INVALIDA` com a mensagem em português de cada campo em `campos`.
+  As outras rotas continuam com o `422 VALIDACAO` de sempre. O perfil `sensor` pode chamar a rota.
+- **Testes:** `TelemetriaControllerTest` (vazão nula, ausente, negativa, acima do máximo, processo inválido e leitura válida).
+
+### Limpeza apontada pelo SonarQube (back-end)
+
+- **6 code smells críticos e bloqueantes:** o BOM do CSV virou `\uFEFF` escrito por extenso (S2479); os métodos que tinham
+  o mesmo nome de uma constante passaram a `CsvDeLotes.linhaDeCabecalho()` e `OpenApiConfig.respostaDeErro()` (S1845);
+  os perfis repetidos no `SecurityConfig` e a mensagem "Usuário não encontrado." no `UsuarioService` viraram
+  constantes (S1192). Sem mudança de comportamento: o CSV, a documentação da API e as permissões continuam iguais.
+
 ### Envio da fila offline em segundo plano (Background Sync)
 
 - **O service worker envia os lotes guardados sozinho** quando a conexão volta, mesmo com a aba fechada ou em
