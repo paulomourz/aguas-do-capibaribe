@@ -73,6 +73,11 @@ import br.com.aguas.service.Privacidade;
         "app.limite.lotes-por-minuto=100000",
         "app.jwt.segredo=segredo-de-teste-com-mais-de-32-caracteres",
         "app.cors-origens=http://localhost:8443",
+        // Saúde do sensor (issue #158): a janela de 60 s do padrão deixaria o componente sensorWokwi em DOWN
+        // sempre que o teste da saúde rodasse mais de 1 minuto depois do lote do sensor, e um componente em DOWN
+        // faz /actuator/health responder 503. Com uma janela larga, o resultado não depende da ordem nem da
+        // duração da bateria de testes.
+        "app.sensor.janela-telemetria=24h",
         "app.admin.senha=" + IntegracaoPostgresBase.SENHA_ADMIN })
 abstract class IntegracaoPostgresBase {
 
@@ -261,7 +266,11 @@ abstract class IntegracaoPostgresBase {
         chamar(get("/actuator/health"), conta("gestor")).andExpect(jsonPath("$.components").doesNotExist());
         chamar(get("/actuator/health"), conta("admin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.components.db.status").value("UP"));
+                .andExpect(jsonPath("$.components.db.status").value("UP"))
+                // Saúde do sensor (issue #158): o componente aparece para o admin. O status não é verificado aqui
+                // porque depende de a bateria já ter registrado um lote pela conta de sensor (UP) ou não (UNKNOWN);
+                // a regra de UP, DOWN e UNKNOWN é testada em SensorWokwiHealthIndicatorTest.
+                .andExpect(jsonPath("$.components.sensorWokwi").exists());
     }
 
     @Test
