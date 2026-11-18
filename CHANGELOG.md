@@ -8,9 +8,21 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Regras de integridade no banco
 
-- **Migração V14:** o próprio banco passa a recusar login ou processo repetido com maiúsculas diferentes, nome em
+- **Migração V15:** o próprio banco passa a recusar login ou processo repetido com maiúsculas diferentes, nome em
   branco, exclusão de usuário, lote com data futura, alerta sem lotes ou com lote de outro processo, volta no status do
   alerta, alteração de descarte de efluentes e `TRUNCATE` nas tabelas de registros imutáveis.
+
+### Telemetria gravada e testes da camada web
+
+- **`POST /telemetria` grava a leitura e responde `201`** (issue #157). Nova tabela `telemetria` (migração V14:
+  processo, usuário, vazão e hora do servidor; só recebe INSERT, com índices pela data e por processo e autovacuum
+  mais frequente), entidade imutável `Telemetria` e `TelemetriaService`. A leitura fica no nome de quem enviou (o
+  sensor, pelo token); processo inexistente → `422` no campo `processoId`, como em `POST /lotes`. O `aguas_api` só lê
+  e insere (`database/seguranca-usuario-api.sql`).
+- **Testes:** `TelemetriaControllerTest` virou slice `@WebMvcTest` com o `TelemetriaService` simulado (`@MockitoBean`)
+  e sem banco: 201 (token de API do sensor e JWT), 400 (cada regra de validação; o serviço nunca é chamado) e 401
+  (sem cabeçalho, token de sensor desconhecido, conta desativada, JWT inválido). Na integração com PostgreSQL,
+  `sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada` confere a linha gravada e as restrições da V14.
 
 ### Validação da telemetria do sensor
 

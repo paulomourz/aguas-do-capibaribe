@@ -171,7 +171,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -186,7 +186,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(14);
+           assertThat(flyway.info().applied()).hasSize(15);
     }
 
     @Test
@@ -249,8 +249,52 @@ abstract class IntegracaoPostgresBase {
                 "autovacuum_analyze_scale_factor=0.02");
     }
 
+    // ---------- telemetria (issues #156 e #157) ----------
+
     @Test
-    void v14ReforcaAsRegrasDeIntegridadeNoBanco() throws Exception {
+    void sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada() throws Exception {
+        Conta adm = conta("admin");
+        Conta s = conta("sensor");
+        int p = processo(adm, "lote", "100");
+
+        JsonNode gravada = ler(enviar(post("/telemetria"), s, Map.of("processoId", p, "vazaoLitros", new BigDecimal("12.75")))
+                .andExpect(status().isCreated()));
+        assertThat(gravada.get("processoId").asInt()).isEqualTo(p);
+        assertThat(gravada.get("vazaoLitros").decimalValue()).isEqualByComparingTo("12.75");
+        assertThat(gravada.get("data").asText()).isNotBlank();
+
+        Map<String, Object> linha = jdbc.queryForMap(
+                "select processo_id, usuario_id, vazao_litros, registrado_em > now() - interval '1 minute' as recente "
+                        + "from telemetria where id = ?", gravada.get("id").asInt());
+        assertThat(linha).containsEntry("processo_id", p).containsEntry("usuario_id", s.id()).containsEntry("recente", true);
+        assertThat((BigDecimal) linha.get("vazao_litros")).isEqualByComparingTo("12.75");
+
+        // Leitura inválida não chega ao banco; processo inexistente é recusado como no lote.
+        int antes = jdbc.queryForObject("select count(*) from telemetria", Integer.class);
+        enviar(post("/telemetria"), s, Map.of("processoId", p, "vazaoLitros", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("TELEMETRIA_INVALIDA"));
+        enviar(post("/telemetria"), s, Map.of("processoId", 999999, "vazaoLitros", 5))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.processoId").exists());
+        mvc.perform(post("/telemetria").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("processoId", p, "vazaoLitros", 5))))
+                .andExpect(status().isUnauthorized());
+        assertThat(jdbc.queryForObject("select count(*) from telemetria", Integer.class)).isEqualTo(antes);
+
+        // O banco também barra vazão fora da faixa, mesmo sem passar pela API.
+        assertThatThrownBy(() -> jdbc.update("insert into telemetria (processo_id, usuario_id, vazao_litros) values (?, ?, ?)",
+                p, s.id(), new BigDecimal("-0.01"))).isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update("insert into telemetria (processo_id, usuario_id, vazao_litros) values (?, ?, ?)",
+                p, s.id(), new BigDecimal("10000.01"))).isInstanceOf(DataAccessException.class);
+
+        List<String> indices = jdbc.queryForList(
+                "select indexname from pg_indexes where schemaname = 'public' and tablename = 'telemetria'", String.class);
+        assertThat(indices).contains("ix_telemetria_processo_data", "ix_telemetria_data", "ix_telemetria_usuario");
+    }
+
+    @Test
+    void v15ReforcaAsRegrasDeIntegridadeNoBanco() throws Exception {
         Conta g = conta("gestor");
         Conta semLotes = conta("operador");
         int p = processo(g, "lote", "100");

@@ -1,4 +1,4 @@
--- V14: regras de integridade que antes dependiam só da API ou das permissões do aguas_api.
+-- V15: regras de integridade que antes dependiam só da API ou das permissões do aguas_api.
 -- Se o banco já tiver logins ou processos repetidos (diferença só de maiúsculas) ou nomes em branco, esta migração
 -- falha sem aplicar nada: corrija os dados e suba a API de novo.
 
