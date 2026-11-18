@@ -6,6 +6,28 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Saúde do sensor no Actuator
+
+- **Componente `sensorWokwi` em `GET /api/actuator/health`** (issue #158, RNF20): diz se o sensor continua enviando
+  leituras, para o operador descobrir que o dispositivo parou sem abrir o Histórico. Fica `UP` enquanto o último
+  lote de uma conta de perfil `sensor` estiver dentro da janela `SENSOR_JANELA_TELEMETRIA` (padrão `60s`, como pede a
+  issue), `DOWN` quando passar dela — com `ultimaLeitura`, `segundosSemEnviar`, `janelaSegundos`, `processoId` e
+  `loteId` nos detalhes — e `UNKNOWN` se nenhuma conta de sensor tiver registrado lote ainda. No limite exato da
+  janela fica `UP`, a mesma convenção do desvio de 8% do lote. Os detalhes continuam só para o administrador
+  (`show-details: when-authorized`), e nenhum endpoint novo do Actuator foi aberto.
+- **O projeto não tem telemetria contínua:** o sensor mede o lote no dispositivo e faz um `POST /lotes` ao encerrar,
+  então "última leitura" é o último lote da conta de sensor. A consulta usa o perfil `sensor`, e não o login
+  `sensor.wokwi`, porque é o perfil que a `SecurityConfig` autoriza a registrar lotes.
+- **Risco registrado:** um componente em `DOWN` derruba o total de `/actuator/health`, usado como checagem de saúde
+  pelo Render e pelo healthcheck do contêiner (`backend/docker/Saude.java`). Com 60 s, qualquer período sem lote
+  deixaria a API publicada como fora do ar; em produção, aumente a janela (`SENSOR_JANELA_TELEMETRIA=6h`) ou
+  desligue o componente (`SENSOR_SAUDE_ATIVO=false`). Separar a checagem da plataforma num grupo de saúde próprio
+  mexe na `SecurityConfig`, no `docker/Saude.java` e na configuração do Render, e ficou para decisão da equipe.
+- **Testes:** `SensorWokwiHealthIndicatorTest` cobre UP, DOWN, o limite exato da janela, o relógio fora de sincronia
+  e o banco sem lote de sensor, com relógio fixo. O teste de integração `saudeAbertaMostraSoOStatusSemToken` passou
+  a conferir que o componente aparece para o admin, e a bateria de integração fixa a janela em `24h` para o
+  resultado não depender da ordem dos testes.
+
 ### Correções apontadas pelo SonarQube
 
 - **Os 2 bugs da primeira análise:** em `AvisoDeAlerta`, a pausa entre as tentativas do Telegram calcula o expoente já
