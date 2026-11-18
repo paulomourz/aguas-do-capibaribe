@@ -1,4 +1,5 @@
 import { ESPERA_PADRAO_S, escopoDaRota, lerRetryAfter, registrarBloqueio, segundosRestantes } from './limite'
+import { esquecerCredencial } from './filaOffline'
 import type { ErroApiDTO } from './tipos'
 
 export const API_URL: string = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api'
@@ -9,6 +10,8 @@ export const salvarToken = (t: string) => sessionStorage.setItem(CHAVE_TOKEN, t)
 export const limparSessao = () => {
   sessionStorage.removeItem(CHAVE_TOKEN)
   sessionStorage.removeItem('ac-sessao')
+  // Logout, 401 ou sessão recusada: o token guardado para o envio em segundo plano sai junto (issue #160).
+  void esquecerCredencial()
 }
 
 export class ApiError extends Error {
@@ -36,6 +39,18 @@ type Opcoes = Omit<RequestInit, 'body'> & {
   query?: Record<string, string | number | undefined>
   /** Desiste depois deste tempo (ms) e trata como sem conexão. Na Wi-Fi instável, um fetch pode ficar pendurado por minutos. */
   timeoutMs?: number
+}
+
+/** Corpo de erro da API ({codigo, mensagem, campos}); sem corpo JSON, uma mensagem genérica com o status. */
+export async function lerErroDaResposta(resp: Response): Promise<ErroApiDTO> {
+  const generico: ErroApiDTO = { codigo: `HTTP_${resp.status}`, mensagem: 'Erro inesperado no servidor.' }
+  try {
+    const j = (await resp.json()) as Partial<ErroApiDTO>
+    if (j && typeof j.mensagem === 'string') return { codigo: j.codigo ?? generico.codigo, mensagem: j.mensagem, campos: j.campos }
+  } catch {
+    /* corpo vazio ou não JSON */
+  }
+  return generico
 }
 
 const ROTA_LOGIN = '/auth/login'
@@ -73,13 +88,7 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ti
   }
 
   if (!resp.ok) {
-    let erro: ErroApiDTO = { codigo: `HTTP_${resp.status}`, mensagem: 'Erro inesperado no servidor.' }
-    try {
-      const j = (await resp.json()) as Partial<ErroApiDTO>
-      if (j && typeof j.mensagem === 'string') erro = { codigo: j.codigo ?? erro.codigo, mensagem: j.mensagem, campos: j.campos }
-    } catch {
-      /* corpo vazio ou não JSON */
-    }
+    const erro = await lerErroDaResposta(resp)
     if (resp.status === 429) {
       // Sem o cabeçalho (ou com CORS escondendo-o), espera a janela inteira do limite.
       const segundos = lerRetryAfter(resp.headers.get('Retry-After')) ?? ESPERA_PADRAO_S

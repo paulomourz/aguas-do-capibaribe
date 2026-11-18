@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Banner, Button, Card, Modal, cx } from './ui'
-import { IconAlertTriangle, IconClock, IconCloudOff, IconInbox, IconRefresh, IconTrash } from './icons'
+import { IconAlertTriangle, IconCheckCircle, IconClock, IconCloudOff, IconInbox, IconRefresh, IconTrash } from './icons'
 import { esperadoDe, fmtDataHora, fmtL, fmtNum } from '../domain'
 import { navigate } from '../router'
 import { useApp } from '../store'
@@ -9,7 +9,8 @@ import { textoEspera, useEsperaLimite } from './LimiteRequisicoes'
 
 /*
  * O que o operador vê da fila de lotes sem conexão:
- * - IndicadorConexao: no cabeçalho, em todas as telas (sem conexão / enviando / N aguardando / N recusados).
+ * - IndicadorConexao: no cabeçalho, em todas as telas (sem conexão / enviando / N aguardando / N recusados), e o
+ *   selo "Sincronizado" por alguns segundos quando a fila chega ao servidor (inclusive pelo service worker).
  * - AvisoOffline: faixa no topo do conteúdo quando o site abriu com os dados guardados.
  * - ResultadoPendenteCard: no lugar do resultado, quando o lote acabou de ficar guardado.
  * - PainelPendentes: lista dos lotes guardados, com "Enviar agora", "Tentar de novo" e "Descartar".
@@ -28,13 +29,13 @@ function irParaPendentes() {
 }
 
 export function IndicadorConexao() {
-  const { pendentes, conectado, modoOffline, sincronizando } = useApp()
+  const { pendentes, conectado, modoOffline, sincronizando, sincronizado } = useApp()
   const espera = useEsperaLimite('lotes')
   const esperando = pendentes.filter((p) => p.estado === 'pendente').length
   const recusados = pendentes.length - esperando
   const offline = !conectado || modoOffline
 
-  if (!offline && !esperando && !recusados && !sincronizando) return null
+  if (!offline && !esperando && !recusados && !sincronizando) return sincronizado ? <SeloSincronizado /> : null
 
   let texto: string
   let tom: 'warn' | 'crit' | 'info'
@@ -79,6 +80,20 @@ export function IndicadorConexao() {
         </span>
       )}
     </button>
+  )
+}
+
+/** A fila foi toda enviada: confirmação curta no lugar do indicador. */
+function SeloSincronizado() {
+  return (
+    <output
+      aria-live="polite"
+      data-testid="selo-sincronizado"
+      className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-ok-bg px-3 text-[14px] font-semibold text-ok sm:gap-2"
+    >
+      <IconCheckCircle size={18} strokeWidth={2.2} className="shrink-0" />
+      <span className="sr-only sm:not-sr-only">Sincronizado</span>
+    </output>
   )
 }
 
