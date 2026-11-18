@@ -88,6 +88,19 @@ app:
   # Conta do sensor (sensor.wokwi). Criada na inicialização se SENSOR_SENHA estiver definida.
   sensor:
     senha: ${SENSOR_SENHA:}
+    # Saúde do sensor no Actuator (issue #158). O componente "sensorWokwi" de /api/actuator/health fica UP
+    # enquanto o último lote de uma conta de perfil sensor estiver dentro desta janela, DOWN quando passar dela
+    # e UNKNOWN se nenhuma conta de sensor tiver registrado lote ainda.
+    #
+    # ATENÇÃO: o componente entra na soma de /actuator/health, que o Render e o healthcheck do contêiner
+    # (backend/docker/Saude.java) usam para saber se a API está no ar. Em DOWN, o endpoint responde 503 e a API
+    # publicada é considerada fora do ar. Com a janela de 60 s do enunciado da issue, qualquer período sem lote
+    # (à noite, no fim de semana, ou com a simulação do Wokwi desligada) tem esse efeito. Em produção, use uma
+    # janela compatível com o turno da lavanderia (SENSOR_JANELA_TELEMETRIA=6h) ou desligue o componente
+    # (SENSOR_SAUDE_ATIVO=false).
+    janela-telemetria: ${SENSOR_JANELA_TELEMETRIA:60s}
+    saude:
+      ativo: ${SENSOR_SAUDE_ATIVO:true}
   # Aviso no Telegram quando um alerta é aberto (issue #52). Desligado sem TELEGRAM_TOKEN e TELEGRAM_CHAT_ID.
   # SITE_URL (opcional) põe o link do alerta na mensagem. Nunca versione o token.
   telegram:
