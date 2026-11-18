@@ -91,7 +91,7 @@ public class RelatorioService {
     public void escreverCsv(PeriodoCsv periodo, OutputStream saida) throws IOException {
         Writer w = new BufferedWriter(new OutputStreamWriter(saida, StandardCharsets.UTF_8), 64 * 1024);
         w.write(CsvDeLotes.BOM);
-        w.write(CsvDeLotes.cabecalho());
+        w.write(CsvDeLotes.linhaDeCabecalho());
         w.flush();
 
         // Processos e usuários são poucos: os nomes ficam em memória; dos lotes, só uma página por vez.

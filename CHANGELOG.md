@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Limpeza apontada pelo SonarQube (back-end)
+
+- **6 code smells críticos e bloqueantes:** o BOM do CSV virou `\uFEFF` escrito por extenso (S2479); os métodos que tinham
+  o mesmo nome de uma constante passaram a `CsvDeLotes.linhaDeCabecalho()` e `OpenApiConfig.respostaDeErro()` (S1845);
+  os perfis repetidos no `SecurityConfig` e a mensagem "Usuário não encontrado." no `UsuarioService` viraram
+  constantes (S1192). Sem mudança de comportamento: o CSV, a documentação da API e as permissões continuam iguais.
+
 ### Envio da fila offline em segundo plano (Background Sync)
 
 - **O service worker envia os lotes guardados sozinho** quando a conexão volta, mesmo com a aba fechada ou em

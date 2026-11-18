@@ -70,11 +70,11 @@ public class OpenApiConfig {
         return api -> api.getPaths().values().forEach(caminho -> caminho.readOperations().forEach(op -> {
             boolean publica = op.getSecurity() != null && op.getSecurity().isEmpty();
             if (publica) return;
-            op.getResponses().putIfAbsent("401", erro("Sem token, token inválido/expirado ou usuário desativado."));
+            op.getResponses().putIfAbsent("401", respostaDeErro("Sem token, token inválido/expirado ou usuário desativado."));
         }));
     }
 
-    static ApiResponse erro(String descricao) {
+    static ApiResponse respostaDeErro(String descricao) {
         return new ApiResponse().description(descricao).content(new Content().addMediaType("application/json",
                 new MediaType().schema(new Schema<>().$ref("#/components/schemas/" + ERRO))));
     }
