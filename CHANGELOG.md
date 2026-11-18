@@ -25,6 +25,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   `src/services/__testes__/sw.test.ts`, `src/components/__testes__/seloSincronizado.test.ts` e
   `e2e/backgroundSync.spec.ts`, que fecha a aba, devolve a rede e dispara o `sync` pelo DevTools Protocol.
 
+### Correções apontadas pelo SonarQube
+
+- **Os 2 bugs da primeira análise:** em `AvisoDeAlerta`, a pausa entre as tentativas do Telegram calcula o expoente já
+  em `double` (regra S2184); em `Limitador`, o último uso de cada chave passou de `long[]` para `AtomicLong`, o que
+  tira o array do `record` (regra S6218) e deixa a atualização segura com várias requisições ao mesmo tempo. Testes do
+  limite, do aviso e do reenvio passando.
+
 ### Relatório em planilha Excel (.xlsx)
 
 - **Botão "Exportar para Excel (.xlsx)"** na tela de Relatórios (issue #159, RF18), ao lado do PDF. Baixa
