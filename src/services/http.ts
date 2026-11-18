@@ -4,6 +4,13 @@ import type { ErroApiDTO } from './tipos'
 
 export const API_URL: string = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api'
 
+/** Tira as barras do fim da URL base (sem regex: `/\/+$/` tem backtracking quadrático, Sonar S8786). */
+export function semBarraNoFim(url: string): string {
+  let fim = url.length
+  while (fim > 0 && url[fim - 1] === '/') fim--
+  return url.slice(0, fim)
+}
+
 export const CHAVE_TOKEN = 'ac-token'
 export const obterToken = () => sessionStorage.getItem(CHAVE_TOKEN)
 export const salvarToken = (t: string) => sessionStorage.setItem(CHAVE_TOKEN, t)
@@ -64,7 +71,7 @@ export async function requisicao<T>(caminho: string, { corpo, query, headers, ti
   const restante = escopo ? segundosRestantes(escopo) : 0
   if (restante > 0) throw erroLimite(restante)
 
-  const url = new URL(API_URL.replace(/\/+$/, '') + caminho, window.location.origin)
+  const url = new URL(semBarraNoFim(API_URL) + caminho, window.location.origin)
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v))
 
   const token = obterToken()

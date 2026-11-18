@@ -18,7 +18,7 @@ import {
   type EventoSync,
 } from '../envioSegundoPlano'
 import { _fecharBanco, apagarCredencial, esquecerCredencial, guardarCredencial, guardarPendente, lerCredencial, listarPendentes, novaChave, type LotePendente } from '../filaOffline'
-import { ApiError, limparSessao } from '../http'
+import { ApiError, limparSessao, semBarraNoFim } from '../http'
 import type { LoteDTO } from '../tipos'
 
 /*
@@ -126,6 +126,16 @@ describe('expiracaoDoToken', () => {
     expect(expiracaoDoToken('nao-e-jwt', AGORA)).toBe(AGORA + oitoHoras)
     expect(expiracaoDoToken(jwt({ sub: 'x' }), AGORA)).toBe(AGORA + oitoHoras)
     expect(expiracaoDoToken('a.%%%.c', AGORA)).toBe(AGORA + oitoHoras)
+  })
+})
+
+describe('semBarraNoFim', () => {
+  it('tira só as barras do fim', () => {
+    expect(semBarraNoFim('/api/')).toBe('/api')
+    expect(semBarraNoFim('http://x/api///')).toBe('http://x/api')
+    expect(semBarraNoFim('http://x/api')).toBe('http://x/api')
+    expect(semBarraNoFim('///')).toBe('')
+    expect(semBarraNoFim('')).toBe('')
   })
 })
 

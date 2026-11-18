@@ -1,5 +1,5 @@
 import { apagarCredencial, guardarCredencial, lerCredencial, listarPendentes, type LotePendente } from './filaOffline'
-import { API_URL, ApiError, lerErroDaResposta } from './http'
+import { API_URL, ApiError, lerErroDaResposta, semBarraNoFim } from './http'
 import { ESPERA_PADRAO_S, lerRetryAfter } from './limite'
 import { TEMPO_LIMITE_ENVIO_MS } from './lotes'
 import { sincronizarPendentes, type Enviar, type ResultadoSincronizacao } from './sincronizacao'
@@ -54,7 +54,7 @@ export function expiracaoDoToken(token: string, agora = Date.now()): number {
 
 /** POST /lotes com o token guardado, para o service worker (que não tem window nem sessionStorage). */
 export function enviarComToken(token: string, apiUrl = API_URL, origem = globalThis.location?.origin ?? 'http://localhost'): Enviar {
-  const url = new URL(apiUrl.replace(/\/+$/, '') + '/lotes', origem)
+  const url = new URL(semBarraNoFim(apiUrl) + '/lotes', origem)
   return async (p) => {
     let resp: Response
     try {
