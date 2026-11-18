@@ -34,7 +34,7 @@ public class SaudeDoSensorForaDaRaiz implements HealthEndpointGroupsPostProcesso
         return HealthEndpointGroups.of(new SemSensor(grupos.getPrimary()), nomeados);
     }
 
-    /** O grupo principal sem o sensorWokwi; todo o resto (detalhes, papéis, status HTTP) continua igual. */
+    /** O grupo principal sem o sensorWokwi; o resto (detalhes, papéis, status HTTP) continua igual. */
     record SemSensor(HealthEndpointGroup principal) implements HealthEndpointGroup {
 
         @Override
