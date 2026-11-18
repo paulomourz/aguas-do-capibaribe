@@ -50,10 +50,12 @@ react(),
 })
 
 /**
- * PWA: o service worker guarda a casca do site (HTML, JS, CSS, ícones) para ele abrir mesmo com a Wi-Fi
- * da lavanderia fora. Os DADOS não passam pelo cache do service worker: a API é sempre rede
- * (navigateFallbackDenylist + nenhum runtimeCaching) e os lotes sem conexão vão para o IndexedDB
- * (src/services/filaOffline.ts), que o próprio site reenvia quando a conexão volta.
+ * PWA: o service worker (src/sw.ts) guarda a casca do site (HTML, JS, CSS, ícones) para ele abrir mesmo com
+ * a Wi-Fi da lavanderia fora. Os DADOS não passam pelo cache do service worker: a API é sempre rede e os lotes
+ * sem conexão vão para o IndexedDB (src/services/filaOffline.ts). O site reenvia a fila quando a conexão
+ * volta e, com a aba fechada, o service worker faz o mesmo pela Background Sync API (issue #160).
+ *
+ * injectManifest: o sw.ts é nosso (para tratar o evento `sync`); o plugin só injeta a lista de arquivos.
  *
  * registerType 'prompt' + registro em src/main.tsx sem chamar updateSW: uma versão nova só assume
  * quando todas as abas do site forem fechadas, para nunca recarregar a página no meio de um registro.
@@ -61,6 +63,9 @@ react(),
  */
 function pwaAguas() {
   return VitePWA({
+    strategies: 'injectManifest',
+    srcDir: 'src',
+    filename: 'sw.ts',
     registerType: 'prompt',
     injectRegister: false,
     includeAssets: ['favicon.png', 'apple-touch-icon.png'],
@@ -80,13 +85,10 @@ function pwaAguas() {
         { src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
       ],
     },
-    workbox: {
+    injectManifest: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
       // O jsPDF (relatórios) passa do limite padrão de 2 MiB.
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-      navigateFallback: 'index.html',
-      navigateFallbackDenylist: [/^\/api\//],
-      cleanupOutdatedCaches: true,
     },
     devOptions: { enabled: false },
   })

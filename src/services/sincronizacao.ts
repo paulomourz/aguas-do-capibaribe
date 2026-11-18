@@ -45,7 +45,8 @@ export type ResultadoSincronizacao = {
   parouPor?: 'semConexao' | 'sessaoExpirada' | 'limite'
 }
 
-type Enviar = (p: LotePendente) => Promise<LoteDTO>
+/** Como um lote pendente vai para a API: pela página (http.ts) ou pelo service worker (envioSegundoPlano.ts). */
+export type Enviar = (p: LotePendente) => Promise<LoteDTO>
 
 const enviarPelaApi: Enviar = (p) => registrarLote({ processoId: p.processoId, pecas: p.pecas, litros: p.litros }, p.chave)
 

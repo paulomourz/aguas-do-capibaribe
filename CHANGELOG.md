@@ -6,6 +6,25 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Envio da fila offline em segundo plano (Background Sync)
+
+- **O service worker envia os lotes guardados sozinho** quando a conexão volta, mesmo com a aba fechada ou em
+  segundo plano (issue #160, RNF12). Quando sobra lote sem conexão, o site registra a tag `sync-lotes` na Background
+  Sync API; no evento `sync`, o service worker lê a fila do IndexedDB e envia pela mesma regra da página: na ordem do
+  registro, com a mesma `Idempotency-Key` (não duplica) e com a mesma trava entre abas. Sem conexão de novo, o
+  navegador repete o `sync` mais tarde.
+- **Selo "Sincronizado"** no cabeçalho por 5 segundos quando a fila chega ao servidor, pela página ou pelo service
+  worker. As abas abertas recebem o aviso do service worker por BroadcastChannel e mostram os lotes enviados.
+- **Token só enquanto houver lote esperando.** O service worker não lê o `sessionStorage`, então o token vai para o
+  IndexedDB (banco `aguas-offline` versão 2, store `credencial`) só nos navegadores com Background Sync (Chrome, Edge
+  e Android). Ele sai quando a fila esvazia, ao sair, no 401 e quando o token expira. No Firefox e no Safari nada
+  muda: a página continua enviando a fila quando está aberta.
+- **Service worker próprio** (`src/sw.ts`, estratégia `injectManifest` do vite-plugin-pwa), com o mesmo cache de
+  antes: casca do site para abrir sem conexão, API sempre pela rede.
+- **Testes:** `src/services/__testes__/envioSegundoPlano.test.ts` (envio pelo service worker, token, avisos),
+  `src/services/__testes__/sw.test.ts`, `src/components/__testes__/seloSincronizado.test.ts` e
+  `e2e/backgroundSync.spec.ts`, que fecha a aba, devolve a rede e dispara o `sync` pelo DevTools Protocol.
+
 ### Correções apontadas pelo SonarQube
 
 - **Os 2 bugs da primeira análise:** em `AvisoDeAlerta`, a pausa entre as tentativas do Telegram calcula o expoente já
