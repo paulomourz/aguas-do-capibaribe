@@ -305,7 +305,41 @@ abstract class IntegracaoPostgresBase {
         chamar(get("/actuator/health"), conta("gestor")).andExpect(jsonPath("$.components").doesNotExist());
         chamar(get("/actuator/health"), conta("admin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.components.db.status").value("UP"));
+                .andExpect(jsonPath("$.components.db.status").value("UP"))
+                // O sensor tem grupo próprio: parado, ele não pode derrubar a checagem do Render (issue #158).
+                .andExpect(jsonPath("$.components.sensorWokwi").doesNotExist());
+    }
+
+    @Test
+    void saudeDoSensorWokwiPelaUltimaTelemetriaSemAfetarARaiz() throws Exception {
+        Conta adm = conta("admin");
+        Conta op = conta("operador");
+        Conta s = conta("sensor");
+        int p = processo(adm, "lote", "100");
+
+        // Só quem acompanha a operação vê a hora das leituras.
+        mvc.perform(get("/actuator/health/sensor")).andExpect(status().isUnauthorized());
+        chamar(get("/actuator/health/sensor"), s).andExpect(status().isForbidden());
+
+        // A raiz (Render, Docker) não depende do sensor. O DOWN depois de 60 s está em SensorWokwiHealthIndicatorTest,
+        // com relógio fixo: aqui o banco é compartilhado e outro teste pode ter acabado de gravar uma leitura.
+        chamar(get("/actuator/health"), adm)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.sensorWokwi").doesNotExist());
+
+        // Given o operador consultando, When a última leitura chegou há menos de 60 s, Then UP com a hora dela.
+        String data = ler(enviar(post("/telemetria"), s, Map.of("processoId", p, "vazaoLitros", 8))
+                .andExpect(status().isCreated())).get("data").asText();
+        chamar(get("/actuator/health/sensor"), op)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components.sensorWokwi.status").value("UP"))
+                .andExpect(jsonPath("$.components.sensorWokwi.details.ultimaLeitura").value(data))
+                .andExpect(jsonPath("$.components.sensorWokwi.details.limiteSemLeituraSegundos").value(60))
+                .andExpect(jsonPath("$.components.sensorWokwi.details.linhasAtivas[?(@.processoId == " + p + ")].status")
+                        .value(org.hamcrest.Matchers.contains("UP")));
+        chamar(get("/actuator/health/sensor"), conta("gestor")).andExpect(status().isOk());
+        chamar(get("/actuator/health/sensor"), adm).andExpect(status().isOk());
     }
 
     @Test

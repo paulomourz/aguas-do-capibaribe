@@ -63,6 +63,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /auditoria/seguranca` | admin | — | `{desde, loginsAceitos, loginsRecusados, bloqueiosLogin, bloqueiosLotes, senhasTrocadas, senhasRedefinidas, bloqueios: [{rota, ip, primeiro, ultimo, tentativas}]}`; contado em memória desde `desde` (o último início da API), zera quando ela reinicia; `rota` é `login` ou `lotes`; `ip` mascarado (ex.: `200.17.33.***`, LGPD); no máximo 100 linhas em `bloqueios`, do bloqueio mais recente ao mais antigo; sem senha (issue #109) |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
+| `GET /actuator/health/sensor` | admin, gestor e operador | — | `200 {status: "UP", components: {sensorWokwi: {status, details}}}` se a última telemetria chegou há menos de 60 s; senão `503` com `DOWN` (ver [Monitoramento](#monitoramento-actuator)) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |
 
@@ -74,6 +75,13 @@ Issue #51. O Spring Boot Actuator expõe só `health` e `metrics`. Os outros end
 - **Saúde:** `GET /api/actuator/health` responde `UP` quando a API e o banco estão no ar e `503 DOWN` se o banco
   cair. É aberto para o Render e serviços de monitoramento (como o UptimeRobot) consultarem sem token. Sem token, só
   diz o status.
+- **Saúde do sensor (issue #158, RNF03):** `GET /api/actuator/health/sensor` (admin, gestor e operador) traz o
+  componente `sensorWokwi`. Ele fica `UP` se a última telemetria (`POST /telemetria`) chegou há menos de 60 s e `DOWN`
+  (HTTP 503) se passou disso ou se o sensor nunca enviou nada. Os detalhes trazem `ultimaLeitura`,
+  `segundosDesdeUltimaLeitura`, `limiteSemLeituraSegundos`, `motivo` (quando `DOWN`) e `linhasAtivas`: cada processo
+  com leitura nas últimas 24 h, com a sua última leitura e o seu status. O limite muda com `SENSOR_LIMITE_SEM_LEITURA`.
+  O sensor **não** entra no `/actuator/health` raiz (`SaudeDoSensorForaDaRaiz`): o Render e o healthcheck do Docker
+  reiniciam a API quando a raiz dá 503, e um sensor parado não é motivo para isso.
 - **Métricas (só admin):**
 
 | Métrica | O que mostra |
