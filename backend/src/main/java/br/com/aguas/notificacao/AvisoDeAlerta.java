@@ -80,7 +80,7 @@ public class AvisoDeAlerta {
 
     /** Pausa antes da tentativa n (n >= 2): a inicial antes da 2ª, o dobro antes da 3ª, e assim por diante. */
     Duration pausaAntesDaTentativa(int n) {
-        return props.esperaOuPadrao().multipliedBy((long) Math.pow(MULTIPLICADOR, n - 2));
+        return props.esperaOuPadrao().multipliedBy((long) Math.pow(MULTIPLICADOR, (double) n - 2));
     }
 
     /** Falso se a thread foi interrompida (a API está parando): não adianta tentar de novo. */
