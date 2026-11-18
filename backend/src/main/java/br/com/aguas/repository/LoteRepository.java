@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 import br.com.aguas.dto.LoteCsvDTO;
 import br.com.aguas.dto.ResumoProcessoDTO;
 import br.com.aguas.entity.Lote;
+import br.com.aguas.entity.Perfil;
 import jakarta.persistence.criteria.Predicate;
 
 public interface LoteRepository extends JpaRepository<Lote, Integer>, JpaSpecificationExecutor<Lote> {
@@ -24,6 +25,20 @@ public interface LoteRepository extends JpaRepository<Lote, Integer>, JpaSpecifi
 
     /** Os dois lotes anteriores a um lote, no mesmo processo, do mais recente ao mais antigo. */
     List<Lote> findTop2ByProcessoIdAndIdNotOrderByRegistradoEmDescIdDesc(Integer processoId, Integer id);
+
+    /**
+     * Os últimos lotes registrados por contas de um perfil, do mais recente para o mais antigo. Com
+     * {@code Limit.of(1)} devolve o último lote do perfil, usado pela saúde do sensor (issue #158).
+     * A junção é escrita no WHERE porque a entidade Lote guarda só o {@code usuario_id}, sem associação mapeada
+     * para Usuario (o lote é imutável e não carrega o usuário junto).
+     */
+    @Query("""
+            select l
+            from Lote l, Usuario u
+            where u.id = l.usuarioId and u.perfil = :perfil
+            order by l.registradoEm desc, l.id desc
+            """)
+    List<Lote> ultimosLotesDoPerfil(Perfil perfil, Limit limite);
 
     @Query("""
             select new br.com.aguas.dto.ResumoProcessoDTO(l.processoId, sum(l.litros), sum(l.esperado), count(l), sum(l.pecas))
