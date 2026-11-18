@@ -6,6 +6,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Telemetria gravada e testes da camada web
+
+- **`POST /telemetria` grava a leitura e responde `201`** (issue #157). Nova tabela `telemetria` (migração V14:
+  processo, usuário, vazão e hora do servidor; só recebe INSERT, com índices pela data e por processo e autovacuum
+  mais frequente), entidade imutável `Telemetria` e `TelemetriaService`. A leitura fica no nome de quem enviou (o
+  sensor, pelo token); processo inexistente → `422` no campo `processoId`, como em `POST /lotes`. O `aguas_api` só lê
+  e insere (`database/seguranca-usuario-api.sql`).
+- **Testes:** `TelemetriaControllerTest` virou slice `@WebMvcTest` com o `TelemetriaService` simulado (`@MockitoBean`)
+  e sem banco: 201 (token de API do sensor e JWT), 400 (cada regra de validação; o serviço nunca é chamado) e 401
+  (sem cabeçalho, token de sensor desconhecido, conta desativada, JWT inválido). Na integração com PostgreSQL,
+  `sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada` confere a linha gravada e as restrições da V14.
+
 ### Validação da telemetria do sensor
 
 - **`POST /telemetria` recusa leitura inválida com 400** (issue #156, RNF04, ERS 4.1). O `TelemetriaRequestDTO` usa Bean
