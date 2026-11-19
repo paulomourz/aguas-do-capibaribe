@@ -107,7 +107,7 @@ public class ReenvioDeAvisos {
 
         try {
             telegram.enviar(texto);
-        } catch (CallNotPermittedException e) {
+        } catch (CallNotPermittedException _) {
             // Disjuntor aberto: nenhuma chamada saiu, então não conta como tentativa nem muda o ultimo_erro.
             // A rodada para aqui; na próxima o disjuntor já deixa passar uma chamada de teste.
             log.debug("Reenvio do aviso do alerta {} adiado: disjuntor aberto.", alertaId);

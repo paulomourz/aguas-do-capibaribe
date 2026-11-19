@@ -7,6 +7,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +42,8 @@ class DisjuntorDoTelegramTest {
     final AtomicInteger requisicoes = new AtomicInteger();
     volatile int status = 500;
     volatile long atrasoMs = 0;
+    /** Liberado no fim de cada teste, para nenhuma resposta atrasada ficar presa no servidor. */
+    final CountDownLatch fimDoTeste = new CountDownLatch(1);
 
     CircuitBreaker disjuntor;
     Telegram telegram;
@@ -64,14 +68,16 @@ class DisjuntorDoTelegramTest {
 
     @AfterEach
     void derrubarTelegramDeMentira() {
+        fimDoTeste.countDown();
         servidor.stop(0);
     }
 
-    private static void dormir(long ms) {
+    /** Segura a resposta por até ms, ou até o teste acabar (o que vier antes). */
+    private void dormir(long ms) {
         if (ms <= 0) return;
         try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
+            fimDoTeste.await(ms, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }
@@ -83,7 +89,7 @@ class DisjuntorDoTelegramTest {
                 telegram.enviar("mensagem de teste");
             } catch (CallNotPermittedException e) {
                 throw e;
-            } catch (RuntimeException e) {
+            } catch (RuntimeException _) {
                 // Falha esperada do Telegram de mentira.
             }
         }
