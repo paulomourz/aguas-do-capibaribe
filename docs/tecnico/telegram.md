@@ -14,7 +14,8 @@ ele fica desligado e o resto do sistema funciona igual.
    em outra thread. O operador não espera o envio.
 3. Se o envio falhar (erro de rede, Telegram fora do ar ou recusando), a API tenta de novo: são **até 3 envios** no
    total, com uma pausa que dobra a cada vez: **1 segundo** antes do 2º envio e **2 segundos** antes do 3º
-   (`app.telegram.espera-entre-tentativas` é a primeira pausa).
+   (`app.telegram.espera-entre-tentativas` é a primeira pausa). Com o **disjuntor aberto** (seção abaixo), não há
+   nova tentativa: o aviso vai direto para o passo 4.
 4. Se os 3 falharem, o aviso é gravado como **pendente** na tabela `aviso_pendente` (migração `V10`), com o alerta, o
    número de tentativas, o último erro e a hora. O lote e o alerta continuam gravados, e o operador não percebe nada.
 5. Uma rotina da API (`ReenvioDeAvisos`) roda **a cada 5 minutos** (`app.telegram.reenvio-a-cada`) e tenta de novo os
@@ -43,6 +44,37 @@ from aviso_pendente p order by p.criado_em desc;
 ```
 
 O código fica em `backend/src/main/java/br/com/aguas/notificacao/`.
+
+## Disjuntor (circuit breaker)
+
+Com o Telegram fora do ar, cada envio ainda gastava até **15 segundos** esperando a rede (5 s para conectar e 10 s para
+a resposta), e cada aviso fazia isso 3 vezes. Com muitos alertas abrindo ao mesmo tempo, a fila de avisos entupia.
+
+O disjuntor (Resilience4j) corta esse desperdício. Ele olha as **últimas 10 chamadas** à Bot API e, a partir de **5**
+chamadas nessa conta, se **mais de 50%** tiverem falhado, ele **abre**:
+
+- enquanto está aberto, toda chamada volta **na hora**, com `CallNotPermittedException`, sem abrir conexão e sem
+  esperar tempo limite nenhum. O aviso segue direto para a fila local (`aviso_pendente`);
+- depois de **1 minuto** aberto, ele deixa passar **uma** chamada para ver se o Telegram voltou. Se der certo, fecha;
+  se falhar, abre de novo por mais 1 minuto;
+- essa espera de 1 minuto é menor que o intervalo do reenvio (5 minutos) de propósito: cada rodada de reenvio já
+  encontra o disjuntor pronto, e é ela que fecha o disjuntor quando o Telegram volta.
+
+É **porcentagem de falhas na janela**, não falhas seguidas: 6 falhas em 10 chamadas abrem; 3 em 10 não. E duas quedas
+isoladas nunca abrem o disjuntor, porque abaixo de 5 chamadas a porcentagem nem é calculada.
+
+**Respostas 4xx não contam como falha** (fora 408 e 429). Um `401` (token errado) ou `400` (id do grupo errado) é
+recusa da nossa requisição: esperar não resolve, e abrir o disjuntor só esconderia o status HTTP que diz o que
+corrigir. O aviso vira pendente do mesmo jeito. Já `429` (limite de envios) e `5xx` contam, porque aí o problema é do
+outro lado.
+
+Quando um aviso fica pendente por causa do disjuntor, `ultimo_erro` guarda `DisjuntorAberto` e `tentativas` conta 1 —
+a tentativa que o disjuntor recusou. Nas rodadas de reenvio é diferente: com o disjuntor aberto a rodada para sem
+contar tentativa, porque nenhuma chamada chegou a sair.
+
+Os valores ficam em `app.telegram.disjuntor` (`application.yml`) e o estado aparece no log a cada mudança
+(`Disjuntor do Telegram: CLOSED -> OPEN (falhas: 100%)`) e em `/api/actuator/metrics`, nas métricas
+`resilience4j.circuitbreaker.*`.
 
 ## Como criar o bot do zero
 
@@ -106,6 +138,9 @@ antecede os testes reais.
 | `Aviso do alerta N: tentativa 1 de 3 falhou (HTTP 401)` | token errado | copie o token de novo do BotFather (ou gere outro com `/revoke`) |
 | `Aviso do alerta N: tentativa 1 de 3 falhou (ResourceAccessException)` | Telegram fora do ar ou sem rede | nada: a API tenta de novo |
 | `Aviso do alerta N ficou pendente depois de 3 tentativas (...)` | as 3 tentativas falharam | nada: a rotina de reenvio tenta a cada 5 minutos |
+| `Disjuntor do Telegram: CLOSED -> OPEN (falhas: ...%)` | o Telegram caiu e passou de 50% de falhas | nada: os avisos vão para os pendentes na hora, sem travar a fila |
+| `Disjuntor do Telegram: HALF_OPEN -> CLOSED (...)` | o Telegram voltou | nada |
+| `Aviso do alerta N: disjuntor aberto, sem tentar a rede; vai direto para a fila de pendentes.` | o Telegram continua fora do ar | nada: a rotina de reenvio cuida quando o disjuntor fechar |
 | `Reenvio do aviso do alerta N falhou na tentativa 4 (...)` | o Telegram continua fora do ar ou recusando | se for `HTTP 400` ou `HTTP 401`, corrija as variáveis; senão, espere a próxima rodada |
 | `Reenvio do aviso do alerta N: não deu para montar a mensagem (...)` | falha ao ler o banco | confira o banco; a rodada seguinte tenta de novo, sem contar tentativa |
 | `Aviso pendente do alerta N enviado ao Telegram na tentativa 4.` | o aviso atrasado chegou | nada |

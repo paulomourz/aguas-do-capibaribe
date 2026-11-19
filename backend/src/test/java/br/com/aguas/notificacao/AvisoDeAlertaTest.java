@@ -25,6 +25,8 @@ import org.springframework.web.client.RestClient;
 
 import br.com.aguas.entity.AvisoPendente;
 import br.com.aguas.repository.AvisoPendenteRepository;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 
 /** Aviso de alerta no Telegram: mensagem, novas tentativas e aviso pendente. Sem banco e sem esperar de verdade. */
 class AvisoDeAlertaTest {
@@ -196,6 +198,28 @@ class AvisoDeAlertaTest {
         AvisoPendente pendente = pendenteGravado();
         assertThat(pendente.getTentativas()).isEqualTo(3);
         assertThat(pendente.getUltimoErro()).isEqualTo("ResourceAccessException");
+    }
+
+    @Test
+    void disjuntorAbertoMandaOAvisoDiretoParaOsPendentesSemRepetirESemPausa() {
+        // Telegram fora do ar e disjuntor já aberto: a chamada volta na hora, sem rede. Repetir e esperar as
+        // pausas só atrasaria o aviso, que vai direto para a fila local (a rotina de reenvio cuida dele depois).
+        when(telegram.configurado()).thenReturn(true);
+        doThrow(disjuntorAberto()).when(telegram).enviar(anyString());
+
+        aviso(null).aoAbrir(alerta);
+
+        verify(telegram, times(1)).enviar(anyString());
+        assertThat(pausas).isEmpty();
+        AvisoPendente pendente = pendenteGravado();
+        assertThat(pendente.getTentativas()).isEqualTo(1);
+        assertThat(pendente.getUltimoErro()).isEqualTo("DisjuntorAberto");
+    }
+
+    private static CallNotPermittedException disjuntorAberto() {
+        CircuitBreaker disjuntor = NotificacaoConfig.disjuntor(new DisjuntorProperties(null, null, null, null));
+        disjuntor.transitionToOpenState();
+        return CallNotPermittedException.createCallNotPermittedException(disjuntor);
     }
 
     // ---------- configuração ----------
