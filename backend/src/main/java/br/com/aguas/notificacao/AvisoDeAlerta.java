@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import br.com.aguas.entity.AvisoPendente;
 import br.com.aguas.repository.AvisoPendenteRepository;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 
 /**
  * Avisa no Telegram quando um alerta é aberto. Roda depois do commit e em outra thread: o lote já está
@@ -22,6 +23,10 @@ import br.com.aguas.repository.AvisoPendenteRepository;
  * no total, com uma pausa entre as tentativas que dobra a cada vez (1 s e depois 2 s, por padrão).
  * Se a falha persistir, o aviso é gravado como pendente em
  * aviso_pendente. Nada disso sobe para quem registrou o lote.
+ *
+ * Com o Telegram fora do ar, o disjuntor (DisjuntorProperties) abre e as novas tentativas deixam de fazer
+ * sentido: a chamada volta na hora com CallNotPermittedException, sem rede e sem tempo limite. Nesse caso o
+ * aviso vai direto para a fila de pendentes, sem repetir e sem as pausas.
  */
 @Component
 public class AvisoDeAlerta {
@@ -69,6 +74,13 @@ public class AvisoDeAlerta {
                 telegram.enviar(texto);
                 log.info("Aviso do alerta {} enviado ao Telegram na tentativa {}.", alerta.alertaId(), feitas);
                 return;
+            } catch (CallNotPermittedException e) {
+                // Disjuntor aberto: não houve chamada de rede e o Telegram continua fora do ar. Repetir agora só
+                // atrasaria o aviso pelas pausas; a rotina de reenvio tenta de novo quando o disjuntor fechar.
+                erro = descrever(e);
+                log.warn("Aviso do alerta {}: disjuntor aberto, sem tentar a rede; vai direto para a fila de pendentes.",
+                        alerta.alertaId());
+                break;
             } catch (RuntimeException e) {
                 erro = descrever(e);
             }
@@ -106,6 +118,7 @@ public class AvisoDeAlerta {
 
     /** Só o status HTTP ou o tipo do erro: a mensagem da exceção pode trazer a URL com o token. */
     static String descrever(RuntimeException e) {
+        if (e instanceof CallNotPermittedException) return "DisjuntorAberto";
         return e instanceof RestClientResponseException r ? "HTTP " + r.getStatusCode().value() : e.getClass().getSimpleName();
     }
 

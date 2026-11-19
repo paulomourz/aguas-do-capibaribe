@@ -104,6 +104,18 @@ app:
     # ficarem pendentes. Quando um chega, aviso_pendente.enviado_em recebe a hora do envio.
     reenvio-a-cada: 5m
     reenvio-limite: 24h
+    # Disjuntor (circuit breaker) das chamadas à Bot API. Olha as últimas "janela" chamadas; a partir de
+    # "minimo-chamadas" nessa conta, se "limite-falhas"% ou mais tiverem falhado, ele abre. Aberto, recusa
+    # toda chamada na hora (sem conexão e sem esperar os tempos limite de 5 s + 10 s da rede) e o aviso vai
+    # direto para aviso_pendente. Depois de "espera-aberto" ele deixa passar uma chamada para ver se o
+    # Telegram voltou; essa espera é menor que reenvio-a-cada de propósito, para a rotina de reenvio ser o
+    # teste. Respostas 4xx (token ou grupo errado) não contam como falha: só 408, 429 e 5xx, erros de rede e
+    # tempos esgotados. Estado e contagens aparecem em /api/actuator/metrics (resilience4j.circuitbreaker.*).
+    disjuntor:
+      janela: 10
+      minimo-chamadas: 5
+      limite-falhas: 50
+      espera-aberto: 1m
   # Fuso usado para definir o mês dos relatórios.
   fuso-relatorios: America/Recife
   # Versão do pom.xml (preenchida no build); aparece no Swagger.

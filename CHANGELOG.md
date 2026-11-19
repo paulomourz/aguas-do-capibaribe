@@ -6,6 +6,33 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Disjuntor nos avisos do Telegram
+
+- **Circuit breaker do Resilience4j** (`resilience4j-circuitbreaker` 2.3.0) nas chamadas à Bot API: o `Telegram`
+  passou a executar o POST dentro de um disjuntor. Ele olha as últimas 10 chamadas e, a partir de 5 nessa conta,
+  abre se 50% ou mais tiverem falhado. É porcentagem na janela, não falhas seguidas: 5 em 10 abrem, 3 em 10 não.
+- **Aberto, a chamada volta na hora:** antes, com o Telegram fora do ar, cada aviso gastava até 15 s de espera de
+  rede (5 s para conectar + 10 s de resposta) e repetia isso 3 vezes, entupindo a fila de avisos. Agora a chamada é
+  recusada localmente com `CallNotPermittedException`, sem abrir conexão, e o `AvisoDeAlerta` manda o aviso direto
+  para a fila local (`aviso_pendente`), sem repetir e sem as pausas de 1 s e 2 s. Em `ultimo_erro` fica
+  `DisjuntorAberto`.
+- **Volta sozinho:** depois de 1 minuto aberto, uma única chamada testa se o Telegram voltou. Como o reenvio dos
+  pendentes roda a cada 5 minutos, é ele que faz esse teste. Com o disjuntor aberto a rodada de reenvio para sem
+  contar tentativa, já que nenhuma chamada chegou a sair.
+- **Respostas 4xx não abrem o disjuntor** (fora 408 e 429): `401` (token errado) e `400` (grupo errado) são recusa da
+  nossa requisição, e abrir o disjuntor esconderia o status HTTP que diz o que corrigir.
+- **Configuração** em `app.telegram.disjuntor` (`janela`, `minimo-chamadas`, `limite-falhas`, `espera-aberto`).
+  O estado sai no log a cada mudança e nas métricas `resilience4j.circuitbreaker.*` de `/api/actuator/metrics`
+  (`resilience4j-micrometer`).
+- **Testes** (`DisjuntorDoTelegramTest`, 12 testes): um Telegram de mentira num `HttpServer` local conta as
+  requisições que chegam de verdade, mostrando que o disjuntor aberto não toca na rede e que a chamada recusada volta
+  em menos de 1 s mesmo com o servidor demorando 2 s para responder. Mais um teste em `AvisoDeAlertaTest` (vai direto
+  para os pendentes, sem pausa) e outro em `ReenvioDeAvisosTest` (a rodada para sem contar tentativa).
+- **Isolamento nos testes de integração:** o disjuntor é um bean único, então `IntegracaoPostgresBase` zera o
+  estado dele antes de cada teste (`CircuitBreaker.reset()`). Sem isso, as falhas que um teste provoca de propósito
+  entravam na janela do seguinte e mudavam quantas tentativas aconteciam.
+- Documentação em `docs/tecnico/telegram.md` (seção "Disjuntor" e três linhas novas na tabela de log).
+
 ### Saúde do sensor Wokwi no Actuator
 
 - **`GET /actuator/health/sensor`** (issue #158, RNF03): o `SensorWokwiHealthIndicator` (componente `sensorWokwi`)
