@@ -26,6 +26,7 @@ import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationState;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,6 +53,7 @@ import br.com.aguas.notificacao.AvisoDeAlerta;
 import br.com.aguas.notificacao.ReenvioDeAvisos;
 import br.com.aguas.notificacao.Telegram;
 import br.com.aguas.notificacao.TelegramProperties;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import br.com.aguas.repository.AlertaLoteRepository;
 import br.com.aguas.repository.AlertaRepository;
 import br.com.aguas.repository.AvisoPendenteRepository;
@@ -102,6 +104,17 @@ abstract class IntegracaoPostgresBase {
     @Autowired Flyway flyway;
     @Autowired ReenvioDeAvisos reenvio;
     @Autowired ApplicationContext contexto;
+    @Autowired CircuitBreaker disjuntorDoTelegram;
+
+    /**
+     * O disjuntor é um bean único, compartilhado por todos os testes da classe. Sem zerar, as falhas que um teste
+     * provoca de propósito (TelegramFalso.status = 500) entram na janela do seguinte e podem abrir o disjuntor no
+     * meio dele, mudando quantas tentativas acontecem. Cada teste começa com ele fechado e sem histórico.
+     */
+    @BeforeEach
+    void disjuntorFechado() {
+        disjuntorDoTelegram.reset();
+    }
 
     record Conta(int id, String login, String token) {}
 

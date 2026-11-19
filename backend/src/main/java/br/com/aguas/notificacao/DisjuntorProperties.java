@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Propriedades "app.telegram.disjuntor.*" do disjuntor (circuit breaker) dos envios ao Telegram.
  *
  * O disjuntor olha as últimas {@code janela} chamadas HTTP. Quando pelo menos {@code minimoChamadas} já
- * entraram nessa conta e mais de {@code limiteFalhas}% delas falharam, ele <b>abre</b>: durante
+ * entraram nessa conta e {@code limiteFalhas}% ou mais delas falharam, ele <b>abre</b>: durante
  * {@code esperaAberto}, toda chamada é recusada na hora, sem abrir conexão e sem esperar o tempo limite da
  * rede. Passada essa espera, ele deixa uma chamada passar para ver se o Telegram voltou (estado
  * "meio aberto"): se ela der certo, o disjuntor fecha; se falhar, abre de novo.
@@ -27,7 +27,7 @@ public record DisjuntorProperties(Integer janela, Integer minimoChamadas, Intege
     /** Abaixo disso a porcentagem não é calculada: duas falhas seguidas não podem abrir o disjuntor. */
     static final int MINIMO_CHAMADAS_PADRAO = 5;
 
-    /** Porcentagem de falhas na janela que abre o disjuntor (acima de 50%). */
+    /** Porcentagem de falhas na janela que abre o disjuntor. O Resilience4j abre com a taxa maior ou igual a ela. */
     static final int LIMITE_FALHAS_PADRAO = 50;
 
     /** Quanto tempo o disjuntor fica aberto antes de deixar passar uma chamada de teste. */

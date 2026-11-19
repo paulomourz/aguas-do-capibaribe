@@ -22,7 +22,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 /**
  * Disjuntor (circuit breaker) das chamadas à Bot API do Telegram.
  *
- * Critério: passando de 50% de falhas nas requisições HTTP, o disjuntor abre e as chamadas seguintes voltam
+ * Critério: alcançados 50% de falhas nas requisições HTTP, o disjuntor abre e as chamadas seguintes voltam
  * na hora, sem esperar o tempo limite da rede — o aviso segue para a fila local de pendentes.
  *
  * Os testes usam um Telegram de mentira num servidor local (sem rede externa e sem Spring), que conta
@@ -30,7 +30,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
  */
 class DisjuntorDoTelegramTest {
 
-    /** Janela de 10 chamadas, a partir de 5, abrindo acima de 50% de falhas (os padrões). */
+    /** Janela de 10 chamadas, a partir de 5, abrindo com 50% ou mais de falhas (os padrões). */
     static final DisjuntorProperties PADROES = new DisjuntorProperties(null, null, null, null);
 
     /** Quantas falhas seguidas bastam para a porcentagem ser calculada e passar de 50%. */
@@ -89,7 +89,7 @@ class DisjuntorDoTelegramTest {
         }
     }
 
-    // ---------- abre passando de 50% ----------
+    // ---------- abre ao alcançar 50% ----------
 
     @Test
     void comTodasAsRequisicoesFalhandoODisjuntorAbre() {
@@ -108,15 +108,32 @@ class DisjuntorDoTelegramTest {
     }
 
     @Test
-    void metadeDeFalhasNaoBastaPrecisaPassarDe50PorCento() {
-        // 5 falhas e 5 sucessos intercalados: exatamente 50%, que não passa do limite.
-        for (int i = 0; i < DisjuntorProperties.JANELA_PADRAO; i++) {
+    void exatamenteMetadeDeFalhasJaAbreODisjuntor() {
+        // O Resilience4j abre com a taxa "maior ou igual" ao limite, então 50% em 10 chamadas já abre.
+        // Os 5 sucessos vêm primeiro de propósito: assim a taxa só alcança 50% na última chamada, e dá para
+        // ver que até 44% (4 em 9) o disjuntor continua fechado.
+        status = 200;
+        enviarIgnorandoFalhas(5);
+        status = 500;
+        enviarIgnorandoFalhas(4);
+
+        assertThat(disjuntor.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+
+        enviarIgnorandoFalhas(1);
+
+        assertThat(disjuntor.getMetrics().getFailureRate()).isEqualTo(50f);
+        assertThat(disjuntor.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+    }
+
+    @Test
+    void aTaxaEAvaliadaAssimQueOMinimoDeChamadasEAlcancado() {
+        // A conta não espera a janela de 10 encher: com 3 falhas nas 5 primeiras chamadas (60%), abre ali mesmo.
+        for (int i = 0; i < DisjuntorProperties.MINIMO_CHAMADAS_PADRAO; i++) {
             status = i % 2 == 0 ? 500 : 200;
             enviarIgnorandoFalhas(1);
         }
 
-        assertThat(disjuntor.getMetrics().getFailureRate()).isEqualTo(50f);
-        assertThat(disjuntor.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+        assertThat(disjuntor.getState()).isEqualTo(CircuitBreaker.State.OPEN);
     }
 
     // ---------- aberto, recusa na hora ----------

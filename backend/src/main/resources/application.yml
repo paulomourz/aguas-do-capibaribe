@@ -105,7 +105,7 @@ app:
     reenvio-a-cada: 5m
     reenvio-limite: 24h
     # Disjuntor (circuit breaker) das chamadas à Bot API. Olha as últimas "janela" chamadas; a partir de
-    # "minimo-chamadas" nessa conta, se mais de "limite-falhas"% tiverem falhado, ele abre. Aberto, recusa
+    # "minimo-chamadas" nessa conta, se "limite-falhas"% ou mais tiverem falhado, ele abre. Aberto, recusa
     # toda chamada na hora (sem conexão e sem esperar os tempos limite de 5 s + 10 s da rede) e o aviso vai
     # direto para aviso_pendente. Depois de "espera-aberto" ele deixa passar uma chamada para ver se o
     # Telegram voltou; essa espera é menor que reenvio-a-cada de propósito, para a rotina de reenvio ser o

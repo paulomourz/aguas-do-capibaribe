@@ -78,7 +78,7 @@ public class NotificacaoConfig {
 
     private static CircuitBreakerConfig configuracao(DisjuntorProperties props) {
         return CircuitBreakerConfig.custom()
-                // Porcentagem de falhas nas últimas chamadas, não falhas seguidas: 6 de 10 abrem, 3 de 10 não.
+                // Porcentagem de falhas nas últimas chamadas, não falhas seguidas: 5 de 10 abrem, 3 de 10 não.
                 .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
                 .slidingWindowSize(props.janelaOuPadrao())
                 .minimumNumberOfCalls(props.minimoChamadasOuPadrao())

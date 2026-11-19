@@ -51,7 +51,7 @@ Com o Telegram fora do ar, cada envio ainda gastava até **15 segundos** esperan
 a resposta), e cada aviso fazia isso 3 vezes. Com muitos alertas abrindo ao mesmo tempo, a fila de avisos entupia.
 
 O disjuntor (Resilience4j) corta esse desperdício. Ele olha as **últimas 10 chamadas** à Bot API e, a partir de **5**
-chamadas nessa conta, se **mais de 50%** tiverem falhado, ele **abre**:
+chamadas nessa conta, se **50% ou mais** tiverem falhado, ele **abre**:
 
 - enquanto está aberto, toda chamada volta **na hora**, com `CallNotPermittedException`, sem abrir conexão e sem
   esperar tempo limite nenhum. O aviso segue direto para a fila local (`aviso_pendente`);
@@ -60,8 +60,10 @@ chamadas nessa conta, se **mais de 50%** tiverem falhado, ele **abre**:
 - essa espera de 1 minuto é menor que o intervalo do reenvio (5 minutos) de propósito: cada rodada de reenvio já
   encontra o disjuntor pronto, e é ela que fecha o disjuntor quando o Telegram volta.
 
-É **porcentagem de falhas na janela**, não falhas seguidas: 6 falhas em 10 chamadas abrem; 3 em 10 não. E duas quedas
-isoladas nunca abrem o disjuntor, porque abaixo de 5 chamadas a porcentagem nem é calculada.
+É **porcentagem de falhas na janela**, não falhas seguidas: 5 falhas em 10 chamadas abrem; 3 em 10 não. E duas quedas
+isoladas nunca abrem o disjuntor, porque abaixo de 5 chamadas a porcentagem nem é calculada. A conta também não
+espera a janela de 10 encher: assim que as 5 chamadas mínimas acontecem, a taxa já é avaliada — 3 falhas nas 5
+primeiras (60%) abrem ali mesmo.
 
 **Respostas 4xx não contam como falha** (fora 408 e 429). Um `401` (token errado) ou `400` (id do grupo errado) é
 recusa da nossa requisição: esperar não resolve, e abrir o disjuntor só esconderia o status HTTP que diz o que
