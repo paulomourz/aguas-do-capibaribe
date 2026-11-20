@@ -68,7 +68,8 @@ public class AvisoDeAlerta {
         String texto = texto(alerta);
         String erro = "";
         int feitas = 0;
-        while (feitas < TENTATIVAS) {
+        boolean tentarDeNovo = true;
+        while (tentarDeNovo) {
             feitas++;
             try {
                 telegram.enviar(texto);
@@ -80,12 +81,13 @@ public class AvisoDeAlerta {
                 erro = descrever(e);
                 log.warn("Aviso do alerta {}: disjuntor aberto, sem tentar a rede; vai direto para a fila de pendentes.",
                         alerta.alertaId());
-                break;
+                tentarDeNovo = false;
             } catch (RuntimeException e) {
                 erro = descrever(e);
+                log.warn("Aviso do alerta {}: tentativa {} de {} falhou ({}).", alerta.alertaId(), feitas, TENTATIVAS, erro);
+                // Para se acabaram as tentativas ou se a thread foi interrompida durante a pausa.
+                tentarDeNovo = feitas < TENTATIVAS && esperar(pausaAntesDaTentativa(feitas + 1));
             }
-            log.warn("Aviso do alerta {}: tentativa {} de {} falhou ({}).", alerta.alertaId(), feitas, TENTATIVAS, erro);
-            if (feitas < TENTATIVAS && !esperar(pausaAntesDaTentativa(feitas + 1))) break;
         }
         guardarPendente(alerta, feitas, erro);
     }
