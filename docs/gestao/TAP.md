@@ -8,7 +8,7 @@ Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuár
 novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (20/10/2026), 3.0 (05/11/2026), 3.1 (09/11/2026),
 3.2 (14/11/2026) e 3.3 (17/11/2026).
 
-> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. A versão 3.2 acompanha a versão 1.1.0 do sistema, com as entregas da sprint de 10 a 14/11/2026 (seção 11). A versão 3.3 registra o repositório público. A versão 3.4 acompanha a versão 1.2.0, a da entrega final, com as issues do parecer Week 03 (17/11/2026), e fecha a data de entrega em 23/11/2026. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
+> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. A versão 3.2 acompanha a versão 1.1.0 do sistema, com as entregas da sprint de 10 a 14/11/2026 (seção 11). A versão 3.3 registra o repositório público. A versão 3.4 acompanha a versão 1.2.0, lançada no dia da entrega, com as issues do parecer Week 03 (17/11/2026), e fecha a data de entrega em 23/11/2026. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
 
 <!-- sumario -->
 
@@ -27,7 +27,7 @@ novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (
 | Tipo de solução | Sistema web em arquitetura REST: front-end em React com TypeScript, acessado pelo navegador e instalável como aplicativo (PWA); back-end em Java com Spring Boot, que expõe uma API REST; banco de dados PostgreSQL. |
 | Endereço do sistema | Site: https://aguas-do-capibaribe.onrender.com · API: https://aguas-api-a0vq.onrender.com/api |
 | Repositório GitHub oficial | https://github.com/paulomourz/aguas-do-capibaribe (público desde 17/11/2026, fluxo GitFlow, branch padrão develop) |
-| Versão do sistema | 1.2.0, a versão da entrega final (23/11/2026); a 1.1.0 saiu em 14/11/2026 e a 1.0.0 em 02/11/2026 |
+| Versão do sistema | 1.2.0, lançada no dia da entrega (23/11/2026), com alguns detalhes finais feitos no próprio dia; a 1.1.0 saiu em 14/11/2026 e a 1.0.0 em 02/11/2026 |
 
 ## 2. Papéis no projeto
 
