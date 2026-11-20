@@ -8,9 +8,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [1.2.0] - 2026-11-23
 
-Versão lançada no dia da entrega, com as issues do parecer Week 03. Alguns detalhes ainda entram no próprio dia 23,
-antes do lançamento: limpeza do banco publicado, teste do buffer do sensor no Wokwi, conferência da publicação no
-Render e fechamento das últimas issues. O que entrou: planilha Excel, telemetria do sensor validada e gravada,
+Versão da entrega final, com as issues do parecer Week 03: planilha Excel, telemetria do sensor validada e gravada,
 saúde do sensor no Actuator, envio da fila offline em segundo plano, carregamento sem saltos, disjuntor nos avisos do
 Telegram, auditoria de efluentes e autovacuum no banco, turno industrial com 120 sensores, Quality Gate no SonarQube,
 SBOM, runbook de recuperação de desastres, contêineres sem root, acessibilidade com axe-core e documentação final.

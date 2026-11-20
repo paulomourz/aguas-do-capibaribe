@@ -97,7 +97,7 @@ Prazo final: **23/11/2026**, com a versão 1.2.0.
 | 17 a 19/11 | Issues do parecer Week 03 (#156 a #172) e correções do SonarQube | equipe |
 | 20 e 21/11 | Revisão final, correções e atualização de todos os documentos | Paulo e responsáveis de cada módulo |
 | 22/11 | Congelar funcionalidades, limpeza do banco publicado e ensaio da apresentação | equipe |
-| 23/11 | Detalhes finais (limpeza do banco publicado, teste do buffer do sensor, conferência da publicação e fechamento das issues), lançamento da versão 1.2.0 e entrega final | Paulo e equipe |
+| 23/11 | Versão 1.2.0 lançada e entrega final | Paulo e equipe |
 
 # 6. Pendências e riscos
 
