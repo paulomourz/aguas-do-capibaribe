@@ -88,7 +88,7 @@ A mesma configuração rodada duas vezes variou cerca de 15% no p95 de 100 senso
 ## Turno industrial: 120 sensores com picos de lavagem (issue #165)
 
 O teste de lotes acima manda requisições sem pausa para achar o limite. Este, em
-[`testes-carga/turno-industrial.js`](../../testes-carga/turno-industrial.js), imita um turno da fábrica (RNF02):
+[`testes-carga/turno-industrial.js`](../../testes-carga/turno-industrial.js), imita um turno da fábrica (RNF17):
 **120 sensores**, cada um mandando uma leitura a cada **2 segundos** (60 por segundo), com dois picos repentinos de
 lavagem química, em que o ritmo triplica (180 por segundo).
 

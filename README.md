@@ -249,11 +249,12 @@ mvn test
 | `ProcessoControllerTest`, `ProcessoServiceCacheTest` | não | cadastro de processos e cache da lista |
 | `AuditoriaUsuarioTest`, `AuditoriaServiceTest` | não | registro e consulta da auditoria |
 | `AdminInicialTest`, `GestorInicialTest`, `SensorInicialTest` | não | contas criadas na inicialização |
-| `AvisoDeAlertaTest` | não | mensagem do Telegram e falha no envio sem afetar o lote |
+| `AvisoDeAlertaTest`, `DisjuntorDoTelegramTest` | não | mensagem do Telegram, falha no envio sem afetar o lote e disjuntor |
+| `TelemetriaControllerTest`, `SensorWokwiHealthIndicatorTest` | não | validação da telemetria (400, 401) e saúde do sensor |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real, perfis, auditoria, Actuator e aviso no Telegram (com um servidor falso) |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 169 testes: 132 unitários e de web + 37 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
+São 221 testes: 180 unitários e de web + 41 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
@@ -261,8 +262,8 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 **Site:**
 
 ```bash
-pnpm test        # Vitest (199 testes): fila em IndexedDB, sincronização, CSV, tema, glossário, números, gauge, pegada e limites
-pnpm test:e2e    # Playwright (10 testes): modo offline, fluxo do operador, privacidade e números
+pnpm test        # Vitest (286 testes): fila em IndexedDB, sincronização e envio em segundo plano, CSV, planilha, tema, glossário, números, gauge, pegada, limites e esqueletos
+pnpm test:e2e    # Playwright (24 testes): modo offline, Background Sync, fluxo do operador e do alerta, planilha, privacidade, números, carregamento e acessibilidade (axe-core)
 ```
 
 O teste ponta a ponta (`e2e/offline.spec.ts`) derruba a conexão do navegador, registra lotes, recarrega a página
@@ -288,12 +289,13 @@ que esses checks passam. **Não faça merge com check vermelho.**
 3. **Banco:** o rollback não desfaz migração do Flyway. Se o problema veio de uma migração, corrija com uma
    migração nova (próximo número livre), nunca editando a que já rodou.
 
-[Teste de carga](docs/tecnico/teste-carga.md) (k6, 50 sensores ao mesmo tempo) e [análise de índices](docs/tecnico/desempenho-indices.md)
-(EXPLAIN ANALYZE) ficam fora da CI e são rodados à mão.
+O [teste de carga](docs/tecnico/teste-carga.md) (k6: 100 sensores ao mesmo tempo e turno industrial com 120) roda no
+workflow "Teste de carga", disparado à mão; a [análise de índices](docs/tecnico/desempenho-indices.md) (EXPLAIN
+ANALYZE) é rodada à mão.
 
 ## 📌 Status
 
-Última versão: **v1.1.0** (14/11/2026). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
+Última versão: **v1.2.0** (23/11/2026), a da entrega final. O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
@@ -302,23 +304,26 @@ que esses checks passam. **Não faça merge com check vermelho.**
 - ✅ Processos e metas
 - ✅ Registro de lote com desvio e histórico por perfil, inclusive sem conexão (PWA), e exportação em CSV
 - ✅ Alertas (3 lotes seguidos acima da meta) com status e aviso no Telegram
-- ✅ Dashboard com gráficos e relatório mensal, com download direto em PDF
-- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS, encontrando o processo pelo nome e renovando o login sozinho
+- ✅ Dashboard com gráficos e relatório mensal, com download direto em PDF e em planilha Excel (.xlsx), e esqueletos no carregamento
+- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS com token de API, encontrando o processo pelo nome; telemetria validada e gravada, e saúde do sensor no Actuator
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
-- ✅ Versionamento do banco com migrações Flyway (V1 a V13), aplicadas ao subir a API
+- ✅ Versionamento do banco com migrações Flyway (V1 a V14), aplicadas ao subir a API
 - ✅ Desempenho medido: teste de carga, índices com EXPLAIN ANALYZE e cache da lista de processos
 - ✅ Monitoramento (Actuator) e backup do banco com restauração verificada
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
 - ✅ Sistema publicado na internet, com endereço fixo e HTTPS
 - ✅ Docker Compose: banco, API e site com um comando
-- ✅ CI no GitHub Actions com testes da API, do site e do Docker; o Render só publica depois do CI
+- ✅ CI no GitHub Actions com testes da API, do site (com acessibilidade) e do Docker, vulnerabilidades, SBOM e Quality Gate no SonarQube; o Render só publica depois do CI
+- ✅ Contêineres sem root, aviso do Telegram com disjuntor e runbook de recuperação de desastres ensaiado
 
 **Limitações conhecidas**
 
-- **Senha do sensor:** é colada no projeto do Wokwi, que é público, na hora de usar, e não deve ser salva lá. A
-  conta tem o perfil sensor, que só consulta processos e registra lotes.
+- **Token do sensor:** é colado no projeto do Wokwi, que é público, na hora de usar, e não deve ser salvo lá. A
+  conta tem o perfil sensor, que só consulta processos e envia lotes e leituras, e o administrador troca o token a
+  qualquer momento.
+- **Descarte de efluentes:** a tabela já existe no banco (V12), mas a rota da API e a tela ficam para depois.
 - **Certificado do sensor:** a impressão digital vale até 20/12/2026 e precisa ser atualizada quando o Render
   renovar o certificado ([como fazer](iot/LEIA-ME.md#se-der-errado)).
 - **Limites do status:** estão na API e no site, para classificar totais e médias. Se mudarem, mude nos dois.

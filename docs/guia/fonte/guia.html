@@ -116,7 +116,7 @@
   <h1>Guia do Águas do Capibaribe</h1>
   <p class="chamada">Como o sistema funciona no dia a dia da lavanderia e como colocá-lo para rodar, do banco de dados ao sensor.</p>
   <div class="rodape">
-    <span><strong>Versão 2.2</strong> · 14 de novembro de 2026</span>
+    <span><strong>Versão 2.3</strong> · 20 de novembro de 2026</span>
     <span>Toritama · Caruaru · Santa Cruz do Capibaribe</span>
   </div>
 </section>
@@ -161,7 +161,7 @@
     <li>No sistema, o ícone de informação ao lado do nome de um processo explica o termo têxtil (estonagem, amaciamento, alvejamento, tingimento).</li>
   </ul>
 
-  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve a versão 1.1.0 do sistema, de 14 de novembro de 2026. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
+  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve a versão 1.2.0 do sistema, a da entrega final, de 23 de novembro de 2026. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
 </section>
 
 <!-- ============ 1 ============ -->
@@ -263,7 +263,7 @@
     <tr><th style="width:26%">Tela</th><th>Para que serve</th><th style="width:13%">Gestor</th><th style="width:13%">Operador</th></tr>
     <tr><td><strong>Dashboard</strong></td><td>Consumo do mês, meta, desvio geral, água por peça (pegada hídrica), alertas ativos e gráficos de meta e consumo por processo e por dia</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Alertas</strong></td><td>Alertas abertos, em análise e resolvidos; mudança de status</td><td>sim</td><td>—</td></tr>
-    <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido, com litros por peça; impressão ou PDF</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido, com litros por peça; impressão, PDF ou planilha Excel</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado, desvio e um gauge com a faixa do lote. Sem conexão, o lote fica guardado no aparelho</td><td>sim</td><td>sim</td></tr>
     <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtros por período, processo e quem registrou, e exportação em CSV</td><td>todos</td><td>os próprios</td></tr>
     <tr><td><strong>Processos e metas</strong></td><td>Cadastrar processos e ajustar metas</td><td>sim</td><td>—</td></tr>
@@ -307,7 +307,7 @@
     <li><strong>Números grandes</strong>Pode escrever os litros com ponto de milhar, como 1.590, e decimais com vírgula, como 12,5.</li>
     <li><strong>Dúvida sobre o processo?</strong>Toque no ícone de informação ao lado do nome: ele explica o que a etapa faz e por que gasta água.</li>
   </ol>
-  <div class="nota agua"><p><strong>A Wi-Fi caiu?</strong> Registre normalmente. O lote fica guardado no aparelho, aparece como pendente no topo da tela e é enviado sozinho quando a conexão volta, sem duplicar. O site também pode ser instalado como aplicativo.</p></div>
+  <div class="nota agua"><p><strong>A Wi-Fi caiu?</strong> Registre normalmente. O lote fica guardado no aparelho, aparece como pendente no topo da tela e é enviado sozinho quando a conexão volta, sem duplicar. No Chrome, no Edge e no Android, o envio acontece mesmo com a aba fechada; quando a fila chega ao servidor, o selo <strong>Sincronizado</strong> aparece no topo por alguns segundos. O site também pode ser instalado como aplicativo.</p></div>
 
   <h3>Acompanhando o mês (gestor)</h3>
   <ul>
@@ -315,7 +315,7 @@
     <li>Os gráficos mostram a meta e o consumo de cada processo no mês e o consumo de cada dia.</li>
     <li><strong>Água por peça</strong> mostra quantos litros cada peça gastou, em média, comparado com a referência de 49 a 70 L por peça da lavanderia completa.</li>
     <li>No <strong>Histórico de lotes</strong>, dá para filtrar por período, processo e quem registrou; <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa.</li>
-    <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. Mês sem lotes não gera relatório.</li>
+    <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. <strong>Exportar para Excel (.xlsx)</strong> baixa uma planilha com uma aba dos lotes e outra do resumo por processo, com fórmulas que podem ser conferidas. Mês sem lotes não gera relatório.</li>
   </ul>
 </section>
 

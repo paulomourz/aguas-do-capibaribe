@@ -2,11 +2,12 @@
 
 | Documento | Versão | PDF | Texto |
 |---|---|---|---|
-| **TAP** — Termo de Abertura do Projeto e backlog de histórias | 3.3, 17/11/2026 | [`TAP.pdf`](TAP.pdf) | [`TAP.md`](TAP.md) |
-| **ERS** — Especificação de Requisitos de Software (ISO/IEC/IEEE 29148) | 2.5, 14/11/2026 | [`ERS.pdf`](ERS.pdf) | [`ERS.md`](ERS.md) |
-| **Segurança da informação** — política, riscos e continuidade (ISO/IEC 27001) | 1.3, 17/11/2026 | [`seguranca.pdf`](seguranca.pdf) | [`seguranca.md`](seguranca.md) |
-| **Auditoria e cronograma** — auditoria nas normas e cronograma até 23/11 (Engenharia de Requisitos) | 1.1, 14/11/2026 | [`auditoria.pdf`](auditoria.pdf) | [`auditoria.md`](auditoria.md) |
-| **Ciclo de vida** — processos da concepção ao descarte (ISO/IEC 12207) | 1.0, 09/11/2026 | [`ciclo-de-vida.pdf`](ciclo-de-vida.pdf) | [`ciclo-de-vida.md`](ciclo-de-vida.md) |
+| **TAP** — Termo de Abertura do Projeto e backlog de histórias | 3.4, 20/11/2026 | [`TAP.pdf`](TAP.pdf) | [`TAP.md`](TAP.md) |
+| **ERS** — Especificação de Requisitos de Software (ISO/IEC/IEEE 29148) | 2.6, 20/11/2026 | [`ERS.pdf`](ERS.pdf) | [`ERS.md`](ERS.md) |
+| **Segurança da informação** — política, riscos e continuidade (ISO/IEC 27001) | 1.4, 20/11/2026 | [`seguranca.pdf`](seguranca.pdf) | [`seguranca.md`](seguranca.md) |
+| **Auditoria e cronograma** — auditoria nas normas e cronograma até 23/11 (Engenharia de Requisitos) | 1.2, 20/11/2026 | [`auditoria.pdf`](auditoria.pdf) | [`auditoria.md`](auditoria.md) |
+| **Ciclo de vida** — processos da concepção ao descarte (ISO/IEC 12207) | 1.1, 20/11/2026 | [`ciclo-de-vida.pdf`](ciclo-de-vida.pdf) | [`ciclo-de-vida.md`](ciclo-de-vida.md) |
+| **Avaliação heurística** — usabilidade dos fluxos de lote, gauge e alerta (heurísticas de Nielsen) | 19/11/2026 | — | [`avaliacao-heuristica-usabilidade.md`](avaliacao-heuristica-usabilidade.md) |
 
 ### Normas de documentação
 
