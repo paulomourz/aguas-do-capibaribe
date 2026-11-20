@@ -55,7 +55,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /lotes?processoId=&usuarioId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais, combináveis (`inicio`/`fim` em ISO 8601 com fuso); `usuarioId` (quem registrou) vale para gestor e administrador, e para o operador é ignorado: ele continua vendo só os próprios (issue #107) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
 | `POST /lotes` | autenticado, inclusive o sensor | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
-| `POST /telemetria` | autenticado, inclusive o sensor | `{processoId, vazaoLitros}` (`processoId` ≥ 1; `vazaoLitros` de 0 a 10000, até 2 casas decimais) | `201 {id, processoId, vazaoLitros, data}`, a leitura gravada no nome de quem enviou (`data` é a hora do servidor); processo inexistente → `422` no campo `processoId`; campo nulo, negativo ou fora da faixa → `400 TELEMETRIA_INVALIDA` com o problema de cada campo em `campos` (issues #156 e #157, RNF04) |
+| `POST /telemetria` | autenticado, inclusive o sensor | `{processoId, vazaoLitros}` (`processoId` ≥ 1; `vazaoLitros` de 0 a 10000, até 2 casas decimais) | `201 {id, processoId, vazaoLitros, data}`, a leitura gravada no nome de quem enviou (`data` é a hora do servidor); processo inexistente → `422` no campo `processoId`; campo nulo, negativo ou fora da faixa → `400 TELEMETRIA_INVALIDA` com o problema de cada campo em `campos` (issues #156 e #157, RF37) |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
@@ -75,7 +75,7 @@ Issue #51. O Spring Boot Actuator expõe só `health` e `metrics`. Os outros end
 - **Saúde:** `GET /api/actuator/health` responde `UP` quando a API e o banco estão no ar e `503 DOWN` se o banco
   cair. É aberto para o Render e serviços de monitoramento (como o UptimeRobot) consultarem sem token. Sem token, só
   diz o status.
-- **Saúde do sensor (issue #158, RNF03):** `GET /api/actuator/health/sensor` (admin, gestor e operador) traz o
+- **Saúde do sensor (issue #158, RNF20):** `GET /api/actuator/health/sensor` (admin, gestor e operador) traz o
   componente `sensorWokwi`. Ele fica `UP` se a última telemetria (`POST /telemetria`) chegou há menos de 60 s e `DOWN`
   (HTTP 503) se passou disso ou se o sensor nunca enviou nada. Os detalhes trazem `ultimaLeitura`,
   `segundosDesdeUltimaLeitura`, `limiteSemLeituraSegundos`, `motivo` (quando `DOWN`) e `linhasAtivas`: cada processo

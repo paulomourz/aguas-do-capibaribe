@@ -6,6 +6,28 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+Tudo o que está aqui entra na **versão 1.2.0, a última**, que sai na segunda-feira, 23/11/2026, com a demonstração
+incluída (roteiro e massa de dados, issue #115).
+
+### Documentação da versão 1.2.0
+
+- **ERS v2.6:** RF36 (planilha Excel, #159), RF37 (telemetria validada e gravada, #156 e #157) e RNF29 (carregamento
+  sem saltos, #161) criados; RF28 (Background Sync), RF30 (disjuntor), RNF13 (axe-core), RNF15 (números de testes),
+  RNF17 (turno com 120 sensores), RNF19 (limite por conta), RNF20 (saúde do sensor), RNF21 (runbook), RNF22
+  (autovacuum), RNF24 (Quality Gate e SBOM) e RNF28 (contêineres sem root) atualizados; tabelas `aviso_pendente`,
+  `telemetria` e `efluentes_descarte` na seção 3.5; 24 endpoints; migrações V1 a V14; data final 23/11/2026. A linha
+  do RNF28, que estava na tabela de necessidades, foi para a seção 3.7.3.
+- **Testes v1.2:** 531 testes automáticos em 20/11/2026 (180 de unidade e web e 41 de integração na API; 286 de
+  unidade e 24 de ponta a ponta no site), níveis novos (acessibilidade, análise estática, SBOM e continuidade) e casos
+  das entregas novas.
+- **TAP v3.4, auditoria v1.2, arquitetura v1.3, segurança v1.4, ciclo de vida v1.1 e guia v2.3:** entregas do parecer
+  Week 03, achados A14 a A19 da auditoria, participação de cada integrante até 20/11, riscos R15 a R17, runbook no
+  plano de continuidade e planilha e envio em segundo plano no guia. PDFs gerados de novo.
+- **Códigos de requisito corrigidos:** as issues do parecer Week 03 citavam RF18, RNF03 e RNF04, que na ERS são outros
+  requisitos; o CHANGELOG, a documentação da API e o teste de carga passaram a citar RF36, RF37, RNF17 e RNF20.
+- **Quality Gate:** o projeto usa o gate padrão do servidor (Sonar way), e não o `SENAC-PI-Quality-Gate`, como diziam
+  o CHANGELOG, o `sonar-project.properties` e o workflow.
+
 ### Disjuntor nos avisos do Telegram
 
 - **Circuit breaker do Resilience4j** (`resilience4j-circuitbreaker` 2.3.0) nas chamadas à Bot API: o `Telegram`
@@ -35,7 +57,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Saúde do sensor Wokwi no Actuator
 
-- **`GET /actuator/health/sensor`** (issue #158, RNF03): o `SensorWokwiHealthIndicator` (componente `sensorWokwi`)
+- **`GET /actuator/health/sensor`** (issue #158, RNF20): o `SensorWokwiHealthIndicator` (componente `sensorWokwi`)
   consulta a última telemetria gravada. `UP` se ela chegou há menos de 60 s, com a hora da leitura; `DOWN` (503) se
   passou disso ou se nunca houve leitura, com os segundos decorridos. Os detalhes listam cada linha de lavagem ativa
   (processo com leitura nas últimas 24 h) com a sua última leitura e o seu status. Para admin, gestor e operador; o
@@ -62,7 +84,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Validação da telemetria do sensor
 
-- **`POST /telemetria` recusa leitura inválida com 400** (issue #156, RNF04, ERS 4.1). O `TelemetriaRequestDTO` usa Bean
+- **`POST /telemetria` recusa leitura inválida com 400** (issue #156, RF37). O `TelemetriaRequestDTO` usa Bean
   Validation: `processoId` obrigatório e maior que zero; `vazaoLitros` obrigatória, sem valor negativo, até 10000 e com
   no máximo 2 casas decimais. O `@Valid` no controller barra a leitura antes da regra de negócio, e o
   `TelemetriaExceptionHandler` devolve `400 TELEMETRIA_INVALIDA` com a mensagem em português de cada campo em `campos`.
@@ -104,7 +126,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Relatório em planilha Excel (.xlsx)
 
-- **Botão "Exportar para Excel (.xlsx)"** na tela de Relatórios (issue #159, RF18), ao lado do PDF. Baixa
+- **Botão "Exportar para Excel (.xlsx)"** na tela de Relatórios (issue #159, RF36), ao lado do PDF. Baixa
   `aguas-do-capibaribe-relatorio-AAAA-MM.xlsx` do período escolhido, gerado no navegador com o ExcelJS 4.4.0, que só
   é carregado no primeiro clique (pedaço separado do site, 260 KB comprimido).
 - **Aba "Lotes"**: um lote por linha, em ordem cronológica (código, data e hora de Recife, processo, peças, meta,
@@ -156,9 +178,8 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   linhas e 80,3% das decisões cobertas; site com 13,8% nos testes de unidade (as telas são cobertas pelos testes de
   ponta a ponta, que não entram nessa conta).
 - **Workflow "Qualidade"** com o SonarQube da disciplina (`https://sonar.fchicout.dev`, `sonar-project.properties`):
-  analisa a API e o site com a cobertura e espera o Quality Gate `SENAC-PI-Quality-Gate`; se ele reprovar, o PR fica
-  bloqueado. No código novo: nenhum problema bloqueante ou crítico, notas A em manutenção, confiabilidade e
-  segurança, cobertura de pelo menos 80% e duplicação abaixo de 3%. Precisa do segredo `SONAR_TOKEN`; sem ele, o job
+  analisa a API e o site com a cobertura e espera o Quality Gate padrão do servidor (Sonar way); se ele reprovar, o PR fica
+  bloqueado. No código novo: nenhum problema novo, cobertura de pelo menos 80% e duplicação de no máximo 3%. Precisa do segredo `SONAR_TOKEN`; sem ele, o job
   só avisa.
 
 ### Acessibilidade (axe-core no CI)

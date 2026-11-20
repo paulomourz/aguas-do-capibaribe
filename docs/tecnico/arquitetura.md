@@ -7,7 +7,7 @@ os pontos de vista usados e as visões do sistema, com as decisões e a justific
 | Campo | Descrição |
 |---|---|
 | Sistema | Águas do Capibaribe — gestão de consumo de água por lote em lavanderias de jeans |
-| Versão | 1.2, 14 de novembro de 2026 (versão 1.1.0 do sistema) |
+| Versão | 1.3, 20 de novembro de 2026 (versão 1.2.0 do sistema) |
 | Requisitos | [ERS v2.0](../gestao/ERS.md) (ISO/IEC/IEEE 29148) |
 | Responsáveis | Equipe Águas do Capibaribe |
 
@@ -74,8 +74,8 @@ Regras do contexto:
 | Parte | Responsabilidade |
 |---|---|
 | `screens/` | Uma tela por função: Acesso, Dashboard, Alertas, Relatórios, Registro de lote, Histórico, Processos, Usuários, Auditoria e Configurações. |
-| `components/` | Peças reutilizáveis: interface base, gráficos, fila offline, seletor de tema e dica do glossário. |
-| `services/` | Comunicação com a API (`http.ts` e um arquivo por recurso), fila de lotes no IndexedDB (`filaOffline.ts`), sincronização, exportação em CSV, PDF e tema. |
+| `components/` | Peças reutilizáveis: interface base, gráficos, esqueletos de carregamento (`SkeletonCard`, `SkeletonChart`), fila offline, selo "Sincronizado", seletor de tema e dica do glossário. |
+| `services/` | Comunicação com a API (`http.ts` e um arquivo por recurso), fila de lotes no IndexedDB (`filaOffline.ts`), sincronização e envio em segundo plano, exportação em CSV, PDF e planilha Excel (`exportToExcel.ts`, ExcelJS carregado só no primeiro clique) e tema. |
 | `domain/` | Tipos, regras de apresentação (faixas de status), formatação, gráficos e glossário. |
 | `store.tsx`, `router.tsx` | Estado da sessão e navegação entre telas. |
 
@@ -89,12 +89,13 @@ só enquanto houver lote esperando.
 
 | Camada / pacote | Responsabilidade |
 |---|---|
-| `controller` | Recebe as requisições HTTP e devolve JSON: autenticação, usuários, processos, lotes, alertas, relatórios e auditoria. |
-| `service` | Regras de negócio: cálculo do desvio, regra de alerta (`RegraDeAlerta`), relatórios, usuários e auditoria. |
+| `controller` | Recebe as requisições HTTP e devolve JSON: autenticação, usuários, processos, lotes, telemetria, alertas, relatórios e auditoria. |
+| `service` | Regras de negócio: cálculo do desvio, regra de alerta (`RegraDeAlerta`), telemetria (`TelemetriaService`), relatórios, usuários e auditoria. |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `entity`, `dto` | Modelo de dados e formatos de entrada e saída da API. |
 | `security` | JWT, token de API do sensor (`FiltroTokenDeApi`, `TokenDeApi`), perfis, limite de requisições (`FiltroDeLimite`, `Limitador`) e respostas 401/403 no formato da API. |
-| `notificacao` | Aviso de alerta no Telegram, enviado depois do commit e em outra thread, com até 3 tentativas; o que não chega fica em `aviso_pendente` e é reenviado pelo `ReenvioDeAvisos` a cada 5 minutos. |
+| `notificacao` | Aviso de alerta no Telegram, enviado depois do commit e em outra thread, com até 3 tentativas, dentro de um disjuntor (Resilience4j); o que não chega fica em `aviso_pendente` e é reenviado pelo `ReenvioDeAvisos` a cada 5 minutos. |
+| `monitoramento` | Saúde do sensor no Actuator (`SensorWokwiHealthIndicator`), pela hora da última telemetria, fora da saúde principal (`SaudeDoSensorForaDaRaiz`). |
 | `exception` | Formato único de erro `{codigo, mensagem, campos}`. |
 | `config` | Segurança, cache, documentação (Swagger) e criação das contas iniciais. |
 
@@ -108,8 +109,11 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
   *token bucket* (Bucket4j) por IP no login e por usuário no envio de lotes. Acima do limite, a resposta é 429 com
   `Retry-After`.
 - **Avisos:** a `RegraDeAlerta` publica o evento `AlertaAberto`. O `AvisoDeAlerta` só o recebe depois do commit e
-  manda a mensagem ao Telegram em outra thread, então o registro do lote nunca espera nem depende do Telegram.
-- **IoT:** o sensor ESP32 é um cliente igual ao site e passa pelos mesmos filtros, com o perfil `sensor`. Ele se identifica por um token de API (`FiltroTokenDeApi`), cujo SHA-256 fica no banco; o administrador troca o token em Usuários. O diagrama acima é de 10/11/2026 e ainda não mostra esse filtro nem o reenvio dos avisos.
+  manda a mensagem ao Telegram em outra thread, então o registro do lote nunca espera nem depende do Telegram. A
+  chamada passa por um disjuntor: com 50% ou mais de falhas nas últimas 10 chamadas, ele abre, e o aviso vai direto
+  para `aviso_pendente`, sem esperar a rede; depois de 1 minuto, uma chamada de teste confere se o Telegram voltou.
+  Respostas 401 e 400 (token ou grupo errado) não abrem o disjuntor, para o erro continuar visível.
+- **IoT:** o sensor ESP32 é um cliente igual ao site e passa pelos mesmos filtros, com o perfil `sensor`. Ele se identifica por um token de API (`FiltroTokenDeApi`), cujo SHA-256 fica no banco; o administrador troca o token em Usuários. Além dos lotes, ele envia leituras de vazão por `POST /telemetria`, validadas antes da regra de negócio (400 `TELEMETRIA_INVALIDA`) e gravadas na tabela `telemetria`. A hora da última leitura dá a saúde do sensor em `/api/actuator/health/sensor`, que fica fora da saúde principal: um sensor parado não faz o Render reiniciar a API. O diagrama acima é de 10/11/2026 e ainda não mostra o filtro do token, o reenvio dos avisos, o disjuntor nem a telemetria.
 
 ## 5. Visão de dados
 
@@ -118,11 +122,12 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 | `usuario`, `processo`, `lote`, `alerta`, `alerta_lote`, `auditoria_usuario` | Tabelas principais (detalhe na ERS, seção 3.5). |
 | `aviso_pendente` | Avisos do Telegram que não chegaram; o `aguas_api` só lê, insere e atualiza as colunas do reenvio (V10 e V11). |
 | `efluentes_descarte` | Descarte de efluentes de cada lote (volume, pH, turbidez, % reaproveitado) para a CPRH e a ISO 14001; o `aguas_api` só lê e insere (V12). |
+| `telemetria` | Leituras de vazão do sensor (processo, usuário, vazão e hora do servidor); só recebe INSERT, com índices pela data e por processo (V14). |
 | `usuario.token_hash` | SHA-256 do token de API das contas de sensor, único (V9). |
 | `trg_lote_esperado` | O banco calcula o esperado de cada lote pela meta do momento. |
 | `trg_lote_imutavel`, `trg_auditoria_imutavel` | Lote e auditoria não podem ser alterados nem apagados, nem pela API. |
 | `v_historico_lotes`, `v_alertas` | Visões que entregam o desvio já calculado. |
-| Migrações Flyway V1 a V13 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. |
+| Migrações Flyway V1 a V14 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. A V13 deixa o autovacuum mais frequente nas tabelas que mais recebem linhas ([manutenção do banco](manutencao-banco.md)). |
 | Usuário `aguas_api` | Lê e grava, mas não pode apagar dados nem mudar o esquema. |
 
 ## 6. Visão de implantação
@@ -130,13 +135,16 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 | Ambiente | Site | API | Banco | Uso |
 |---|---|---|---|---|
 | Publicado | Render (site estático, HTTPS) | Render (contêiner Docker distroless, HTTPS, checagem em `/api/actuator/health`) | Neon (PostgreSQL 18) | Uso real e apresentação (plano A) |
-| Local com Docker | contêiner `frontend` (Nginx, porta 3000) | contêiner `backend` | contêiner `db` | Plano B sem internet e testes |
+| Local com Docker | contêiner `frontend` (Nginx sem root, porta 3000) | contêiner `backend` | contêiner `db` | Plano B sem internet e testes |
 | Desenvolvimento | Vite na porta 8443 | Spring Boot na porta 8080 | PostgreSQL local | Programar |
 | CI | build e testes no GitHub Actions | testes com PostgreSQL em contêiner | contêiner temporário | Conferir cada pull request |
 
 No Docker, o serviço `segredos` gera as senhas na primeira subida, e a API as lê como arquivos só de leitura em
 `/run/secrets/aguas`, sem variáveis de ambiente. A imagem da API é distroless (só o Java 25 e o jar, sem shell e sem
-root, cerca de 132 MB), e o healthcheck é uma classe Java que chama `/api/actuator/health`. O serviço `tunel`
+root, cerca de 132 MB), e o healthcheck é uma classe Java que chama `/api/actuator/health`. Nenhum contêiner roda
+como root: o site usa o `nginx-unprivileged` e o banco roda como `postgres`; todos têm `cap_drop: ALL`,
+`no-new-privileges` e sistema de arquivos só de leitura. A recuperação de cada ambiente depois de um desastre está no
+[runbook](runbook-disaster-recovery.md). O serviço `tunel`
 (perfil `tunel`) liga o Wokwi à API local por um túnel temporário.
 
 O pool de conexões da API com o banco tem 20 conexões por padrão, medido no teste de carga com 100 sensores
@@ -145,7 +153,8 @@ O pool de conexões da API com o banco tem 20 conexões por padrão, medido no t
 ## 7. Visão de desenvolvimento
 
 1. Cada mudança nasce numa branch `feature/`, `fix/` ou `docs/` a partir da `develop`.
-2. O pull request para a `develop` roda o CI: testes do back-end, build e testes do site e teste do Docker.
+2. O pull request para a `develop` roda o CI: testes do back-end, build e testes do site (com acessibilidade), teste do
+   Docker e vulnerabilidades das dependências; e também o SBOM e o Quality Gate do SonarQube.
 3. Com o CI verde e o merge feito, o Render publica sozinho (Auto-Deploy "After CI Checks Pass").
 4. Versões vão para a `main` por uma branch `release/`, com tag.
 
@@ -162,12 +171,14 @@ Detalhes dos processos em [ciclo de vida](../gestao/ciclo-de-vida.md) (ISO/IEC 1
 | Aviso no Telegram depois do commit, em outra thread | O registro do lote não espera nem depende do Telegram. |
 | Render e Neon nos planos grátis, com Docker como plano B | Custo zero; o Docker cobre a falta de internet ou a API dormindo. |
 | Imagem distroless e segredos como arquivos | Menos coisas para um invasor usar no contêiner, e nenhuma senha nas variáveis de ambiente. |
+| Disjuntor nas chamadas ao Telegram | Com o Telegram fora do ar, os avisos não ficam presos esperando a rede, e a fila de pendentes garante a entrega depois. |
+| Saúde do sensor fora da saúde principal | O Render reinicia a API quando a saúde principal falha; um sensor parado não é motivo para isso. |
 
 ## 9. Correspondência com os requisitos
 
 | Visão | Requisitos da ERS |
 |---|---|
-| Contexto e lógica | RF01 a RF31, RNF03, RNF08 |
+| Contexto e lógica | RF01 a RF37, RNF03, RNF08 |
 | Dados | RF09, RF10, RF27, RNF07, RNF09, RNF10, RNF22 |
-| Implantação | RNF06, RNF11, RNF14, RNF20, RNF21 |
+| Implantação | RNF06, RNF11, RNF14, RNF20, RNF21, RNF28 |
 | Desenvolvimento | RNF15, RNF16, RNF24 |
