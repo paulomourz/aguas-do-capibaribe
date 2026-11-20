@@ -6,13 +6,6 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
-## [1.2.0] - 2026-11-23
-
-Versão da entrega final, com as issues do parecer Week 03: planilha Excel, telemetria do sensor validada e gravada,
-saúde do sensor no Actuator, envio da fila offline em segundo plano, carregamento sem saltos, disjuntor nos avisos do
-Telegram, auditoria de efluentes e autovacuum no banco, turno industrial com 120 sensores, Quality Gate no SonarQube,
-SBOM, runbook de recuperação de desastres, contêineres sem root, acessibilidade com axe-core e documentação final.
-
 ### Documentação da versão 1.2.0
 
 - **ERS v2.6:** RF36 (planilha Excel, #159), RF37 (telemetria validada e gravada, #156 e #157) e RNF29 (carregamento
@@ -628,7 +621,6 @@ Primeira versão preliminar: baseline das semanas 1 a 3 do cronograma do TAP.
 
 - README, guia em PDF, Termo de Abertura v2.1 e Especificação de Requisitos de Software (IEEE 830).
 
-[1.2.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.2.0
 [1.1.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.1.0
 [1.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.0.0
 [0.1.0-alpha]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v0.1.0-alpha
