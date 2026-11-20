@@ -6,6 +6,9 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+Tudo o que está aqui entra na **versão 1.2.0, a última**, que sai na segunda-feira, 23/11/2026, com a demonstração
+incluída (roteiro e massa de dados, issue #115).
+
 ### Documentação da versão 1.2.0
 
 - **ERS v2.6:** RF36 (planilha Excel, #159), RF37 (telemetria validada e gravada, #156 e #157) e RNF29 (carregamento

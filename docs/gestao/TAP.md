@@ -8,7 +8,7 @@ Termo de Abertura do Projeto (Project Charter) e Backlog de Histórias de Usuár
 novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (20/10/2026), 3.0 (05/11/2026), 3.1 (09/11/2026),
 3.2 (14/11/2026) e 3.3 (17/11/2026).
 
-> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. A versão 3.2 acompanha a versão 1.1.0 do sistema, com as entregas da sprint de 10 a 14/11/2026 (seção 11). A versão 3.3 registra o repositório público. A versão 3.4 acompanha a versão 1.2.0, a da entrega final, com as issues do parecer Week 03 (17/11/2026), e fecha a data de entrega em 23/11/2026. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
+> **Sobre esta versão.** A versão 3.0 alinha o termo ao sistema publicado e às entregas feitas depois do parecer técnico de 27/10/2026: versão 1.0.0, hospedagem, segurança, novos perfis, modo offline, auditoria, avisos e desempenho. As mudanças estão listadas na seção 11. A versão 3.1 adota as normas ISO/IEC de documentação (seção 5.1), registra o glossário têxtil e o aviso de lote crítico no sensor e atualiza os números de testes. A versão 3.2 acompanha a versão 1.1.0 do sistema, com as entregas da sprint de 10 a 14/11/2026 (seção 11). A versão 3.3 registra o repositório público. A versão 3.4 atualiza o termo com as issues do parecer Week 03 (17/11/2026) e fecha a data de entrega em 23/11/2026, quando sai a versão 1.2.0, a última, com a demonstração incluída. Itens marcados com **[A CONFIRMAR]** dependem de decisão do orientador.
 
 <!-- sumario -->
 
@@ -27,7 +27,7 @@ novembro de 2026. Versões anteriores: 1.0 (22/09/2026), 2.0 (12/10/2026), 2.1 (
 | Tipo de solução | Sistema web em arquitetura REST: front-end em React com TypeScript, acessado pelo navegador e instalável como aplicativo (PWA); back-end em Java com Spring Boot, que expõe uma API REST; banco de dados PostgreSQL. |
 | Endereço do sistema | Site: https://aguas-do-capibaribe.onrender.com · API: https://aguas-api-a0vq.onrender.com/api |
 | Repositório GitHub oficial | https://github.com/paulomourz/aguas-do-capibaribe (público desde 17/11/2026, fluxo GitFlow, branch padrão develop) |
-| Versão do sistema | 1.2.0, a versão da entrega final (23/11/2026); a 1.1.0 saiu em 14/11/2026 e a 1.0.0 em 02/11/2026 |
+| Versão do sistema | 1.1.0, lançada em 14/11/2026 (a 1.0.0 saiu em 02/11/2026). A 1.2.0, a última, sai em 23/11/2026, com as entregas da semana de 17 a 21/11 e a demonstração incluída (issue #115). |
 
 ## 2. Papéis no projeto
 
@@ -191,7 +191,7 @@ Semanas contadas a partir de 12/10/2026, até a entrega final em 23/11/2026.
 | 4 | Dashboard e relatório mensal com PDF; integração completa do front-end. Ponto de verificação do IoT físico. | Concluída; ponto de verificação a formalizar |
 | 5 | Testes dos fluxos completos, implantação e simulação de IoT com a API publicada. Versão 1.0.0 (02/11/2026). | Concluída |
 | 6 | Itens do parecer técnico, documentação nas normas ISO/IEC, versão 1.1.0 (14/11/2026). | Concluída |
-| 7 | Auditoria e cronograma (16/11); issues do parecer Week 03 (17 a 19/11); revisão final e correções (20 e 21/11); congelamento, limpeza do banco publicado e ensaio (22/11); versão 1.2.0 e entrega final (23/11/2026). | Em andamento |
+| 7 | Auditoria e cronograma (16/11); issues do parecer Week 03 (17 a 19/11); revisão final e correções (20 e 21/11); congelamento, limpeza do banco publicado e ensaio (22/11); versão 1.2.0, a última, com a demonstração, e entrega final (23/11/2026). | Em andamento |
 
 ## 11. Alterações desde a versão 2.1
 
@@ -215,7 +215,7 @@ Semanas contadas a partir de 12/10/2026, até a entrega final em 23/11/2026.
 | IoT | Túnel temporário em HTTP. | Projeto público em HTTPS ligado à API publicada; projeto local para testes. |
 | Validação com persona | Prevista. | Roteiro, questionário SUS e kit prontos (issue #50); aplicação pendente. |
 
-Na versão 3.4 (20/11/2026), com o sistema na versão 1.2.0: relatório em planilha Excel (issue #159), telemetria do sensor validada e gravada (issues #156 e #157), saúde do sensor no monitoramento (issue #158), envio da fila offline em segundo plano (issue #160), carregamento sem saltos (issue #161), auditoria de descarte de efluentes no banco (issue #162), autovacuum das tabelas mais usadas (issue #163), turno industrial com 120 sensores (issue #165), Quality Gate no SonarQube (issue #168), SBOM da API e do site (issue #169), runbook de recuperação de desastres (issue #170), contêineres sem root (issue #171), auditoria de acessibilidade com axe-core (issue #172), disjuntor nos avisos do Telegram, teste de ponta a ponta do fluxo do alerta e avaliação heurística de usabilidade.
+Na versão 3.4 (20/11/2026), com as entregas que vão para a versão 1.2.0: relatório em planilha Excel (issue #159), telemetria do sensor validada e gravada (issues #156 e #157), saúde do sensor no monitoramento (issue #158), envio da fila offline em segundo plano (issue #160), carregamento sem saltos (issue #161), auditoria de descarte de efluentes no banco (issue #162), autovacuum das tabelas mais usadas (issue #163), turno industrial com 120 sensores (issue #165), Quality Gate no SonarQube (issue #168), SBOM da API e do site (issue #169), runbook de recuperação de desastres (issue #170), contêineres sem root (issue #171), auditoria de acessibilidade com axe-core (issue #172), disjuntor nos avisos do Telegram, teste de ponta a ponta do fluxo do alerta e avaliação heurística de usabilidade.
 
 Na versão 3.3 (17/11/2026): o repositório passou a ser público, porque os minutos do GitHub Actions do plano grátis acabaram; antes, o histórico foi varrido atrás de senhas e tokens.
 
@@ -226,7 +226,7 @@ Na versão 3.1 (09/11/2026): glossário têxtil na interface (issue #55), aviso 
 ### 11.1 Em aberto
 
 - **Bancada física (seção 6):** a equipe propõe ficar no simulado; falta a ata assinada pelo orientador. **[A CONFIRMAR]**
-- **Numeração das versões:** o parecer de 27/10/2026 orienta não declarar 1.0.0 antes da homologação; o parecer da Week 02 (10/11/2026) já cita a preparação da 1.1.0, lançada em 14/11/2026; a 1.2.0 fecha a entrega em 23/11/2026. A homologação com operador real segue como limitação registrada (issue #50). **[A CONFIRMAR]**
+- **Numeração das versões:** o parecer de 27/10/2026 orienta não declarar 1.0.0 antes da homologação; o parecer da Week 02 (10/11/2026) já cita a preparação da 1.1.0, lançada em 14/11/2026; a 1.2.0, a última, com a demonstração, sai em 23/11/2026. A homologação com operador real segue como limitação registrada (issue #50). **[A CONFIRMAR]**
 - **Regra de alerta:** hoje, cada nova sequência de 3 lotes acima da meta abre outro alerta, se a anterior foi interrompida; o parecer descreve o lote sendo anexado ao alerta já aberto. **[A CONFIRMAR]**
 - **Item adiado:** vários sensores por linha de lavagem (US-15, RF31, issue #47). O sensor é simulado no Wokwi, que roda no navegador, e cada sensor a mais precisa de outra aba do simulador aberta ao mesmo tempo; no teste de 06/11/2026, com o computador carregado, um único sensor caiu para 3% da velocidade e a conexão segura com a API falhou. A API não é o limite: aceita lotes de vários dispositivos ao mesmo tempo (teste de carga com 50 sensores). Com sensores físicos, o caminho é uma conta de perfil sensor por linha de lavagem, sem mudar o banco. Detalhes no Apêndice B da ERS.
 - **Numeração deste termo:** o parecer de 27/10/2026 cita um TAP v3.0 que não está no repositório; esta versão segue a numeração do repositório. **[A CONFIRMAR]**

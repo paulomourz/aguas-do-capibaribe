@@ -23,7 +23,7 @@ O ciclo do projeto tem cinco estágios. Cada um termina num marco verificável:
 | Concepção | Problema, solução, escopo e partes interessadas | TAP v1.0 (22/09/2026) |
 | Desenvolvimento | Requisitos, arquitetura, código e testes, em incrementos semanais | ERS v1.0 (27/10/2026) |
 | Produção e entrega | Versão publicada no Render e no Neon | Versão 1.0.0 (02/11/2026) |
-| Utilização e suporte | Uso, monitoramento, correções e melhorias pela `develop` | Itens dos pareceres; versões 1.1.0 (14/11/2026) e 1.2.0 (23/11/2026) |
+| Utilização e suporte | Uso, monitoramento, correções e melhorias pela `develop` | Itens dos pareceres; versões 1.1.0 (14/11/2026) e 1.2.0, a última, com a demonstração (23/11/2026) |
 | Descarte | Encerramento dos serviços e arquivamento | Seção 6 |
 
 # 2. Processos de acordo

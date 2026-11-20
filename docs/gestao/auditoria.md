@@ -88,7 +88,7 @@ de Abraão para Mateus Basilio.
 
 # 5. Cronograma até a entrega final
 
-Prazo final: **23/11/2026**, com a versão 1.2.0.
+Prazo final: **23/11/2026**, com a versão 1.2.0, a última, que inclui a demonstração (#115).
 
 | Data | Atividade | Responsável |
 |---|---|---|
@@ -97,14 +97,14 @@ Prazo final: **23/11/2026**, com a versão 1.2.0.
 | 17 a 19/11 | Issues do parecer Week 03 (#156 a #172) e correções do SonarQube | equipe |
 | 20 e 21/11 | Revisão final, correções e atualização de todos os documentos | Paulo e responsáveis de cada módulo |
 | 22/11 | Congelar funcionalidades, limpeza do banco publicado e ensaio da apresentação | equipe |
-| 23/11 | Versão 1.2.0 lançada e entrega final | Paulo e equipe |
+| 23/11 | Versão 1.2.0, a última, com a demonstração incluída (roteiro e massa de dados, #115), e entrega final | Paulo e equipe |
 
 # 6. Pendências e riscos
 
 | Item | Situação | Tratamento |
 |---|---|---|
 | Teste com operador real (RNF25) | Limitação registrada | Validação feita com pessoas de fora da equipe e por avaliação simulada; kit pronto para um teste real |
-| Roteiro da demonstração final (#115) | Pendente | Pedro, até a entrega |
+| Roteiro da demonstração final (#115) | Pendente | Entra na versão 1.2.0, em 23/11 |
 | Ata do orientador sobre a bancada física | Pendente | Proposta de ficar no simulado, registrada no TAP |
 | Diagrama C4 nível 3 | Desatualizado em parte | Não mostra o filtro do token, o reenvio dos avisos, o disjuntor nem a telemetria; o texto da arquitetura descreve todos |
 | API do plano grátis dorme sem uso | Risco | Abrir o site antes; Docker como plano B |

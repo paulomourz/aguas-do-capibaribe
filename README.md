@@ -295,7 +295,7 @@ ANALYZE) é rodada à mão.
 
 ## 📌 Status
 
-Última versão: **v1.2.0** (23/11/2026), a da entrega final. O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
+Última versão: **v1.1.0** (14/11/2026). A próxima, a **v1.2.0**, é a última: sai na segunda-feira, 23/11/2026, com as entregas desta semana e a demonstração incluída (roteiro e massa de dados, #115). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
