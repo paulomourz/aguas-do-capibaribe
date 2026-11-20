@@ -1,6 +1,6 @@
 name: Qualidade
 
-# Quality Gate no SonarQube da disciplina (issue #168, https://sonar.fchicout.dev, gate SENAC-PI-Quality-Gate):
+# Quality Gate no SonarQube da disciplina (issue #168, https://sonar.fchicout.dev, gate padrão Sonar way):
 # análise estática da API e do site, com a cobertura dos testes.
 # O PR fica bloqueado se o gate reprovar: no código novo, problema bloqueante ou crítico, nota abaixo de A em
 # manutenção, confiabilidade ou segurança, cobertura abaixo de 80% ou duplicação acima de 3%.
