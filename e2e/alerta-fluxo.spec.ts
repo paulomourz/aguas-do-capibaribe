@@ -26,74 +26,100 @@ const USUARIOS = {
 } as const
 type Usuario = (typeof USUARIOS)[keyof typeof USUARIOS]
 
-async function instalarApi(context: BrowserContext) {
-  const estado = {
-    lotes: [] as { id: number; processoId: number; pecas: number; litros: number; esperado: number; desvio: number; statusConformidade: string; data: string; usuarioId: number }[],
-    alertas: [] as { id: number; processoId: number; loteIds: number[]; detectado: string; status: string }[],
-    /** Mudanças de status gravadas pela API (PATCH /alertas/{id}/status). */
-    mudancas: [] as { alertaId: number; status: string; usuario: string; data: string }[],
+type LoteFalso = {
+  id: number
+  processoId: number
+  pecas: number
+  litros: number
+  esperado: number
+  desvio: number
+  statusConformidade: string
+  data: string
+  usuarioId: number
+}
+type AlertaFalso = { id: number; processoId: number; loteIds: number[]; detectado: string; status: string }
+type Estado = {
+  lotes: LoteFalso[]
+  alertas: AlertaFalso[]
+  /** Mudanças de status gravadas pela API (PATCH /alertas/{id}/status). */
+  mudancas: { alertaId: number; status: string; usuario: string; data: string }[]
+  logado: Usuario | null
+}
+
+const json = (route: Route, status: number, corpo: unknown) =>
+  route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(corpo) })
+
+function conformidade(desvio: number) {
+  if (desvio <= 0) return 'DENTRO_DA_META'
+  if (desvio <= 8) return 'ATENCAO'
+  return 'CRITICO'
+}
+
+function registrarLote(route: Route, estado: Estado, usuario: Usuario) {
+  const corpo = route.request().postDataJSON() as { processoId: number; pecas: number; litros: number }
+  const p = PROCESSOS.find((x) => x.id === corpo.processoId)
+  if (!p) return json(route, 404, { codigo: 'NAO_ENCONTRADO', mensagem: 'Processo não encontrado.' })
+  const esperado = p.unidade === 'peca' ? p.meta * corpo.pecas : p.meta
+  const desvio = Math.round(((corpo.litros - esperado) / esperado) * 10000) / 100
+  const lote = {
+    id: estado.lotes.length + 1,
+    ...corpo,
+    esperado,
+    desvio,
+    statusConformidade: conformidade(desvio),
+    data: new Date().toISOString(),
+    usuarioId: usuario.id,
   }
-  let logado: Usuario | null = null
-  const json = (route: Route, status: number, corpo: unknown) =>
-    route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(corpo) })
+  estado.lotes.push(lote)
+  // Regra de alerta da API: 3 lotes seguidos do mesmo processo acima da meta.
+  const doProcesso = estado.lotes.filter((l) => l.processoId === lote.processoId).slice(-3)
+  if (doProcesso.length === 3 && doProcesso.every((l) => l.desvio > 0)) {
+    estado.alertas.push({
+      id: estado.alertas.length + 1,
+      processoId: lote.processoId,
+      loteIds: doProcesso.map((l) => l.id),
+      detectado: new Date().toISOString(),
+      status: 'aberto',
+    })
+  }
+  return json(route, 201, lote)
+}
+
+function rotaDeAlertas(route: Route, estado: Estado, usuario: Usuario, caminho: string) {
+  if (usuario.perfil === 'operador') return json(route, 403, { codigo: 'ACESSO_NEGADO', mensagem: 'Acesso negado.' })
+  const metodo = route.request().method()
+  if (caminho === '/alertas' && metodo === 'GET') return json(route, 200, estado.alertas)
+  const mudar = /^\/alertas\/(\d+)\/status$/.exec(caminho)
+  const alerta = mudar ? estado.alertas.find((a) => a.id === Number(mudar[1])) : undefined
+  if (!alerta || metodo !== 'PATCH') return json(route, 404, { codigo: 'NAO_ENCONTRADO', mensagem: 'Alerta não encontrado.' })
+  const { status } = route.request().postDataJSON() as { status: string }
+  alerta.status = status
+  estado.mudancas.push({ alertaId: alerta.id, status, usuario: usuario.usuario, data: new Date().toISOString() })
+  return json(route, 200, alerta)
+}
+
+function entrarNaApi(route: Route, estado: Estado) {
+  const { usuario } = route.request().postDataJSON() as { usuario: keyof typeof USUARIOS }
+  estado.logado = USUARIOS[usuario]
+  return json(route, 200, { token: `token-${usuario}`, usuario: estado.logado })
+}
+
+async function instalarApi(context: BrowserContext) {
+  const estado: Estado = { lotes: [], alertas: [], mudancas: [], logado: null }
 
   await context.route('**/api/**', async (route) => {
     const req = route.request()
     const caminho = new URL(req.url()).pathname.replace(/^\/api/, '')
-    const metodo = req.method()
+    const leitura = req.method() === 'GET'
 
-    if (caminho === '/auth/login' && metodo === 'POST') {
-      const { usuario } = req.postDataJSON() as { usuario: keyof typeof USUARIOS }
-      logado = USUARIOS[usuario]
-      return json(route, 200, { token: `token-${usuario}`, usuario: logado })
-    }
-    if (caminho === '/auth/me') return json(route, 200, logado)
+    if (caminho === '/auth/login') return entrarNaApi(route, estado)
     if (caminho === '/processos') return json(route, 200, PROCESSOS)
     if (caminho === '/usuarios') return json(route, 200, Object.values(USUARIOS))
-    if (caminho === '/lotes' && metodo === 'GET') return json(route, 200, [...estado.lotes].reverse())
-
-    if (caminho === '/lotes' && metodo === 'POST') {
-      const corpo = req.postDataJSON() as { processoId: number; pecas: number; litros: number }
-      const p = PROCESSOS.find((x) => x.id === corpo.processoId)!
-      const esperado = p.unidade === 'peca' ? p.meta * corpo.pecas : p.meta
-      const desvio = Math.round(((corpo.litros - esperado) / esperado) * 10000) / 100
-      const lote = {
-        id: estado.lotes.length + 1,
-        ...corpo,
-        esperado,
-        desvio,
-        statusConformidade: desvio <= 0 ? 'DENTRO_DA_META' : desvio <= 8 ? 'ATENCAO' : 'CRITICO',
-        data: new Date().toISOString(),
-        usuarioId: logado!.id,
-      }
-      estado.lotes.push(lote)
-      // Regra de alerta da API: 3 lotes seguidos do mesmo processo acima da meta.
-      const doProcesso = estado.lotes.filter((l) => l.processoId === lote.processoId).slice(-3)
-      if (doProcesso.length === 3 && doProcesso.every((l) => l.desvio > 0)) {
-        estado.alertas.push({
-          id: estado.alertas.length + 1,
-          processoId: lote.processoId,
-          loteIds: doProcesso.map((l) => l.id),
-          detectado: new Date().toISOString(),
-          status: 'aberto',
-        })
-      }
-      return json(route, 201, lote)
-    }
-
-    if (caminho.startsWith('/alertas') && logado?.perfil === 'operador') {
-      return json(route, 403, { codigo: 'ACESSO_NEGADO', mensagem: 'Acesso negado.' })
-    }
-    if (caminho === '/alertas' && metodo === 'GET') return json(route, 200, estado.alertas)
-    const mudar = caminho.match(/^\/alertas\/(\d+)\/status$/)
-    if (mudar && metodo === 'PATCH') {
-      const alerta = estado.alertas.find((a) => a.id === Number(mudar[1]))!
-      const { status } = req.postDataJSON() as { status: string }
-      alerta.status = status
-      estado.mudancas.push({ alertaId: alerta.id, status, usuario: logado!.usuario, data: new Date().toISOString() })
-      return json(route, 200, alerta)
-    }
-
+    const usuario = estado.logado
+    if (!usuario) return json(route, 401, { codigo: 'NAO_AUTENTICADO', mensagem: 'Faça login.' })
+    if (caminho === '/auth/me') return json(route, 200, usuario)
+    if (caminho === '/lotes') return leitura ? json(route, 200, [...estado.lotes].reverse()) : registrarLote(route, estado, usuario)
+    if (caminho.startsWith('/alertas')) return rotaDeAlertas(route, estado, usuario, caminho)
     return json(route, 404, { codigo: 'NAO_ENCONTRADO', mensagem: 'Recurso não encontrado.' })
   })
 
