@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { Banner, Button, EmptyState, ErrorState, Field, LoadingBlock, Modal, TextInput } from './ui'
 import { IconDroplet, IconPlus } from './icons'
 import {
@@ -78,7 +78,7 @@ export default function DescartesDoLote({ loteId, titulo, onClose }: Readonly<{ 
     setErros((e) => ({ ...e, [campo]: undefined }))
   }
 
-  async function salvar(e: FormEvent) {
+  async function salvar(e: { preventDefault: () => void }) {
     e.preventDefault()
     setSalvando(true)
     const r = await salvarDescarte(loteId, form)

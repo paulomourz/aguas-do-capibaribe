@@ -21,7 +21,7 @@ export function validarDescarte(f: FormDescarte): { dados?: NovoDescarteDTO; err
     const texto = f[campo].trim()
     if (!texto) {
       erros[campo] = vazio
-      return NaN
+      return Number.NaN
     }
     const n = lerNumeroBR(texto)
     if (Number.isNaN(n)) erros[campo] = 'Use só números, com vírgula para as casas decimais (ex.: 7,2).'
