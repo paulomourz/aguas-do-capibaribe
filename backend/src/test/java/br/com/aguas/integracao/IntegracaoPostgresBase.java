@@ -184,7 +184,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -199,7 +199,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(14);
+           assertThat(flyway.info().applied()).hasSize(15);
     }
 
     @Test
@@ -304,6 +304,34 @@ abstract class IntegracaoPostgresBase {
         List<String> indices = jdbc.queryForList(
                 "select indexname from pg_indexes where schemaname = 'public' and tablename = 'telemetria'", String.class);
         assertThat(indices).contains("ix_telemetria_processo_data", "ix_telemetria_data", "ix_telemetria_usuario");
+    }
+
+    // ---------- visão mensal dos efluentes (issue #203) ----------
+
+    @Test
+    void visaoMensalDosEfluentesSomaOVolumePesaOReusoEContaOPhForaDaFaixa() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "100");
+        int loteId = lote(g, p, 10, "90").get("id").asInt();
+        // 1.000 L com 50% reaproveitado, 10 L com 90% e pH 9,5 (fora de 5 a 9), 90 L com 0% e pH 4,8 (fora).
+        String insere = "insert into efluentes_descarte (lote_id, data_descarte, volume_litros, ph, turbidez_ntu, "
+                + "reutilizado_percentual) values (?, timestamptz '2026-03-15 10:00-03', ?, ?, ?, ?)";
+        jdbc.update(insere, loteId, new BigDecimal("1000"), new BigDecimal("7.0"), new BigDecimal("30"), new BigDecimal("50"));
+        jdbc.update(insere, loteId, new BigDecimal("10"), new BigDecimal("9.5"), new BigDecimal("60"), new BigDecimal("90"));
+        jdbc.update(insere, loteId, new BigDecimal("90"), new BigDecimal("4.8"), new BigDecimal("0"), new BigDecimal("0"));
+
+        Map<String, Object> mes = jdbc.queryForMap(
+                "select * from v_efluentes_mensal where processo_id = ? and mes = date '2026-03-01'", p);
+        assertThat(mes).containsEntry("descartes", 3).containsEntry("fora_do_ph_de_lancamento", 2);
+        assertThat((BigDecimal) mes.get("volume_litros")).isEqualByComparingTo("1100");
+        assertThat((BigDecimal) mes.get("ph_minimo")).isEqualByComparingTo("4.8");
+        assertThat((BigDecimal) mes.get("ph_maximo")).isEqualByComparingTo("9.5");
+        // (500 + 9) ÷ 1.100 = 46,27%: o descarte grande pesa mais que a média simples dos percentuais (46,67%).
+        assertThat((BigDecimal) mes.get("volume_reaproveitado_litros")).isEqualByComparingTo("509");
+        assertThat((BigDecimal) mes.get("indice_reuso_percentual")).isEqualByComparingTo("46.27");
+
+        assertThat(jdbc.queryForList("select indexname from pg_indexes where tablename = 'efluentes_descarte'", String.class))
+                .contains("ix_efluentes_descarte_mes");
     }
 
     // ---------- descarte de efluentes (issue #201) ----------
