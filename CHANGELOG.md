@@ -6,6 +6,19 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Visão mensal de conformidade dos efluentes
+
+- **Migração V15, visão `v_efluentes_mensal`** (issue #203): por mês, no fuso de Recife, e por processo do lote,
+  traz quantos descartes houve, o volume descartado, o pH médio, mínimo e máximo, a turbidez média, o volume
+  reaproveitado e o **índice de reúso** (volume reaproveitado ÷ volume descartado, com cada descarte pesando pelo seu
+  volume), além de quantos descartes ficaram **fora da faixa de pH de lançamento da CONAMA 430/2011** (5 a 9). O
+  `aguas_api` só lê (na migração e em `database/seguranca-usuario-api.sql`).
+- **Índice `ix_efluentes_descarte_mes`** na mesma expressão do mês: com 200.000 descartes, o filtro de um mês caiu de
+  58 ms (Seq Scan) para 15 ms (Index Scan). Medição em `docs/tecnico/desempenho-indices.md`; os totais da visão foram
+  conferidos com uma consulta direta na tabela.
+- **Massa de demonstração:** um descarte para cada lote de Tingimento e Alvejamento (34 no total), 5 deles com o pH
+  acima de 9.
+
 Tudo o que está aqui entra na **versão 1.2.0, a última**, que sai na segunda-feira, 23/11/2026, com a demonstração
 incluída (roteiro e massa de dados, issue #115).
 
