@@ -14,19 +14,24 @@ Os dois planos são separados: usuários, senhas e lotes de um não aparecem no 
 
 ## Demonstração cronometrada (issue #115)
 
-Cerca de 12 minutos, mostrando o ciclo **lote → alerta → resolução → relatório**. Funciona igual nos dois planos,
+Cerca de 13 minutos, mostrando o ciclo **lote → alerta → resolução → relatório**, com o **sensor no Wokwi** como
+destaque: é o diferencial do projeto. Funciona igual nos dois planos,
 depois de preparar a área de demonstração (seção seguinte).
 
 | Tempo | Parte | O que mostrar | Entrega de | Quem fala |
 |---|---|---|---|---|
 | 0:00 a 1:00 | O problema | Lavanderias do Agreste sem controle da água por lote; a ideia do sistema (TAP, seção 3) | Pedro | Pedro |
 | 1:00 a 2:30 | Acesso | Aviso de privacidade na tela de login; o **administrador** entra, cadastra um operador em **Usuários** e mostra o registro em **Auditoria** | Paulo Moura, Matheus Andrade | Matheus Andrade |
-| 2:30 a 4:30 | Registro de lote | O **operador** novo registra um lote no celular e vê o gauge; com a conexão desligada, registra outro, religa e mostra o selo **Sincronizado** | Abraão Filipe, Matheus Andrade | Matheus Andrade |
-| 4:30 a 6:00 | Sensor | Lote enviado pelo ESP32 no Wokwi, com o token de API; o lote aparece no **Histórico** | Pedro, Paulo Moura, João Bezerra | Pedro |
-| 6:00 a 8:00 | Alertas | O alerta **aberto** da Estonagem vai para **Em análise** e depois **Resolvido**; 3 lotes acima da meta no Amaciamento abrem um alerta novo e o aviso chega ao Telegram | Abraão Filipe, Paulo Moura | Pedro |
-| 8:00 a 10:00 | Acompanhamento | **Dashboard** com os gráficos dos 20 dias e a água por peça; **Relatórios** com o PDF e a planilha Excel | Matheus Andrade, Mateus Basilio, Paulo Moura | Matheus Andrade |
-| 10:00 a 11:00 | Qualidade e operação | No GitHub: CI verde, Quality Gate do SonarQube, SBOM na release e o runbook de recuperação | Paulo Moura | Pedro |
-| 11:00 a 12:00 | Fechamento | Limitações (operador real e sensor simulado) e perguntas | equipe | Pedro e Matheus Andrade |
+| 2:30 a 4:00 | Registro de lote | O **operador** novo registra um lote no celular e vê o gauge; com a conexão desligada, registra outro, religa e mostra o selo **Sincronizado** | Abraão Filipe, Matheus Andrade | Matheus Andrade |
+| 4:00 a 7:30 | **Sensor no Wokwi (o diferencial)** | 1) O circuito: ESP32, potenciômetro no papel do sensor de vazão YF-S201, botão, LEDs e buzzer. 2) Um lote normal: o ESP32 mede, envia com o token de API e o lote aparece no **Histórico** (F5). 3) Um lote crítico, com a vazão alta: a API responde que passou da meta, o LED vermelho acende e o buzzer apita 3 vezes. 4) Sem Wi-Fi: **Q** no monitor serial derruba o sinal por 60 s; os lotes feitos nesse tempo ficam no buffer e são enviados sozinhos quando o sinal volta, sem duplicar | Pedro, Paulo Moura, João Bezerra, Mateus Basilio | Pedro |
+| 7:30 a 9:30 | Alertas | O alerta **aberto** da Estonagem vai para **Em análise** e depois **Resolvido**; 3 lotes acima da meta no Amaciamento abrem um alerta novo e o aviso chega ao Telegram | Abraão Filipe, Paulo Moura | Pedro |
+| 9:30 a 11:00 | Acompanhamento | **Dashboard** com os gráficos dos 20 dias e a água por peça; **Relatórios** com o PDF e a planilha Excel | Matheus Andrade, Mateus Basilio, Paulo Moura | Matheus Andrade |
+| 11:00 a 12:00 | Qualidade e operação | No GitHub: CI verde, Quality Gate do SonarQube, SBOM na release e o runbook de recuperação | Paulo Moura | Pedro |
+| 12:00 a 13:00 | Fechamento | Limitações (operador real e sensor simulado) e perguntas | equipe | Pedro e Matheus Andrade |
+
+**Sensor:** antes de começar, cole o token, clique em ▶ e espere `Gire o potenciômetro...`: a primeira conexão ao
+Wi-Fi e à API leva alguns segundos. Durante cada envio, deixe a aba do Wokwi na frente (o simulador desacelera em
+segundo plano). Detalhes do buffer em [`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#sem-wi-fi-as-leituras-ficam-guardadas).
 
 **Ensaio:** cronometre uma passada completa antes da apresentação e anote aqui o tempo e os ajustes.
 
