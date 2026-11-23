@@ -16,7 +16,8 @@ import {
   TextInput,
   type Col,
 } from '../components/ui'
-import { IconDownload, IconHistory, IconPlus } from '../components/icons'
+import { IconDownload, IconDroplet, IconHistory, IconPlus } from '../components/icons'
+import DescartesDoLote from '../components/DescartesDoLote'
 import {
   filtrando,
   filtrarLotes,
@@ -42,6 +43,8 @@ export default function Historico() {
   const [estado, setEstado] = useEstadoTela()
   const [filtro, setFiltro] = useState<FiltroHistorico>({})
   const [pagina, setPagina] = useState(1)
+  // Lote cujo descarte de efluentes está aberto na janela (issue #202).
+  const [efluentesDe, setEfluentesDe] = useState<Lote | null>(null)
   const { processoId } = filtro
 
   const mudar = (campo: keyof FiltroHistorico, valor: string) => {
@@ -112,6 +115,22 @@ export default function Historico() {
     { key: 'status', header: 'Status', mobile: 'badge', render: (l) => <StatusBadge status={l.status} size="sm" /> },
   ]
   if (gestor) cols.push({ key: 'por', header: 'Registrado por', render: (l) => nomeUsuario(l.usuarioId) })
+  cols.push({
+    key: 'efluentes',
+    header: 'Efluentes',
+    mobile: 'field',
+    render: (l) => (
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<IconDroplet size={16} />}
+        onClick={() => setEfluentesDe(l)}
+        aria-label={`Descartes do lote ${l.id}`}
+      >
+        Descartes
+      </Button>
+    ),
+  })
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
@@ -220,13 +239,21 @@ export default function Historico() {
           />
         ) : (
           <>
-            <DataTable rows={visiveis} cols={cols} rowKey={(l) => l.id} caption="Histórico de lotes" minWidth={gestor ? 880 : 720} />
+            <DataTable rows={visiveis} cols={cols} rowKey={(l) => l.id} caption="Histórico de lotes" minWidth={gestor ? 1000 : 840} />
             <div className="border-t border-line">
               <Pagination page={pagina_} total={filtrados.length} perPage={POR_PAGINA} onChange={setPagina} />
             </div>
           </>
         )}
       </Card>
+
+      {efluentesDe && (
+        <DescartesDoLote
+          loteId={Number(efluentesDe.id)}
+          titulo={`Lote ${efluentesDe.id} · ${nomeProcesso(efluentesDe.processoId)} · ${fmtData(efluentesDe.data)} ${fmtHora(efluentesDe.data)}`}
+          onClose={() => setEfluentesDe(null)}
+        />
+      )}
     </div>
   )
 }
