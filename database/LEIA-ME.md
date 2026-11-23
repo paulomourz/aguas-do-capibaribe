@@ -39,6 +39,7 @@ Regras que moram no próprio banco:
 | V12 | `V12__cria_tabela_efluentes_descarte.sql` | `efluentes_descarte`: volume, pH, turbidez e reaproveitamento de cada descarte do lote, só leitura e inserção para o `aguas_api` (issue #162) |
 | V13 | `V13__ajusta_autovacuum_tabelas_quentes.sql` | autovacuum e analyze mais frequentes em `lote`, `alerta_lote` e `alerta` (issue #163, ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 | V14 | `V14__cria_tabela_telemetria.sql` | `telemetria`: leituras de vazão do sensor (processo, usuário, vazão e hora do servidor), só leitura e inserção para o `aguas_api`, com índices pela data e por processo (issues #156 e #157) |
+| V15 | `V15__cria_visao_efluentes_mensal.sql` | visão `v_efluentes_mensal`: por mês (fuso de Recife) e processo, o volume descartado, o pH, a turbidez, o índice de reúso e os descartes com pH fora da faixa de lançamento da CONAMA 430 (5 a 9), com índice na expressão do mês; só leitura para o `aguas_api` (issue #203, ver [`desempenho-indices.md`](../docs/tecnico/desempenho-indices.md)) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.
@@ -159,7 +160,7 @@ dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para 
 | `seguranca-usuario-api.sql` | cria o usuário `aguas_api`, que a API usa, só com ler, inserir e atualizar (sem apagar nem mudar a estrutura) |
 | `backup.sh` / `restore.sh` | backup com verificação e retenção de 7 dias, e restore só em banco vazio (veja acima) |
 | `env.backup.example` | modelo da conexão do backup, para copiar para `.env.backup` |
-| `demonstracao/massa-demonstracao.sql` | massa de dados da demonstração: 20 dias de lotes, 2 alertas tratados e a Estonagem à espera do sensor, só num banco sem lotes (ver [roteiro](../docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração), issue #115) |
+| `demonstracao/massa-demonstracao.sql` | massa de dados da demonstração: 20 dias de lotes, 2 alertas tratados, descartes de efluentes e a Estonagem à espera do sensor, só num banco sem lotes (ver [roteiro](../docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração), issue #115) |
 | `manutencao/db-bloat-check.sql` | linhas mortas, inchaço e autovacuum de cada tabela, com o `VACUUM` sugerido (ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 
 Os testes automáticos usam bancos temporários terminados em `_teste`, criados e apagados na hora;

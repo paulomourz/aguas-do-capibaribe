@@ -63,7 +63,7 @@ GRANT SELECT, INSERT ON public.efluentes_descarte TO :"papel";
 GRANT SELECT, INSERT ON public.telemetria TO :"papel";
 
 -- 5. Views: só leitura.
-GRANT SELECT ON public.v_alertas, public.v_historico_lotes TO :"papel";
+GRANT SELECT ON public.v_alertas, public.v_historico_lotes, public.v_efluentes_mensal TO :"papel";
 
 -- 6. Sequências dos ids: nextval (USAGE) e leitura do valor atual (SELECT).
 GRANT USAGE, SELECT ON SEQUENCE public.usuario_id_seq, public.processo_id_seq,

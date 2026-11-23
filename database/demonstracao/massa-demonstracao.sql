@@ -1,5 +1,5 @@
 -- Massa de dados da demonstração (issue #115): 20 dias de lotes dos 4 processos iniciais (V3), com 2 alertas
--- já tratados, para o Dashboard, os gráficos, o Histórico, os Alertas e os Relatórios já abrirem cheios.
+-- já tratados e o descarte de efluentes dos lotes de Tingimento e Alvejamento, para o Dashboard, os gráficos, o Histórico, os Alertas e os Relatórios já abrirem cheios.
 --
 -- SÓ RODA EM BANCO SEM LOTES: no Docker recém-criado ou no banco publicado logo depois da limpeza
 -- (docs/guia/roteiro-apresentacao.md, "Começar com o histórico limpo"). Se já houver lote, para sem mudar nada.
@@ -139,6 +139,21 @@ FROM novos n
 JOIN processo p ON p.id = n.processo_id
 JOIN demo_gravado g ON g.processo = p.nome AND g.marca IS NOT NULL;
 
+-- Descarte de efluentes (issue #203): um por lote de Tingimento e de Alvejamento, os processos com banho químico,
+-- 2 horas depois do lote. Valores fixos: volume de 90% da água do lote, pH de 6,5 a 9,4 (alguns acima de 9, fora da
+-- faixa de lançamento da CONAMA 430), turbidez de 20 a 79 NTU e reaproveitamento de 0% a 44%.
+INSERT INTO efluentes_descarte (lote_id, data_descarte, volume_litros, ph, turbidez_ntu, reutilizado_percentual)
+SELECT g.id,
+       g.registrado_em + interval '2 hours',
+       round(l.litros * 0.9, 2),
+       6.5 + ((g.id * 37) % 30) / 10.0,
+       20 + (g.id * 13) % 60,
+       (g.id * 7) % 45
+FROM demo_gravado g
+JOIN lote l ON l.id = g.id
+WHERE g.processo IN ('Tingimento', 'Alvejamento')
+ORDER BY g.registrado_em;
+
 -- Conferência: lotes por processo e alertas criados.
 SELECT p.nome AS processo, count(l.id) AS lotes,
        count(*) FILTER (WHERE l.litros > l.esperado) AS acima_da_meta,
@@ -146,6 +161,8 @@ SELECT p.nome AS processo, count(l.id) AS lotes,
        max(l.registrado_em AT TIME ZONE 'America/Recife')::date AS ultimo
 FROM processo p JOIN lote l ON l.processo_id = p.id
 GROUP BY p.nome ORDER BY p.nome;
+
+SELECT count(*) AS descartes, count(*) FILTER (WHERE ph < 5 OR ph > 9) AS fora_do_ph_de_lancamento FROM efluentes_descarte;
 
 SELECT a.id AS alerta, p.nome AS processo, a.status, count(al.lote_id) AS lotes
 FROM alerta a JOIN processo p ON p.id = a.processo_id JOIN alerta_lote al ON al.alerta_id = a.id
