@@ -334,6 +334,46 @@ abstract class IntegracaoPostgresBase {
                 .contains("ix_efluentes_descarte_mes");
     }
 
+    // ---------- descarte de efluentes (issue #201) ----------
+
+    @Test
+    void descarteDeEfluentesFicaGravadoNoLoteESoQuemAlcancaOLoteRegistra() throws Exception {
+        Conta g = conta("gestor");
+        Conta dono = conta("operador");
+        Conta outro = conta("operador");
+        int p = processo(g, "lote", "100");
+        int loteId = lote(dono, p, 10, "95").get("id").asInt();
+        String rota = "/lotes/" + loteId + "/descartes";
+
+        JsonNode gravado = ler(enviar(post(rota), dono, Map.of("volumeLitros", new BigDecimal("80.50"), "ph", new BigDecimal("7.40"),
+                "turbidezNtu", 35, "reutilizadoPercentual", 25)).andExpect(status().isCreated()));
+        assertThat(gravado.get("loteId").asInt()).isEqualTo(loteId);
+        Map<String, Object> linha = jdbc.queryForMap(
+                "select lote_id, volume_litros, ph, turbidez_ntu, reutilizado_percentual, "
+                        + "data_descarte > now() - interval '1 minute' as recente from efluentes_descarte where id = ?",
+                gravado.get("id").asInt());
+        assertThat(linha).containsEntry("lote_id", loteId).containsEntry("recente", true);
+        assertThat((BigDecimal) linha.get("ph")).isEqualByComparingTo("7.40");
+        assertThat((BigDecimal) linha.get("reutilizado_percentual")).isEqualByComparingTo("25");
+
+        // Sem o reaproveitamento, o banco grava 0; o gestor alcança o lote de qualquer operador.
+        enviar(post(rota), g, Map.of("volumeLitros", 40, "ph", 6.8, "turbidezNtu", 10)).andExpect(status().isCreated());
+        JsonNode lista = ler(chamar(get(rota), g).andExpect(status().isOk()));
+        assertThat(lista).hasSize(2);
+        assertThat(lista.get(0).get("reutilizadoPercentual").decimalValue()).isEqualByComparingTo("0");
+
+        // Outro operador nem fica sabendo que o lote existe; pH fora da faixa não chega ao banco.
+        int antes = jdbc.queryForObject("select count(*) from efluentes_descarte", Integer.class);
+        enviar(post(rota), outro, Map.of("volumeLitros", 10, "ph", 7, "turbidezNtu", 1)).andExpect(status().isNotFound());
+        chamar(get(rota), outro).andExpect(status().isNotFound());
+        enviar(post(rota), g, Map.of("volumeLitros", 10, "ph", 15, "turbidezNtu", 1))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.ph").exists());
+        enviar(post("/lotes/999999/descartes"), g, Map.of("volumeLitros", 10, "ph", 7, "turbidezNtu", 1))
+                .andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("select count(*) from efluentes_descarte", Integer.class)).isEqualTo(antes);
+    }
+
     // ---------- monitoramento (issue #51) ----------
 
     @Test

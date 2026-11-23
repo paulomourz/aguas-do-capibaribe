@@ -18,6 +18,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   conferidos com uma consulta direta na tabela.
 - **Massa de demonstração:** um descarte para cada lote de Tingimento e Alvejamento (34 no total), 5 deles com o pH
   acima de 9.
+### Descarte de efluentes pela API
+
+- **`POST` e `GET /lotes/{id}/descartes`** (issue #201): registra e lista os descartes de efluentes de cada lote
+  (volume, pH, turbidez e percentual reaproveitado) na tabela `efluentes_descarte` (V12, #162), para a auditoria
+  ambiental da CPRH e da ISO 14001. Bean Validation com os mesmos limites das restrições da V12 (volume maior que 0,
+  pH de 0 a 14, turbidez de pelo menos 0, reaproveitado de 0 a 100, padrão 0); campo fora da faixa responde 422
+  `VALIDACAO`. A data é a do servidor. Entidade `DescarteEfluente` imutável, sem PUT nem DELETE.
+- **Acesso:** a mesma regra de `GET /lotes/{id}`. O operador só alcança os próprios lotes (os outros respondem 404,
+  sem revelar que existem); gestor e administrador alcançam todos; o sensor recebe 403.
+- **Testes:** `DescarteControllerTest` (`@WebMvcTest`: 201, 422 em cada regra sem chamar o serviço, 404, 403 e 401),
+  `DescarteServiceTest` (acesso por perfil e reaproveitamento padrão) e, na integração com PostgreSQL,
+  `descarteDeEfluentesFicaGravadoNoLoteESoQuemAlcancaOLoteRegistra`.
 
 Tudo o que está aqui entra na **versão 1.2.0, a última**, que sai na segunda-feira, 23/11/2026, com a demonstração
 incluída (roteiro e massa de dados, issue #115).
