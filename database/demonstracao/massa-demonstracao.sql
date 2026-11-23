@@ -1,5 +1,5 @@
--- Massa de dados da demonstração (issue #115): 20 dias de lotes dos 4 processos iniciais (V3), com 3 alertas
--- em situações diferentes, para o Dashboard, os gráficos, o Histórico, os Alertas e os Relatórios já abrirem cheios.
+-- Massa de dados da demonstração (issue #115): 20 dias de lotes dos 4 processos iniciais (V3), com 2 alertas
+-- já tratados, para o Dashboard, os gráficos, o Histórico, os Alertas e os Relatórios já abrirem cheios.
 --
 -- SÓ RODA EM BANCO SEM LOTES: no Docker recém-criado ou no banco publicado logo depois da limpeza
 -- (docs/guia/roteiro-apresentacao.md, "Começar com o histórico limpo"). Se já houver lote, para sem mudar nada.
@@ -17,8 +17,9 @@
 -- Alertas criados (a regra de 3 lotes seguidos acima da meta, Apêndice D da ERS, é respeitada nos dados):
 --   Tingimento   há 12 dias  -> resolvido
 --   Alvejamento  há 6 dias   -> em análise
---   Estonagem    ontem       -> aberto (para tratar ao vivo)
--- Amaciamento termina dentro da meta: 3 lotes acima, registrados ao vivo, abrem um alerta novo.
+-- A Estonagem termina com 2 lotes seguidos acima da meta, ontem, e sem alerta: o próximo lote acima (o lote crítico
+-- do sensor, na apresentação) é o 3º e abre o alerta ao vivo, com o aviso no Telegram. Até lá, não registre lote de
+-- Estonagem. Amaciamento, Tingimento e Alvejamento terminam dentro da meta.
 
 BEGIN;
 
@@ -91,9 +92,8 @@ INSERT INTO demo_lote (processo, dias, horas, desvio, pecas, marca) VALUES
     ('Alvejamento', 6, 16.0,  0.06, 47, 'alvejamento'),
     ('Alvejamento', 5,  9.5, -0.02, 46, NULL),
     ('Estonagem',   1,  7.5, -0.03, 80, NULL),
-    ('Estonagem',   1,  9.0,  0.10, 82, 'estonagem'),
-    ('Estonagem',   1, 11.0,  0.13, 78, 'estonagem'),
-    ('Estonagem',   1, 14.0,  0.16, 85, 'estonagem'),
+    ('Estonagem',   1, 11.0,  0.10, 82, NULL),
+    ('Estonagem',   1, 14.0,  0.13, 78, NULL),
     ('Amaciamento', 1, 16.5, -0.02, 50, NULL);
 
 -- Grava em ordem cronológica, como a API faria. O esperado vem do trigger trg_lote_esperado.
@@ -121,17 +121,15 @@ SELECT g.id, b.processo, b.marca, g.registrado_em
 FROM gravados g
 JOIN base b ON b.processo_id = g.processo_id AND b.quando = g.registrado_em;
 
--- Os 3 alertas, detectados no 3º lote de cada sequência.
+-- Os 2 alertas já tratados, detectados no 3º lote de cada sequência.
 WITH novos AS (
     INSERT INTO alerta (processo_id, status, detectado_em, atualizado_em)
     SELECT p.id,
            s.status,
            (SELECT max(registrado_em) FROM demo_gravado WHERE marca = s.marca),
-           CASE WHEN s.status = 'aberto' THEN NULL
-                ELSE (SELECT max(registrado_em) FROM demo_gravado WHERE marca = s.marca) + s.tratado_depois END
+           (SELECT max(registrado_em) FROM demo_gravado WHERE marca = s.marca) + s.tratado_depois
     FROM (VALUES ('tingimento', 'Tingimento', 'resolvido', interval '1 day 20 hours'),
-                 ('alvejamento', 'Alvejamento', 'analise', interval '17 hours'),
-                 ('estonagem', 'Estonagem', 'aberto', NULL::interval)) AS s(marca, processo, status, tratado_depois)
+                 ('alvejamento', 'Alvejamento', 'analise', interval '17 hours')) AS s(marca, processo, status, tratado_depois)
     JOIN processo p ON p.nome = s.processo
     RETURNING id, processo_id
 )

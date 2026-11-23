@@ -159,7 +159,7 @@ dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para 
 | `seguranca-usuario-api.sql` | cria o usuário `aguas_api`, que a API usa, só com ler, inserir e atualizar (sem apagar nem mudar a estrutura) |
 | `backup.sh` / `restore.sh` | backup com verificação e retenção de 7 dias, e restore só em banco vazio (veja acima) |
 | `env.backup.example` | modelo da conexão do backup, para copiar para `.env.backup` |
-| `demonstracao/massa-demonstracao.sql` | massa de dados da demonstração: 20 dias de lotes e 3 alertas, só num banco sem lotes (ver [roteiro](../docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração), issue #115) |
+| `demonstracao/massa-demonstracao.sql` | massa de dados da demonstração: 20 dias de lotes, 2 alertas tratados e a Estonagem à espera do sensor, só num banco sem lotes (ver [roteiro](../docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração), issue #115) |
 | `manutencao/db-bloat-check.sql` | linhas mortas, inchaço e autovacuum de cada tabela, com o `VACUUM` sugerido (ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 
 Os testes automáticos usam bancos temporários terminados em `_teste`, criados e apagados na hora;
