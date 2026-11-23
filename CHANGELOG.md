@@ -17,8 +17,9 @@ incluída (roteiro e massa de dados, issue #115).
   sequência de 3 lotes acima da meta fica sem alerta) e o esperado vem do trigger do banco. As datas contam a partir
   do dia em que o script roda, e os valores são fixos. Só roda num banco sem lotes; se houver algum, para sem mudar
   nada. Funciona no Docker (`psql`) e no SQL Editor do Neon.
-- **Roteiro cronometrado** em `docs/guia/roteiro-apresentacao.md`: cerca de 13 minutos, do problema ao relatório,
-  com o sensor no Wokwi como destaque (lote normal, lote crítico com LED e buzzer e buffer sem Wi-Fi),
+- **Roteiro cronometrado** em `docs/guia/roteiro-apresentacao.md`: 10 minutos, do problema ao relatório,
+  com o sensor no Wokwi como destaque (lote crítico com LED e buzzer e buffer sem Wi-Fi; a meta da Estonagem fica
+  na escala da bancada, 15 L por lote),
   com o que mostrar em cada parte, de quem é cada entrega e quem fala, como preparar a área de demonstração e uma
   tabela para anotar o ensaio.
 - **Limpeza do histórico corrigida:** o comando do roteiro (`TRUNCATE alerta_lote, alerta, lote`) falhava desde a
