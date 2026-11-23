@@ -1,7 +1,7 @@
 # API REST: endpoints
 
 > **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
-> Lá estão as 21 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> Lá estão as 23 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
 > `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
 
 Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://localhost:8080/api` no computador. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
@@ -11,7 +11,7 @@ Autenticação: `Authorization: Bearer <token>`, com o token obtido em `POST /au
 8 horas e não é renovado automaticamente.
 
 **Perfis:** `admin` (tudo, mais usuários e auditoria), `gestor` (operação; só lê a lista de usuários), `operador`
-(registra lotes e vê os próprios) e `sensor` (só `GET /processos`, `POST /lotes` e `POST /telemetria`). Na tabela, "gestor" quer dizer
+(registra lotes e vê os próprios) e `sensor` (só `GET /processos`, `POST /lotes` e `POST /telemetria`; não alcança os descartes de efluentes). Na tabela, "gestor" quer dizer
 gestor ou admin.
 
 ## Erros
@@ -55,6 +55,8 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /lotes?processoId=&usuarioId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais, combináveis (`inicio`/`fim` em ISO 8601 com fuso); `usuarioId` (quem registrou) vale para gestor e administrador, e para o operador é ignorado: ele continua vendo só os próprios (issue #107) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
 | `POST /lotes` | autenticado, inclusive o sensor | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
+| `GET /lotes/{id}/descartes` | gestor vê todos; operador, os dos próprios lotes | — | `DescarteDTO[]`, do mais recente ao mais antigo; lote inexistente ou de outra pessoa (para o operador) → `404` (issue #201) |
+| `POST /lotes/{id}/descartes` | mesma regra | `{volumeLitros, ph, turbidezNtu, reutilizadoPercentual?}` (volume > 0; pH de 0 a 14; turbidez ≥ 0; reaproveitado de 0 a 100, padrão 0) | `201 DescarteDTO`; a data é a do servidor; o descarte não pode ser alterado nem excluído; campo fora da faixa → `422 VALIDACAO`; lote que a pessoa não alcança → `404` (issue #201) |
 | `POST /telemetria` | autenticado, inclusive o sensor | `{processoId, vazaoLitros}` (`processoId` ≥ 1; `vazaoLitros` de 0 a 10000, até 2 casas decimais) | `201 {id, processoId, vazaoLitros, data}`, a leitura gravada no nome de quem enviou (`data` é a hora do servidor); processo inexistente → `422` no campo `processoId`; campo nulo, negativo ou fora da faixa → `400 TELEMETRIA_INVALIDA` com o problema de cada campo em `campos` (issues #156 e #157, RF37) |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
@@ -163,6 +165,7 @@ ProcessoDTO = { id, nome, unidade: 'lote' | 'peca', meta }
 LoteDTO     = { id, processoId, pecas, litros, esperado, desvio, statusConformidade, data, usuarioId }  // desvio em %, 2 casas
               // statusConformidade: 'DENTRO_DA_META' (≤ 0%) | 'ATENCAO' (≤ 8%) | 'CRITICO' (> 8%)
 AlertaDTO   = { id, processoId, loteIds: number[], detectado, status }
+DescarteDTO = { id, loteId, data, volumeLitros, ph, turbidezNtu, reutilizadoPercentual }   // efluentes_descarte (V12, #201)
 ResumoDTO   = { processoId, real, esperado, lotes, pecas, litrosPorPeca }   // litrosPorPeca = real ÷ pecas, 2 casas; null sem peças (#116)
 ```
 
