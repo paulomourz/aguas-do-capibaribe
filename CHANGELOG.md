@@ -9,6 +9,21 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 Tudo o que está aqui entra na **versão 1.2.0, a última**, que sai na segunda-feira, 23/11/2026, com a demonstração
 incluída (roteiro e massa de dados, issue #115).
 
+### Demonstração (roteiro e massa de dados)
+
+- **Massa de dados** (`database/demonstracao/massa-demonstracao.sql`, issue #115): 65 lotes dos 4 processos nos
+  últimos 20 dias, de 3 operadores fictícios (que não entram no sistema), e 3 alertas em situações diferentes:
+  Tingimento resolvido, Alvejamento em análise e Estonagem aberto. Os dados respeitam a regra de alertas (nenhuma
+  sequência de 3 lotes acima da meta fica sem alerta) e o esperado vem do trigger do banco. As datas contam a partir
+  do dia em que o script roda, e os valores são fixos. Só roda num banco sem lotes; se houver algum, para sem mudar
+  nada. Funciona no Docker (`psql`) e no SQL Editor do Neon.
+- **Roteiro cronometrado** em `docs/guia/roteiro-apresentacao.md`: cerca de 12 minutos, do problema ao relatório,
+  com o que mostrar em cada parte, de quem é cada entrega e quem fala, como preparar a área de demonstração e uma
+  tabela para anotar o ensaio.
+- **Limpeza do histórico corrigida:** o comando do roteiro (`TRUNCATE alerta_lote, alerta, lote`) falhava desde a
+  V10 e a V12, porque `aviso_pendente` e `efluentes_descarte` apontam para `alerta` e `lote`. Agora limpa as seis
+  tabelas juntas, inclusive a `telemetria`.
+
 ### Documentação da versão 1.2.0
 
 - **ERS v2.6:** RF36 (planilha Excel, #159), RF37 (telemetria validada e gravada, #156 e #157) e RNF29 (carregamento
