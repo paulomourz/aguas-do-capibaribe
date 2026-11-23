@@ -6,6 +6,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Descarte de efluentes no Histórico
+
+- **Botão "Descartes" em cada lote do Histórico** (issue #202): abre uma janela com os descartes de efluentes do
+  lote (data, volume, pH, turbidez e % reaproveitado) e o formulário para registrar um novo. Os números seguem o padrão
+  brasileiro ("7,2"), com as mesmas faixas da API; o erro aparece junto ao campo, e o erro de campo da API (422)
+  volta para o campo certo. O pH fora da faixa de lançamento da CONAMA 430 (5 a 9) ganha o aviso em texto, não só em
+  cor. Estados de carregamento, de lista vazia e de erro com "tentar de novo".
+- **Testes:** `src/domain/__testes__/descarte.test.ts` (validação), `src/services/__testes__/descartes.test.ts` (API e
+  salvar, sem rede), `src/components/__testes__/descartes.test.ts` (janela renderizada em HTML) e
+  `e2e/efluentes.spec.ts`, que registra um descarte pelo Histórico, confere o erro do pH e roda o axe-core dentro da
+  janela. A API falsa dos testes de ponta a ponta ganhou as rotas dos descartes.
+
 ### Descarte de efluentes pela API
 
 - **`POST` e `GET /lotes/{id}/descartes`** (issue #201): registra e lista os descartes de efluentes de cada lote

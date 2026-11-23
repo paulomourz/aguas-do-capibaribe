@@ -14,6 +14,16 @@ import type { BrowserContext, Route } from '@playwright/test'
  */
 export type Rede = 'ok' | 'fora' | 'perdeResposta'
 
+type Descarte = {
+  id: number
+  loteId: number
+  data: string
+  volumeLitros: number
+  ph: number
+  turbidezNtu: number
+  reutilizadoPercentual: number
+}
+
 type Lote = {
   id: number
   processoId: number
@@ -53,6 +63,8 @@ export async function instalarApiFalsa(context: BrowserContext, opcoes: { perfil
     limite: {} as { login?: number; lotes?: number },
     /** Quantos POST /auth/login chegaram ao servidor. */
     loginsRecebidos: 0,
+    /** Descartes de efluentes de cada lote (issue #201), do mais antigo ao mais recente. */
+    descartes: [] as Descarte[],
   }
 
   const json = (route: Route, status: number, corpo: unknown) =>
@@ -111,6 +123,22 @@ export async function instalarApiFalsa(context: BrowserContext, opcoes: { perfil
       }
       if (estado.rede === 'perdeResposta') return route.abort('connectionreset')
       return json(route, repetido ? 200 : 201, lote)
+    }
+
+    const descarte = /^\/lotes\/(\d+)\/descartes$/.exec(caminho)
+    if (descarte) {
+      const loteId = Number(descarte[1])
+      if (!estado.lotes.some((l) => l.id === loteId)) {
+        return json(route, 404, { codigo: 'NAO_ENCONTRADO', mensagem: 'Lote não encontrado.' })
+      }
+      if (req.method() === 'GET') return json(route, 200, estado.descartes.filter((d) => d.loteId === loteId).reverse())
+      const corpo = req.postDataJSON() as Omit<Descarte, 'id' | 'loteId' | 'data'>
+      if (corpo.ph < 0 || corpo.ph > 14) {
+        return json(route, 422, { codigo: 'VALIDACAO', mensagem: 'Verifique os campos destacados.', campos: { ph: 'O pH vai de 0 a 14.' } })
+      }
+      const novo: Descarte = { ...corpo, id: estado.descartes.length + 1, loteId, data: new Date().toISOString() }
+      estado.descartes.push(novo)
+      return json(route, 201, novo)
     }
 
     return json(route, 404, { codigo: 'NAO_ENCONTRADO', mensagem: 'Recurso não encontrado.' })

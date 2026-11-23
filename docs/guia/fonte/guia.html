@@ -265,7 +265,7 @@
     <tr><td><strong>Alertas</strong></td><td>Alertas abertos, em análise e resolvidos; mudança de status</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Relatórios</strong></td><td>Consumo consolidado por processo no mês escolhido, com litros por peça; impressão, PDF ou planilha Excel</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado, desvio e um gauge com a faixa do lote. Sem conexão, o lote fica guardado no aparelho</td><td>sim</td><td>sim</td></tr>
-    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtros por período, processo e quem registrou, e exportação em CSV</td><td>todos</td><td>os próprios</td></tr>
+    <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtros por período, processo e quem registrou, exportação em CSV e o descarte de efluentes de cada lote</td><td>todos</td><td>os próprios</td></tr>
     <tr><td><strong>Processos e metas</strong></td><td>Cadastrar processos e ajustar metas</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas e trocar o token do sensor</td><td>só o administrador</td><td>—</td></tr>
     <tr><td><strong>Auditoria</strong></td><td>Quem criou, desativou, reativou ou redefiniu a senha de cada conta, e quando; painel de eventos de segurança (logins e bloqueios)</td><td>só o administrador</td><td>—</td></tr>
@@ -314,7 +314,7 @@
     <li>O <strong>Dashboard</strong> mostra o mês de referência, que também aparece no topo da tela.</li>
     <li>Os gráficos mostram a meta e o consumo de cada processo no mês e o consumo de cada dia.</li>
     <li><strong>Água por peça</strong> mostra quantos litros cada peça gastou, em média, comparado com a referência de 49 a 70 L por peça da lavanderia completa.</li>
-    <li>No <strong>Histórico de lotes</strong>, dá para filtrar por período, processo e quem registrou; <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa.</li>
+    <li>No <strong>Histórico de lotes</strong>, dá para filtrar por período, processo e quem registrou; <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa. Em cada lote, <strong>Descartes</strong> mostra e registra o descarte de efluentes: volume, pH, turbidez e quanto da água foi reaproveitado. Depois de salvo, o descarte não pode ser alterado.</li>
     <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. <strong>Exportar para Excel (.xlsx)</strong> baixa uma planilha com uma aba dos lotes e outra do resumo por processo, com fórmulas que podem ser conferidas. Mês sem lotes não gera relatório.</li>
   </ul>
 </section>
