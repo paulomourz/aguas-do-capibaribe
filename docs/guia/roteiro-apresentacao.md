@@ -22,15 +22,19 @@ de demonstração (seção seguinte). Deixe as abas abertas e com login feito an
 |---|---|---|---|---|
 | 0:00 a 0:45 | O problema | Lavanderias do Agreste sem controle da água por lote; a ideia do sistema (TAP, seção 3) | Pedro | Pedro |
 | 0:45 a 1:45 | Acesso | Aviso de privacidade na tela de login; o **administrador** cadastra um operador em **Usuários** | Paulo Moura, Matheus Andrade | Matheus Andrade |
-| 1:45 a 3:00 | Registro de lote | O **operador** registra um lote no celular e vê o gauge; com a conexão desligada, registra outro, religa e mostra o selo **Sincronizado** | Abraão Filipe, Matheus Andrade | Matheus Andrade |
-| 3:00 a 6:00 | **Sensor no Wokwi (o diferencial)** | 1) O circuito: ESP32, potenciômetro no papel do sensor de vazão YF-S201, botão, LEDs e buzzer. 2) Um lote crítico: vazão no máximo (30 L/min) por uns 40 s, cerca de 20 L contra a meta de 15 L; o ESP32 envia com o token de API, a API responde que passou da meta, o LED vermelho acende e o buzzer apita 3 vezes; o lote aparece no **Histórico** (F5) e entra no alerta aberto da Estonagem. 3) Sem Wi-Fi: **Q** no monitor serial derruba o sinal por 60 s; o lote feito nesse tempo fica no buffer e é enviado sozinho quando o sinal volta, sem duplicar | Pedro, Paulo Moura, João Bezerra, Mateus Basilio | Pedro |
-| 6:00 a 7:15 | Alertas | Os 3 alertas da massa (resolvido, em análise e aberto); o da Estonagem vai para **Em análise** e depois **Resolvido** | Abraão Filipe, Paulo Moura | Pedro |
+| 1:45 a 3:00 | Registro de lote | O **operador** registra um lote de **Amaciamento** no celular (nunca de Estonagem, que fica para o sensor) e vê o gauge; com a conexão desligada, registra outro, religa e mostra o selo **Sincronizado** | Abraão Filipe, Matheus Andrade | Matheus Andrade |
+| 3:00 a 6:00 | **Sensor no Wokwi (o diferencial)** | 1) O circuito: ESP32, potenciômetro no papel do sensor de vazão YF-S201, botão, LEDs e buzzer. 2) Um lote crítico: vazão no máximo (30 L/min) por uns 40 s, cerca de 20 L contra a meta de 15 L; o ESP32 envia com o token de API, a API responde que passou da meta, o LED vermelho acende e o buzzer apita 3 vezes. É o 3º lote seguido acima da meta na Estonagem: **o alerta abre no site e o aviso chega ao Telegram** (mostrar no celular). 3) Sem Wi-Fi: **Q** no monitor serial derruba o sinal por 60 s; o lote feito nesse tempo fica no buffer e é enviado sozinho quando o sinal volta, sem duplicar | Pedro, Paulo Moura, João Bezerra, Mateus Basilio | Pedro |
+| 6:00 a 7:15 | Alertas | Os 2 alertas da massa (resolvido e em análise) e o que o sensor acabou de abrir; esse vai para **Em análise** e depois **Resolvido** | Abraão Filipe, Paulo Moura | Pedro |
 | 7:15 a 8:45 | Acompanhamento | **Dashboard** com os gráficos dos 20 dias e a água por peça; **Relatórios** com o PDF e a planilha Excel | Matheus Andrade, Mateus Basilio, Paulo Moura | Matheus Andrade |
 | 8:45 a 9:30 | Qualidade e operação | No GitHub: CI verde, Quality Gate do SonarQube e SBOM na release | Paulo Moura | Pedro |
 | 9:30 a 10:00 | Fechamento | Limitações (operador real e sensor simulado) | equipe | Pedro e Matheus Andrade |
 
-**Se sobrar tempo ou nas perguntas:** 3 lotes acima da meta no Amaciamento abrem um alerta novo e o aviso chega ao
-Telegram; a **Auditoria** mostra o cadastro do operador; o runbook de recuperação de desastres.
+**Se sobrar tempo ou nas perguntas:** a **Auditoria** mostra o cadastro do operador; o runbook de recuperação de
+desastres.
+
+**Telegram:** a massa deixa a Estonagem com 2 lotes seguidos acima da meta, sem alerta, para o lote crítico do sensor
+abrir o alerta ao vivo. Por isso, **ninguém registra lote de Estonagem antes do sensor**, nem no ensaio. Se ensaiar
+no mesmo banco, limpe e rode a massa de novo depois. Antes de começar, deixe o grupo do Telegram aberto no celular.
 
 **Se atrasar:** corte primeiro a parte de qualidade (vira uma frase no fechamento) e depois o registro sem conexão. O
 sensor fica inteiro.
@@ -48,9 +52,9 @@ segundo plano). Detalhes do buffer em [`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#se
 ### Preparar a área de demonstração
 
 A demonstração usa o próprio site publicado (ou o Docker, no plano B), com a massa de dados
-[`database/demonstracao/massa-demonstracao.sql`](../../database/demonstracao/massa-demonstracao.sql): 65 lotes dos
-4 processos nos últimos 20 dias, lançados por 3 operadores fictícios, e 3 alertas (Tingimento resolvido, Alvejamento
-em análise e Estonagem aberto). Assim o Dashboard, os gráficos e os relatórios já abrem cheios. As datas contam a partir
+[`database/demonstracao/massa-demonstracao.sql`](../../database/demonstracao/massa-demonstracao.sql): 64 lotes dos
+4 processos nos últimos 20 dias, lançados por 3 operadores fictícios, e 2 alertas (Tingimento resolvido e Alvejamento
+em análise); a Estonagem termina com 2 lotes acima da meta, à espera do sensor. Assim o Dashboard, os gráficos e os relatórios já abrem cheios. As datas contam a partir
 do dia em que o script roda, e ele só roda num banco **sem lotes**: se houver algum, para sem mudar nada.
 
 **Antes da massa, ajuste a meta da Estonagem à escala do sensor.** O sensor envia os lotes como Estonagem, e no Wokwi

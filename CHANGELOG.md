@@ -11,9 +11,10 @@ incluída (roteiro e massa de dados, issue #115).
 
 ### Demonstração (roteiro e massa de dados)
 
-- **Massa de dados** (`database/demonstracao/massa-demonstracao.sql`, issue #115): 65 lotes dos 4 processos nos
-  últimos 20 dias, de 3 operadores fictícios (que não entram no sistema), e 3 alertas em situações diferentes:
-  Tingimento resolvido, Alvejamento em análise e Estonagem aberto. Os dados respeitam a regra de alertas (nenhuma
+- **Massa de dados** (`database/demonstracao/massa-demonstracao.sql`, issue #115): 64 lotes dos 4 processos nos
+  últimos 20 dias, de 3 operadores fictícios (que não entram no sistema), e 2 alertas já tratados (Tingimento
+  resolvido e Alvejamento em análise). A Estonagem termina com 2 lotes acima da meta, para o lote crítico do sensor
+  abrir o alerta ao vivo, com o aviso no Telegram. Os dados respeitam a regra de alertas (nenhuma
   sequência de 3 lotes acima da meta fica sem alerta) e o esperado vem do trigger do banco. As datas contam a partir
   do dia em que o script roda, e os valores são fixos. Só roda num banco sem lotes; se houver algum, para sem mudar
   nada. Funciona no Docker (`psql`) e no SQL Editor do Neon.
