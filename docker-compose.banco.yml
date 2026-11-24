@@ -1,9 +1,11 @@
 # Plano C: banco de dados ao vivo, só para a disciplina de Banco de Dados (issue #225). Não é usado no ProjetAÍ.
-# Soma-se ao docker-compose.yml (plano B) e muda só duas coisas:
-#   1. o PostgreSQL escreve no log todo comando SQL que recebe, com a hora, o usuário e os valores enviados;
-#   2. o Adminer, uma tela web para navegar nas tabelas, visões e dados, em http://localhost:8081.
+# Soma-se ao docker-compose.yml (plano B) e muda só três coisas:
+#   1. o banco do Docker abre a porta 5433 deste computador, para o pgAdmin (ou o psql) entrar nele;
+#   2. o PostgreSQL escreve no log todo comando SQL que recebe, com a hora, o usuário e os valores enviados;
+#   3. o Adminer, uma tela web para navegar no banco sem instalar nada, em http://localhost:8081.
 #
 # Subir:      docker compose -f docker-compose.yml -f docker-compose.banco.yml up -d --build
+# Com o sensor no Wokwi (túnel do plano B): acrescente --profile tunel
 # Ver o SQL:  docker compose logs -f db
 # Voltar ao plano B (sem log de SQL nem Adminer): docker compose up -d --remove-orphans
 #
@@ -11,6 +13,10 @@
 
 services:
   db:
+    ports:
+      # 5433, e não 5432, para não brigar com um PostgreSQL instalado no computador. Só neste computador: o banco não
+      # fica acessível na rede.
+      - "127.0.0.1:5433:5432"
     command:
       - postgres
       # Todo comando (SELECT, INSERT, UPDATE, DELETE e DDL), uma vez cada; os valores dos parâmetros saem na linha

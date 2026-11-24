@@ -8,16 +8,25 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Plano C: banco de dados ao vivo
 
+- **Script da aula** em `database/demonstracao/aula-banco-de-dados.sql` (issue #227): 12 partes, um bloco de cada vez
+  no pgAdmin ou inteiro no psql. Mostra o catálogo (restrições, índices, triggers, funções e visões), consultas com JOIN,
+  HAVING, subconsulta, CTE e funções de janela (a regra do alerta em SQL), INSERT com o trigger do esperado, UPDATE e
+  DELETE permitidos e recusados (triggers e chave estrangeira), TRUNCATE com ROLLBACK, CHECK, NOT NULL, UNIQUE, FK e
+  PK, SAVEPOINT, sequências, permissões do `aguas_api` com `SET LOCAL ROLE`, EXPLAIN ANALYZE e as visões. Grava só
+  dentro de `BEGIN ... ROLLBACK`, mostra as recusas como NOTICE sem parar e confere no fim que todas as tabelas
+  terminaram com as mesmas linhas. O CI roda o script no plano C e confere as recusas e o banco igual.
 - **`docker-compose.banco.yml`** (issue #225), só para a disciplina de Banco de Dados, fora da apresentação do
-  ProjetAÍ: somado ao `docker-compose.yml`, faz o PostgreSQL registrar no log todo comando SQL, com a hora de Recife, o
-  usuário do banco e os valores dos parâmetros, e sobe o Adminer (5.5.1, sem root, só em `127.0.0.1:8081`) para
-  navegar nas tabelas, visões e dados.
-- **Roteiro** em `docs/guia/roteiro-banco-de-dados.md`: preparação, o modelo (9 tabelas e 3 visões), cada ação do site
+  ProjetAÍ: somado ao `docker-compose.yml`, abre o banco do Docker ao pgAdmin na porta 5433 (só neste computador), faz o
+  PostgreSQL registrar no log todo comando SQL, com a hora de Recife, o usuário do banco e os valores dos parâmetros, e
+  sobe o Adminer (5.5.1, sem root, só em `127.0.0.1:8081`) para quem não tem o pgAdmin.
+- **Roteiro** em `docs/guia/roteiro-banco-de-dados.md`: preparação com a conexão do pgAdmin, um lote de ponta a ponta
+  (do Wokwi ao log de SQL, ao site e à linha na tabela, no pgAdmin), o modelo (9 tabelas e 3 visões), cada ação do site
   com o SQL que aparece no log e o recurso de banco que ela mostra (transações, trigger, índice único, travamento,
   agregação, paginação por cursor), e os blocos para o Adminer (trigger de lote imutável, permissões do usuário
   restrito com `SET ROLE`, `CHECK`, `EXPLAIN` com e sem índice, visão dos efluentes e histórico do Flyway).
 - **CI:** o job `docker-compose` sobe o plano C, registra um lote e confere o `INSERT` no log de SQL feito pelo
-  `aguas_api`, que a senha do administrador não aparece no log e que o Adminer responde sem root.
+  `aguas_api`, que a senha do administrador não aparece no log, que o banco atende na porta 5433 e que o Adminer
+  responde sem root.
 
 ### Descarte de efluentes no Histórico
 
