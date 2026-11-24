@@ -11,7 +11,7 @@ Como mostrar o sistema funcionando. Use o **plano A**. Se o site publicado ou o 
 | **Precisa instalar** | só um navegador | Docker Desktop |
 
 Os dois planos são separados: usuários, senhas e lotes de um não aparecem no outro. Para a disciplina de Banco de
-Dados há um plano C, fora da apresentação: o plano B com o log de SQL e o Adminer ([roteiro do banco](roteiro-banco-de-dados.md)).
+Dados há um plano C, fora da apresentação: o plano B com o banco aberto ao pgAdmin, o log de SQL e o Adminer ([roteiro do banco](roteiro-banco-de-dados.md)).
 
 ## Demonstração cronometrada (issue #115)
 

@@ -245,11 +245,13 @@ jobs:
             echo "::error::A senha do administrador apareceu no log de SQL."
             exit 1
           fi
+          # O banco atende o pgAdmin na porta 5433 deste computador.
+          pg_isready -h 127.0.0.1 -p 5433 -U postgres -d aguas
           curl -fsS --retry 10 --retry-delay 2 --retry-all-errors -o /dev/null http://127.0.0.1:8081/
           id=$(compose ps -q adminer)
           uid=$(sudo awk '/^Uid:/ {print $2}' "/proc/$(docker inspect "$id" --format '{{.State.Pid}}')/status")
           test "$uid" != 0 || { echo "::error::O Adminer roda como root."; exit 1; }
-          echo "Plano C: INSERT do lote no log de SQL e Adminer de pé (UID $uid)." | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Plano C: INSERT do lote no log de SQL, banco na porta 5433 e Adminer de pé (UID $uid)." | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Logs em caso de falha
         if: failure()

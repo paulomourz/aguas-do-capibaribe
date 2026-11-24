@@ -1,34 +1,40 @@
 # Roteiro do banco de dados (plano C)
 
-Como mostrar o **banco de dados funcionando com o sistema**, para a disciplina de Banco de Dados (issue #225). Cada
-ação no site aparece na hora como SQL no log do PostgreSQL, e o banco pode ser aberto numa tela web para ver as
-tabelas, as chaves, as regras e os dados.
+Como mostrar o **banco de dados funcionando com o sistema**, para a disciplina de Banco de Dados (issue #225). O
+professor faz uma ação, por exemplo registra um lote pelo sensor no Wokwi, confere no site que o lote entrou e depois
+abre o **próprio PostgreSQL, no pgAdmin**, para ver a mesma linha gravada na tabela. O SQL que a API mandou também
+aparece na hora, no log do banco.
 
 **Não faz parte da apresentação do ProjetAÍ.** A feira usa os planos A e B do
-[roteiro de apresentação](roteiro-apresentacao.md). O plano C é o plano B (Docker no computador) com duas coisas a mais:
+[roteiro de apresentação](roteiro-apresentacao.md). O plano C é o plano B (Docker no computador) com três coisas a mais:
 
 | | O que muda | Onde ver |
 |---|---|---|
-| **Log de SQL** | O PostgreSQL escreve todo comando que recebe, com a hora, o usuário do banco e os valores enviados | Terminal, com `docker compose logs` |
-| **Adminer** | Tela web para navegar no banco: tabelas, chaves, visões, dados e um editor de SQL | <http://localhost:8081> |
+| **Banco aberto ao pgAdmin** | O PostgreSQL do Docker atende na porta **5433** deste computador (a 5432 fica livre para um PostgreSQL instalado) | pgAdmin 4, ou `psql -h localhost -p 5433` |
+| **Log de SQL** | O PostgreSQL escreve todo comando que recebe, com a hora, o usuário do banco e os valores enviados | PowerShell, com `docker compose logs` |
+| **Adminer** | Tela web para navegar no banco, para quem não tem o pgAdmin | <http://localhost:8081> |
 
 A configuração fica em [`docker-compose.banco.yml`](../../docker-compose.banco.yml), somada ao `docker-compose.yml`. O
-banco é o mesmo do plano B: nada muda no site publicado nem no Neon.
+banco é o mesmo do plano B: nada muda no site publicado nem no Neon. A porta 5433 e o Adminer só aceitam conexões
+deste computador.
 
-## Preparar (uns 10 minutos, na véspera)
+## Preparar (uns 15 minutos, na véspera)
 
-Precisa do Docker Desktop aberto. Use o **PowerShell**, na pasta do projeto: no Git Bash, o Docker Compose 5.6 recusa
-o build (`additional privileges requested`). Os comandos usam a `main`, que tem o plano C a partir da v2.0.0.
+Precisa do Docker Desktop aberto e, para o professor ver no PostgreSQL, do **pgAdmin 4** (vem com o instalador do
+PostgreSQL). Use o **PowerShell**, na pasta do projeto: no Git Bash, o Docker Compose 5.6 recusa o build
+(`additional privileges requested`). Os comandos usam a `main`, que tem o plano C a partir da v2.0.0.
 
-**1. Subir com banco limpo.** O `down -v` apaga os dados e as senhas do Docker deste computador (só do Docker, não do
-site publicado), para a massa poder rodar:
+**1. Subir com banco limpo e com o túnel do sensor.** O `down -v` apaga os dados e as senhas do Docker deste
+computador (só do Docker, não do site publicado), para a massa poder rodar:
 
 ```powershell
 git checkout main
 git pull
-docker compose -f docker-compose.yml -f docker-compose.banco.yml down -v
-docker compose -f docker-compose.yml -f docker-compose.banco.yml up -d --build --wait
+docker compose -f docker-compose.yml -f docker-compose.banco.yml --profile tunel down -v
+docker compose -f docker-compose.yml -f docker-compose.banco.yml --profile tunel up -d --build --wait
 ```
+
+Sem o Wokwi, tire o `--profile tunel` dos dois comandos: os lotes passam a ser registrados só pelo site.
 
 **2. Carregar a massa de dados** (64 lotes de 20 dias, 2 alertas e 34 descartes de efluentes):
 
@@ -44,14 +50,36 @@ docker compose exec db cat /segredos/postgres
 ```
 
 O primeiro comando mostra os logins do site (administrador e gestor). O segundo mostra a senha do usuário `postgres`
-do banco, para o Adminer.
+do banco, para o pgAdmin e o Adminer.
 
-**4. Deixar três janelas abertas, lado a lado:**
+**4. Conectar o pgAdmin ao banco do Docker.** No pgAdmin, clique com o botão direito em **Servers > Register >
+Server...** e preencha:
+
+| Aba | Campo | Valor |
+|---|---|---|
+| General | Name | `Águas do Capibaribe (Docker)` |
+| Connection | Host name/address | `localhost` |
+| Connection | Port | `5433` |
+| Connection | Maintenance database | `aguas` |
+| Connection | Username | `postgres` |
+| Connection | Password | a senha do passo 3 |
+
+As tabelas ficam em **aguas > Schemas > public > Tables**. Para ver os dados: botão direito na tabela,
+**View/Edit Data > All Rows**. Para rodar SQL: **Tools > Query Tool**. Se o Docker for recriado com `down -v`, a senha
+muda: atualize em **Properties > Connection**.
+
+**5. Ligar o sensor** no projeto local do Wokwi, como no plano B
+([roteiro de apresentação](roteiro-apresentacao.md#plano-b-docker-no-computador), "Com o sensor", passos 1 a 4):
+copie o endereço do túnel com `docker compose --profile tunel logs tunel`, cole em `API_URL` e gere o token do
+`sensor.wokwi` no site local.
+
+**6. Deixar as janelas abertas, lado a lado:**
 
 | Janela | O quê |
 |---|---|
 | Navegador | O site em <http://localhost:3000>, com login do administrador |
-| Navegador | O Adminer em <http://localhost:8081>: sistema **PostgreSQL**, servidor `db`, usuário `postgres`, a senha do passo 3 e base de dados `aguas` |
+| Navegador | O projeto local do Wokwi, com o monitor serial |
+| pgAdmin | O servidor do passo 4, com o Query Tool aberto |
 | PowerShell | O log de SQL, com o comando abaixo |
 
 ```powershell
@@ -66,15 +94,46 @@ mostra a hora, o usuário do banco entre colchetes e o comando:
 2026-11-24 19:57:27.153 -03 [aguas_api] DETAIL:  Parameters: $1 = '7b0e6f1e-...', $2 = '790', $3 = '100', $4 = '1', $5 = '1'
 ```
 
-`aguas_api` é a API, com permissões mínimas. `postgres` é o dono do banco, usado só pelo Flyway, pelo Adminer e pelo
-`psql`. A API usa comandos preparados: o SQL vem com `$1`, `$2`, e os valores chegam separados, na linha `DETAIL`.
-Por isso não há SQL injection.
+`aguas_api` é a API, com permissões mínimas. `postgres` é o dono do banco, usado pelo Flyway, pelo pgAdmin, pelo
+Adminer e pelo `psql`. A API usa comandos preparados: o SQL vem com `$1`, `$2`, e os valores chegam separados, na
+linha `DETAIL`. Por isso não há SQL injection.
+
+## Do Wokwi ao PostgreSQL: um lote de ponta a ponta
+
+É o centro da aula: o mesmo lote visto nos quatro lugares.
+
+1. **No Wokwi:** clique em ▶, aperte o botão verde para começar o lote, gire o potenciômetro para dar vazão e aperte
+   o botão de novo para encerrar. O sensor envia o lote à API, e o monitor serial mostra a resposta.
+2. **No log de SQL (PowerShell):** aparecem na hora o `select ... from usuario where token_hash=$1`, que identifica o
+   sensor, e o `insert into lote (...)`, com o usuário `[aguas_api]` e os litros medidos na linha `DETAIL`. O valor
+   de `token_hash` é o hash SHA-256 do token: o token em si nunca chega ao banco.
+3. **No site:** em **Histórico**, o lote está no topo, registrado pelo sensor.
+4. **No pgAdmin (Query Tool):** a mesma linha, gravada no banco:
+
+```sql
+-- Os últimos lotes, com o processo e quem registrou
+SELECT l.id, p.nome AS processo, u.nome AS registrado_por, l.pecas, l.litros, l.esperado,
+       round((l.litros - l.esperado) / l.esperado * 100, 2) AS desvio_percentual,
+       l.registrado_em AT TIME ZONE 'America/Recife' AS registrado_em_recife
+FROM lote l
+JOIN processo p ON p.id = l.processo_id
+JOIN usuario u ON u.id = l.usuario_id
+ORDER BY l.id DESC
+LIMIT 5;
+```
+
+O `esperado` não veio do sensor: o trigger `trg_lote_esperado` calculou pela meta do processo na hora do `INSERT`
+(tabela abaixo, passo 3). O mesmo vale para um lote registrado pelo site, em **Registrar lote**.
+
+**Não registre lote de Estonagem pelo site** se quiser mostrar o alerta ao vivo: a massa deixa a Estonagem com 2 lotes
+acima da meta, e o lote crítico do sensor (vazão no máximo por uns 40 s) é o 3º, que abre o alerta. Aí o pgAdmin
+mostra a linha nova em `alerta` e as 3 em `alerta_lote`.
 
 ## O modelo
 
 São 9 tabelas, criadas e alteradas só por migrações do Flyway
-([`backend/src/main/resources/db/migration`](../../backend/src/main/resources/db/migration), V1 a V15). No Adminer, o
-link **Esquema do banco de dados** (*Database schema*) desenha as tabelas com as chaves estrangeiras.
+([`backend/src/main/resources/db/migration`](../../backend/src/main/resources/db/migration), V1 a V15). No pgAdmin,
+botão direito em **aguas > ERD For Database** desenha as tabelas com as chaves estrangeiras.
 
 | Tabela | Guarda | Liga com |
 |---|---|---|
@@ -85,7 +144,7 @@ link **Esquema do banco de dados** (*Database schema*) desenha as tabelas com as
 | `alerta_lote` | Quais lotes formaram cada alerta (N para N) | `alerta`, `lote` |
 | `aviso_pendente` | Avisos do Telegram que falharam e esperam reenvio | `alerta` |
 | `efluentes_descarte` | Descarte da água de cada lote: volume, pH, turbidez e reúso | `lote` |
-| `telemetria` | Leituras de vazão do sensor (ESP32 no Wokwi) | `processo`, `usuario` |
+| `telemetria` | Leituras de vazão enviadas pela rota `POST /telemetria` | `processo`, `usuario` |
 | `auditoria_usuario` | Quem criou, desativou ou trocou a senha de cada conta | `usuario` (2 vezes) |
 
 Visões: `v_historico_lotes` (lote com desvio e status), `v_alertas` (alerta com o processo) e `v_efluentes_mensal`
@@ -109,15 +168,11 @@ Faça a ação no site e mostre a linha que aparece no log. A coluna da direita 
 | 10 | **Processos**: mudar a meta de um processo | `select ... from processo where upper(nome)=upper($1) and id<>$2` (nome repetido) e `update processo set meta=$1,...` | Os lotes antigos guardam o esperado da época: mudar a meta não reescreve o histórico |
 | 11 | **Auditoria** (administrador) | `select ... from auditoria_usuario ...` | O registro do passo 2 |
 
-Com o sensor (opcional, precisa do túnel do plano B): cada leitura do Wokwi aparece como `insert into telemetria`,
-com o usuário `aguas_api`, e o lote do sensor como no passo 3.
 
-**Não registre lote de Estonagem** se quiser mostrar depois o alerta ao vivo pelo sensor: a massa deixa a Estonagem
-com 2 lotes acima da meta, à espera do 3º.
 
-## No Adminer: as regras que moram no banco
+## No pgAdmin: as regras que moram no banco
 
-Abra **Comando SQL** (*SQL command*) no Adminer e rode um bloco de cada vez. Os erros são o resultado esperado: mostram o banco
+Abra o **Query Tool** no pgAdmin (ou **Comando SQL** no Adminer) e rode um bloco de cada vez. Os erros são o resultado esperado: mostram o banco
 recusando.
 
 **Lote não se altera nem se apaga**, nem pelo dono do banco (trigger `trg_lote_imutavel`):
@@ -192,8 +247,9 @@ ORDER BY installed_rank;
 
 ## Ao terminar
 
-Volte ao plano B, sem o log de SQL nem o Adminer. Os dados continuam:
+Desligue o túnel e volte ao plano B, sem a porta 5433, o log de SQL nem o Adminer. Os dados continuam:
 
 ```powershell
+docker compose --profile tunel stop tunel
 docker compose up -d --remove-orphans
 ```
