@@ -245,6 +245,19 @@ jobs:
             echo "::error::A senha do administrador apareceu no log de SQL."
             exit 1
           fi
+          # O script da aula (issue #227) roda inteiro sem erro, todo bloco proibido é recusado e o banco termina igual.
+          compose exec -T db psql -U postgres -d aguas -v ON_ERROR_STOP=1 < database/demonstracao/aula-banco-de-dados.sql > aula.txt
+          if grep -q 'ACEITO (não devia)' aula.txt; then
+            echo "::error::O banco aceitou uma operação que o script da aula espera ver recusada."
+            exit 1
+          fi
+          if grep -q 'MUDOU' aula.txt; then
+            echo "::error::O script da aula mudou os dados do banco."
+            exit 1
+          fi
+          recusas=$(grep -c 'RECUSADO' aula.txt)
+          test "$recusas" -ge 12 || { echo "::error::Só $recusas recusas no script da aula (esperava 12 ou mais)."; exit 1; }
+          echo "Script da aula: $recusas recusas do banco e todas as tabelas iguais no fim." | tee -a "$GITHUB_STEP_SUMMARY"
           # O banco atende o pgAdmin na porta 5433 deste computador.
           pg_isready -h 127.0.0.1 -p 5433 -U postgres -d aguas
           curl -fsS --retry 10 --retry-delay 2 --retry-all-errors -o /dev/null http://127.0.0.1:8081/

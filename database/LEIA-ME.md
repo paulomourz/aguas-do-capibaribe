@@ -162,6 +162,7 @@ dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para 
 | `env.backup.example` | modelo da conexão do backup, para copiar para `.env.backup` |
 | `demonstracao/massa-demonstracao.sql` | massa de dados da demonstração: 20 dias de lotes, 2 alertas tratados, descartes de efluentes e a Estonagem à espera do sensor, só num banco sem lotes (ver [roteiro](../docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração), issue #115) |
 | `../docker-compose.banco.yml` | plano C, só para a disciplina de Banco de Dados: banco aberto ao pgAdmin na porta 5433, log de todo comando SQL e o Adminer em `localhost:8081` (ver [roteiro do banco](../docs/guia/roteiro-banco-de-dados.md), issue #225) |
+| `demonstracao/aula-banco-de-dados.sql` | script da aula de Banco de Dados no plano C: catálogo, consultas, triggers, DELETE, restrições, transações, permissões, índices e visões, sem mudar os dados (ver [roteiro do banco](../docs/guia/roteiro-banco-de-dados.md#script-da-aula-tudo-o-que-o-banco-faz), issue #227) |
 | `demonstracao/testar-massa.sh` | testa a massa e o reset do roteiro num PostgreSQL temporário no Docker: 64 lotes, 2 alertas e 34 descartes, recusa na segunda vez e reset idêntico em menos de 30 s (issue #210) |
 | `manutencao/db-bloat-check.sql` | linhas mortas, inchaço e autovacuum de cada tabela, com o `VACUUM` sugerido (ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 

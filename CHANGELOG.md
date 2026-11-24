@@ -8,6 +8,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ### Plano C: banco de dados ao vivo
 
+- **Script da aula** em `database/demonstracao/aula-banco-de-dados.sql` (issue #227): 12 partes, um bloco de cada vez
+  no pgAdmin ou inteiro no psql. Mostra o catálogo (restrições, índices, triggers, funções e visões), consultas com JOIN,
+  HAVING, subconsulta, CTE e funções de janela (a regra do alerta em SQL), INSERT com o trigger do esperado, UPDATE e
+  DELETE permitidos e recusados (triggers e chave estrangeira), TRUNCATE com ROLLBACK, CHECK, NOT NULL, UNIQUE, FK e
+  PK, SAVEPOINT, sequências, permissões do `aguas_api` com `SET LOCAL ROLE`, EXPLAIN ANALYZE e as visões. Grava só
+  dentro de `BEGIN ... ROLLBACK`, mostra as recusas como NOTICE sem parar e confere no fim que todas as tabelas
+  terminaram com as mesmas linhas. O CI roda o script no plano C e confere as recusas e o banco igual.
 - **`docker-compose.banco.yml`** (issue #225), só para a disciplina de Banco de Dados, fora da apresentação do
   ProjetAÍ: somado ao `docker-compose.yml`, abre o banco do Docker ao pgAdmin na porta 5433 (só neste computador), faz o
   PostgreSQL registrar no log todo comando SQL, com a hora de Recife, o usuário do banco e os valores dos parâmetros, e

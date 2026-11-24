@@ -3,7 +3,8 @@
 Como mostrar o **banco de dados funcionando com o sistema**, para a disciplina de Banco de Dados (issue #225). O
 professor faz uma ação, por exemplo registra um lote pelo sensor no Wokwi, confere no site que o lote entrou e depois
 abre o **próprio PostgreSQL, no pgAdmin**, para ver a mesma linha gravada na tabela. O SQL que a API mandou também
-aparece na hora, no log do banco.
+aparece na hora, no log do banco. E um script de aula mostra, bloco a bloco, triggers, `DELETE`,
+restrições, transações, permissões e o resto, sem estragar os dados.
 
 **Não faz parte da apresentação do ProjetAÍ.** A feira usa os planos A e B do
 [roteiro de apresentação](roteiro-apresentacao.md). O plano C é o plano B (Docker no computador) com três coisas a mais:
@@ -170,72 +171,55 @@ Faça a ação no site e mostre a linha que aparece no log. A coluna da direita 
 
 
 
-## No pgAdmin: as regras que moram no banco
+## Script da aula: tudo o que o banco faz
 
-Abra o **Query Tool** no pgAdmin (ou **Comando SQL** no Adminer) e rode um bloco de cada vez. Os erros são o resultado esperado: mostram o banco
-recusando.
+[`database/demonstracao/aula-banco-de-dados.sql`](../../database/demonstracao/aula-banco-de-dados.sql) mostra, em 12
+partes, tudo o que dá para fazer no banco: consultas, `INSERT`, `UPDATE`, `DELETE`, triggers, restrições,
+transações, permissões, índices e visões. Cada bloco tem um comentário explicando o que vai acontecer.
 
-**Lote não se altera nem se apaga**, nem pelo dono do banco (trigger `trg_lote_imutavel`):
+**Não estraga os dados da demonstração.** O que grava, altera ou apaga roda dentro de `BEGIN ... ROLLBACK`. O que o
+banco recusa roda num bloco `DO` que mostra a mensagem de erro como aviso (`NOTICE: RECUSADO ...`), sem parar o
+script. A última parte compara a quantidade de linhas de cada tabela com a do começo e mostra `igual` em todas.
+
+**No pgAdmin** (o jeito da aula): **Tools > Query Tool**, abra o arquivo pelo ícone de pasta, selecione um bloco e
+aperte **F5**. O resultado aparece em **Data Output**, e as recusas, em **Messages**. Rode primeiro a parte 0, que
+guarda a "foto" do começo para a parte 12.
+
+**Inteiro, no PowerShell** (para conferir antes da aula, uns 2 segundos):
+
+```powershell
+chcp 65001
+cmd /c "docker compose exec -T db psql -U postgres -d aguas < database\demonstracao\aula-banco-de-dados.sql"
+```
+
+O `chcp 65001` faz o PowerShell mostrar os acentos certos.
+
+| Parte | O que mostra | Como |
+|---|---|---|
+| 0 | Foto do começo | Uma tabela temporária com a quantidade de linhas de cada tabela |
+| 1 | **Catálogo**: o banco descreve a si mesmo | Tabelas e visões, colunas de `lote`, todas as restrições (PK, FK, UNIQUE, CHECK), índices, triggers, o código PL/pgSQL das funções e a definição das visões |
+| 2 | **Consultas** | `JOIN` de 3 tabelas; `GROUP BY` com `HAVING`; subconsulta correlacionada; **a regra do alerta escrita em SQL**, com CTE e `LAG` (encontra os mesmos alertas que a API abriu); acumulado por dia com `SUM() OVER` |
+| 3 | **INSERT com trigger** | O lote entra sem o `esperado`, e o trigger `trg_lote_esperado` calcula (meta × peças). O mesmo trigger recusa lote de usuário desativado |
+| 4 | **UPDATE** | Mudar a meta é permitido, e os lotes antigos guardam o esperado da época. Alterar lote ou auditoria é recusado pelos triggers `trg_lote_imutavel` e `trg_auditoria_imutavel` |
+| 5 | **DELETE** | Apagar lote é recusado pelo trigger. Apagar processo com lotes é recusado pela chave estrangeira. Apagar um processo novo, sem lotes, funciona (`DELETE ... RETURNING`). `TRUNCATE` esvazia sem disparar os triggers de linha e volta com `ROLLBACK` |
+| 6 | **Restrições** | O banco recusa pH 15 e litros negativos (`CHECK`), status inventado (`CHECK`), lote sem litros (`NOT NULL`), processo com nome repetido (`UNIQUE`), descarte de lote inexistente (`FOREIGN KEY`) e lote em dois alertas (`PRIMARY KEY`) |
+| 7 | **Transações** | `SAVEPOINT` e `ROLLBACK TO SAVEPOINT` desfazem só uma parte; o `ROLLBACK` final desfaz tudo |
+| 8 | **Sequências** | O id usado numa transação desfeita não volta: é por isso que os ids podem ter buracos |
+| 9 | **Permissões** | O que o `aguas_api` pode em cada tabela. Com `SET LOCAL ROLE aguas_api`, ler funciona, mas apagar e criar tabela são recusados (privilégio mínimo) |
+| 10 | **Índices** | `EXPLAIN ANALYZE` da consulta do Histórico, com e sem leitura sequencial, mostrando o índice `ix_lote_processo_data` |
+| 11 | **Visões e versão** | `v_alertas`, `v_efluentes_mensal` e o histórico de migrações do Flyway |
+| 12 | Conferência | A quantidade de linhas de cada tabela, no começo e agora: `igual` em todas |
+
+Com a massa de demonstração, o script mostra 14 recusas. Sem ela, duas recusas viram um aviso pedindo dados: a da
+auditoria, que precisa de um usuário cadastrado pelo site, e a da chave primária de `alerta_lote`, que precisa de um
+alerta. O CI roda o script inteiro em todo PR e confere que nada foi aceito indevidamente e que o banco terminou igual.
+
+**Para ver um erro "de verdade"**, como o professor veria fora do script, rode um comando solto no Query Tool. Ele
+para com o erro em vermelho:
 
 ```sql
-UPDATE lote SET litros = 1 WHERE id = 1;
+DELETE FROM lote WHERE id = 1;
 -- ERROR: Lote não pode ser alterado nem excluído.
-```
-
-**A API tem só as permissões de que precisa** (privilégio mínimo). `SET ROLE` faz o `postgres` agir como a API:
-
-```sql
-SET ROLE aguas_api;
-DELETE FROM lote WHERE id = 1;        -- ERROR: permission denied for table lote
-CREATE TABLE teste (id int);           -- ERROR: permission denied for schema public
-RESET ROLE;
-```
-
-O que ela pode, tabela por tabela (em `aviso_pendente`, o `UPDATE` vale só para 3 colunas e aparece em `information_schema.column_privileges`):
-
-```sql
-SELECT table_name, string_agg(privilege_type, ', ' ORDER BY privilege_type) AS pode
-FROM information_schema.role_table_grants
-WHERE grantee = 'aguas_api'
-GROUP BY table_name
-ORDER BY table_name;
-```
-
-**CHECK recusa dado impossível:**
-
-```sql
-INSERT INTO efluentes_descarte (lote_id, data_descarte, volume_litros, ph, turbidez_ntu, reutilizado_percentual)
-VALUES (1, now(), 10, 15, 1, 0);
--- ERROR: ... violates check constraint "efluentes_descarte_ph_check"
-```
-
-**Índice em uso.** Com só 64 lotes, o PostgreSQL prefere ler a tabela inteira (Seq Scan), que é mais barato. Para ver
-o plano com o índice, desligue a leitura sequencial só nesta sessão:
-
-```sql
-EXPLAIN ANALYZE
-SELECT * FROM lote WHERE processo_id = 1 ORDER BY registrado_em DESC, id DESC LIMIT 20;
-
-SET enable_seqscan = off;
-EXPLAIN ANALYZE
-SELECT * FROM lote WHERE processo_id = 1 ORDER BY registrado_em DESC, id DESC LIMIT 20;
-RESET enable_seqscan;
-```
-
-A medição com 200 mil linhas está em [`docs/tecnico/desempenho-indices.md`](../tecnico/desempenho-indices.md).
-
-**Visão de conformidade dos efluentes**, com o índice de reúso ponderado pelo volume:
-
-```sql
-SELECT * FROM v_efluentes_mensal ORDER BY mes DESC, processo_id;
-```
-
-**Histórico das migrações**, a versão do banco:
-
-```sql
-SELECT installed_rank, version, description, installed_on, success
-FROM flyway_schema_history
-ORDER BY installed_rank;
 ```
 
 ## Se sobrar tempo
