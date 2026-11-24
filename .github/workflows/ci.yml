@@ -246,7 +246,7 @@ jobs:
             exit 1
           fi
           # O script da aula (issue #227) roda inteiro sem erro, todo bloco proibido é recusado e o banco termina igual.
-          compose exec -T db psql -U postgres -d aguas -v ON_ERROR_STOP=1 < database/demonstracao/aula-banco-de-dados.sql > aula.txt
+          compose exec -T db psql -U postgres -d aguas -v ON_ERROR_STOP=1 < database/demonstracao/aula-banco-de-dados.sql > aula.txt 2>&1
           if grep -q 'ACEITO (não devia)' aula.txt; then
             echo "::error::O banco aceitou uma operação que o script da aula espera ver recusada."
             exit 1
