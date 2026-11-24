@@ -6,11 +6,11 @@ de negócios): cada cenário tem como reconhecer, o que fazer passo a passo, que
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.0, 17 de novembro de 2026 (issue #170) |
+| Versão | 1.1, 24 de novembro de 2026 (issues #170 e #219) |
 | Metas | **RTO** (tempo até voltar) menor que 10 minutos; **RPO** (dados que podem se perder) menor que 1 minuto |
 | Ambientes | Publicado (site e API no Render, banco no Neon) e Docker (plano B, no computador) |
 | Responsável | DevOps (Paulo Moura) |
-| Ensaio | 17/11/2026, no Docker: sistema de volta em **23 segundos**, sem perder nenhum lote (seção 6) |
+| Ensaios | 17/11/2026, no Docker: sistema de volta em **23 segundos**, sem perder nenhum lote (seção 6); 24/11/2026, com a massa da demonstração: de volta em **35 segundos**, com todas as tabelas idênticas (seção 6.1) |
 
 ## 1. Antes de um incidente
 
@@ -161,7 +161,7 @@ logins estranhos e registrar o incidente (seção 7).
 
 | Meta | Ambiente | Situação |
 |---|---|---|
-| RTO menor que 10 min | Docker | **Atende:** 23 s no ensaio, do banco apagado ao sistema de pé |
+| RTO menor que 10 min | Docker | **Atende:** 23 s e 35 s nos ensaios, do banco apagado ao sistema de pé |
 | RTO menor que 10 min | Publicado | Rollback e restart do Render não reconstroem a imagem; o tempo ainda não foi medido num ensaio |
 | RPO menor que 1 min | Publicado | Depende da restauração por ponto no tempo do Neon (caminho A), dentro da janela do plano |
 | RPO menor que 1 min | Docker e caminho B | **Não atende:** a perda é tudo o que entrou depois do último backup (até 24 h com o backup diário). Os lotes guardados nos celulares sem conexão são reenviados sozinhos |
@@ -182,6 +182,27 @@ Feito no Docker, num projeto separado (`docker compose -p aguas-dr`), sem tocar 
 
 **Achado do ensaio:** o `database/seguranca-usuario-api.sql` falhava num banco do Docker recém-criado, porque o
 usuário `aguas_api` já existe nele. O script passou a criar o usuário só quando ele não existe.
+
+### 6.1 Ensaio de 24/11/2026 (antes do freeze)
+
+Feito no Docker, num projeto separado (`docker compose -p aguas-dr`, com o site na porta 3100 para não brigar com o
+Docker de uso), com os comandos da seção 4.3 exatamente como estão:
+
+| Passo | O que foi feito | Tempo |
+|---|---|---|
+| Preparação | Subida do sistema, `database/demonstracao/massa-demonstracao.sql` e, pela API, 1 lote, 1 descarte e 5 leituras do sensor | — |
+| Backup | `database/backup.sh`, com a verificação num banco temporário | 21 s |
+| Desastre | Contêiner do banco removido e volume de dados apagado | — |
+| Banco novo | `docker compose up -d --wait db` | 8 s |
+| Restore | `database/restore.sh` do backup | 4 s (12 s acumulados) |
+| Permissões | `database/seguranca-usuario-api.sql` | 2 s (14 s acumulados) |
+| Sistema de pé | Subida da API e do site | **35 s no total** |
+| Conferência | Saúde `UP`, login do administrador, site respondendo, e linhas e conteúdo (hash) de todas as tabelas | 10 tabelas idênticas antes e depois (65 lotes, 2 alertas, 35 descartes, 5 leituras, 6 usuários, 15 migrações) |
+| Escrita depois do restore | Pela API: 1 lote, 1 leitura do sensor e o relatório CSV | 201, 201 e 200 |
+
+**Achado do ensaio:** a verificação do backup (`database/backup-comum.sh`) só contava as tabelas que existiam na
+época do script e deixava de fora `aviso_pendente`, `efluentes_descarte` e `telemetria` (V10, V12 e V14). Um backup
+sem elas passaria como completo. As três entraram na lista; toda tabela nova de uma migração precisa entrar também.
 
 ## 7. Depois do incidente
 
