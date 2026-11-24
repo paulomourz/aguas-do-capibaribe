@@ -171,3 +171,7 @@ TRUNCATE alerta_lote, aviso_pendente, alerta, efluentes_descarte, telemetria, lo
 Isso apaga de vez todos os lotes, alertas, avisos pendentes, descartes e leituras do sensor, sem como desfazer.
 Usuários, processos, metas e auditoria continuam. As tabelas `aviso_pendente` e `efluentes_descarte` apontam para
 `alerta` e `lote`, por isso entram no mesmo comando; sem elas, o PostgreSQL recusa a limpeza.
+
+O operador cadastrado ao vivo também continua: no próximo ensaio, cadastre outro login. Para conferir a massa e este
+reset sem mexer no banco publicado, rode `bash database/demonstracao/testar-massa.sh` (precisa do Docker; leva menos
+de 1 segundo para limpar e recarregar).

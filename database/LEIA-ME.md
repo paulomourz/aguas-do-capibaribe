@@ -161,6 +161,7 @@ dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para 
 | `backup.sh` / `restore.sh` | backup com verificação e retenção de 7 dias, e restore só em banco vazio (veja acima) |
 | `env.backup.example` | modelo da conexão do backup, para copiar para `.env.backup` |
 | `demonstracao/massa-demonstracao.sql` | massa de dados da demonstração: 20 dias de lotes, 2 alertas tratados, descartes de efluentes e a Estonagem à espera do sensor, só num banco sem lotes (ver [roteiro](../docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração), issue #115) |
+| `demonstracao/testar-massa.sh` | testa a massa e o reset do roteiro num PostgreSQL temporário no Docker: 64 lotes, 2 alertas e 34 descartes, recusa na segunda vez e reset idêntico em menos de 30 s (issue #210) |
 | `manutencao/db-bloat-check.sql` | linhas mortas, inchaço e autovacuum de cada tabela, com o `VACUUM` sugerido (ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 
 Os testes automáticos usam bancos temporários terminados em `_teste`, criados e apagados na hora;
