@@ -142,6 +142,7 @@ banco local, que não roda no CI.
 | 17/11/2026 | Turno industrial com 120 sensores e picos de lavagem, 3 rodadas no GitHub Actions | Cerca de 50.700 leituras por turno, 0 respostas 5xx; p95 no pico entre 16 e 178 ms (meta: 250 ms) |
 | 24/11/2026 | Massa de demonstração e reset do roteiro (`database/demonstracao/testar-massa.sh`) | 64 lotes, 2 alertas e 34 descartes; a 2ª execução recusa sem gravar nada; depois de um ensaio, `TRUNCATE` + massa em 0,4 a 0,6 s, sem erro de constraint e com o banco idêntico ao de antes (só o operador cadastrado ao vivo continua) |
 | 17/11/2026 | Ensaio do runbook de recuperação no Docker | Backup, banco apagado e restauração: sistema de volta em 23 s, com todos os lotes |
+| 24/11/2026 | Ensaio do runbook de recuperação no Docker com a massa da demonstração | Backup, banco apagado e restauração: sistema de volta em 35 s, com as 10 tabelas idênticas e a API gravando de novo; a verificação do backup passou a conferir também descartes, telemetria e avisos pendentes |
 | 03/11/2026 | Índices com 200.000 lotes | Regra de alerta de 73,5 ms para 0,19 ms |
 | 05/11/2026 | Aviso no Telegram com o sistema publicado | Alerta aberto e mensagem recebida no grupo |
 | 06/11/2026 | Sensor no Wokwi com a API publicada | Lote de 19,55 L crítico, com LED vermelho; lote de 3,74 L dentro da meta, sem sinal |
