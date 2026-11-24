@@ -210,7 +210,7 @@ O `chcp 65001` faz o PowerShell mostrar os acentos certos.
 | 11 | **Visões e versão** | `v_alertas`, `v_efluentes_mensal` e o histórico de migrações do Flyway |
 | 12 | Conferência | A quantidade de linhas de cada tabela, no começo e agora: `igual` em todas |
 
-Com a massa de demonstração, o script mostra 14 recusas. Sem ela, duas recusas viram um aviso pedindo dados: a da
+Com a massa de demonstração, o script mostra 14 recusas. Sem ela, até duas recusas viram um aviso pedindo dados: a da
 auditoria, que precisa de um usuário cadastrado pelo site, e a da chave primária de `alerta_lote`, que precisa de um
 alerta. O CI roda o script inteiro em todo PR e confere que nada foi aceito indevidamente e que o banco terminou igual.
 
