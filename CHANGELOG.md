@@ -6,6 +6,19 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Plano C: banco de dados ao vivo
+
+- **`docker-compose.banco.yml`** (issue #225), só para a disciplina de Banco de Dados, fora da apresentação do
+  ProjetAÍ: somado ao `docker-compose.yml`, faz o PostgreSQL registrar no log todo comando SQL, com a hora de Recife, o
+  usuário do banco e os valores dos parâmetros, e sobe o Adminer (5.5.1, sem root, só em `127.0.0.1:8081`) para
+  navegar nas tabelas, visões e dados.
+- **Roteiro** em `docs/guia/roteiro-banco-de-dados.md`: preparação, o modelo (9 tabelas e 3 visões), cada ação do site
+  com o SQL que aparece no log e o recurso de banco que ela mostra (transações, trigger, índice único, travamento,
+  agregação, paginação por cursor), e os blocos para o Adminer (trigger de lote imutável, permissões do usuário
+  restrito com `SET ROLE`, `CHECK`, `EXPLAIN` com e sem índice, visão dos efluentes e histórico do Flyway).
+- **CI:** o job `docker-compose` sobe o plano C, registra um lote e confere o `INSERT` no log de SQL feito pelo
+  `aguas_api`, que a senha do administrador não aparece no log e que o Adminer responde sem root.
+
 ### Descarte de efluentes no Histórico
 
 - **Botão "Descartes" em cada lote do Histórico** (issue #202): abre uma janela com os descartes de efluentes do

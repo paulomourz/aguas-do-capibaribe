@@ -1,0 +1,45 @@
+# Plano C: banco de dados ao vivo, só para a disciplina de Banco de Dados (issue #225). Não é usado no ProjetAÍ.
+# Soma-se ao docker-compose.yml (plano B) e muda só duas coisas:
+#   1. o PostgreSQL escreve no log todo comando SQL que recebe, com a hora, o usuário e os valores enviados;
+#   2. o Adminer, uma tela web para navegar nas tabelas, visões e dados, em http://localhost:8081.
+#
+# Subir:      docker compose -f docker-compose.yml -f docker-compose.banco.yml up -d --build
+# Ver o SQL:  docker compose logs -f db
+# Voltar ao plano B (sem log de SQL nem Adminer): docker compose up -d --remove-orphans
+#
+# Roteiro: docs/guia/roteiro-banco-de-dados.md.
+
+services:
+  db:
+    command:
+      - postgres
+      # Todo comando (SELECT, INSERT, UPDATE, DELETE e DDL), uma vez cada; os valores dos parâmetros saem na linha
+      # DETAIL logo abaixo. A saúde da API manda um comando vazio a cada 5 s: o roteiro mostra como esconder.
+      - -c
+      - log_statement=all
+      # Hora de Recife no log, a mesma do site.
+      - -c
+      - log_timezone=America/Recife
+      # Hora e usuário do banco: aguas_api é a API; postgres é o Flyway, o Adminer ou o psql.
+      - -c
+      - "log_line_prefix=%m [%u] "
+
+  adminer:
+    image: adminer:5.5.1-standalone
+    restart: unless-stopped
+    # A imagem já roda como o usuário adminer, sem root. Escreve só as sessões, em /tmp.
+    # Mesmos privilégios mínimos dos outros serviços (docker-compose.yml).
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Já abre a tela de login apontando para o banco do Docker.
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      # Só neste computador: o Adminer não fica acessível na rede.
+      - "127.0.0.1:8081:8080"
