@@ -121,6 +121,49 @@ volta, o sensor envia as leituras em ordem, sozinho.
    guardada(s)...` e termina em `Buffer vazio: todas as leituras foram enviadas`.
 4. Confira no **Histórico** do site: um lote para cada leitura, sem repetição.
 
+### Sinal de vida: a saúde do sensor na API
+
+Sem lote em andamento, o sensor envia a vazão atual (L/min do potenciômetro) para `POST /telemetria`, com o mesmo
+token, **a cada 15 s**. Também envia logo depois de cada lote e, com a API respondendo, ao iniciar um lote. Pela hora
+da última leitura, a API diz se o sensor está no ar (issue #158): o componente `sensorWokwi` de
+`GET /api/actuator/health/sensor` fica **UP** com leitura há menos de 60 s e **DOWN** (HTTP 503) depois disso.
+
+- O monitor serial só fala do sinal de vida quando ele começa (`Sinal de vida OK`) ou deixa de chegar
+  (`Sinal de vida NAO chegou`). Os envios a cada 15 s não aparecem, para não esconder os lotes.
+- **Durante um lote, nada é enviado**: o envio para o contador de pulsos e mudaria os litros. Como o lote começa com
+  um sinal recém-enviado, um lote de **menos de 1 minuto** mantém o sensor UP. O lote crítico da demonstração (uns
+  40 s) cabe nisso.
+- Ao ligar o sensor, o primeiro sinal acorda a API do plano grátis do Render, o que leva até uns 2 minutos. Espere
+  `Sinal de vida OK` antes do primeiro lote: até lá, o botão não responde.
+- Sem Wi-Fi (comando **Q**), o sinal não sai: depois de 60 s a saúde mostra **DOWN** e volta a **UP** quando o
+  Wi-Fi volta. Assim dá para mostrar na demonstração que a API percebe a queda do sensor.
+- `ENVIAR_TELEMETRIA = false` desliga o sinal de vida (a saúde do sensor fica DOWN).
+- A raiz `GET /api/actuator/health` não depende do sensor: é a checagem do Render, e um sensor parado não pode fazer
+  a API reiniciar.
+
+**Validar no Render (issue #218):**
+
+1. Rode o sensor no Wokwi com o token e espere `Sinal de vida OK`.
+2. Entre com uma conta de **operador**, **gestor** ou **administrador** e copie o token (o do sensor não vê a saúde):
+
+   ```bash
+   API=https://aguas-api-a0vq.onrender.com/api
+   TOKEN=$(curl -s -X POST "$API/auth/login" -H "Content-Type: application/json" \
+     -d '{"usuario":"<login>","senha":"<senha>"}' | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+   ```
+
+3. Consulte a saúde do sensor. Esperado: HTTP 200, `"status":"UP"` e, em `components.sensorWokwi.details`, a
+   `ultimaLeitura`, os `segundosDesdeUltimaLeitura` (menos de 60) e a Estonagem em `linhasAtivas`:
+
+   ```bash
+   curl -s -w "\nHTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" "$API/actuator/health/sensor"
+   ```
+
+4. Digite **Q** no Wokwi, espere uns 70 s e repita o passo 3. Esperado: HTTP 503, `"status":"DOWN"` e o `motivo`
+   com os segundos sem leitura. Quando o Wi-Fi voltar, o passo 3 mostra UP de novo.
+5. Confira que a raiz continua no ar mesmo com o sensor DOWN: `curl -s "$API/actuator/health"` responde
+   `{"status":"UP"}`.
+
 ## Calibrar o coeficiente K
 
 O sensor de vazão gera um número de pulsos por litro, o **coeficiente K**. O sketch calcula
