@@ -25,6 +25,8 @@
         <tomcat.version>10.1.61</tomcat.version>
         <postgresql.version>42.7.14</postgresql.version>
         <jackson-bom.version>2.21.8</jackson-bom.version>
+        <!-- Disjuntor dos envios ao Telegram. A linha 2.x é a de Java 17+ e Spring Boot 3.x. -->
+        <resilience4j.version>2.3.0</resilience4j.version>
     </properties>
 
     <dependencies>
@@ -81,6 +83,21 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!-- Disjuntor (circuit breaker) dos envios ao Telegram (issue #52): com o Telegram fora do ar, as chamadas
+             seguintes são recusadas na hora, sem esperar o tempo limite da rede. Só o núcleo da biblioteca, usado
+             direto no código (Telegram.enviar); não entra o starter com AOP e anotações. -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-circuitbreaker</artifactId>
+            <version>${resilience4j.version}</version>
+        </dependency>
+        <!-- Estado e contagens do disjuntor em /api/actuator/metrics (resilience4j.circuitbreaker.*). -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-micrometer</artifactId>
+            <version>${resilience4j.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -113,6 +130,55 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Cobertura de testes (issue #168): o JaCoCo mede, no mvn test, quais linhas e decisões os testes executam.
+                 Relatório em target/site/jacoco (index.html para ler, jacoco.xml para o SonarQube). -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.16</version>
+                <executions>
+                    <execution>
+                        <id>agente</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>relatorio</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- SBOM (issue #169): lista de todas as dependências, inclusive as transitivas, com hashes e licenças,
+                 no padrão CycloneDX. O Spring Boot já gera um SBOM em JSON dentro do jar (META-INF/sbom); esta
+                 execução gera também os arquivos publicados pelo CI: target/bom.json e target/bom.xml. -->
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>2.9.3</version>
+                <executions>
+                    <execution>
+                        <id>sbom-arquivos</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>makeBom</goal>
+                        </goals>
+                        <configuration>
+                            <projectType>application</projectType>
+                            <schemaVersion>1.6</schemaVersion>
+                            <outputFormat>all</outputFormat>
+                            <outputName>bom</outputName>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <!-- Só o que vai para a imagem: dependências de teste ficam fora. -->
+                            <includeTestScope>false</includeTestScope>
+                            <skipAttach>true</skipAttach>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- Migrações sem subir a API: mvn flyway:info / flyway:migrate (conexão em FLYWAY_URL,
                  FLYWAY_USER e FLYWAY_PASSWORD; ver database/LEIA-ME.md). Versão do Spring Boot. -->

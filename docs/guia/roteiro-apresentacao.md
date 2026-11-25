@@ -10,7 +10,69 @@ Como mostrar o sistema funcionando. Use o **plano A**. Se o site publicado ou o 
 | **Conexão do sensor** | HTTPS | HTTP, pelo túnel |
 | **Precisa instalar** | só um navegador | Docker Desktop |
 
-Os dois planos são separados: usuários, senhas e lotes de um não aparecem no outro.
+Os dois planos são separados: usuários, senhas e lotes de um não aparecem no outro. Para a disciplina de Banco de
+Dados há um plano C, fora da apresentação: o plano B com o banco aberto ao pgAdmin, o log de SQL e o Adminer ([roteiro do banco](roteiro-banco-de-dados.md)).
+
+## Demonstração cronometrada (issue #115)
+
+**10 minutos**, mostrando o ciclo **lote → alerta → resolução → relatório**, com o **sensor no Wokwi** como destaque: é
+o diferencial do projeto e fica com quase um terço do tempo. Funciona igual nos dois planos, depois de preparar a área
+de demonstração (seção seguinte). Deixe as abas abertas e com login feito antes de começar: o tempo é só para mostrar.
+
+| Tempo | Parte | O que mostrar | Entrega de | Quem fala |
+|---|---|---|---|---|
+| 0:00 a 0:45 | O problema | Lavanderias do Agreste sem controle da água por lote; a ideia do sistema (TAP, seção 3) | Pedro | Pedro |
+| 0:45 a 1:45 | Acesso | Aviso de privacidade na tela de login; o **administrador** cadastra um operador em **Usuários** | Paulo Moura, Matheus Andrade | Matheus Andrade |
+| 1:45 a 3:00 | Registro de lote | O **operador** registra um lote de **Amaciamento** no celular (nunca de Estonagem, que fica para o sensor) e vê o gauge; com a conexão desligada, registra outro, religa e mostra o selo **Sincronizado** | Abraão Filipe, Matheus Andrade | Matheus Andrade |
+| 3:00 a 6:00 | **Sensor no Wokwi (o diferencial)** | 1) O circuito: ESP32, potenciômetro no papel do sensor de vazão YF-S201, botão, LEDs e buzzer. 2) Um lote crítico: vazão no máximo (30 L/min) por uns 40 s, cerca de 20 L contra a meta de 15 L; o ESP32 envia com o token de API, a API responde que passou da meta, o LED vermelho acende e o buzzer apita 3 vezes. É o 3º lote seguido acima da meta na Estonagem: **o alerta abre no site e o aviso chega ao Telegram** (mostrar no celular). 3) Sem Wi-Fi: **Q** no monitor serial derruba o sinal por 60 s; o lote feito nesse tempo fica no buffer e é enviado sozinho quando o sinal volta, sem duplicar | Pedro, Paulo Moura, João Bezerra, Mateus Basilio | Pedro |
+| 6:00 a 7:15 | Alertas | Os 2 alertas da massa (resolvido e em análise) e o que o sensor acabou de abrir; esse vai para **Em análise** e depois **Resolvido** | Abraão Filipe, Paulo Moura | Pedro |
+| 7:15 a 8:45 | Acompanhamento | **Dashboard** com os gráficos dos 20 dias e a água por peça; **Relatórios** com o PDF e a planilha Excel | Matheus Andrade, Mateus Basilio, Paulo Moura | Matheus Andrade |
+| 8:45 a 9:30 | Qualidade e operação | No GitHub: CI verde, Quality Gate do SonarQube e SBOM na release | Paulo Moura | Pedro |
+| 9:30 a 10:00 | Fechamento | Limitações (operador real e sensor simulado) | equipe | Pedro e Matheus Andrade |
+
+**Se sobrar tempo ou nas perguntas:** a **Auditoria** mostra o cadastro do operador; o runbook de recuperação de
+desastres.
+
+**Telegram:** a massa deixa a Estonagem com 2 lotes seguidos acima da meta, sem alerta, para o lote crítico do sensor
+abrir o alerta ao vivo. Por isso, **ninguém registra lote de Estonagem antes do sensor**, nem no ensaio. Se ensaiar
+no mesmo banco, limpe e rode a massa de novo depois. Antes de começar, deixe o grupo do Telegram aberto no celular.
+
+**Se atrasar:** corte primeiro a parte de qualidade (vira uma frase no fechamento) e depois o registro sem conexão. O
+sensor fica inteiro.
+
+**Sensor:** antes de começar, cole o token, clique em ▶ e espere `Gire o potenciômetro...`: a primeira conexão ao
+Wi-Fi e à API leva alguns segundos. Durante cada envio, deixe a aba do Wokwi na frente (o simulador desacelera em
+segundo plano). Detalhes do buffer em [`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#sem-wi-fi-as-leituras-ficam-guardadas).
+
+**Ensaio:** cronometre uma passada completa antes da apresentação e anote aqui o tempo e os ajustes.
+
+| Data | Tempo total | Ajustes |
+|---|---|---|
+| | | |
+
+### Preparar a área de demonstração
+
+A demonstração usa o próprio site publicado (ou o Docker, no plano B), com a massa de dados
+[`database/demonstracao/massa-demonstracao.sql`](../../database/demonstracao/massa-demonstracao.sql): 64 lotes dos
+4 processos nos últimos 20 dias, lançados por 3 operadores fictícios, e 2 alertas (Tingimento resolvido e Alvejamento
+em análise); a Estonagem termina com 2 lotes acima da meta, à espera do sensor. Assim o Dashboard, os gráficos e os relatórios já abrem cheios. As datas contam a partir
+do dia em que o script roda, e ele só roda num banco **sem lotes**: se houver algum, para sem mudar nada.
+
+**Antes da massa, ajuste a meta da Estonagem à escala do sensor.** O sensor envia os lotes como Estonagem, e no Wokwi
+um lote de 1 minuto mede uns 15 a 30 L (vazão de até 30 L/min). Com a meta padrão (12 L por peça, 600 L num lote de
+50 peças), todo lote do sensor sairia "dentro da meta" e o LED e o buzzer não apareceriam. No site, como gestor ou
+administrador, abra **Processos e metas**, edite a **Estonagem** e deixe **por lote, 15 L**. Faça isso pelo site, e
+não direto no banco: a API guarda a lista de processos em cache e só a atualiza quando a meta muda pelo site. Depois
+rode a massa, que usa a meta que estiver cadastrada.
+
+- **Plano A (publicado):** limpe o histórico ([seção abaixo](#começar-com-o-histórico-limpo)) e, no mesmo **SQL
+  Editor** do Neon, cole e rode o arquivo da massa. Faça isso na véspera ou até 1 hora antes.
+- **Plano B (Docker):** com o sistema de pé, rode:
+  ```bash
+  docker compose exec -T db psql -U postgres -d aguas -v ON_ERROR_STOP=1 < database/demonstracao/massa-demonstracao.sql
+  ```
+
+Os operadores da massa não entram no sistema. Para o registro ao vivo, use o operador cadastrado na hora.
 
 ## Plano A: site publicado
 
@@ -104,7 +166,13 @@ O site não apaga lotes, de propósito. Para limpar o banco publicado, abra o **
 `aguas` e rode:
 
 ```sql
-TRUNCATE alerta_lote, alerta, lote RESTART IDENTITY;
+TRUNCATE alerta_lote, aviso_pendente, alerta, efluentes_descarte, telemetria, lote RESTART IDENTITY;
 ```
 
-Isso apaga de vez todos os lotes e alertas, sem como desfazer. Usuários, processos, metas e auditoria continuam.
+Isso apaga de vez todos os lotes, alertas, avisos pendentes, descartes e leituras do sensor, sem como desfazer.
+Usuários, processos, metas e auditoria continuam. As tabelas `aviso_pendente` e `efluentes_descarte` apontam para
+`alerta` e `lote`, por isso entram no mesmo comando; sem elas, o PostgreSQL recusa a limpeza.
+
+O operador cadastrado ao vivo também continua: no próximo ensaio, cadastre outro login. Para conferir a massa e este
+reset sem mexer no banco publicado, rode `bash database/demonstracao/testar-massa.sh` (precisa do Docker; leva menos
+de 1 segundo para limpar e recarregar).

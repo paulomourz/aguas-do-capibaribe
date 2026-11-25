@@ -37,6 +37,8 @@ import br.com.aguas.repository.AlertaLoteRepository;
 import br.com.aguas.repository.AlertaRepository;
 import br.com.aguas.repository.AvisoPendenteRepository;
 import br.com.aguas.repository.ProcessoRepository;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 
 /** Reenvio dos avisos pendentes (#97): uma tentativa por rodada, marca o enviado e para no limite. Sem banco. */
 class ReenvioDeAvisosTest {
@@ -138,6 +140,27 @@ class ReenvioDeAvisosTest {
         assertThat(primeiro.getUltimoErro()).isEqualTo("HTTP 503");
         verify(pendentes).save(primeiro);
         verify(pendentes, never()).save(segundo);
+    }
+
+    @Test
+    void disjuntorAbertoParaARodadaSemContarTentativa() {
+        // Nenhuma chamada chegou a sair, então não é tentativa: tentativas e ultimo_erro ficam como estavam.
+        // A rodada seguinte (5 min) encontra o disjuntor pronto para deixar passar uma chamada de teste.
+        AvisoPendente primeiro = pendente(7, AGORA.minusHours(1));
+        AvisoPendente segundo = pendente(8, AGORA.minusMinutes(30));
+        alerta(7, StatusAlerta.aberto);
+        alerta(8, StatusAlerta.aberto);
+        naFila(primeiro, segundo);
+        CircuitBreaker disjuntor = NotificacaoConfig.disjuntor(new DisjuntorProperties(null, null, null, null));
+        disjuntor.transitionToOpenState();
+        doThrow(CallNotPermittedException.createCallNotPermittedException(disjuntor)).when(telegram).enviar(anyString());
+
+        reenvio.reenviarPendentes();
+
+        verify(telegram, times(1)).enviar(anyString());
+        assertThat(primeiro.getTentativas()).isEqualTo(3);
+        assertThat(primeiro.getUltimoErro()).isEqualTo("HTTP 500");
+        verify(pendentes, never()).save(any());
     }
 
     @Test

@@ -40,7 +40,7 @@ import br.com.aguas.service.AuthService;
 import br.com.aguas.service.LoteService;
 import br.com.aguas.service.UsuarioService;
 
-/** Limite de login por IP e de lotes por usuário, passando pela cadeia de segurança real. */
+/** Limite de login por IP e por conta e de lotes por usuário, passando pela cadeia de segurança real. */
 @WebMvcTest(controllers = { AuthController.class, LoteController.class })
 @Import({ SecurityConfig.class, ConversorJwt.class, JwtService.class, RespostasDeSeguranca.class, EventosDeSeguranca.class })
 @TestPropertySource(properties = {
@@ -49,10 +49,14 @@ import br.com.aguas.service.UsuarioService;
         "app.cors-origens=http://localhost:8443",
         "app.limite.login-por-minuto=5",
         "app.limite.lotes-por-minuto=2",
-        "app.limite.cabecalho-ip=X-Real-IP" })
+        "app.limite.cabecalho-ip=X-Real-IP",
+        "app.limite.login-por-conta-por-minuto=8" })
 class LimiteDeRequisicoesTest {
 
-    private static final String LOGIN = "{\"usuario\":\"alguem\",\"senha\":\"senha-errada\"}";
+    /** Uma conta por IP, para o limite por conta (8) não somar as tentativas de testes diferentes. */
+    private static String loginDe(String ip) {
+        return "{\"usuario\":\"alguem-" + ip + "\",\"senha\":\"senha-errada\"}";
+    }
     private static final String LOTE = "{\"processoId\":1,\"pecas\":1,\"litros\":10}";
 
     @Autowired MockMvc mvc;
@@ -66,7 +70,7 @@ class LimiteDeRequisicoesTest {
 
     private ResultActions entrar(String ip) throws Exception {
         return mvc.perform(post("/auth/login").header("X-Real-IP", ip)
-                .contentType(MediaType.APPLICATION_JSON).content(LOGIN));
+                .contentType(MediaType.APPLICATION_JSON).content(loginDe(ip)));
     }
 
     private String tokenDe(int id) {
@@ -128,12 +132,52 @@ class LimiteDeRequisicoesTest {
 
         for (int i = 0; i < 5; i++) {
             mvc.perform(post("/auth/login").header("X-Real-IP", "10.0.0.4").header("X-Forwarded-For", "1.2.3." + i)
-                    .contentType(MediaType.APPLICATION_JSON).content(LOGIN));
+                    .contentType(MediaType.APPLICATION_JSON).content(loginDe("10.0.0.4")));
         }
 
         mvc.perform(post("/auth/login").header("X-Real-IP", "10.0.0.4").header("X-Forwarded-For", "9.9.9.9")
-                        .contentType(MediaType.APPLICATION_JSON).content(LOGIN))
+                        .contentType(MediaType.APPLICATION_JSON).content(loginDe("10.0.0.4")))
                 .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void mesmaContaTentadaDeMuitosIpsRecebe429() throws Exception {
+        when(authService.login(any())).thenThrow(new ApiException(HttpStatus.UNAUTHORIZED,
+                "CREDENCIAIS_INVALIDAS", "Usuário ou senha incorretos.", null));
+        String alvo = "{\"usuario\":\" Conta.Alvo \",\"senha\":\"senha-errada\"}";
+
+        // Cada IP fica abaixo do limite dele (5), mas a conta soma 8 tentativas.
+        for (int i = 0; i < 8; i++) {
+            mvc.perform(post("/auth/login").header("X-Real-IP", "10.7.0." + i)
+                    .contentType(MediaType.APPLICATION_JSON).content(alvo)).andExpect(status().isUnauthorized());
+        }
+
+        mvc.perform(post("/auth/login").header("X-Real-IP", "10.7.1.1")
+                        .contentType(MediaType.APPLICATION_JSON).content(alvo.replace("Conta.Alvo", "conta.alvo")))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists(HttpHeaders.RETRY_AFTER))
+                .andExpect(jsonPath("$.codigo").value("LIMITE_EXCEDIDO"));
+        verify(authService, times(8)).login(any());
+
+        // Outra conta, do mesmo IP, continua podendo tentar; e o corpo chega inteiro ao controller.
+        mvc.perform(post("/auth/login").header("X-Real-IP", "10.7.1.1")
+                .contentType(MediaType.APPLICATION_JSON).content(loginDe("10.7.1.1"))).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void memoriaCheiaNaoZeraOLimiteDeQuemJaEstaBloqueado() {
+        AtomicLong agora = new AtomicLong();
+        Limitador limitador = new Limitador(2, agora::get);
+
+        limitador.consumir("atacante");
+        limitador.consumir("atacante");
+        assertThat(limitador.consumir("atacante")).isPositive();
+
+        // Muitos IPs novos dentro do mesmo minuto enchem a memória.
+        for (int i = 0; i < Limitador.MAX_CHAVES + 50; i++) limitador.consumir("ip-" + i);
+
+        assertThat(limitador.consumir("atacante")).isPositive();
+        assertThat(limitador.chavesNaMemoria()).isLessThanOrEqualTo(Limitador.MAX_CHAVES + 1);
     }
 
     @Test
@@ -187,7 +231,7 @@ class LimiteDeRequisicoesTest {
 
         // O contador do site (issue #101) lê o Retry-After pelo fetch; sem o expose, o navegador devolve null.
         mvc.perform(post("/auth/login").header("X-Real-IP", "10.0.0.9").header(HttpHeaders.ORIGIN, "http://localhost:8443")
-                .contentType(MediaType.APPLICATION_JSON).content(LOGIN))
+                .contentType(MediaType.APPLICATION_JSON).content(loginDe("10.0.0.9")))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, containsString(HttpHeaders.RETRY_AFTER)));
     }

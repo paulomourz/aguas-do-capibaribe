@@ -1,0 +1,119 @@
+name: SBOM
+
+# Software Bill of Materials (issue #169): inventário CycloneDX de todas as dependências da API e do site,
+# inclusive as transitivas, com hashes e licenças. Fica como artefato de cada execução e, quando uma release
+# é publicada, é anexado a ela (bom-api.json, bom-api.xml e bom-site.json).
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbom-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sbom:
+    name: sbom
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # O cyclonedx-maven-plugin roda no package e grava target/bom.json e target/bom.xml (ver backend/pom.xml).
+      - name: SBOM da API (Maven)
+        working-directory: backend
+        run: mvn -B -DskipTests package
+
+      # Mesmas versões do .mise.toml
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.3
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Só as dependências que vão para o site publicado (--required-only deixa de fora as de desenvolvimento).
+      - name: SBOM do site (pnpm)
+        env:
+          FETCH_LICENSE: 'true'
+        run: npx --yes @cyclonedx/cdxgen@12.9.0 -t js --required-only --spec-version 1.6 --no-install-deps -o bom-site.json .
+
+      - name: Confere e organiza os SBOMs
+        run: |
+          mkdir sbom
+          cp backend/target/bom.json sbom/bom-api.json
+          cp backend/target/bom.xml sbom/bom-api.xml
+          cp bom-site.json sbom/bom-site.json
+
+          resumo() {
+            jq -r --arg nome "$1" '
+              (.components // []) as $c
+              | "| \($nome) | \($c | length) | \([$c[] | select(.hashes)] | length) | \([$c[] | select(.licenses)] | length) |"' "$2"
+          }
+          {
+            echo "### SBOM (CycloneDX 1.6)"
+            echo
+            echo "| Parte | Componentes | Com hash | Com licença |"
+            echo "|---|---|---|---|"
+            resumo API sbom/bom-api.json
+            resumo Site sbom/bom-site.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # A API precisa listar tudo com hash e licença; o site precisa ter componentes.
+          api_total=$(jq '.components | length' sbom/bom-api.json)
+          api_sem_hash=$(jq '[.components[] | select(.hashes | not)] | length' sbom/bom-api.json)
+          api_sem_licenca=$(jq '[.components[] | select(.licenses | not)] | length' sbom/bom-api.json)
+          site_total=$(jq '.components | length' sbom/bom-site.json)
+          if [ "$api_total" -eq 0 ] || [ "$site_total" -eq 0 ]; then
+            echo "::error::SBOM vazio (API: $api_total, site: $site_total componentes)"; exit 1
+          fi
+          if [ "$api_sem_hash" -ne 0 ] || [ "$api_sem_licenca" -ne 0 ]; then
+            echo "::error::SBOM da API com $api_sem_hash componentes sem hash e $api_sem_licenca sem licença"; exit 1
+          fi
+
+      - name: Guarda os SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+          retention-days: 90
+
+  anexa-na-release:
+    name: anexa-na-release
+    if: github.event_name == 'release'
+    needs: sbom
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Só este job escreve no repositório, e só quando uma release é publicada.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: sbom
+
+      - name: Anexa os SBOMs na release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" sbom/* --clobber --repo "${{ github.repository }}"

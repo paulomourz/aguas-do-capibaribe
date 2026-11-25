@@ -33,6 +33,18 @@ export type LoteDTO = {
 }
 export type NovoLoteDTO = { processoId: Id; pecas: number; litros: number }
 
+/** Descarte de efluentes de um lote (issue #201): efluentes_descarte, V12. */
+export type DescarteDTO = {
+  id: Id
+  loteId: Id
+  data: string
+  volumeLitros: number
+  ph: number
+  turbidezNtu: number
+  reutilizadoPercentual: number
+}
+export type NovoDescarteDTO = { volumeLitros: number; ph: number; turbidezNtu: number; reutilizadoPercentual?: number }
+
 export type AlertaDTO = { id: Id; processoId: Id; loteIds: Id[]; detectado: string; status: StatusAlerta }
 
 /** Consumo de um processo no mês (mês definido no fuso America/Recife pelo servidor). */

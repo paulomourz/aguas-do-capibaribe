@@ -8,7 +8,7 @@ pede, adaptada ao porte de um projeto acadêmico, sem certificação formal.
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.2, 14 de novembro de 2026 (versão 1.1.0 do sistema: token de API do sensor, imagem distroless e segredos como arquivos) |
+| Versão | 1.4, 20 de novembro de 2026 (versão 1.2.0 do sistema: contêineres sem root, SBOM, disjuntor do Telegram, runbook de recuperação ensaiado e análise no SonarQube; antes, 1.3 com o repositório público e 1.2 com o token de API do sensor, a imagem distroless e os segredos como arquivos) |
 | Escopo | Site, API, banco publicado (Render e Neon), ambiente Docker, sensor simulado, repositório no GitHub e aviso no Telegram |
 | Responsável | Paulo Moura (DevOps), com apoio da equipe |
 | Revisão | A cada versão do sistema ou depois de qualquer incidente |
@@ -54,20 +54,23 @@ Probabilidade e impacto em três níveis (baixo, médio, alto). O risco residual
 
 | ID | Ameaça | Prob. | Impacto | Controles | Risco residual |
 |---|---|---|---|---|---|
-| R01 | Senha ou token vazar no repositório | Média | Alto | `.gitignore` para `.env`, `.env.local`, `.env.backup` e `docs/privado/`; revisão dos PRs; repositório privado | Baixo |
-| R02 | Tentativas de adivinhar senhas | Média | Médio | 5 tentativas de login por minuto por IP (429); mensagem genérica; BCrypt | Baixo |
+| R01 | Senha ou token vazar no repositório | Média | Alto | `.gitignore` para `.env`, `.env.local`, `.env.backup` e `docs/privado/`; revisão dos PRs; segredos só no GitHub, no Render e no Docker. O repositório é **público desde 17/11/2026**: antes da abertura, o histórico inteiro foi varrido atrás de tokens, chaves e senhas, e só havia textos de exemplo | Baixo |
+| R02 | Tentativas de adivinhar senhas | Média | Médio | 5 tentativas de login por minuto por IP e 10 por conta, somando todos os IPs (429); mensagem genérica; BCrypt | Baixo |
 | R03 | Pessoa acessar função de outro perfil | Média | Alto | Autorização na API, com o perfil lido do banco a cada requisição; testes de cada perfil | Baixo |
 | R04 | Alguém alterar ou apagar registros de consumo | Baixa | Alto | Triggers que impedem UPDATE e DELETE; usuário `aguas_api` sem DELETE nem TRUNCATE | Baixo |
-| R05 | Perda do banco publicado (o Neon grátis pode apagar o banco depois de 90 dias parado) | Média | Alto | Backup com `database/backup.sh`, conferido por restauração num banco temporário; 7 dias guardados | Médio |
-| R06 | Token do sensor exposto no simulador público | Média | Baixo | Perfil `sensor` só consulta processos e registra lotes; o sensor usa token de API, não a senha; o token não fica salvo e é rotacionado pelo administrador, com auditoria; o banco guarda só o SHA-256 | Baixo |
+| R05 | Perda do banco publicado (o Neon grátis pode apagar o banco depois de 90 dias parado) | Média | Alto | Backup com `database/backup.sh`, conferido por restauração num banco temporário; 7 dias guardados; runbook de recuperação com restauração por ponto no tempo do Neon ou pelo último backup, ensaiado no Docker | Médio |
+| R06 | Token do sensor exposto no simulador público | Média | Baixo | Perfil `sensor` só consulta processos, registra lotes e envia leituras de vazão (validadas pela API); o sensor usa token de API, não a senha; o token não fica salvo e é rotacionado pelo administrador, com auditoria; o banco guarda só o SHA-256 | Baixo |
 | R07 | Interceptação dos dados na rede | Baixa | Médio | HTTPS no site, na API e no sensor, que confere a impressão digital do certificado | Baixo |
 | R08 | Publicação com erro derrubar o sistema | Média | Médio | CI obrigatório para publicar; checagem de saúde; rollback no Render (README) | Baixo |
 | R09 | Indisponibilidade do Render, do Neon ou da internet na apresentação | Média | Médio | Plano B com Docker no computador, sem internet | Baixo |
 | R10 | Token do bot do Telegram vazar | Baixa | Baixo | Token só nas variáveis do Render; `/revoke` no BotFather (docs/tecnico/telegram.md) | Baixo |
 | R11 | Sessão roubada ou usada por muito tempo | Baixa | Médio | JWT de 8 horas, sem renovação; desativar a conta corta o acesso na hora | Baixo |
 | R12 | Certificado da API mudar e o sensor recusar a conexão | Alta | Baixo | Impressão digital atual vale até 20/12/2026; o comando para atualizar está no sketch | Baixo |
-| R13 | Dependência com vulnerabilidade conhecida (CVE) | Alta | Alto | Job `dependencias` do CI com o OSV-Scanner; atualização das versões; exceção só com motivo e prazo | Baixo |
+| R13 | Dependência com vulnerabilidade conhecida (CVE) | Alta | Alto | Job `dependencias` do CI com o OSV-Scanner; atualização das versões; exceção só com motivo e prazo; SBOM CycloneDX de cada versão, para saber na hora se uma vulnerabilidade nova nos atinge | Baixo |
 | R14 | Exposição de dados pessoais além do necessário (LGPD) | Média | Médio | Aviso de privacidade no login; login de outras pessoas mascarado na API; CSV e PDF só com o nome (seção 6) | Baixo |
+| R15 | Invasor que entre num contêiner ganhar o controle da máquina | Baixa | Alto | Nenhum contêiner roda como root; `cap_drop: ALL`, `no-new-privileges` e sistema de arquivos só de leitura; o CI confere | Baixo |
+| R16 | Telegram fora do ar travar os avisos | Média | Baixo | Disjuntor nas chamadas: aberto, o aviso vai direto para a fila de pendentes, sem esperar a rede, e é reenviado quando o Telegram volta | Baixo |
+| R17 | Código novo com falha de segurança ou qualidade entrar sem ser percebido | Média | Médio | Quality Gate do SonarQube em todo PR (nenhum problema novo, cobertura de pelo menos 80%); revisão do DevOps; testes de mutação | Baixo |
 
 # 3. Controles aplicados
 
@@ -80,12 +83,13 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 | Registro de eventos | Auditoria das ações sobre contas, que não pode ser alterada nem apagada; painel de eventos de segurança (logins aceitos e recusados, bloqueios por limite com IP mascarado, trocas de senha), com exportação em JSON | RF27, RF32 |
 | Privacidade e proteção de dados pessoais (5.34) | Aviso de privacidade aberto a todos na tela de login; login de outras pessoas mascarado na API (ex.: `ca****in`); CSV e PDF sem login, senha nem perfil (seção 6) | RNF27 |
 | Criptografia | HTTPS em todo o tráfego publicado; senhas só como hash | RNF06, RNF01 |
-| Segurança no desenvolvimento | Pull request, CI com 148 testes, revisão, segredos fora do Git | RNF05, RNF24 |
-| Imagem mínima do contêiner | API em imagem distroless (sem shell, sem gerenciador de pacotes, usuário não root), presa por digest; o CI falha se a imagem tiver shell | RNF05, RNF24 |
+| Segurança no desenvolvimento | Pull request, CI com 531 testes, Quality Gate do SonarQube, revisão, segredos fora do Git | RNF05, RNF24 |
+| Imagem mínima do contêiner | API em imagem distroless (sem shell, sem gerenciador de pacotes, usuário não root), presa por digest; o CI falha se a imagem tiver shell. Banco e site também sem root, todos com `cap_drop: ALL`, `no-new-privileges` e sistema de arquivos só de leitura | RNF05, RNF24, RNF28 |
 | Proteção de segredos em execução | No Docker, a API lê as senhas e a chave JWT como arquivos só de leitura (`/run/secrets/aguas`), sem variáveis de ambiente; o CI confere que nenhuma aparece em `docker inspect` nem no processo | RNF05 |
 | Separação de ambientes | Desenvolvimento, Docker, CI e publicado separados; testes nunca no banco oficial | RNF15 |
-| Backup | `backup.sh` com verificação e `restore.sh` só em banco vazio | RNF21 |
-| Monitoramento | Saúde aberta, métricas só para o administrador, nada mais do Actuator exposto | RNF20 |
+| Backup | `backup.sh` com verificação e `restore.sh` só em banco vazio; runbook de recuperação de desastres | RNF21 |
+| Monitoramento | Saúde aberta, métricas só para o administrador, saúde do sensor para os perfis da lavanderia, nada mais do Actuator exposto | RNF20 |
+| Cadeia de suprimentos | SBOM CycloneDX da API e do site em cada mudança, anexado às releases | RNF24 |
 | Menor privilégio | Usuário `aguas_api` sem DELETE, TRUNCATE nem mudança de esquema; perfil `sensor` restrito | RNF07 |
 | Gestão de vulnerabilidades técnicas | Versões atuais (Java 25, Spring Boot 3.5, PostgreSQL 18); CORS sem `*`; job `dependencias` do CI (OSV-Scanner) bloqueia dependência com vulnerabilidade alta ou crítica, e as exceções ficam em `osv-scanner.toml`, com motivo e data de revisão | RNF04, RNF24 |
 
@@ -95,7 +99,7 @@ Controles do Anexo A da ISO/IEC 27001 que se aplicam ao projeto:
 |---|---|---|
 | Senha de uma pessoa vazou | Administrador redefine a senha em **Usuários** | Conferir a auditoria daquela conta |
 | Muitas tentativas de login (força bruta) | Conferir em **Auditoria > Eventos de segurança** os logins recusados e os IPs bloqueados; o limite por IP já responde 429 | Exportar o JSON e anexar à issue do incidente; se a conta atacada for conhecida, trocar a senha |
-| Senha do sensor vazou | Administrador redefine a senha de `sensor.wokwi` | Atualizar `docs/privado/hospedagem.md` |
+| Token do sensor vazou | Administrador gera um token novo em **Usuários** (o anterior deixa de valer na hora) e cola no sketch | Conferir a auditoria (`ROTACAO_TOKEN`) |
 | Token do Telegram vazou | `/revoke` no BotFather e novo token no Render | Atualizar `docs/privado/hospedagem.md` |
 | Chave JWT vazou | Trocar `JWT_SECRET` no Render (todas as sessões caem) | Pedir para todos entrarem de novo |
 | Segredo entrou num commit | Trocar o segredo na hora (o histórico do Git guarda o antigo) | Revisar o `.gitignore` |
@@ -110,9 +114,9 @@ Todo incidente é registrado numa issue do GitHub, **sem colocar o segredo nela*
 | API dormindo (plano grátis) | Abrir o site uns 2 minutos antes de usar | 2 minutos |
 | Render, Neon ou internet fora do ar | Plano B: `docker compose up -d --build` no computador (roteiro em docs/guia/roteiro-apresentacao.md) | 5 minutos |
 | Publicação com erro | Rollback no Render | Poucos minutos |
-| Banco publicado perdido | Criar banco novo no Neon, restaurar o último backup com `restore.sh` e apontar a API para ele | Cerca de 30 minutos |
+| Banco publicado perdido | Seguir o [runbook de recuperação](../tecnico/runbook-disaster-recovery.md): restauração por ponto no tempo do Neon ou banco novo com o último backup (`restore.sh`) | Meta: menos de 10 minutos (23 s no ensaio no Docker, em 17/11/2026) |
 | Conexão caindo no chão de fábrica | O site guarda os lotes no aparelho e envia quando a conexão volta, sem duplicar | Automático |
-| Telegram fora do ar | Lote e alerta continuam gravados; os próximos avisos voltam sozinhos | Automático |
+| Telegram fora do ar | Lote e alerta continuam gravados; o disjuntor manda os avisos para a fila de pendentes, que são reenviados quando o Telegram volta | Automático |
 
 **Rotina de backup:** rodar `bash database/backup.sh` com o `.env.backup` do Neon pelo menos uma vez por semana e
 antes de cada apresentação ou mudança de banco. O backup fica em `database/backups/`, fora do Git.

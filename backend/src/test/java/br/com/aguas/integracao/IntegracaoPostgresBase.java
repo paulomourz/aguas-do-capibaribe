@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationState;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -51,6 +53,7 @@ import br.com.aguas.notificacao.AvisoDeAlerta;
 import br.com.aguas.notificacao.ReenvioDeAvisos;
 import br.com.aguas.notificacao.Telegram;
 import br.com.aguas.notificacao.TelegramProperties;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import br.com.aguas.repository.AlertaLoteRepository;
 import br.com.aguas.repository.AlertaRepository;
 import br.com.aguas.repository.AvisoPendenteRepository;
@@ -101,6 +104,17 @@ abstract class IntegracaoPostgresBase {
     @Autowired Flyway flyway;
     @Autowired ReenvioDeAvisos reenvio;
     @Autowired ApplicationContext contexto;
+    @Autowired CircuitBreaker disjuntorDoTelegram;
+
+    /**
+     * O disjuntor é um bean único, compartilhado por todos os testes da classe. Sem zerar, as falhas que um teste
+     * provoca de propósito (TelegramFalso.status = 500) entram na janela do seguinte e podem abrir o disjuntor no
+     * meio dele, mudando quantas tentativas acontecem. Cada teste começa com ele fechado e sem histórico.
+     */
+    @BeforeEach
+    void disjuntorFechado() {
+        disjuntorDoTelegram.reset();
+    }
 
     record Conta(int id, String login, String token) {}
 
@@ -170,7 +184,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -185,7 +199,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(12);
+           assertThat(flyway.info().applied()).hasSize(16);
     }
 
     @Test
@@ -197,6 +211,167 @@ abstract class IntegracaoPostgresBase {
         assertThat(indices).contains("ix_lote_processo_data", "ix_alerta_lote_alerta", "ix_lote_data", "ix_lote_usuario")
                 // substituído pelo ix_lote_processo_data, que começa pela mesma coluna
                 .doesNotContain("ix_lote_processo");
+    }
+
+    @Test
+    void v12CriaEfluentesDescarteComRegrasDeIntegridade() throws Exception {
+        // Issue #162: auditoria do descarte de efluentes por lote (CPRH / ISO 14001).
+        Conta g = conta("gestor");
+        int loteId = lote(g, processo(g, "lote", "100"), 1, "90").get("id").asInt();
+        String sql = "insert into efluentes_descarte (lote_id, volume_litros, ph, turbidez_ntu, reutilizado_percentual) "
+                + "values (?, ?, ?, ?, ?)";
+
+        jdbc.update(sql, loteId, new BigDecimal("85.50"), new BigDecimal("7.20"), new BigDecimal("12.0"), new BigDecimal("40"));
+        assertThat(jdbc.queryForObject("select count(*) from efluentes_descarte where lote_id = ?", Integer.class, loteId))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject("select data_descarte > now() - interval '1 minute' from efluentes_descarte "
+                + "where lote_id = ?", Boolean.class, loteId)).isTrue();
+
+        // pH fora de 0 a 14, volume zero, turbidez negativa, reaproveitamento acima de 100% e lote inexistente.
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, new BigDecimal("14.01"), BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, new BigDecimal("-0.01"), BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.ZERO, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, BigDecimal.TEN, new BigDecimal("-1"), BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, loteId, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, new BigDecimal("100.01")))
+                .isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update(sql, -1, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ZERO))
+                .isInstanceOf(DataAccessException.class);
+
+        List<String> indices = jdbc.queryForList(
+                "select indexname from pg_indexes where schemaname = 'public' and tablename = 'efluentes_descarte'",
+                String.class);
+        assertThat(indices).contains("ix_efluentes_descarte_lote", "ix_efluentes_descarte_data");
+    }
+
+    @Test
+    void v13DeixaOAutovacuumMaisFrequenteNasTabelasQuentes() {
+        // Issue #163: rotina em docs/tecnico/manutencao-banco.md.
+        Map<String, List<String>> opcoes = new HashMap<>();
+        jdbc.query("select relname, array_to_string(reloptions, ',') as op from pg_class "
+                + "where relnamespace = 'public'::regnamespace and relname in ('lote', 'alerta_lote', 'alerta')",
+                rs -> { opcoes.put(rs.getString("relname"), List.of(rs.getString("op").split(","))); });
+        List<String> soInsercao = List.of("autovacuum_vacuum_scale_factor=0.05", "autovacuum_vacuum_insert_scale_factor=0.05",
+                "autovacuum_analyze_scale_factor=0.02");
+        assertThat(opcoes.get("lote")).containsExactlyInAnyOrderElementsOf(soInsercao);
+        assertThat(opcoes.get("alerta_lote")).containsExactlyInAnyOrderElementsOf(soInsercao);
+        assertThat(opcoes.get("alerta")).containsExactlyInAnyOrder("autovacuum_vacuum_scale_factor=0.05",
+                "autovacuum_analyze_scale_factor=0.02");
+    }
+
+    // ---------- telemetria (issues #156 e #157) ----------
+
+    @Test
+    void sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada() throws Exception {
+        Conta adm = conta("admin");
+        Conta s = conta("sensor");
+        int p = processo(adm, "lote", "100");
+
+        JsonNode gravada = ler(enviar(post("/telemetria"), s, Map.of("processoId", p, "vazaoLitros", new BigDecimal("12.75")))
+                .andExpect(status().isCreated()));
+        assertThat(gravada.get("processoId").asInt()).isEqualTo(p);
+        assertThat(gravada.get("vazaoLitros").decimalValue()).isEqualByComparingTo("12.75");
+        assertThat(gravada.get("data").asText()).isNotBlank();
+
+        Map<String, Object> linha = jdbc.queryForMap(
+                "select processo_id, usuario_id, vazao_litros, registrado_em > now() - interval '1 minute' as recente "
+                        + "from telemetria where id = ?", gravada.get("id").asInt());
+        assertThat(linha).containsEntry("processo_id", p).containsEntry("usuario_id", s.id()).containsEntry("recente", true);
+        assertThat((BigDecimal) linha.get("vazao_litros")).isEqualByComparingTo("12.75");
+
+        // Leitura inválida não chega ao banco; processo inexistente é recusado como no lote.
+        int antes = jdbc.queryForObject("select count(*) from telemetria", Integer.class);
+        enviar(post("/telemetria"), s, Map.of("processoId", p, "vazaoLitros", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("TELEMETRIA_INVALIDA"));
+        enviar(post("/telemetria"), s, Map.of("processoId", 999999, "vazaoLitros", 5))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.processoId").exists());
+        mvc.perform(post("/telemetria").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("processoId", p, "vazaoLitros", 5))))
+                .andExpect(status().isUnauthorized());
+        assertThat(jdbc.queryForObject("select count(*) from telemetria", Integer.class)).isEqualTo(antes);
+
+        // O banco também barra vazão fora da faixa, mesmo sem passar pela API.
+        assertThatThrownBy(() -> jdbc.update("insert into telemetria (processo_id, usuario_id, vazao_litros) values (?, ?, ?)",
+                p, s.id(), new BigDecimal("-0.01"))).isInstanceOf(DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update("insert into telemetria (processo_id, usuario_id, vazao_litros) values (?, ?, ?)",
+                p, s.id(), new BigDecimal("10000.01"))).isInstanceOf(DataAccessException.class);
+
+        List<String> indices = jdbc.queryForList(
+                "select indexname from pg_indexes where schemaname = 'public' and tablename = 'telemetria'", String.class);
+        assertThat(indices).contains("ix_telemetria_processo_data", "ix_telemetria_data", "ix_telemetria_usuario");
+    }
+
+    // ---------- visão mensal dos efluentes (issue #203) ----------
+
+    @Test
+    void visaoMensalDosEfluentesSomaOVolumePesaOReusoEContaOPhForaDaFaixa() throws Exception {
+        Conta g = conta("gestor");
+        int p = processo(g, "lote", "100");
+        int loteId = lote(g, p, 10, "90").get("id").asInt();
+        // 1.000 L com 50% reaproveitado, 10 L com 90% e pH 9,5 (fora de 5 a 9), 90 L com 0% e pH 4,8 (fora).
+        String insere = "insert into efluentes_descarte (lote_id, data_descarte, volume_litros, ph, turbidez_ntu, "
+                + "reutilizado_percentual) values (?, timestamptz '2026-03-15 10:00-03', ?, ?, ?, ?)";
+        jdbc.update(insere, loteId, new BigDecimal("1000"), new BigDecimal("7.0"), new BigDecimal("30"), new BigDecimal("50"));
+        jdbc.update(insere, loteId, new BigDecimal("10"), new BigDecimal("9.5"), new BigDecimal("60"), new BigDecimal("90"));
+        jdbc.update(insere, loteId, new BigDecimal("90"), new BigDecimal("4.8"), new BigDecimal("0"), new BigDecimal("0"));
+
+        Map<String, Object> mes = jdbc.queryForMap(
+                "select * from v_efluentes_mensal where processo_id = ? and mes = date '2026-03-01'", p);
+        assertThat(mes).containsEntry("descartes", 3).containsEntry("fora_do_ph_de_lancamento", 2);
+        assertThat((BigDecimal) mes.get("volume_litros")).isEqualByComparingTo("1100");
+        assertThat((BigDecimal) mes.get("ph_minimo")).isEqualByComparingTo("4.8");
+        assertThat((BigDecimal) mes.get("ph_maximo")).isEqualByComparingTo("9.5");
+        // (500 + 9) ÷ 1.100 = 46,27%: o descarte grande pesa mais que a média simples dos percentuais (46,67%).
+        assertThat((BigDecimal) mes.get("volume_reaproveitado_litros")).isEqualByComparingTo("509");
+        assertThat((BigDecimal) mes.get("indice_reuso_percentual")).isEqualByComparingTo("46.27");
+
+        assertThat(jdbc.queryForList("select indexname from pg_indexes where tablename = 'efluentes_descarte'", String.class))
+                .contains("ix_efluentes_descarte_mes");
+    }
+
+    // ---------- descarte de efluentes (issue #201) ----------
+
+    @Test
+    void descarteDeEfluentesFicaGravadoNoLoteESoQuemAlcancaOLoteRegistra() throws Exception {
+        Conta g = conta("gestor");
+        Conta dono = conta("operador");
+        Conta outro = conta("operador");
+        int p = processo(g, "lote", "100");
+        int loteId = lote(dono, p, 10, "95").get("id").asInt();
+        String rota = "/lotes/" + loteId + "/descartes";
+
+        JsonNode gravado = ler(enviar(post(rota), dono, Map.of("volumeLitros", new BigDecimal("80.50"), "ph", new BigDecimal("7.40"),
+                "turbidezNtu", 35, "reutilizadoPercentual", 25)).andExpect(status().isCreated()));
+        assertThat(gravado.get("loteId").asInt()).isEqualTo(loteId);
+        Map<String, Object> linha = jdbc.queryForMap(
+                "select lote_id, volume_litros, ph, turbidez_ntu, reutilizado_percentual, "
+                        + "data_descarte > now() - interval '1 minute' as recente from efluentes_descarte where id = ?",
+                gravado.get("id").asInt());
+        assertThat(linha).containsEntry("lote_id", loteId).containsEntry("recente", true);
+        assertThat((BigDecimal) linha.get("ph")).isEqualByComparingTo("7.40");
+        assertThat((BigDecimal) linha.get("reutilizado_percentual")).isEqualByComparingTo("25");
+
+        // Sem o reaproveitamento, o banco grava 0; o gestor alcança o lote de qualquer operador.
+        enviar(post(rota), g, Map.of("volumeLitros", 40, "ph", 6.8, "turbidezNtu", 10)).andExpect(status().isCreated());
+        JsonNode lista = ler(chamar(get(rota), g).andExpect(status().isOk()));
+        assertThat(lista).hasSize(2);
+        assertThat(lista.get(0).get("reutilizadoPercentual").decimalValue()).isEqualByComparingTo("0");
+
+        // Outro operador nem fica sabendo que o lote existe; pH fora da faixa não chega ao banco.
+        int antes = jdbc.queryForObject("select count(*) from efluentes_descarte", Integer.class);
+        enviar(post(rota), outro, Map.of("volumeLitros", 10, "ph", 7, "turbidezNtu", 1)).andExpect(status().isNotFound());
+        chamar(get(rota), outro).andExpect(status().isNotFound());
+        enviar(post(rota), g, Map.of("volumeLitros", 10, "ph", 15, "turbidezNtu", 1))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.campos.ph").exists());
+        enviar(post("/lotes/999999/descartes"), g, Map.of("volumeLitros", 10, "ph", 7, "turbidezNtu", 1))
+                .andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("select count(*) from efluentes_descarte", Integer.class)).isEqualTo(antes);
     }
 
     // ---------- monitoramento (issue #51) ----------
@@ -211,7 +386,41 @@ abstract class IntegracaoPostgresBase {
         chamar(get("/actuator/health"), conta("gestor")).andExpect(jsonPath("$.components").doesNotExist());
         chamar(get("/actuator/health"), conta("admin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.components.db.status").value("UP"));
+                .andExpect(jsonPath("$.components.db.status").value("UP"))
+                // O sensor tem grupo próprio: parado, ele não pode derrubar a checagem do Render (issue #158).
+                .andExpect(jsonPath("$.components.sensorWokwi").doesNotExist());
+    }
+
+    @Test
+    void saudeDoSensorWokwiPelaUltimaTelemetriaSemAfetarARaiz() throws Exception {
+        Conta adm = conta("admin");
+        Conta op = conta("operador");
+        Conta s = conta("sensor");
+        int p = processo(adm, "lote", "100");
+
+        // Só quem acompanha a operação vê a hora das leituras.
+        mvc.perform(get("/actuator/health/sensor")).andExpect(status().isUnauthorized());
+        chamar(get("/actuator/health/sensor"), s).andExpect(status().isForbidden());
+
+        // A raiz (Render, Docker) não depende do sensor. O DOWN depois de 60 s está em SensorWokwiHealthIndicatorTest,
+        // com relógio fixo: aqui o banco é compartilhado e outro teste pode ter acabado de gravar uma leitura.
+        chamar(get("/actuator/health"), adm)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.sensorWokwi").doesNotExist());
+
+        // Given o operador consultando, When a última leitura chegou há menos de 60 s, Then UP com a hora dela.
+        String data = ler(enviar(post("/telemetria"), s, Map.of("processoId", p, "vazaoLitros", 8))
+                .andExpect(status().isCreated())).get("data").asText();
+        chamar(get("/actuator/health/sensor"), op)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components.sensorWokwi.status").value("UP"))
+                .andExpect(jsonPath("$.components.sensorWokwi.details.ultimaLeitura").value(data))
+                .andExpect(jsonPath("$.components.sensorWokwi.details.limiteSemLeituraSegundos").value(60))
+                .andExpect(jsonPath("$.components.sensorWokwi.details.linhasAtivas[?(@.processoId == " + p + ")].status")
+                        .value(org.hamcrest.Matchers.contains("UP")));
+        chamar(get("/actuator/health/sensor"), conta("gestor")).andExpect(status().isOk());
+        chamar(get("/actuator/health/sensor"), adm).andExpect(status().isOk());
     }
 
     @Test

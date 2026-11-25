@@ -1,4 +1,4 @@
--- V12: preço do m³ da água comprada (poço e caminhão-pipa juntos), base do custo da água.
+-- V16: preço do m³ da água comprada (poço e caminhão-pipa juntos), base do custo da água.
 -- Cada preço vale a partir de "vigencia" até outro com vigência maior. Na mesma vigência, vale o cadastrado por último:
 -- é assim que se corrige um erro de digitação, sem apagar nada.
 

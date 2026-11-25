@@ -34,3 +34,6 @@ database/backups/
 
 # Resultados do teste de carga
 testes-carga/resultados/
+
+# Cobertura dos testes do site (pnpm test:cobertura)
+coverage/

@@ -1,0 +1,78 @@
+name: Qualidade
+
+# Quality Gate no SonarQube da disciplina (issue #168, https://sonar.fchicout.dev, gate padrão Sonar way):
+# análise estática da API e do site, com a cobertura dos testes.
+# O PR fica bloqueado se o gate reprovar: no código novo, problema bloqueante ou crítico, nota abaixo de A em
+# manutenção, confiabilidade ou segurança, cobertura abaixo de 80% ou duplicação acima de 3%.
+# A edição Community não separa branches: cada análise (de PR ou da develop) atualiza o mesmo projeto.
+# Precisa do segredo SONAR_TOKEN no repositório; sem ele, o job avisa e não analisa.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: qualidade-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: qualidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: https://sonar.fchicout.dev
+    steps:
+      - name: Segredo do SonarQube configurado?
+        if: env.SONAR_TOKEN == ''
+        run: echo "::warning::SONAR_TOKEN não configurado; análise do SonarQube pulada."
+
+      - uses: actions/checkout@v5
+        if: env.SONAR_TOKEN != ''
+        with:
+          # Histórico completo: o Sonar usa o git blame para saber o que é código novo.
+          fetch-depth: 0
+
+      - name: Java 25
+        if: env.SONAR_TOKEN != ''
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Compila e roda os testes (inclusive os de integração, com PostgreSQL no Testcontainers) com o JaCoCo.
+      - name: Testes da API com cobertura
+        if: env.SONAR_TOKEN != ''
+        working-directory: backend
+        run: mvn -B test
+
+      # Mesmas versões do .mise.toml
+      - uses: pnpm/action-setup@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          version: 10.34.3
+
+      - uses: actions/setup-node@v5
+        if: env.SONAR_TOKEN != ''
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Testes do site com cobertura
+        if: env.SONAR_TOKEN != ''
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test:cobertura
+
+      - name: Análise e Quality Gate
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v8.4.0

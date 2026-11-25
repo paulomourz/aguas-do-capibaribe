@@ -62,13 +62,16 @@ export default function AppLayout({ ativo, children }: { ativo?: MenuId; childre
       <header className="on-dark sticky top-0 z-30 bg-brand text-white">
         <NuvensDoTopo />
         <div className="relative flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">
-          <Link to={homeDe(usuario.perfil)} className="flex items-center gap-3 rounded-lg" aria-label="Águas do Capibaribe, ir para a tela inicial">
+          {/* Sem aria-label: o nome do link para o leitor de tela começa pelo texto que aparece na tela (WCAG 2.5.3,
+              achado pelo axe-core na issue #172), e o destino vai num texto só para leitores de tela. */}
+          <Link to={homeDe(usuario.perfil)} className="flex items-center gap-3 rounded-lg">
             <span aria-hidden="true" className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full bg-logo-bg ring-2 ring-areia/60">
               <img src={logoUrl} alt="" className="h-[44px] w-[44px] object-contain" />
             </span>
             <span className="leading-tight">
               <span className="block font-display text-[21px] font-bold tracking-tight text-white">Águas do Capibaribe</span>
               <span className="hidden text-[13px] text-areia sm:block">Gestão de água por lote</span>
+              <span className="sr-only">, ir para a tela inicial</span>
             </span>
           </Link>
           <div className="flex items-center gap-3 sm:gap-5">
