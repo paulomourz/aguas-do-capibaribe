@@ -3,276 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Águas do Capibaribe · Estande ProjetAÍ</title>
-<!-- Gerado a partir do deck do Slides (issue #215). Abra no navegador; o PDF ao lado é a versão para imprimir. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<title>Águas do Capibaribe · Apresentação ProjetAÍ</title>
+<!-- Deck da feira ProjetAÍ (issue #215), feito no Canva e exportado em estande/. Abra no navegador: abaixo de cada
+     slide fica o cartão de apoio com a fala e o tempo. O PDF ao lado é a versão para projetar ou imprimir. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
 <style>
-html, body { margin: 0; background: #0a2941; }
-.pagina { width: 1920px; margin: 0 auto 64px; }
-.pagina > section { position: relative; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
-h1, h2, h3, p { margin: 0; }
-.cartao { box-sizing: border-box; width: 1920px; padding: 32px 48px; background: #f3ecdf; border-top: 6px solid #b5543a; font-family: 'Inter', Arial, sans-serif; }
-.cartao-titulo { font-size: 24px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #b5543a; margin-bottom: 8px; }
-.cartao-texto { font-size: 28px; line-height: 1.45; color: #1f2933; }
-@page { size: 1920px 1080px; margin: 0; }
+:root { --marinho: #0d364d; --areia: #f1e6d6; --terracota: #a3441f; --texto: #1f2933; }
+html, body { margin: 0; background: #0a2941; font-family: 'Inter', Arial, sans-serif; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 64px; }
+header { color: #f1e6d6; margin-bottom: 24px; }
+header h1 { font-size: 28px; margin: 0 0 8px; }
+header p { font-size: 17px; line-height: 1.5; margin: 0; color: #c9d9e5; }
+header a { color: #7dc8ed; }
+figure { margin: 0 0 40px; border-radius: 12px; overflow: hidden; background: var(--areia); box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { padding: 20px 28px 24px; border-top: 6px solid var(--terracota); }
+.titulo { font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--terracota); margin: 0 0 6px; }
+.fala { font-size: 20px; line-height: 1.5; color: var(--texto); margin: 0; }
 @media print {
-  html, body { background: none; zoom: 1 !important; }
-  .pagina { margin: 0; }
-  .pagina > section { break-after: page; }
-  .cartao { display: none; }
+  @page { size: 1920px 1080px; margin: 0; }
+  html, body { background: none; }
+  main { max-width: none; padding: 0; }
+  header, figcaption { display: none; }
+  figure { margin: 0; border-radius: 0; box-shadow: none; break-after: page; }
 }
-/* Identidade "sertão e água" do site (src/index.css): azul-marinho, areia, azul-água e terracota.
-   Escala: 120 / 96 / 72 / 32 / 24 px. */
-section {
-  padding: 128px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  font-family: 'Inter', Arial, sans-serif;
-  font-size: 32px;
-  color: #1f2933;
-  background: #f7f4ee;
-}
-section.claro { background: #f7f4ee; }
-section.areia { background: #f3ecdf; }
-section.escuro { background: #12344d; color: #dce7ef; }
-section.com-rodape { padding: 128px 128px 160px; }
-
-h1, h2, h3 { font-family: 'Bricolage Grotesque', 'Inter', Arial, sans-serif; }
-h1 { font-size: 120px; font-weight: 700; line-height: 1.05; color: #f7f4ee; }
-h2 { font-size: 72px; font-weight: 700; line-height: 1.1; color: #12344d; }
-h3 { font-size: 32px; font-weight: 700; line-height: 1.25; color: #12344d; }
-.escuro h2 { color: #f7f4ee; }
-.escuro h3 { color: #f7f4ee; }
-
-.eyebrow { font-size: 24px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #b5543a; margin-bottom: 16px; }
-.escuro .eyebrow { color: #7dc8ed; }
-.texto { font-size: 32px; line-height: 1.4; color: #52606d; }
-.escuro .texto { color: #c9d9e5; }
-.fonte { position: absolute; left: 128px; bottom: 64px; width: 1664px; font-size: 24px; line-height: 1.3; color: #52606d; }
-.escuro .fonte { color: #c9d9e5; }
-
-/* Números grandes em cartões */
-.stats { display: flex; gap: 32px; margin-top: 64px; }
-.stat { flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 40px; border-radius: 16px; border-top: 8px solid #12344d; background: #fbfaf7; }
-.stat.acento { border-top: 8px solid #b5543a; }
-.num { font-family: 'Bricolage Grotesque', 'Inter', Arial, sans-serif; font-size: 96px; font-weight: 700; line-height: 1; color: #12344d; white-space: nowrap; }
-.num.grande { font-size: 120px; }
-.num.terracota { color: #b5543a; }
-.legenda { font-size: 32px; line-height: 1.35; color: #1f2933; }
-.detalhe { font-size: 24px; line-height: 1.4; color: #52606d; }
-
-/* Capa */
-.capa-linha { display: flex; align-items: center; gap: 72px; flex: 1; }
-.logo-placa { background: #ffffff; border-radius: 40px; padding: 40px; display: flex; }
-.capa-texto { flex: 1; display: flex; flex-direction: column; gap: 32px; }
-.slogan { font-size: 32px; font-weight: 600; line-height: 1.35; color: #7dc8ed; }
-
-/* Fluxo da solução */
-.passos { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 32px; margin-top: 64px; }
-.passo { display: flex; flex-direction: column; gap: 20px; padding: 36px 32px; border-radius: 16px; background: #fbfaf7; border: 2px solid #e5dfd3; }
-.selo { align-self: flex-start; font-size: 24px; font-weight: 700; color: #f7f4ee; background: #12344d; border-radius: 24px; padding: 6px 20px; }
-.faixas { display: flex; flex-direction: column; gap: 12px; }
-.faixa { display: flex; align-items: center; gap: 14px; }
-.ponto { width: 20px; height: 20px; }
-.faixa-texto { font-size: 24px; line-height: 1.3; color: #1f2933; }
-
-/* Arquitetura */
-.diagrama { position: relative; width: 1664px; height: 540px; margin-top: 48px; }
-.caixa { position: absolute; box-sizing: border-box; width: 460px; height: 170px; padding: 28px 32px; border-radius: 16px; background: #fbfaf7; border: 2px solid #c9c1b1; display: flex; flex-direction: column; gap: 10px; }
-.caixa.central { background: #12344d; border: 2px solid #12344d; }
-.caixa.central h3 { color: #f7f4ee; }
-.caixa.opcional { border: 2px dashed #8b5a2b; }
-.caixa-texto { font-size: 24px; line-height: 1.35; color: #52606d; }
-.caixa.central .caixa-texto { color: #c9d9e5; }
-.linha { color: #12344d; border-width: 3px; }
-.linha.tracejada { border-style: dashed; color: #8b5a2b; }
-.nota { font-size: 32px; line-height: 1.4; color: #1f2933; margin-top: 32px; }
-
-/* Sensor */
-.duas-colunas { display: flex; gap: 72px; margin-top: 56px; flex: 1; }
-.recursos { flex: 1; display: flex; flex-direction: column; gap: 28px; }
-.recurso { display: flex; align-items: center; gap: 24px; }
-.recurso .icone { width: 48px; height: 48px; color: #7dc8ed; }
-.recurso-texto { font-size: 32px; line-height: 1.35; color: #dce7ef; }
-.destaque { width: 560px; align-self: flex-start; display: flex; flex-direction: column; gap: 24px; padding: 48px; border-radius: 24px; background: #1b4965; }
-.destaque-texto { font-size: 24px; line-height: 1.45; color: #dce7ef; }
-
-/* Qualidade */
-.grade { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin-top: 56px; }
-.item { display: flex; flex-direction: column; gap: 14px; padding: 36px; border-radius: 16px; background: #f7f4ee; border-left: 8px solid #12344d; }
-.item-texto { font-size: 24px; line-height: 1.4; color: #52606d; }
-
-/* Fechamento */
-.endereco { font-family: 'Bricolage Grotesque', 'Inter', Arial, sans-serif; font-size: 72px; font-weight: 700; line-height: 1.1; color: #7dc8ed; margin-top: 48px; }
-.equipe { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
-.equipe-titulo { font-size: 24px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #7dc8ed; }
-.equipe-nomes { font-size: 32px; line-height: 1.4; color: #f7f4ee; }
-.equipe-orientador { font-size: 24px; line-height: 1.4; color: #c9d9e5; }
-
-
 </style>
 </head>
 <body>
-<div class="pagina">
-<section id="capa" class="escuro com-rodape" data-transition="fade">
-<div class="capa-linha">
-<div class="logo-placa"><img src="../assets/logo-referencia.png" alt="Logo do Águas do Capibaribe: uma gota com o rio e o sol do sertão" style="width:219px; height:276px; object-fit:contain"></div>
-<div class="capa-texto">
-<p class="eyebrow">Projeto Integrador · Senac</p>
-<h1>Águas do Capibaribe</h1>
-<p class="slogan">Cada lote com a água que ele precisa. Nem uma gota a mais.</p>
-<p class="texto">Gestão do consumo de água por lote nas lavanderias de jeans do Agreste Pernambucano.</p>
-</div>
-</div>
-<p class="fonte">Feira ProjetAÍ · novembro de 2026</p>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 1 de 9</p><p class="cartao-texto">Abertura (10 s): “Somos o Águas do Capibaribe. A gente ajuda lavanderia de jeans a saber quanta água cada lote gastou e se passou da meta.” Aponte para o celular ou o notebook com o site aberto e convide para a demonstração do sensor.</p></div>
-</div>
-
-<div class="pagina">
-<section id="problema" class="claro com-rodape">
-<p class="eyebrow">O problema</p>
-<h2>O polo do jeans gasta água sem medir</h2>
-<div class="stats">
-<div class="stat" style="--i:0"><p class="num">14–16%</p><p class="legenda">da produção nacional de jeans sai do Agreste Pernambucano</p></div>
-<div class="stat acento" style="--i:1"><p class="num terracota">77%+</p><p class="legenda">da água usada volta ao rio Capibaribe sem tratamento adequado</p></div>
-<div class="stat" style="--i:2"><p class="num">No olho</p><p class="legenda">é como o consumo é controlado hoje: sem meta por processo nem histórico</p></div>
-</div>
-<p class="fonte">Fonte: Termo de Abertura do Projeto (TAP), seção 3.1</p>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 2 de 9</p><p class="cartao-texto">O polo de Toritama, Caruaru e Santa Cruz do Capibaribe faz de 14% a 16% do jeans do Brasil. A água é cara (poço e caminhão-pipa) e mais de 77% volta ao rio sem tratamento. Já tem fiscalização do MPPE e da CPRH. E ninguém mede quanto cada processo gasta: é tudo no olho.</p></div>
-</div>
-
-<div class="pagina">
-<section id="custo" class="areia com-rodape">
-<p class="eyebrow">Por que importa</p>
-<h2>Água comprada custa caro</h2>
-<div class="stats">
-<div class="stat" style="--i:0"><p class="num grande">R$ 56 mil</p><p class="legenda">por mês em água comprada numa lavanderia de porte médio, com cerca de 70.000 litros por dia</p></div>
-<div class="stat acento" style="--i:1"><p class="num grande terracota">R$ 40 mil+</p><p class="legenda">de economia por mês possível com reúso consistente, de até 85%, já visto na região</p></div>
-</div>
-<p class="texto" style="margin-top:48px">Além disso: menos risco de embargo pela fiscalização ambiental e a rastreabilidade hídrica que as marcas compradoras já pedem.</p>
-<p class="fonte">Estimativas de referência do TAP, seção 3.3. Não são medições feitas pelo sistema.</p>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 3 de 9</p><p class="cartao-texto">Os números são estimativas do nosso Termo de Abertura, não medição do sistema. Uma lavanderia média pode gastar uns R$ 56 mil por mês comprando água. Com reúso bem feito, a economia passa de R$ 40 mil por mês. E medir por lote é o primeiro passo para saber onde está o desperdício.</p></div>
-</div>
-
-<div class="pagina">
-<section id="solucao" class="claro">
-<p class="eyebrow">A solução</p>
-<h2>Cada lote comparado com a sua meta</h2>
-<div class="passos">
-<div class="passo" style="--i:0"><p class="selo">1</p><h3>Meta por processo</h3><p class="detalhe">Litros por lote ou por peça para cada processo: estonagem, tingimento, amaciamento.</p></div>
-<div class="passo" style="--i:1"><p class="selo">2</p><h3>Registro do lote</h3><p class="detalhe">O operador registra no celular, até sem internet, ou o sensor envia sozinho.</p></div>
-<div class="passo" style="--i:2"><p class="selo">3</p><h3>Desvio na hora</h3>
-<div class="faixas">
-<div class="faixa"><div class="ponto" style="background:#14633a; border-radius:50%"></div><p class="faixa-texto">Dentro da meta: até 0%</p></div>
-<div class="faixa"><div class="ponto" style="background:#8b5a2b; border-radius:50%"></div><p class="faixa-texto">Atenção: até 8%</p></div>
-<div class="faixa"><div class="ponto" style="background:#b5543a; border-radius:50%"></div><p class="faixa-texto">Crítico: acima de 8%</p></div>
-</div></div>
-<div class="passo" style="--i:3"><p class="selo">4</p><h3>Alerta e relatório</h3><p class="detalhe">3 lotes seguidos acima da meta abrem um alerta e avisam no Telegram. Relatório em PDF, Excel e CSV.</p></div>
-</div>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 4 de 9</p><p class="cartao-texto">O gestor define a meta de cada processo. Cada lote registrado, pelo operador ou pelo sensor, é comparado com a meta na hora: dentro, atenção ou crítico. Três lotes seguidos acima da meta abrem um alerta e mandam mensagem no Telegram. No fim do mês, o relatório sai em PDF ou Excel para mostrar a cliente e a fiscalização.</p></div>
-</div>
-
-<div class="pagina">
-<section id="arquitetura" class="areia">
-<p class="eyebrow">Arquitetura</p>
-<h2>Tudo passa pela API</h2>
-<div class="diagrama">
-<svg width="1664" height="540" viewBox="0 0 1664 540" style="position:absolute; left:0; top:0" aria-hidden="true">
-<defs>
-<marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#12344d"/></marker>
-<marker id="ponta-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b5a2b"/></marker>
-</defs>
-<line x1="460" y1="105" x2="602" y2="230" stroke="#12344d" stroke-width="3" marker-end="url(#ponta)"/>
-<line x1="460" y1="455" x2="602" y2="330" stroke="#12344d" stroke-width="3" marker-end="url(#ponta)"/>
-<line x1="1062" y1="230" x2="1204" y2="105" stroke="#12344d" stroke-width="3" marker-end="url(#ponta)"/>
-<line x1="1062" y1="330" x2="1204" y2="455" stroke="#8b5a2b" stroke-width="3" stroke-dasharray="10 8" marker-end="url(#ponta-t)"/>
-</svg>
-<div class="caixa" style="left:0px; top:20px; --i:0"><h3>Site (React)</h3><p class="caixa-texto">PWA: abre e guarda lotes sem conexão</p></div>
-<div class="caixa" style="left:0px; top:370px; --i:1"><h3>Sensor ESP32</h3><p class="caixa-texto">Wokwi, HTTPS e token de API</p></div>
-<div class="caixa central" style="left:602px; top:165px; height:230px; --i:2"><h3>API Spring Boot</h3><p class="caixa-texto">Java 25 e regras de negócio</p><p class="caixa-texto">Login JWT, perfis e Actuator</p></div>
-<div class="caixa" style="left:1204px; top:20px; --i:3"><h3>PostgreSQL 18</h3><p class="caixa-texto">Flyway e usuário restrito</p></div>
-<div class="caixa opcional" style="left:1204px; top:370px; --i:4"><h3>Telegram</h3><p class="caixa-texto">Aviso de alerta (opcional)</p></div>
-</div>
-<p class="nota">O site nunca acessa o banco: o site e o sensor são clientes iguais da mesma API.</p>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 5 de 9</p><p class="cartao-texto">O site e o sensor falam com a mesma API, em Java com Spring Boot. Só a API toca no banco PostgreSQL, com um usuário que não pode apagar dados. Quando um alerta abre, a API avisa no Telegram. Tudo está publicado no Render e no Neon, e também sobe no computador com um comando do Docker.</p></div>
-</div>
-
-<div class="pagina">
-<section id="sensor" class="escuro">
-<p class="eyebrow">Internet das Coisas</p>
-<h2>O sensor no Wokwi</h2>
-<div class="duas-colunas">
-<div class="recursos">
-<div class="recurso" style="--i:0"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p class="recurso-texto">Mede a vazão por pulsos, como o sensor YF-S201 de verdade</p></div>
-<div class="recurso" style="--i:1"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><p class="recurso-texto">Envia por HTTPS com um token que o administrador troca</p></div>
-<div class="recurso" style="--i:2"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><p class="recurso-texto">Sem Wi-Fi, guarda até 100 leituras e envia depois, sem duplicar</p></div>
-<div class="recurso" style="--i:3"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="recurso-texto">Manda um sinal de vida a cada 15 s: a API sabe se ele está no ar</p></div>
-<div class="recurso" style="--i:4"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><p class="recurso-texto">Lote crítico: LED vermelho, buzzer e aviso no Telegram</p></div>
-</div>
-<div class="destaque">
-<h3>Simulado, mas falando com a API de verdade</h3>
-<p class="destaque-texto">O ESP32 roda no navegador e envia para a mesma API publicada que o site usa. Não é medição de uma lavanderia real: é a prova do caminho do dispositivo até o alerta.</p>
-</div>
-</div>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 6 de 9</p><p class="cartao-texto">Mostre o Wokwi. O potenciômetro faz o papel da água passando. Um clique inicia o lote, outro encerra e envia. Com a vazão no máximo por uns 40 segundos, o lote passa da meta: LED vermelho, buzzer, e o alerta chega no Telegram. Depois, digite Q para derrubar o Wi-Fi por 60 segundos: o lote fica guardado e é enviado sozinho quando o sinal volta, sem duplicar.</p></div>
-</div>
-
-<div class="pagina">
-<section id="carga" class="claro com-rodape">
-<p class="eyebrow">Teste de carga (k6)</p>
-<h2>A API aguenta a fábrica</h2>
-<div class="stats">
-<div class="stat" style="--i:0"><p class="num">201.617</p><p class="legenda">lotes gravados sem nenhuma falha</p><p class="detalhe">50 sensores ao mesmo tempo, cerca de 1.006 lotes por segundo (03/11)</p></div>
-<div class="stat" style="--i:1"><p class="num">262 ms</p><p class="legenda">para 95% das respostas com 100 sensores ao mesmo tempo</p><p class="detalhe">GitHub Actions, com 20 conexões no banco (10/11)</p></div>
-<div class="stat acento" style="--i:2"><p class="num terracota">0 erros</p><p class="legenda">num turno industrial de 120 sensores com picos de lavagem</p><p class="detalhe">50.699 leituras; 95% abaixo de 151 ms no pico (17/11)</p></div>
-</div>
-<p class="fonte">Fonte: docs/tecnico/teste-carga.md, no repositório do projeto</p>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 7 de 9</p><p class="cartao-texto">Testamos a API com o k6, simulando muitos sensores ao mesmo tempo. Com 50 sensores, foram mais de 200 mil lotes sem nenhuma falha. Com 100 sensores, 95% das respostas saíram em até 262 milissegundos. E num turno industrial de 120 sensores, com picos, não houve nenhum erro do servidor. Se perguntarem: o gargalo é o bloqueio por processo no banco, e por isso subimos o pool para 20 conexões.</p></div>
-</div>
-
-<div class="pagina">
-<section id="qualidade" class="areia">
-<p class="eyebrow">Qualidade</p>
-<h2>Testado a cada mudança</h2>
-<div class="grade">
-<div class="item" style="--i:0"><h3>Mais de 500 testes</h3><p class="item-texto">API, site e ponta a ponta (JUnit, Vitest e Playwright), rodando em todo pull request.</p></div>
-<div class="item" style="--i:1"><h3>CI no GitHub Actions</h3><p class="item-texto">Testes, Docker e vulnerabilidades conhecidas antes de publicar no Render.</p></div>
-<div class="item" style="--i:2"><h3>SonarQube</h3><p class="item-texto">Quality Gate da disciplina: cobertura, duplicação e problemas novos.</p></div>
-<div class="item" style="--i:3"><h3>Acessível</h3><p class="item-texto">Contraste WCAG 2.1 AA, uso pelo teclado e verificação com axe-core.</p></div>
-<div class="item" style="--i:4"><h3>Segurança e LGPD</h3><p class="item-texto">Senhas com BCrypt, token do sensor trocável e logins mascarados.</p></div>
-<div class="item" style="--i:5"><h3>Normas ISO/IEC</h3><p class="item-texto">Requisitos (29148), segurança da informação (27001) e ciclo de vida (12207).</p></div>
-</div>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 8 de 9</p><p class="cartao-texto">Cada mudança passa por testes automáticos antes de chegar ao ar: são mais de 500, na API, no site e de ponta a ponta. O SonarQube da disciplina barra código com problema. O site segue contraste de acessibilidade e funciona pelo teclado. A documentação segue normas ISO: requisitos, segurança da informação e ciclo de vida.</p></div>
-</div>
-
-<div class="pagina">
-<section id="final" class="escuro">
-<p class="eyebrow">Ao vivo</p>
-<h2>Conheça o sistema publicado</h2>
-<p class="endereco">aguas-do-capibaribe.onrender.com</p>
-<p class="texto" style="margin-top:24px">Código aberto: github.com/paulomourz/aguas-do-capibaribe</p>
-<div class="equipe">
-<p class="equipe-titulo">Equipe</p>
-<p class="equipe-nomes">Pedro · Abraão Filipe · João Bezerra · Matheus Andrade · Mateus Basilio · Paulo Moura</p>
-<p class="equipe-orientador">Orientador: Fabio Cesar Figueiredo de Medeiros Chicout</p>
-</div>
-</section>
-<div class="cartao"><p class="cartao-titulo">Cartão de apoio · slide 9 de 9</p><p class="cartao-texto">Feche convidando para ver o sensor no Wokwi e o site no celular. O endereço é público, mas o sistema pede login: [combinar com a equipe qual conta mostrar aos visitantes]. O código está aberto no GitHub. Agradeça e apresente a equipe.</p></div>
-</div>
-<script>
-  // Encaixa os slides (1920 px) na largura da janela.
-  function encaixar() { document.body.style.zoom = Math.min(1, window.innerWidth / 1920); }
-  window.addEventListener('resize', encaixar); encaixar();
-</script>
+<main>
+<header>
+  <h1>Águas do Capibaribe · apresentação na feira ProjetAÍ</h1>
+  <p>Fala de 5 min 40 s (o limite é de 5 a 7 minutos), seguida de 3 minutos de perguntas da banca. Abaixo de cada slide
+  está o cartão de apoio: o que dizer e quanto tempo usar. A demonstração segue o
+  <a href="roteiro-apresentacao.md">roteiro de apresentação</a>. Para projetar, use o
+  <a href="estande-projetai.pdf">PDF</a>.</p>
+</header>
+<figure id="slide-01">
+  <img src="estande/slide-01.jpg" width="1920" height="1080" alt="Slide 1. Capa: Águas do Capibaribe, gestão de água por lote em lavanderias de jeans do Agreste" loading="lazy">
+  <figcaption><p class="titulo">Slide 1 de 11 · O projeto · 0:00 · 10 s</p><p class="fala">“Somos o Águas do Capibaribe. Ajudamos a lavanderia de jeans a saber quanta água cada lote gastou e se passou da meta. Cada lote com a água que ele precisa, nem uma gota a mais.”</p></figcaption>
+</figure>
+<figure id="slide-02">
+  <img src="estande/slide-02.jpg" width="1920" height="1080" alt="Slide 2. A equipe, com a função de cada um e o orientador" loading="lazy">
+  <figcaption><p class="titulo">Slide 2 de 11 · A equipe · 0:10 · 15 s</p><p class="fala">Seis pessoas: Pedro (Full Stack e PO), Abraão Filipe (Back-End), João Bezerra (Back-End e IoT), Matheus Andrade (Front-End), Mateus Basilio (Banco de Dados) e Paulo Moura (DevOps), com orientação do Prof. Fábio Chicout.</p></figcaption>
+</figure>
+<figure id="slide-03">
+  <img src="estande/slide-03.jpg" width="1920" height="1080" alt="Slide 3. O problema: consumo de água sem controle nas lavanderias do Agreste" loading="lazy">
+  <figcaption><p class="titulo">Slide 3 de 11 · Problema · 0:25 · 30 s</p><p class="fala">“O Agreste faz de 14% a 16% do jeans do Brasil. A água é cara, de poço e caminhão-pipa: cerca de R$ 56 mil por mês numa lavanderia média. E mais de 77% volta ao rio sem tratamento. Hoje ninguém sabe quanto cada processo gasta: é tudo no olho.” Os números são estimativas do Termo de Abertura.</p></figcaption>
+</figure>
+<figure id="slide-04">
+  <img src="estande/slide-04.jpg" width="1920" height="1080" alt="Slide 4. Oportunidade e público-alvo: gestor, operador, fiscalização e marcas" loading="lazy">
+  <figcaption><p class="titulo">Slide 4 de 11 · Oportunidade e público-alvo · 0:55 · 30 s</p><p class="fala">“Nosso público são as lavanderias de jeans do Agreste. O gestor vê consumo, alertas e custo. O operador registra o lote no celular, até sem internet, ou o sensor registra por ele. Fiscalização e marcas ganham um histórico que não pode ser alterado. Com reúso, a economia pode passar de R$ 40 mil por mês.”</p></figcaption>
+</figure>
+<figure id="slide-05">
+  <img src="estande/slide-05.jpg" width="1920" height="1080" alt="Slide 5. A solução: o Dashboard no navegador e o registro de lote no celular" loading="lazy">
+  <figcaption><p class="titulo">Slide 5 de 11 · Solução · 1:25 · 35 s</p><p class="fala">“O gestor define a meta de cada processo. Cada lote é comparado com a meta na hora: dentro, atenção ou crítico. Três lotes seguidos acima da meta abrem um alerta, com aviso no Telegram. No fim do mês, o relatório sai em PDF, Excel ou CSV, e o custo aparece em reais.”</p></figcaption>
+</figure>
+<figure id="slide-06">
+  <img src="estande/slide-06.jpg" width="1920" height="1080" alt="Slide 6. O protótipo no ar: registro de lote, alertas, relatórios, efluentes, custo da água e sensor IoT" loading="lazy">
+  <figcaption><p class="titulo">Slide 6 de 11 · Demonstração do protótipo · 2:00 · 1 min 30 s</p><p class="fala">Tudo já aberto e logado como gestor. 1) No Wokwi, potenciômetro no máximo e botão verde: o lote começa. 2) Enquanto ele conta (uns 40 s), mostre no site o Dashboard do mês e o alerta em análise. 3) Botão de novo: LED vermelho, buzzer e o aviso no Telegram, no celular. 4) No site, F5: o lote no Histórico e o alerta novo. Ninguém registra lote de Estonagem antes do sensor.</p></figcaption>
+</figure>
+<figure id="slide-07">
+  <img src="estande/slide-07.jpg" width="1920" height="1080" alt="Slide 7. Diferenciais: o circuito do sensor IoT no simulador Wokwi" loading="lazy">
+  <figcaption><p class="titulo">Slide 7 de 11 · Diferenciais e inovação · 3:30 · 35 s</p><p class="fala">“O lote pode ser registrado sozinho por um sensor de vazão no ESP32, que vocês viram no Wokwi falando com a API de verdade. Sem Wi-Fi, ele guarda as leituras e envia depois, sem duplicar. A cada 15 segundos manda um sinal de vida. E o site também funciona sem internet no celular.”</p></figcaption>
+</figure>
+<figure id="slide-08">
+  <img src="estande/slide-08.jpg" width="1920" height="1080" alt="Slide 8. Viável e sustentável: plano grátis, Docker, 120 sensores, mais de 500 testes, código aberto" loading="lazy">
+  <figcaption><p class="titulo">Slide 8 de 11 · Viabilidade e sustentabilidade · 4:05 · 30 s</p><p class="fala">“Roda de graça no Render e no Neon, ou num computador com um comando do Docker. No teste de carga com o k6, aguentou 120 sensores sem nenhum erro. O código é aberto, tem mais de 500 testes, passou no SonarQube e está documentado nas normas ISO/IEC.”</p></figcaption>
+</figure>
+<figure id="slide-09">
+  <img src="estande/slide-09.jpg" width="1920" height="1080" alt="Slide 9. Impactos esperados, com a tela Custo da água" loading="lazy">
+  <figcaption><p class="titulo">Slide 9 de 11 · Impactos e resultados esperados · 4:35 · 30 s</p><p class="fala">“Medir cada lote é o primeiro passo para gastar menos: com reúso, até R$ 40 mil por mês. O efluente fora da CONAMA 430, pH de 5 a 9, aparece na hora. O custo da água e do excesso sai em reais. E o histórico não muda: é prova para cliente e fiscalização.”</p></figcaption>
+</figure>
+<figure id="slide-10">
+  <img src="estande/slide-10.jpg" width="1920" height="1080" alt="Slide 10. Próximos passos após a feira, do piloto ao laudo ambiental" loading="lazy">
+  <figcaption><p class="titulo">Slide 10 de 11 · Próximos passos · 5:05 · 20 s</p><p class="fala">“Primeiro, um piloto numa lavanderia real com o sensor físico YF-S201. Depois, um sensor em cada máquina, previsão do consumo, aviso também no WhatsApp e um laudo ambiental para a CPRH.”</p></figcaption>
+</figure>
+<figure id="slide-11">
+  <img src="estande/slide-11.jpg" width="1920" height="1080" alt="Slide 11. Obrigado, com os QR codes do site publicado e do código no GitHub" loading="lazy">
+  <figcaption><p class="titulo">Slide 11 de 11 · Encerramento e chamada para ação · 5:25 · 15 s</p><p class="fala">“Obrigado! Aponte a câmera para o QR code: o site está no ar e o código é aberto. Se você conhece uma lavanderia, fale com a gente para um piloto.” Depois, 3 minutos de perguntas da banca. Nenhuma conta é passada aos visitantes.</p></figcaption>
+</figure>
+</main>
 </body>
 </html>
