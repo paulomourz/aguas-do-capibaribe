@@ -103,7 +103,10 @@ linha `DETAIL`. Por isso não há SQL injection.
 
 É o centro da aula: o mesmo lote visto nos quatro lugares.
 
-1. **No Wokwi:** clique em ▶, aperte o botão verde para começar o lote, gire o potenciômetro para dar vazão e aperte
+0. **Antes do lote:** com o sensor ligado, o log já mostra a cada 15 s o sinal de vida (issue #218): o `select` do
+   sensor pelo `token_hash` e um `insert into telemetria (...)` com a vazão do potenciômetro. Espere
+   `Sinal de vida OK` no monitor serial.
+1. **No Wokwi:** clique em ▶, espere `Sinal de vida OK`, aperte o botão verde para começar o lote, gire o potenciômetro para dar vazão e aperte
    o botão de novo para encerrar. O sensor envia o lote à API, e o monitor serial mostra a resposta.
 2. **No log de SQL (PowerShell):** aparecem na hora o `select ... from usuario where token_hash=$1`, que identifica o
    sensor, e o `insert into lote (...)`, com o usuário `[aguas_api]` e os litros medidos na linha `DETAIL`. O valor
@@ -121,6 +124,14 @@ JOIN processo p ON p.id = l.processo_id
 JOIN usuario u ON u.id = l.usuario_id
 ORDER BY l.id DESC
 LIMIT 5;
+
+-- O sinal de vida do sensor: as leituras de vazão dos últimos 2 minutos, a cada 15 s
+SELECT t.id, p.nome AS processo, t.vazao_litros,
+       t.registrado_em AT TIME ZONE 'America/Recife' AS registrado_em_recife
+FROM telemetria t
+JOIN processo p ON p.id = t.processo_id
+WHERE t.registrado_em > now() - interval '2 minutes'
+ORDER BY t.id DESC;
 ```
 
 O `esperado` não veio do sensor: o trigger `trg_lote_esperado` calculou pela meta do processo na hora do `INSERT`
@@ -145,7 +156,7 @@ botão direito em **aguas > ERD For Database** desenha as tabelas com as chaves 
 | `alerta_lote` | Quais lotes formaram cada alerta (N para N) | `alerta`, `lote` |
 | `aviso_pendente` | Avisos do Telegram que falharam e esperam reenvio | `alerta` |
 | `efluentes_descarte` | Descarte da água de cada lote: volume, pH, turbidez e reúso | `lote` |
-| `telemetria` | Leituras de vazão enviadas pela rota `POST /telemetria` | `processo`, `usuario` |
+| `telemetria` | Sinal de vida do sensor: a vazão do momento, a cada 15 s sem lote em andamento (`POST /telemetria`) | `processo`, `usuario` |
 | `auditoria_usuario` | Quem criou, desativou ou trocou a senha de cada conta | `usuario` (2 vezes) |
 
 Visões: `v_historico_lotes` (lote com desvio e status), `v_alertas` (alerta com o processo) e `v_efluentes_mensal`
