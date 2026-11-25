@@ -6,6 +6,15 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### README para a banca
+
+- **Badges de situação no topo** (issue #217): CI, Qualidade (workflow), Quality Gate do SonarQube e Release (última
+  tag publicada, que passa sozinha para a `v2.0.0`), separados dos badges de tecnologia.
+- **"Rodar em 1 comando"** logo no início: `docker compose up --build` sobe banco, API e site sem configurar nada, e os
+  logins e senhas aparecem no próprio log.
+- **Status atualizado para a v2.0.0** (code freeze em 27/11/2026, feira ProjetAÍ), com as entregas da semana: descarte
+  de efluentes, custo da água, sinal de vida do sensor e migrações até a V16.
+
 ### Sinal de vida do sensor no Wokwi
 
 - **O sensor passa a enviar telemetria** (issue #218): sem lote em andamento, `iot/sketch.ino` manda a vazão atual para
