@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Banner, Button, Card, CardHeader, DataTable, EmptyState, ErrorState, Field, KpiCard, LoadingBlock, PageHeader, TextInput, type Col } from '../components/ui'
 import CamposMesAno from '../components/CamposMesAno'
+import { salvarPrecoM3, type ErrosPrecoM3 } from '../services'
 import { IconCalendar, IconDroplet } from '../components/icons'
-import { avisoDoCusto, custoDoMes, diaNoFusoDaLavanderia, fmtDataHora, fmtDia, fmtL, fmtNum, fmtReais, lerNumeroBR, meses, precoVigente, type CustoDoMes, type PrecoM3 } from '../domain'
-import { errosDaApi, periodoAtual, useApp, useLotesDoMes, usePrecosM3 } from '../store'
+import { avisoDoCusto, custoDoMes, diaNoFusoDaLavanderia, fmtDataHora, fmtDia, fmtL, fmtNum, fmtReais, meses, precoVigente, type CustoDoMes, type PrecoM3 } from '../domain'
+import { periodoAtual, useApp, useLotesDoMes, usePrecosM3 } from '../store'
 
 /** G12: custo da água. O custo do mês, por processo, e o preço do m³ com o histórico. */
 export default function CustoAgua() {
@@ -67,36 +68,24 @@ export default function CustoAgua() {
   )
 }
 
-type Erros = { valor?: string; vigencia?: string }
 
 function CardPrecoM3({ dados, carregando, erro, recarregar, cadastrar }: ReturnType<typeof usePrecosM3>) {
   const { notificar } = useApp()
   const [valor, setValor] = useState('')
   const [vigencia, setVigencia] = useState(() => diaNoFusoDaLavanderia(new Date()))
-  const [erros, setErros] = useState<Erros>({})
+  const [erros, setErros] = useState<ErrosPrecoM3>({})
   const [salvando, setSalvando] = useState(false)
 
   async function salvar(e: FormEvent) {
     e.preventDefault()
-    const v = lerNumeroBR(valor)
-    const novo: Erros = {}
-    if (valor.trim() === '') novo.valor = 'Informe o preço do m³.'
-    else if (Number.isNaN(v)) novo.valor = 'Use apenas números no preço, por exemplo 12,50.'
-    if (!vigencia) novo.vigencia = 'Informe a data a partir da qual o preço vale.'
-    setErros(novo)
-    if (Object.keys(novo).length) return
     setSalvando(true)
-    try {
-      const salvo = await cadastrar({ valor: v, vigencia })
-      notificar(`Preço do m³ de ${fmtReais(salvo.valor)} cadastrado a partir de ${fmtDia(salvo.vigencia)}.`)
+    const r = await salvarPrecoM3(valor, vigencia, cadastrar)
+    setSalvando(false)
+    setErros(r.ok ? {} : r.erros)
+    if (r.ok) {
+      notificar(`Preço do m³ de ${fmtReais(r.salvo.valor)} cadastrado a partir de ${fmtDia(r.salvo.vigencia)}.`)
       setValor('')
-    } catch (err) {
-      const { mensagem, campos } = errosDaApi(err)
-      setErros(campos)
-      if (!Object.keys(campos).length) notificar(mensagem, 'erro')
-    } finally {
-      setSalvando(false)
-    }
+    } else if (r.mensagem) notificar(r.mensagem, 'erro')
   }
 
   const hoje = precoVigente(dados, diaNoFusoDaLavanderia(new Date()))
