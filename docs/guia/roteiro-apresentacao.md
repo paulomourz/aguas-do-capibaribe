@@ -13,32 +13,49 @@ Como mostrar o sistema funcionando. Use o **plano A**. Se o site publicado ou o 
 Os dois planos são separados: usuários, senhas e lotes de um não aparecem no outro. Para a disciplina de Banco de
 Dados há um plano C, fora da apresentação: o plano B com o banco aberto ao pgAdmin, o log de SQL e o Adminer ([roteiro do banco](roteiro-banco-de-dados.md)).
 
-## Demonstração cronometrada (issue #115)
+## Apresentação na feira ProjetAÍ
 
-**10 minutos**, mostrando o ciclo **lote → alerta → resolução → relatório**, com o **sensor no Wokwi** como destaque: é
-o diferencial do projeto e fica com quase um terço do tempo. Funciona igual nos dois planos, depois de preparar a área
-de demonstração (seção seguinte). Deixe as abas abertas e com login feito antes de começar: o tempo é só para mostrar.
+**5 a 7 minutos** de fala, seguidos de **3 minutos** de perguntas da banca, no auditório. A fala abaixo dá **5 min 40 s**,
+com folga para respirar. Os slides e o cartão de apoio de cada um (o que dizer e quanto tempo usar) estão em
+[`estande-projetai.html`](estande-projetai.html); para projetar, use o [`estande-projetai.pdf`](estande-projetai.pdf).
+O deck segue a estrutura oficial da feira, e a demonstração mostra o **sensor no Wokwi**, o diferencial do projeto.
+Funciona igual nos dois planos, depois de preparar a área de demonstração (seção seguinte). Deixe as abas abertas e com
+login feito antes de começar: o tempo é só para mostrar.
 
-| Tempo | Parte | O que mostrar | Entrega de | Quem fala |
-|---|---|---|---|---|
-| 0:00 a 0:45 | O problema | Lavanderias do Agreste sem controle da água por lote; a ideia do sistema (TAP, seção 3) | Pedro | Pedro |
-| 0:45 a 1:45 | Acesso | Aviso de privacidade na tela de login; o **administrador** cadastra um operador em **Usuários** | Paulo Moura, Matheus Andrade | Matheus Andrade |
-| 1:45 a 3:00 | Registro de lote | O **operador** registra um lote de **Amaciamento** no celular (nunca de Estonagem, que fica para o sensor) e vê o gauge; com a conexão desligada, registra outro, religa e mostra o selo **Sincronizado** | Abraão Filipe, Matheus Andrade | Matheus Andrade |
-| 3:00 a 6:00 | **Sensor no Wokwi (o diferencial)** | 1) O circuito: ESP32, potenciômetro no papel do sensor de vazão YF-S201, botão, LEDs e buzzer. 2) Um lote crítico: vazão no máximo (30 L/min) por uns 40 s, cerca de 20 L contra a meta de 15 L; o ESP32 envia com o token de API, a API responde que passou da meta, o LED vermelho acende e o buzzer apita 3 vezes. É o 3º lote seguido acima da meta na Estonagem: **o alerta abre no site e o aviso chega ao Telegram** (mostrar no celular). 3) Sem Wi-Fi: **Q** no monitor serial derruba o sinal por 60 s; o lote feito nesse tempo fica no buffer e é enviado sozinho quando o sinal volta, sem duplicar | Pedro, Paulo Moura, João Bezerra, Mateus Basilio | Pedro |
-| 6:00 a 7:15 | Alertas | Os 2 alertas da massa (resolvido e em análise) e o que o sensor acabou de abrir; esse vai para **Em análise** e depois **Resolvido** | Abraão Filipe, Paulo Moura | Pedro |
-| 7:15 a 8:45 | Acompanhamento | **Dashboard** com os gráficos dos 20 dias e a água por peça; **Relatórios** com o PDF e a planilha Excel | Matheus Andrade, Mateus Basilio, Paulo Moura | Matheus Andrade |
-| 8:45 a 9:30 | Qualidade e operação | No GitHub: CI verde, Quality Gate do SonarQube e SBOM na release | Paulo Moura | Pedro |
-| 9:30 a 10:00 | Fechamento | Limitações (operador real e sensor simulado) | equipe | Pedro e Matheus Andrade |
+| Tempo | Slide | O que dizer ou mostrar | Quem fala |
+|---|---|---|---|
+| 0:00 a 0:10 | 1. Nome do projeto | Quem somos e o slogan: cada lote com a água que ele precisa | Pedro |
+| 0:10 a 0:25 | 2. Equipe | Os seis integrantes, a função de cada um e o orientador | Pedro |
+| 0:25 a 0:55 | 3. Problema | 14% a 16% do jeans do Brasil; água cara; 77% volta ao rio sem tratamento; ninguém mede por processo | Pedro |
+| 0:55 a 1:25 | 4. Oportunidade e público-alvo | Gestor, operador, fiscalização e marcas; economia de até R$ 40 mil por mês com reúso | Pedro |
+| 1:25 a 2:00 | 5. Solução | Meta por processo, lote comparado na hora, alerta no Telegram, relatórios e custo em reais | Matheus Andrade |
+| 2:00 a 3:30 | 6. **Demonstração** | Roteiro logo abaixo | Pedro (sensor) e Matheus Andrade (site) |
+| 3:30 a 4:05 | 7. Diferenciais e inovação | Sensor ESP32 falando com a API de verdade; sem Wi-Fi guarda e envia sem duplicar; sinal de vida a cada 15 s; site sem internet no celular | Pedro |
+| 4:05 a 4:35 | 8. Viabilidade e sustentabilidade | Grátis no Render e no Neon ou no Docker; 120 sensores sem erro no k6; mais de 500 testes, SonarQube, normas ISO/IEC | Pedro |
+| 4:35 a 5:05 | 9. Impactos esperados | Economia com reúso; efluente fora da CONAMA 430 na hora; custo do excesso em reais; histórico que não muda | Matheus Andrade |
+| 5:05 a 5:25 | 10. Próximos passos | Piloto com o sensor físico YF-S201, um sensor por máquina, previsão, WhatsApp, laudo para a CPRH | Matheus Andrade |
+| 5:25 a 5:40 | 11. Encerramento | Agradecer, apontar os QR codes e convidar lavanderias para um piloto | Pedro e Matheus Andrade |
 
-**Se sobrar tempo ou nas perguntas:** a **Auditoria** mostra o cadastro do operador; o runbook de recuperação de
-desastres.
+**Demonstração (1 min 30 s):**
+
+1. No Wokwi, gire o potenciômetro até o máximo (30 L/min) e clique no botão verde: o lote começa a contar.
+2. Enquanto ele conta, uns 40 s, mostre no site, como gestor, o **Dashboard** do mês com os gráficos dos 20 dias e o
+   alerta em análise.
+3. Clique de novo no botão. O lote dá cerca de 20 L contra a meta de 15 L: o LED vermelho acende e o buzzer apita 3
+   vezes. É o 3º lote seguido acima da meta na Estonagem, então **o alerta abre e o aviso chega ao Telegram** (mostre no
+   celular).
+4. No site, atualize com **F5**: o lote aparece no **Histórico** e o alerta novo em **Alertas**.
+
+**Nas perguntas, se pedirem:** o operador registrando um lote de **Amaciamento** no celular, com a conexão desligada,
+e o selo **Sincronizado**; **Relatórios** em PDF e Excel; **Custo da água** e **Efluentes**; a **Auditoria**; o sensor
+sem Wi-Fi (**Q** no monitor serial derruba o sinal por 60 s e o lote vai sozinho quando ele volta); no GitHub, o CI
+verde, o Quality Gate do SonarQube e o SBOM na release.
 
 **Telegram:** a massa deixa a Estonagem com 2 lotes seguidos acima da meta, sem alerta, para o lote crítico do sensor
 abrir o alerta ao vivo. Por isso, **ninguém registra lote de Estonagem antes do sensor**, nem no ensaio. Se ensaiar
 no mesmo banco, limpe e rode a massa de novo depois. Antes de começar, deixe o grupo do Telegram aberto no celular.
 
-**Se atrasar:** corte primeiro a parte de qualidade (vira uma frase no fechamento) e depois o registro sem conexão. O
-sensor fica inteiro.
+**Se atrasar:** encurte o Dashboard na demonstração e junte os slides 9 e 10 numa frase. O sensor fica inteiro.
 
 **Sensor:** antes de começar, cole o token, clique em ▶ e espere `Sinal de vida OK`: a primeira conexão ao Wi-Fi e à
 API leva alguns segundos (até uns 2 minutos se a API estiver dormindo). A partir daí, o sensor manda um sinal de vida a

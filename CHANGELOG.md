@@ -13,6 +13,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   qualidade e onde ver o sistema ao vivo. Em `docs/guia/estande-projetai.pdf` (para imprimir ou projetar) e
   `docs/guia/estande-projetai.html` (abre no navegador e mostra, abaixo de cada slide, o cartão de apoio com o que
   falar em cerca de 30 segundos).
+- **Deck refeito no Canva com a estrutura oficial da feira**: 11 slides (nome do projeto, equipe com a função de
+  cada um e o orientador, problema, oportunidade e público-alvo, solução, demonstração, diferenciais, viabilidade,
+  impactos, próximos passos e encerramento), letras grandes para o auditório, telas do sistema em moldura de navegador e
+  celular, o circuito do Wokwi e QR codes para o site publicado e o GitHub. As imagens ficam em `docs/guia/estande/`, e
+  o cartão de apoio de cada slide traz a fala e o tempo, somando 5 min 40 s.
+- **Roteiro de apresentação para 5 a 7 minutos**: a demonstração de 10 minutos virou 1 min 30 s dentro do deck, com o
+  lote crítico do sensor contando enquanto o Dashboard aparece; o resto fica para as perguntas da banca.
 
 ### README para a banca
 
