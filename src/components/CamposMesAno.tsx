@@ -3,7 +3,7 @@ import { meses } from '../domain'
 import { periodoAtual } from '../store'
 
 /** Seletor de mês e ano (Relatórios e Custo da água): o ano corrente e o anterior. */
-export default function CamposMesAno({ mes, ano, setMes, setAno, disabled }: { mes: number; ano: number; setMes: (m: number) => void; setAno: (a: number) => void; disabled?: boolean }) {
+export default function CamposMesAno({ mes, ano, setMes, setAno, disabled }: Readonly<{ mes: number; ano: number; setMes: (m: number) => void; setAno: (a: number) => void; disabled?: boolean }>) {
   const atual = periodoAtual()
   return (
     <>

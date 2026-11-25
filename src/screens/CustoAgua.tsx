@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Banner, Button, Card, CardHeader, DataTable, EmptyState, ErrorState, Field, KpiCard, LoadingBlock, PageHeader, TextInput, type Col } from '../components/ui'
 import CamposMesAno from '../components/CamposMesAno'
 import { salvarPrecoM3, type ErrosPrecoM3 } from '../services'
@@ -37,9 +37,16 @@ export default function CustoAgua() {
         </div>
       </Card>
 
-      {lotes.carregando || precos.carregando ? (
-        <LoadingBlock rows={4} label="Carregando custo…" />
-      ) : lotes.erro || precos.erro ? (
+      {conteudo()}
+
+      <CardPrecoM3 {...precos} />
+    </div>
+  )
+
+  function conteudo() {
+    if (lotes.carregando || precos.carregando) return <LoadingBlock rows={4} label="Carregando custo…" />
+    if (lotes.erro || precos.erro)
+      return (
         <ErrorState
           title="Não foi possível carregar o custo"
           onRetry={() => {
@@ -47,36 +54,33 @@ export default function CustoAgua() {
             if (precos.erro) precos.recarregar()
           }}
         />
-      ) : lotes.dados.length === 0 ? (
-        <EmptyState icon={<IconCalendar size={28} />} title="Sem lotes no período" description={`Não há lotes registrados em ${periodo}. Escolha outro mês ou ano.`} />
-      ) : (
-        <>
-          {aviso && <Banner tone="warn">{aviso}</Banner>}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <KpiCard label="Custo da água" value={reais(custo.custo)} icon={<IconDroplet size={20} />} footer={`${fmtL(custo.consumo)} em ${periodo}`} />
-            <KpiCard label="Custo do excesso" value={reais(custo.custoExcesso)} icon={<IconDroplet size={20} />} footer={`${fmtL(custo.excesso)} acima do esperado`} />
-          </div>
-          <Card as="section" className="overflow-hidden">
-            <CardHeader id="custo-processos" title="Custo por processo" subtitle={periodo} />
-            <DataTable rows={custo.porProcesso} cols={cols} rowKey={(p) => p.processoId} caption="Custo da água por processo" minWidth={720} />
-          </Card>
-        </>
-      )}
-
-      <CardPrecoM3 {...precos} />
-    </div>
-  )
+      )
+    if (lotes.dados.length === 0)
+      return <EmptyState icon={<IconCalendar size={28} />} title="Sem lotes no período" description={`Não há lotes registrados em ${periodo}. Escolha outro mês ou ano.`} />
+    return (
+      <>
+        {aviso && <Banner tone="warn">{aviso}</Banner>}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <KpiCard label="Custo da água" value={reais(custo.custo)} icon={<IconDroplet size={20} />} footer={`${fmtL(custo.consumo)} em ${periodo}`} />
+          <KpiCard label="Custo do excesso" value={reais(custo.custoExcesso)} icon={<IconDroplet size={20} />} footer={`${fmtL(custo.excesso)} acima do esperado`} />
+        </div>
+        <Card as="section" className="overflow-hidden">
+          <CardHeader id="custo-processos" title="Custo por processo" subtitle={periodo} />
+          <DataTable rows={custo.porProcesso} cols={cols} rowKey={(p) => p.processoId} caption="Custo da água por processo" minWidth={720} />
+        </Card>
+      </>
+    )
+  }
 }
 
-
-function CardPrecoM3({ dados, carregando, erro, recarregar, cadastrar }: ReturnType<typeof usePrecosM3>) {
+function CardPrecoM3({ dados, carregando, erro, recarregar, cadastrar }: Readonly<ReturnType<typeof usePrecosM3>>) {
   const { notificar } = useApp()
   const [valor, setValor] = useState('')
   const [vigencia, setVigencia] = useState(() => diaNoFusoDaLavanderia(new Date()))
   const [erros, setErros] = useState<ErrosPrecoM3>({})
   const [salvando, setSalvando] = useState(false)
 
-  async function salvar(e: FormEvent) {
+  async function salvar(e: { preventDefault: () => void }) {
     e.preventDefault()
     setSalvando(true)
     const r = await salvarPrecoM3(valor, vigencia, cadastrar)
@@ -101,15 +105,7 @@ function CardPrecoM3({ dados, carregando, erro, recarregar, cadastrar }: ReturnT
       <CardHeader
         id="preco-m3"
         title="Preço do m³"
-        subtitle={
-          carregando || erro ? undefined : hoje ? (
-            <>
-              Vigente hoje: <strong className="font-semibold text-ink tabular-nums">{fmtReais(hoje.valor)}</strong>, desde {fmtDia(hoje.vigencia)}.
-            </>
-          ) : (
-            'Nenhum preço vigente hoje.'
-          )
-        }
+        subtitle={vigenteHoje()}
       />
 
       <form onSubmit={salvar} noValidate className="flex flex-col gap-4 px-4 py-6 sm:flex-row sm:items-start sm:px-6">
@@ -145,15 +141,25 @@ function CardPrecoM3({ dados, carregando, erro, recarregar, cadastrar }: ReturnT
         </Button>
       </form>
 
-      {carregando ? (
-        <LoadingBlock rows={3} label="Carregando preços…" />
-      ) : erro ? (
-        <ErrorState title="Não foi possível carregar os preços" onRetry={recarregar} />
-      ) : dados.length === 0 ? (
-        <EmptyState icon={<IconDroplet size={28} />} title="Nenhum preço cadastrado" description="Cadastre o preço do m³ para ver o custo da água." />
-      ) : (
-        <DataTable rows={[...dados].reverse()} cols={cols} rowKey={(p) => p.id} caption="Histórico do preço do m³" minWidth={640} />
-      )}
+      {historico()}
     </Card>
   )
+
+  function vigenteHoje() {
+    if (carregando || erro) return undefined
+    if (!hoje) return 'Nenhum preço vigente hoje.'
+    return (
+      <>
+        Vigente hoje: <strong className="font-semibold text-ink tabular-nums">{fmtReais(hoje.valor)}</strong>, desde {fmtDia(hoje.vigencia)}.
+      </>
+    )
+  }
+
+  function historico() {
+    if (carregando) return <LoadingBlock rows={3} label="Carregando preços…" />
+    if (erro) return <ErrorState title="Não foi possível carregar os preços" onRetry={recarregar} />
+    if (dados.length === 0)
+      return <EmptyState icon={<IconDroplet size={28} />} title="Nenhum preço cadastrado" description="Cadastre o preço do m³ para ver o custo da água." />
+    return <DataTable rows={[...dados].reverse()} cols={cols} rowKey={(p) => p.id} caption="Histórico do preço do m³" minWidth={640} />
+  }
 }
