@@ -24,7 +24,7 @@ export default function CustoAgua() {
     { key: 'consumo', header: 'Consumo (L)', num: true, render: (p) => fmtNum(p.consumo) },
     { key: 'custo', header: 'Custo (R$)', num: true, mobile: 'value', render: (p) => reais(p.custo) },
     { key: 'excesso', header: 'Excesso (L)', num: true, render: (p) => fmtNum(p.excesso) },
-    { key: 'custoExcesso', header: 'Custo do excesso (R$)', num: true, mobile: 'subtitle', render: (p) => reais(p.custoExcesso) },
+    { key: 'custoExcesso', header: 'Custo do excesso (R$)', num: true, render: (p) => reais(p.custoExcesso) },
   ]
 
   return (
