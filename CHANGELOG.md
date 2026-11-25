@@ -6,6 +6,14 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Deck do estande da ProjetAÍ
+
+- **Apresentação de apoio para o estande** (issue #215): 9 slides com a identidade do site, sobre o problema da água no
+  polo do jeans, o custo (estimativas do TAP), a solução, a arquitetura, o sensor no Wokwi, o teste de carga com k6, a
+  qualidade e onde ver o sistema ao vivo. Em `docs/guia/estande-projetai.pdf` (para imprimir ou projetar) e
+  `docs/guia/estande-projetai.html` (abre no navegador e mostra, abaixo de cada slide, o cartão de apoio com o que
+  falar em cerca de 30 segundos).
+
 ### README para a banca
 
 - **Badges de situação no topo** (issue #217): CI, Qualidade (workflow), Quality Gate do SonarQube e Release (última
