@@ -1,18 +1,67 @@
 import { useState, type FormEvent } from 'react'
-import { Button, Card, CardHeader, DataTable, EmptyState, ErrorState, Field, LoadingBlock, PageHeader, TextInput, type Col } from '../components/ui'
-import { IconDroplet } from '../components/icons'
-import { diaNoFusoDaLavanderia, fmtDataHora, fmtReais, lerNumeroBR, precoVigente, type PrecoM3 } from '../domain'
-import { errosDaApi, useApp, usePrecosM3 } from '../store'
+import { Banner, Button, Card, CardHeader, DataTable, EmptyState, ErrorState, Field, KpiCard, LoadingBlock, PageHeader, TextInput, type Col } from '../components/ui'
+import { IconCalendar, IconDroplet } from '../components/icons'
+import { custoDoMes, diaNoFusoDaLavanderia, fmtDataHora, fmtL, fmtNum, fmtReais, lerNumeroBR, meses, precoVigente, type CustoDoMes, type PrecoM3 } from '../domain'
+import { errosDaApi, periodoAtual, useApp, useLotesDoMes, usePrecosM3 } from '../store'
+import { CamposMesAno } from './Relatorios'
 
 /** AAAA-MM-DD → DD/MM/AAAA, sem passar por Date (que mudaria o dia pelo fuso). */
 const fmtDia = (dia: string) => dia.split('-').reverse().join('/')
 
-/** G12: custo da água. Nesta etapa, só o preço do m³ com o histórico. */
+/** G12: custo da água. O custo do mês, por processo, e o preço do m³ com o histórico. */
 export default function CustoAgua() {
+  const { nomeProcesso } = useApp()
+  const atual = periodoAtual()
+  const [mes, setMes] = useState(atual.mes)
+  const [ano, setAno] = useState(atual.ano)
+  const lotes = useLotesDoMes(mes, ano)
   const precos = usePrecosM3()
+  const periodo = `${meses[mes - 1]} de ${ano}`.toLowerCase()
+  const r = custoDoMes(lotes.dados, precos.dados)
+  const reais = (v: number | null) => (v === null ? '—' : fmtReais(v))
+
+  const cols: Col<CustoDoMes['porProcesso'][number]>[] = [
+    { key: 'processo', header: 'Processo', mobile: 'title', render: (p) => nomeProcesso(p.processoId) },
+    { key: 'consumo', header: 'Consumo (L)', num: true, render: (p) => fmtNum(p.consumo) },
+    { key: 'custo', header: 'Custo (R$)', num: true, mobile: 'value', render: (p) => reais(p.custo) },
+    { key: 'excesso', header: 'Excesso (L)', num: true, render: (p) => fmtNum(p.excesso) },
+    { key: 'custoExcesso', header: 'Custo do excesso (R$)', num: true, mobile: 'subtitle', render: (p) => reais(p.custoExcesso) },
+  ]
+
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
       <PageHeader title="Custo da água" description="O consumo em reais, pelo preço do m³ da água comprada." />
+
+      <Card className="p-4 sm:p-6">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,240px)_minmax(0,160px)] sm:items-end">
+          <CamposMesAno mes={mes} ano={ano} setMes={setMes} setAno={setAno} />
+        </div>
+      </Card>
+
+      {lotes.carregando || precos.carregando ? (
+        <LoadingBlock rows={4} label="Carregando custo…" />
+      ) : lotes.erro || precos.erro ? (
+        <ErrorState title="Não foi possível carregar o custo" onRetry={lotes.erro ? lotes.recarregar : precos.recarregar} />
+      ) : lotes.dados.length === 0 ? (
+        <EmptyState icon={<IconCalendar size={28} />} title="Sem lotes no período" description={`Não há lotes registrados em ${periodo}. Escolha outro mês ou ano.`} />
+      ) : (
+        <>
+          {r.custo === null ? (
+            <Banner tone="warn">Cadastre o preço do m³ para ver o custo.</Banner>
+          ) : (
+            r.semPreco > 0 && <Banner tone="warn">{r.semPreco === 1 ? '1 lote sem preço do m³ ficou fora do custo.' : `${r.semPreco} lotes sem preço do m³ ficaram fora do custo.`}</Banner>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <KpiCard label="Custo da água" value={reais(r.custo)} icon={<IconDroplet size={20} />} footer={`${fmtL(r.consumo)} em ${periodo}`} />
+            <KpiCard label="Custo do excesso" value={reais(r.custoExcesso)} icon={<IconDroplet size={20} />} footer={`${fmtL(r.excesso)} acima do esperado`} />
+          </div>
+          <Card as="section" className="overflow-hidden">
+            <CardHeader id="custo-processos" title="Custo por processo" subtitle={periodo} />
+            <DataTable rows={r.porProcesso} cols={cols} rowKey={(p) => p.processoId} caption="Custo da água por processo" minWidth={720} />
+          </Card>
+        </>
+      )}
+
       <CardPrecoM3 {...precos} />
     </div>
   )

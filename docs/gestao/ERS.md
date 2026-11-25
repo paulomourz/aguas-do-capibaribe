@@ -97,7 +97,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 
 | ID | Necessidade | Stakeholder | Atendida por |
 |---|---|---|---|
-| NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24, RF34 |
+| NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24, RF34, RF36 |
 | NB-02 | Descobrir cedo quando um processo passa a gastar demais. | Gestor da lavanderia | RF11, RF12, RF30 |
 | NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14 |
@@ -575,6 +575,19 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Situação | Implementado (campos pecas e litrosPorPeca em GET /relatorios/resumo). |
 | Verificação | Teste: PegadaHidricaTest; resumoMensalUsaFusoDeRecife (integração); pegada.test.ts. |
 
+#### RF36 — Mostrar o custo da água do mês
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O sistema deve mostrar ao gestor e ao administrador o custo da água e o custo do excesso do mês escolhido, em reais, no total e por processo. |
+| Entradas | Mês e ano; lotes do mês (litros e esperado); histórico do preço do m³ (valor e data de vigência). |
+| Processamento | Cada lote usa o preço do m³ vigente na data do seu registro em America/Recife: o de maior vigência menor ou igual à data e, na mesma vigência, o cadastrado por último. Custo do lote = litros ÷ 1000 × preço do m³; excesso do lote = max(0, litros − esperado), sem compensação entre lotes. Lote sem preço vigente entra no consumo em litros, mas fica fora dos valores em R$, com aviso. O arredondamento para centavos acontece só na exibição. |
+| Saídas | Tela "Custo da água": custo da água e custo do excesso do mês, tabela por processo com consumo (L), custo (R$), excesso (L) e custo do excesso (R$), e os avisos "Cadastre o preço do m³ para ver o custo" ou "N lotes sem preço do m³ ficaram fora do custo". |
+| Prioridade | Desejável |
+| Origem | NB-01 |
+| Situação | Implementado (cálculo no site, sobre GET /lotes do mês e GET /precos-m3). |
+| Verificação | Teste: custo.test.ts. |
+
 ### 3.1.8 Indicação visual de status
 
 #### RF24 — Classificar o lote por faixa de desvio
@@ -895,6 +908,7 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF32 | Issue #109 | GET /auditoria/seguranca | Auditoria (Eventos de segurança) | Teste | Implementado |
 | RF33 | Issue #99 | GET /relatorios/csv | — (API) | Teste | Implementado |
 | RF34 | Issue #116 | GET /relatorios/resumo | Dashboard, Relatórios, PDF | Teste | Implementado |
+| RF36 | NB-01 | GET /lotes, GET /precos-m3 | Custo da água | Teste | Implementado |
 | RF35 | Issues #103 e #129 | POST /usuarios/{id}/token/rotacao; Authorization: Bearer (sensor) | Usuários; sensor no Wokwi | Teste e Demonstração | Implementado |
 
 Resumo: 35 requisitos funcionais, 34 implementados e 1 adiado (RF31); 28 requisitos não funcionais, 27 implementados, adotados ou medidos e 1 pendente (RNF25).
