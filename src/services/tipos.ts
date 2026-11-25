@@ -39,7 +39,7 @@ export type AlertaDTO = { id: Id; processoId: Id; loteIds: Id[]; detectado: stri
 export type ResumoDTO = { processoId: Id; real: number; esperado: number; lotes: number; pecas: number; litrosPorPeca: number | null }
 
 /** Preço do m³ em R$; `vigencia` em AAAA-MM-DD; `cadastradoPor` é o nome de quem cadastrou. */
-export type PrecoM3DTO = { id: Id; valor: number; vigencia: string; cadastradoPor: string | null; cadastradoEm: string }
+export type PrecoM3DTO = { id: Id; valor: number; vigencia: string; cadastradoPor: string; cadastradoEm: string }
 export type NovoPrecoM3DTO = { valor: number; vigencia: string }
 
 export type AcaoAuditoria = 'CRIACAO_USUARIO' | 'REDEFINICAO_SENHA' | 'DESATIVACAO_USUARIO' | 'REATIVACAO_USUARIO' | 'ROTACAO_TOKEN'

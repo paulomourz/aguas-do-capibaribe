@@ -18,6 +18,7 @@ import {
   StatusBadge,
   statusMeta,
 } from '../components/ui'
+import CamposMesAno from '../components/CamposMesAno'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
 import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Resumo } from '../domain'
 import { Link, navigate } from '../router'
@@ -49,33 +50,6 @@ function useBaixarPdf() {
   }
 
   return { baixar, gerando, falha }
-}
-
-/** Seletor de mês e ano (Relatórios e Custo da água): o ano corrente e o anterior. */
-export function CamposMesAno({ mes, ano, setMes, setAno, disabled }: { mes: number; ano: number; setMes: (m: number) => void; setAno: (a: number) => void; disabled?: boolean }) {
-  const atual = periodoAtual()
-  return (
-    <>
-      <Field id="mes" label="Mês">
-        <Select id="mes" value={mes} disabled={disabled} onChange={(e) => setMes(Number(e.target.value))}>
-          {meses.map((m, i) => (
-            <option key={m} value={i + 1}>
-              {m}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field id="ano" label="Ano">
-        <Select id="ano" value={ano} disabled={disabled} onChange={(e) => setAno(Number(e.target.value))}>
-          {[atual.ano, atual.ano - 1].map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </Select>
-      </Field>
-    </>
-  )
 }
 
 /* ---------- G7 Relatórios ---------- */

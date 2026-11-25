@@ -1,12 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Banner, Button, Card, CardHeader, DataTable, EmptyState, ErrorState, Field, KpiCard, LoadingBlock, PageHeader, TextInput, type Col } from '../components/ui'
+import CamposMesAno from '../components/CamposMesAno'
 import { IconCalendar, IconDroplet } from '../components/icons'
-import { custoDoMes, diaNoFusoDaLavanderia, fmtDataHora, fmtL, fmtNum, fmtReais, lerNumeroBR, meses, precoVigente, type CustoDoMes, type PrecoM3 } from '../domain'
+import { avisoDoCusto, custoDoMes, diaNoFusoDaLavanderia, fmtDataHora, fmtDia, fmtL, fmtNum, fmtReais, lerNumeroBR, meses, precoVigente, type CustoDoMes, type PrecoM3 } from '../domain'
 import { errosDaApi, periodoAtual, useApp, useLotesDoMes, usePrecosM3 } from '../store'
-import { CamposMesAno } from './Relatorios'
-
-/** AAAA-MM-DD → DD/MM/AAAA, sem passar por Date (que mudaria o dia pelo fuso). */
-const fmtDia = (dia: string) => dia.split('-').reverse().join('/')
 
 /** G12: custo da água. O custo do mês, por processo, e o preço do m³ com o histórico. */
 export default function CustoAgua() {
@@ -17,7 +14,8 @@ export default function CustoAgua() {
   const lotes = useLotesDoMes(mes, ano)
   const precos = usePrecosM3()
   const periodo = `${meses[mes - 1]} de ${ano}`.toLowerCase()
-  const r = custoDoMes(lotes.dados, precos.dados)
+  const custo = custoDoMes(lotes.dados, precos.dados)
+  const aviso = avisoDoCusto(custo, precos.dados)
   const reais = (v: number | null) => (v === null ? '—' : fmtReais(v))
 
   const cols: Col<CustoDoMes['porProcesso'][number]>[] = [
@@ -41,23 +39,25 @@ export default function CustoAgua() {
       {lotes.carregando || precos.carregando ? (
         <LoadingBlock rows={4} label="Carregando custo…" />
       ) : lotes.erro || precos.erro ? (
-        <ErrorState title="Não foi possível carregar o custo" onRetry={lotes.erro ? lotes.recarregar : precos.recarregar} />
+        <ErrorState
+          title="Não foi possível carregar o custo"
+          onRetry={() => {
+            if (lotes.erro) lotes.recarregar()
+            if (precos.erro) precos.recarregar()
+          }}
+        />
       ) : lotes.dados.length === 0 ? (
         <EmptyState icon={<IconCalendar size={28} />} title="Sem lotes no período" description={`Não há lotes registrados em ${periodo}. Escolha outro mês ou ano.`} />
       ) : (
         <>
-          {r.custo === null ? (
-            <Banner tone="warn">Cadastre o preço do m³ para ver o custo.</Banner>
-          ) : (
-            r.semPreco > 0 && <Banner tone="warn">{r.semPreco === 1 ? '1 lote sem preço do m³ ficou fora do custo.' : `${r.semPreco} lotes sem preço do m³ ficaram fora do custo.`}</Banner>
-          )}
+          {aviso && <Banner tone="warn">{aviso}</Banner>}
           <div className="grid gap-4 sm:grid-cols-2">
-            <KpiCard label="Custo da água" value={reais(r.custo)} icon={<IconDroplet size={20} />} footer={`${fmtL(r.consumo)} em ${periodo}`} />
-            <KpiCard label="Custo do excesso" value={reais(r.custoExcesso)} icon={<IconDroplet size={20} />} footer={`${fmtL(r.excesso)} acima do esperado`} />
+            <KpiCard label="Custo da água" value={reais(custo.custo)} icon={<IconDroplet size={20} />} footer={`${fmtL(custo.consumo)} em ${periodo}`} />
+            <KpiCard label="Custo do excesso" value={reais(custo.custoExcesso)} icon={<IconDroplet size={20} />} footer={`${fmtL(custo.excesso)} acima do esperado`} />
           </div>
           <Card as="section" className="overflow-hidden">
             <CardHeader id="custo-processos" title="Custo por processo" subtitle={periodo} />
-            <DataTable rows={r.porProcesso} cols={cols} rowKey={(p) => p.processoId} caption="Custo da água por processo" minWidth={720} />
+            <DataTable rows={custo.porProcesso} cols={cols} rowKey={(p) => p.processoId} caption="Custo da água por processo" minWidth={720} />
           </Card>
         </>
       )}
@@ -103,7 +103,7 @@ function CardPrecoM3({ dados, carregando, erro, recarregar, cadastrar }: ReturnT
   const cols: Col<PrecoM3>[] = [
     { key: 'valor', header: 'Preço do m³', num: true, mobile: 'value', render: (p) => fmtReais(p.valor) },
     { key: 'vigencia', header: 'Vale a partir de', mobile: 'title', render: (p) => <span className="tabular-nums">{fmtDia(p.vigencia)}</span> },
-    { key: 'por', header: 'Cadastrado por', render: (p) => p.cadastradoPor ?? 'Usuário removido' },
+    { key: 'por', header: 'Cadastrado por', render: (p) => p.cadastradoPor },
     { key: 'em', header: 'Cadastrado em', mobile: 'subtitle', render: (p) => <span className="tabular-nums">{fmtDataHora(p.cadastradoEm)}</span> },
   ]
 

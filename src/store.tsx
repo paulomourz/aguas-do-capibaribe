@@ -648,7 +648,8 @@ export function usePrecosM3() {
   const [versao, setVersao] = useState(0)
   useEffect(() => {
     let vivo = true
-    setR((x) => ({ ...x, carregando: true, erro: false }))
+    // Esqueleto só na primeira carga e no "tentar novamente": depois de cadastrar, o histórico atual fica na tela até chegar o novo.
+    setR((x) => (x.erro ? { ...x, carregando: true, erro: false } : x))
     api.listarPrecosM3().then(
       (dados) => vivo && setR({ dados: dados.map(dePreco), carregando: false, erro: false }),
       () => vivo && setR({ dados: [], carregando: false, erro: true }),

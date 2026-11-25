@@ -13,6 +13,8 @@ export const fmtPct = (n: number) => {
 }
 export const fmtData = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 export const fmtHora = (d: Date) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+/** AAAA-MM-DD → DD/MM/AAAA, sem passar por Date (que mudaria o dia pelo fuso). */
+export const fmtDia = (dia: string) => dia.split('-').reverse().join('/')
 export const fmtDataHora = (d: Date) => `${fmtData(d)} às ${fmtHora(d)}`
 
 export const unidadeLabel: Record<Unidade, string> = { lote: 'litros por lote', peca: 'litros por peça' }

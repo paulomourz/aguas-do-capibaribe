@@ -8,8 +8,8 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 
 | Campo | Descrição |
 |---|---|
-| Versão | 2.4 |
-| Data | 14 de novembro de 2026 |
+| Versão | 2.5 |
+| Data | 24 de novembro de 2026 |
 | Base | Termo de Abertura do Projeto v3.2 (14/11/2026), pareceres técnicos do orientador (27/10, 03/11 e 10/11/2026) e código do repositório em 14/11/2026 (branch develop, versão 1.1.0) |
 | Equipe | Pedro (Full Stack / PO), Abraão Filipe (Back-end), João Bezerra (Back-end), Matheus Andrade (Front-end), Mateus Basilio (Banco de dados) e Paulo Moura (DevOps) |
 | Orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
@@ -27,6 +27,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 2.2 | 11/11/2026 | Painel de eventos de segurança na Auditoria (RF32, issue #109): logins aceitos e recusados, bloqueios por limite com o IP mascarado e trocas de senha, com exportação em JSON. | Equipe Águas do Capibaribe |
 | 2.3 | 13/11/2026 | Exportação dos lotes de um período em CSV pela API (RF33, issue #99), em streaming e paginada, para a auditoria da CPRH. | Equipe Águas do Capibaribe |
 | 2.4 | 14/11/2026 | Consolidação para a versão 1.1.0: pegada hídrica por peça (RF34, #116), token de API do sensor (RF35, #103 e #129), reenvio dos avisos pendentes do Telegram (RF30, #97), gauge de tolerância no resultado do lote (RF24, #98), buffer do sensor sem Wi-Fi (RF26, #108), contador do erro 429 (RNF19, #101), contraste WCAG AA (RNF13, #106), carga com 100 sensores e pool de 20 conexões (RNF17, #113), vulnerabilidades e testes de mutação no CI (RNF24, #112 e #102), proteção do ambiente de execução (RNF28, #105 e #118), migrações V1 a V11 e números de testes atuais. | Equipe Águas do Capibaribe |
+| 2.5 | 24/11/2026 | Custo da água (RF36): preço do m³ com vigência e histórico imutável (tabela preco_m3, migração V12) e custo da água e do excesso do mês, no total e por processo, na tela Custo da água. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -739,7 +740,7 @@ Os dados de consumo são permanentes: não há exclusão de lotes, de registros 
 ## 3.6 Restrições de projeto
 
 - Pilha tecnológica definida pela equipe: React, Java com Spring Boot e PostgreSQL (TAP, seção 5).
-- O esquema do banco é versionado com migrações Flyway (V1 a V11), aplicadas por um usuário dono do banco. O Hibernate não cria nem altera tabelas: ao iniciar, a API apenas confere se elas batem com as entidades e não sobe se divergirem.
+- O esquema do banco é versionado com migrações Flyway (V1 a V12), aplicadas por um usuário dono do banco. O Hibernate não cria nem altera tabelas: ao iniciar, a API apenas confere se elas batem com as entidades e não sobe se divergirem.
 - O front-end segue a estrutura exigida pelo Figma Make e roda na porta 8443 em desenvolvimento.
 - RNF18 — Padrões de dados: datas trafegam em ISO 8601 (UTC); o mês dos relatórios segue o fuso America/Recife; litros e metas com 2 casas decimais. **Implementado.**
 
@@ -908,10 +909,10 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF32 | Issue #109 | GET /auditoria/seguranca | Auditoria (Eventos de segurança) | Teste | Implementado |
 | RF33 | Issue #99 | GET /relatorios/csv | — (API) | Teste | Implementado |
 | RF34 | Issue #116 | GET /relatorios/resumo | Dashboard, Relatórios, PDF | Teste | Implementado |
-| RF36 | NB-01 | GET /lotes, GET /precos-m3 | Custo da água | Teste | Implementado |
 | RF35 | Issues #103 e #129 | POST /usuarios/{id}/token/rotacao; Authorization: Bearer (sensor) | Usuários; sensor no Wokwi | Teste e Demonstração | Implementado |
+| RF36 | NB-01 | GET /lotes, GET /precos-m3 | Custo da água | Teste | Implementado |
 
-Resumo: 35 requisitos funcionais, 34 implementados e 1 adiado (RF31); 28 requisitos não funcionais, 27 implementados, adotados ou medidos e 1 pendente (RNF25).
+Resumo: 36 requisitos funcionais, 35 implementados e 1 adiado (RF31); 28 requisitos não funcionais, 27 implementados, adotados ou medidos e 1 pendente (RNF25).
 
 ## Apêndice D — Regras de negócio
 

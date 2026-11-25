@@ -44,3 +44,10 @@ export function custoDoMes(lotes: Lote[], precos: PrecoM3[]): CustoDoMes {
   }
   return { ...total, porProcesso: [...porProcesso].map(([processoId, c]) => ({ processoId, ...c })), semPreco }
 }
+
+/** Aviso sobre o custo do mês: pedir o cadastro só quando não há preço nenhum; senão, contar os lotes fora do custo. */
+export function avisoDoCusto(custo: CustoDoMes, precos: PrecoM3[]): string | null {
+  if (precos.length === 0) return 'Cadastre o preço do m³ para ver o custo.'
+  if (custo.semPreco === 0) return null
+  return custo.semPreco === 1 ? '1 lote sem preço do m³ ficou fora do custo.' : `${custo.semPreco} lotes sem preço do m³ ficaram fora do custo.`
+}

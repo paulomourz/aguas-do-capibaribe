@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { custoDoMes, fmtReais, precoVigente } from '..'
+import { avisoDoCusto, custoDoMes, fmtDia, fmtReais, precoVigente } from '..'
 import type { Lote, PrecoM3 } from '../tipos'
 
 /* Preço do m³: vale o de maior vigência até o dia; na mesma vigência, o cadastrado por último. */
@@ -153,5 +153,33 @@ describe('reais no formato brasileiro', () => {
   it('usa R$, ponto de milhar e vírgula com 2 casas', () => {
     expect(fmtReais(1234.5).replace(/\s/g, ' ')).toBe('R$ 1.234,50')
     expect(fmtReais(0).replace(/\s/g, ' ')).toBe('R$ 0,00')
+  })
+})
+
+describe('aviso do custo do mês', () => {
+  const p = preco('1', 10, '2026-11-10', '2026-11-01T10:00:00Z')
+  const antes = lote('a', 'p1', 1000, 1000, '2026-11-05T12:00:00Z')
+  const depois = lote('b', 'p1', 1000, 1000, '2026-11-15T12:00:00Z')
+
+  it('sem nenhum preço cadastrado pede o cadastro', () => {
+    expect(avisoDoCusto(custoDoMes([antes], []), [])).toBe('Cadastre o preço do m³ para ver o custo.')
+  })
+
+  it('com preço cadastrado mas nenhum vigente nos lotes do mês, conta os lotes fora do custo', () => {
+    expect(avisoDoCusto(custoDoMes([antes, antes], [p]), [p])).toBe('2 lotes sem preço do m³ ficaram fora do custo.')
+  })
+
+  it('parte dos lotes sem preço', () => {
+    expect(avisoDoCusto(custoDoMes([antes, depois], [p]), [p])).toBe('1 lote sem preço do m³ ficou fora do custo.')
+  })
+
+  it('todos os lotes com preço: sem aviso', () => {
+    expect(avisoDoCusto(custoDoMes([depois], [p]), [p])).toBeNull()
+  })
+})
+
+describe('dia no formato brasileiro', () => {
+  it('AAAA-MM-DD vira DD/MM/AAAA sem mudar o dia pelo fuso', () => {
+    expect(fmtDia('2026-11-01')).toBe('01/11/2026')
   })
 })

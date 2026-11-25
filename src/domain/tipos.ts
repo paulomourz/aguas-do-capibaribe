@@ -33,7 +33,7 @@ export type Alerta = {
 }
 
 /** Preço do m³ em R$, que vale a partir de `vigencia` (AAAA-MM-DD). `cadastradoPor` é o nome de quem cadastrou. */
-export type PrecoM3 = { id: string; valor: number; vigencia: string; cadastradoPor: string | null; cadastradoEm: Date }
+export type PrecoM3 = { id: string; valor: number; vigencia: string; cadastradoPor: string; cadastradoEm: Date }
 
 /** Consumo de um processo no mês, com o total de peças e a pegada hídrica (litros por peça, #116). */
 export type Resumo = { processoId: string; real: number; esperado: number; lotes: number; pecas: number; litrosPorPeca: number | null }

@@ -46,10 +46,11 @@ public class PrecoM3Service {
     @Transactional
     public PrecoM3DTO cadastrar(UsuarioAutenticado quem, NovoPrecoM3DTO dados) {
         PrecoM3 p = precos.save(new PrecoM3(dados.valor(), dados.vigencia(), quem.id()));
-        return dto(p, usuarios.findById(quem.id()).orElse(null));
+        return dto(p, usuarios.findById(quem.id()).orElseThrow());
     }
 
+    /** Quem cadastrou sempre existe: usuário não é excluído (só desativado) e a FK usuario_id impede. */
     private static PrecoM3DTO dto(PrecoM3 p, Usuario u) {
-        return new PrecoM3DTO(p.getId(), p.getValor(), p.getVigencia(), u == null ? null : u.getNome(), p.getCadastradoEm().toInstant());
+        return new PrecoM3DTO(p.getId(), p.getValor(), p.getVigencia(), u.getNome(), p.getCadastradoEm().toInstant());
     }
 }
