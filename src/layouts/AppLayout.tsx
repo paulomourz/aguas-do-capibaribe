@@ -10,6 +10,7 @@ import {
   IconChevronDown,
   IconClipboard,
   IconDashboard,
+  IconDroplet,
   IconHistory,
   IconLogout,
   IconSettings,
@@ -21,7 +22,7 @@ import { Link, navigate } from '../router'
 import { homeDe, periodoAtual, useApp } from '../store'
 import { meses, perfilLabel, type Perfil } from '../domain'
 
-export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'alertas' | 'relatorios' | 'auditoria' | 'usuarios'
+export type MenuId = 'dashboard' | 'registro' | 'historico' | 'processos' | 'alertas' | 'relatorios' | 'custo' | 'auditoria' | 'usuarios'
 
 export type MenuGrupo = 'Acompanhamento' | 'Lotes' | 'Cadastros'
 
@@ -29,6 +30,7 @@ export const menu: { id: MenuId; label: string; to: string; Icon: typeof IconDas
   { id: 'dashboard', label: 'Dashboard', to: '/dashboard', Icon: IconDashboard, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
   { id: 'alertas', label: 'Alertas', to: '/alertas', Icon: IconBell, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
   { id: 'relatorios', label: 'Relatórios', to: '/relatorios', Icon: IconReport, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
+  { id: 'custo', label: 'Custo da água', to: '/custo-da-agua', Icon: IconDroplet, perfis: ['admin', 'gestor'], grupo: 'Acompanhamento' },
   { id: 'auditoria', label: 'Auditoria', to: '/auditoria', Icon: IconSearchCheck, perfis: ['admin'], grupo: 'Acompanhamento' },
   { id: 'registro', label: 'Registro de lotes', to: '/registro', Icon: IconClipboard, perfis: ['admin', 'gestor', 'operador'], grupo: 'Lotes' },
   { id: 'historico', label: 'Histórico de lotes', to: '/historico', Icon: IconHistory, perfis: ['admin', 'gestor', 'operador'], grupo: 'Lotes' },

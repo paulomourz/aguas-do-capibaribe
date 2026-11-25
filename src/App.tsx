@@ -15,6 +15,7 @@ import { RelatorioPdf, Relatorios } from './screens/Relatorios'
 import { UsuarioNovo, Usuarios } from './screens/Usuarios'
 import Configuracoes from './screens/Configuracoes'
 import Auditoria from './screens/Auditoria'
+import CustoAgua from './screens/CustoAgua'
 
 type Rota = { titulo: string; perfis: Perfil[]; menu?: MenuId; el: ReactNode }
 
@@ -53,6 +54,7 @@ function resolver(path: string, q: URLSearchParams, perfil?: Perfil): Rota | nul
       menu: 'relatorios',
       el: <RelatorioPdf mes={Number(q.get('mes')) || periodoAtual().mes} ano={Number(q.get('ano')) || periodoAtual().ano} />,
     }
+  if (path === '/custo-da-agua') return { titulo: 'G12 Custo da água', perfis: GESTOR, menu: 'custo', el: <CustoAgua /> }
   if (path === '/usuarios')
     return { titulo: 'G9 Usuários', perfis: ADMIN, menu: 'usuarios', el: <Usuarios destaque={q.get('novo') ?? undefined} /> }
   if (path === '/usuarios/novo') return { titulo: 'G10 Novo usuário', perfis: ADMIN, menu: 'usuarios', el: <UsuarioNovo /> }

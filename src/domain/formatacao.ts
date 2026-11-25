@@ -4,6 +4,8 @@ import type { Perfil, Unidade } from './tipos'
 
 export const fmtNum = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 0 })
 export const fmtL = (n: number) => `${fmtNum(n)} L`
+/** R$ 1.234,56: arredonda para centavos só aqui, na exibição. */
+export const fmtReais = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 export const fmtPct = (n: number) => {
   const r = Math.round(n * 10) / 10
   const s = Math.abs(r).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from 'react'
 import type { ToastData, ViewState } from './components/ui'
-import { limitesDoMes, statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
+import { limitesDoMes, statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type PrecoM3, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
 import * as api from './services'
 
 /*
@@ -632,6 +632,38 @@ export function useLotesDoMes(mes: number, ano: number) {
     }
   }, [mes, ano, versao])
   return { ...r, recarregar: () => setVersao((v) => v + 1) }
+}
+
+const dePreco = (p: api.PrecoM3DTO): PrecoM3 => ({
+  id: txt(p.id),
+  valor: Number(p.valor),
+  vigencia: p.vigencia,
+  cadastradoPor: p.cadastradoPor,
+  cadastradoEm: new Date(p.cadastradoEm),
+})
+
+/** Histórico do preço do m³ (custo da água). `cadastrar` recarrega o histórico e lança o erro da API. */
+export function usePrecosM3() {
+  const [r, setR] = useState<{ dados: PrecoM3[]; carregando: boolean; erro: boolean }>({ dados: [], carregando: true, erro: false })
+  const [versao, setVersao] = useState(0)
+  useEffect(() => {
+    let vivo = true
+    setR((x) => ({ ...x, carregando: true, erro: false }))
+    api.listarPrecosM3().then(
+      (dados) => vivo && setR({ dados: dados.map(dePreco), carregando: false, erro: false }),
+      () => vivo && setR({ dados: [], carregando: false, erro: true }),
+    )
+    return () => {
+      vivo = false
+    }
+  }, [versao])
+  const recarregar = () => setVersao((v) => v + 1)
+  const cadastrar = async (dados: api.NovoPrecoM3DTO) => {
+    const novo = dePreco(await api.cadastrarPrecoM3(dados))
+    recarregar()
+    return novo
+  }
+  return { ...r, recarregar, cadastrar }
 }
 
 /** Mês corrente em America/Recife. */
