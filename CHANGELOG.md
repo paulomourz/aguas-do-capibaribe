@@ -6,6 +6,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Sinal de vida do sensor no Wokwi
+
+- **O sensor passa a enviar telemetria** (issue #218): sem lote em andamento, `iot/sketch.ino` manda a vazão atual para
+  `POST /telemetria` a cada 15 s, logo depois de cada lote e, com a API respondendo, ao iniciar um lote. Antes, ele só
+  enviava lotes, e a saúde do sensor (`/api/actuator/health/sensor`, issue #158) ficava sempre DOWN em produção.
+- Durante o lote nada é enviado (o envio para o contador de pulsos), então um lote de menos de 1 minuto mantém o sensor
+  UP. Sem Wi-Fi (comando Q), a saúde cai para DOWN depois de 60 s e volta quando o sinal retorna.
+- O id do processo fica guardado depois da 1ª consulta, e os envios a cada 15 s não aparecem no monitor serial: só os
+  avisos `Sinal de vida OK` e `Sinal de vida NAO chegou`. `ENVIAR_TELEMETRIA = false` desliga.
+- Passo a passo para validar no Render em `iot/LEIA-ME.md` ("Sinal de vida: a saúde do sensor na API"); o roteiro da
+  demonstração manda esperar `Sinal de vida OK` antes do primeiro lote.
+
 ### Plano C: banco de dados ao vivo
 
 - **Script da aula** em `database/demonstracao/aula-banco-de-dados.sql` (issue #227): 12 partes, um bloco de cada vez

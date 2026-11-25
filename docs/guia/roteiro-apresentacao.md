@@ -40,8 +40,11 @@ no mesmo banco, limpe e rode a massa de novo depois. Antes de começar, deixe o 
 **Se atrasar:** corte primeiro a parte de qualidade (vira uma frase no fechamento) e depois o registro sem conexão. O
 sensor fica inteiro.
 
-**Sensor:** antes de começar, cole o token, clique em ▶ e espere `Gire o potenciômetro...`: a primeira conexão ao
-Wi-Fi e à API leva alguns segundos. Durante cada envio, deixe a aba do Wokwi na frente (o simulador desacelera em
+**Sensor:** antes de começar, cole o token, clique em ▶ e espere `Sinal de vida OK`: a primeira conexão ao Wi-Fi e à
+API leva alguns segundos (até uns 2 minutos se a API estiver dormindo). A partir daí, o sensor manda um sinal de vida a
+cada 15 s, o que também mantém a API acordada. Faça cada lote em menos de 1 minuto: durante o lote o sinal não sai, e
+a saúde do sensor (`/api/actuator/health/sensor`, [`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#sinal-de-vida-a-saúde-do-sensor-na-api))
+cairia para DOWN. Durante cada envio, deixe a aba do Wokwi na frente (o simulador desacelera em
 segundo plano). Detalhes do buffer em [`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#sem-wi-fi-as-leituras-ficam-guardadas).
 
 **Ensaio:** cronometre uma passada completa antes da apresentação e anote aqui o tempo e os ajustes.
@@ -89,7 +92,8 @@ Não precisa de deploy nem de login no Render e no Neon.
 
 **Durante a apresentação**
 
-1. No Wokwi, clique em ▶ e espere `Gire o potenciômetro...`.
+1. No Wokwi, clique em ▶ e espere `Sinal de vida OK` (o sensor avisa a API que está no ar; com a API dormindo, leva
+   até uns 2 minutos, e até lá o botão não responde).
 2. Gire o potenciômetro e clique no botão verde para iniciar o lote.
 3. Clique de novo para encerrar e espere `Lote registrado na API`. Deixe a aba do Wokwi na frente nesse tempo.
 4. No site, atualize com **F5** e mostre o lote no **Histórico**.
