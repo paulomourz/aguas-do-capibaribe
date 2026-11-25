@@ -81,6 +81,7 @@ por função:
 | Processos (RF04 a RF06) | `ProcessoControllerTest`, `processoDuplicadoSemDiferenciarMaiusculas` | Meta ≤ 0 e nome repetido são recusados. |
 | Esperado e desvio (RF09) | `esperadoVemDoTriggerEDesvioDaFormulaDaView` | Banco calcula o esperado; desvio igual ao da visão. |
 | Lote imutável (RF10) | `loteNaoPodeSerAlteradoNemExcluido` | UPDATE e DELETE recusados pelo banco. |
+| Preço do m³ imutável (RF38) | `precoDoM3NaoPodeSerAlteradoNemExcluido`, `PrecoM3ControllerTest` | Quem cadastrou vem do token; UPDATE e DELETE em `preco_m3` recusados pelo banco. |
 | Sem conexão (RF28) | `e2e/offline.spec.ts`, `reenvioComAMesmaChaveNaoDuplicaOLote` | Lotes chegam uma vez só, na ordem. |
 | Envio em segundo plano (RF28) | `e2e/backgroundSync.spec.ts`, `envioSegundoPlano.test.ts`, `sw.test.ts` | Com a aba fechada, o service worker envia a fila quando a rede volta, sem duplicar. |
 | Alertas (RF11, RF12) | `regraDeAlertaTresConsecutivosEAnexacao`, `alertaResolvidoNaoReaproveitaLotesETransicoesSaoValidadas` | 3 lotes acima abrem alerta; transição inválida devolve 409. |
@@ -92,13 +93,14 @@ por função:
 | Auditoria (RF27) | `AuditoriaUsuarioTest`, `auditoriaListaAsAcoesComFiltrosEPaginacao` | Cada ação gera registro, sem senha, que não pode ser apagado. |
 | CSV (RF29) | `historicoCsv.test.ts` | Arquivo com BOM, ";" e CRLF, hora de Recife, ordem cronológica e fórmulas neutralizadas. |
 | CSV da API (RF33) | `CsvDeLotesTest`, `csvDoPeriodoUsaFusoDeRecifeFiltraPorProcessoEProtegeTextos`, `csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum`, `csvConfereOPeriodoEOProcessoAntesDeComecarESoParaGestor` | Mesmo formato do site; período fecha no fuso de Recife; 50.000 lotes na mesma hora saem todos, uma vez, em ordem; período inválido devolve 422 e operador recebe 403. |
+| Custo da água (RF38) | `custo.test.ts` | Cada lote no preço vigente na sua data em Recife; na mesma vigência vale o último cadastrado; excesso sem compensação; lote sem preço fora do custo, com aviso. |
 | Faixas (RF24) | `faixaDeConformidadeRespeitaAsFronteiras` | 0% = dentro; 8% = atenção; acima de 8% = crítico. |
 | Telemetria (RF37) | `TelemetriaControllerTest`, `sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada` | Leitura válida → 201 e gravada no nome do sensor; nula, negativa ou acima de 10000 → 400 `TELEMETRIA_INVALIDA`; sem token → 401. |
 | Monitoramento (RNF20) | `saudeAbertaMostraSoOStatusSemToken`, `metricasSoParaOAdmin` | Saúde aberta; métricas só para o administrador. |
 | Saúde do sensor (RNF20) | `SensorWokwiHealthIndicatorTest`, `saudeDoSensorWokwiPelaUltimaTelemetriaSemAfetarARaiz` | UP com leitura de até 59 s; DOWN (503) com 60 s ou sem leitura; a saúde principal não muda. |
 | Acessibilidade (RNF13) | `e2e/acessibilidade.spec.ts` | Nenhuma violação séria ou crítica do WCAG 2.1 AA, nos dois temas. |
 | Carregamento (RNF29) | `e2e/carregamento.spec.ts`, `esqueletos.test.ts` | Esqueletos no lugar dos dados e CLS abaixo de 0,1 com rede 3G simulada. |
-| Migrações | `flywayAplicouTodasAsMigracoesEmOrdem`, `reinicioValidaChecksumsENaoRecriaNada` | V1 a V14 aplicadas uma vez, na ordem. |
+| Migrações | `flywayAplicouTodasAsMigracoesEmOrdem`, `reinicioValidaChecksumsENaoRecriaNada` | V1 a V16 aplicadas uma vez, na ordem. |
 
 ## 3. Procedimentos
 

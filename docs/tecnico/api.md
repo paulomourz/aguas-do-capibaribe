@@ -62,6 +62,8 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
 | `GET /relatorios/csv?inicio=&fim=&processoId=` | gestor | `inicio` e `fim` em `AAAA-MM-DD` (inclusivos, fuso America/Recife), no máximo 1 ano; `processoId` opcional | arquivo `text/csv` em streaming, no formato do CSV do Histórico (ver [Exportação em CSV](#exportação-em-csv-issue-99)); período invertido, maior que 1 ano ou processo inexistente → `422` |
+| `GET /precos-m3` | gestor | — | `PrecoM3DTO[]`, o histórico inteiro, por `vigencia` e, na mesma vigência, por `cadastradoEm` (do mais antigo ao mais novo) |
+| `POST /precos-m3` | gestor | `{valor, vigencia}` (`vigencia` em `AAAA-MM-DD`: o preço vale a partir desse dia; quem cadastrou vem do token) | `201 PrecoM3DTO`; não há rota para editar nem apagar: para corrigir, cadastre outro preço com a mesma vigência, e vale o cadastrado por último |
 | `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /auditoria/seguranca` | admin | — | `{desde, loginsAceitos, loginsRecusados, bloqueiosLogin, bloqueiosLotes, senhasTrocadas, senhasRedefinidas, bloqueios: [{rota, ip, primeiro, ultimo, tentativas}]}`; contado em memória desde `desde` (o último início da API), zera quando ela reinicia; `rota` é `login` ou `lotes`; `ip` mascarado (ex.: `200.17.33.***`, LGPD); no máximo 100 linhas em `bloqueios`, do bloqueio mais recente ao mais antigo; sem senha (issue #109) |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
@@ -167,6 +169,7 @@ LoteDTO     = { id, processoId, pecas, litros, esperado, desvio, statusConformid
 AlertaDTO   = { id, processoId, loteIds: number[], detectado, status }
 DescarteDTO = { id, loteId, data, volumeLitros, ph, turbidezNtu, reutilizadoPercentual }   // efluentes_descarte (V12, #201)
 ResumoDTO   = { processoId, real, esperado, lotes, pecas, litrosPorPeca }   // litrosPorPeca = real ÷ pecas, 2 casas; null sem peças (#116)
+PrecoM3DTO  = { id, valor, vigencia, cadastradoPor, cadastradoEm }   // valor em R$ por m³; vigencia 'AAAA-MM-DD'; cadastradoPor = nome
 ```
 
 ## Validações
@@ -182,3 +185,5 @@ Os limites vêm das colunas e restrições criadas pelas migrações (`V1__cria_
 | `meta` | maior que 0; até 8 dígitos inteiros e 2 decimais |
 | `pecas` | inteiro maior que 0 |
 | `litros` | maior que 0; até 10 dígitos inteiros e 2 decimais |
+| `valor` do preço do m³ | obrigatório; maior que 0; até 8 dígitos inteiros e 2 decimais (`V16__cria_preco_m3.sql`) |
+| `vigencia` do preço do m³ | obrigatória; só a data, sem hora; pode ser passada ou futura |

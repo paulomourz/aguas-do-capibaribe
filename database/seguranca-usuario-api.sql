@@ -61,6 +61,8 @@ GRANT UPDATE (enviado_em, tentativas, ultimo_erro) ON public.aviso_pendente TO :
 GRANT SELECT, INSERT ON public.efluentes_descarte TO :"papel";
 --    Leituras de telemetria do sensor (V14, #157): histórico de medição, só lê e insere.
 GRANT SELECT, INSERT ON public.telemetria TO :"papel";
+--    Preço do m³ (V16): histórico imutável (trigger trg_preco_m3_imutavel), só lê e insere.
+GRANT SELECT, INSERT ON public.preco_m3 TO :"papel";
 
 -- 5. Views: só leitura.
 GRANT SELECT ON public.v_alertas, public.v_historico_lotes, public.v_efluentes_mensal TO :"papel";
@@ -68,7 +70,8 @@ GRANT SELECT ON public.v_alertas, public.v_historico_lotes, public.v_efluentes_m
 -- 6. Sequências dos ids: nextval (USAGE) e leitura do valor atual (SELECT).
 GRANT USAGE, SELECT ON SEQUENCE public.usuario_id_seq, public.processo_id_seq,
   public.lote_id_seq, public.alerta_id_seq, public.auditoria_usuario_id_seq,
-  public.aviso_pendente_id_seq, public.efluentes_descarte_id_seq, public.telemetria_id_seq TO :"papel";
+  public.aviso_pendente_id_seq, public.efluentes_descarte_id_seq, public.telemetria_id_seq,
+  public.preco_m3_id_seq TO :"papel";
 
 -- DROP, ALTER e TRUNCATE não precisam de REVOKE: as tabelas pertencem ao postgres,
 -- e só o dono pode alterar a estrutura. DELETE e TRUNCATE nunca foram concedidos.

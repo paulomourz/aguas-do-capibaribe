@@ -184,7 +184,7 @@ abstract class IntegracaoPostgresBase {
     void flywayAplicouTodasAsMigracoesEmOrdem() {
         // Pelo Flyway (usuário dono do esquema): o aguas_api não lê flyway_schema_history.
         var aplicadas = flyway.info().applied();
-           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15");
+           assertThat(aplicadas).extracting(m -> m.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16");
         assertThat(aplicadas).allMatch(m -> m.getState() == MigrationState.SUCCESS);
         assertThat(flyway.info().pending()).isEmpty();
 
@@ -199,7 +199,7 @@ abstract class IntegracaoPostgresBase {
         // Mesmo efeito de a API subir de novo num banco já migrado.
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-           assertThat(flyway.info().applied()).hasSize(15);
+           assertThat(flyway.info().applied()).hasSize(16);
     }
 
     @Test
@@ -497,6 +497,20 @@ abstract class IntegracaoPostgresBase {
         int id = lote(g, p, 1, "50").get("id").asInt();
         assertThatThrownBy(() -> jdbc.update("update lote set litros = 1 where id = ?", id)).isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> jdbc.update("delete from lote where id = ?", id)).isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void precoDoM3NaoPodeSerAlteradoNemExcluido() throws Exception {
+        Conta g = conta("gestor");
+        JsonNode preco = ler(enviar(post("/precos-m3"), g, Map.of("valor", new BigDecimal("12.50"), "vigencia", "2026-11-01"))
+                .andExpect(status().isCreated()));
+        assertThat(preco.get("cadastradoPor").asText()).isEqualTo("Pessoa " + g.login());
+        assertThat(preco.get("cadastradoEm").asText()).endsWith("Z");
+        int id = preco.get("id").asInt();
+        assertThatThrownBy(() -> jdbc.update("update preco_m3 set valor = 1 where id = ?", id))
+                .isInstanceOf(DataAccessException.class).hasMessageContaining("não pode ser alterado");
+        assertThatThrownBy(() -> jdbc.update("delete from preco_m3 where id = ?", id))
+                .isInstanceOf(DataAccessException.class).hasMessageContaining("não pode ser alterado");
     }
 
     @Test

@@ -17,6 +17,7 @@ import {
   StatusBadge,
   statusMeta,
 } from '../components/ui'
+import CamposMesAno from '../components/CamposMesAno'
 import SkeletonChart from '../components/SkeletonChart'
 import { IconArrowLeft, IconCalendar, IconDownload, IconPrinter } from '../components/icons'
 import { consumoPorDia, desvioDe, fmtDataHora, fmtL, fmtLitrosPorPeca, fmtNum, fmtPct, litrosPorPeca, meses, nomeArquivoPlanilha, nomeArquivoRelatorio, statusDe, textoDaReferencia, type Lote, type Resumo } from '../domain'
@@ -125,24 +126,7 @@ export function Relatorios({ mesInicial, anoInicial }: { mesInicial?: number; an
 
       <Card className="p-4 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-[minmax(0,240px)_minmax(0,160px)_1fr] sm:items-end">
-          <Field id="mes" label="Mês">
-            <Select id="mes" value={mes} disabled={gerando} onChange={(e) => setMes(Number(e.target.value))}>
-              {meses.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field id="ano" label="Ano">
-            <Select id="ano" value={ano} disabled={gerando} onChange={(e) => setAno(Number(e.target.value))}>
-              {[atual.ano, atual.ano - 1].map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <CamposMesAno mes={mes} ano={ano} setMes={setMes} setAno={setAno} disabled={gerando} />
           {/* Com três formatos, os botões não cabem ao lado dos filtros: ficam numa linha própria, à direita. */}
           <div className="flex flex-col gap-2 sm:col-span-3 sm:flex-row sm:flex-wrap sm:justify-end">
             <Button

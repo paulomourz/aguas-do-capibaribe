@@ -8,8 +8,8 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 
 | Campo | Descrição |
 |---|---|
-| Versão | 2.6 |
-| Data | 20 de novembro de 2026 |
+| Versão | 2.7 |
+| Data | 24 de novembro de 2026 |
 | Base | Termo de Abertura do Projeto v3.4 (20/11/2026), pareceres técnicos do orientador (27/10, 03/11, 10/11 e 17/11/2026) e código do repositório em 20/11/2026 (branch develop, versão 1.2.0) |
 | Equipe | Pedro (Full Stack / PO), Abraão Filipe (Back-end), João Bezerra (Back-end), Matheus Andrade (Front-end), Mateus Basilio (Banco de dados) e Paulo Moura (DevOps) |
 | Orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
@@ -29,6 +29,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 2.4 | 14/11/2026 | Consolidação para a versão 1.1.0: pegada hídrica por peça (RF34, #116), token de API do sensor (RF35, #103 e #129), reenvio dos avisos pendentes do Telegram (RF30, #97), gauge de tolerância no resultado do lote (RF24, #98), buffer do sensor sem Wi-Fi (RF26, #108), contador do erro 429 (RNF19, #101), contraste WCAG AA (RNF13, #106), carga com 100 sensores e pool de 20 conexões (RNF17, #113), vulnerabilidades e testes de mutação no CI (RNF24, #112 e #102), proteção do ambiente de execução (RNF28, #105 e #118), migrações V1 a V11 e números de testes atuais. | Equipe Águas do Capibaribe |
 | 2.5 | 14/11/2026 | Validação de usabilidade (RNF25, issue #50 encerrada): avaliação simulada por inspeção e teste com pessoas de fora da equipe; o teste com operador real de lavanderia fica registrado como limitação. | Equipe Águas do Capibaribe |
 | 2.6 | 20/11/2026 | Consolidação para a versão 1.2.0, com as issues do parecer Week 03 (17/11/2026): relatório em planilha Excel (RF36, #159), telemetria do sensor validada e gravada (RF37, #156 e #157), saúde do sensor no Actuator (RNF20, #158), envio da fila em segundo plano (RF28, #160), carregamento sem saltos (RNF29, #161), disjuntor nos avisos do Telegram (RF30), auditoria de descarte de efluentes no banco (V12, #162), autovacuum das tabelas quentes (RNF22, #163), turno industrial com 120 sensores (RNF17, #165), Quality Gate no SonarQube e SBOM (RNF24, #168 e #169), runbook de recuperação de desastres (RNF21, #170), contêineres sem root (RNF28, #171), auditoria WCAG com axe-core (RNF13, #172), limite de login por conta (RNF19), migrações V1 a V14 e números de testes atuais. RNF28 passa para a seção 3.7.3. | Equipe Águas do Capibaribe |
+| 2.7 | 24/11/2026 | Custo da água (RF38): preço do m³ com vigência e histórico imutável (tabela preco_m3, migração V16) e custo da água e do excesso do mês, no total e por processo, na tela Custo da água. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -100,7 +101,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 
 | ID | Necessidade | Stakeholder | Atendida por |
 |---|---|---|---|
-| NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24, RF34 |
+| NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24, RF34, RF38 |
 | NB-02 | Descobrir cedo quando um processo passa a gastar demais. | Gestor da lavanderia | RF11, RF12, RF30 |
 | NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RF36, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14, RNF29 |
@@ -590,6 +591,19 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Situação | Implementado (campos pecas e litrosPorPeca em GET /relatorios/resumo). |
 | Verificação | Teste: PegadaHidricaTest; resumoMensalUsaFusoDeRecife (integração); pegada.test.ts. |
 
+#### RF38 — Mostrar o custo da água do mês
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O sistema deve mostrar ao gestor e ao administrador o custo da água e o custo do excesso do mês escolhido, em reais, no total e por processo. |
+| Entradas | Mês e ano; lotes do mês (litros e esperado); histórico do preço do m³ (valor e data de vigência). |
+| Processamento | Cada lote usa o preço do m³ vigente na data do seu registro em America/Recife: o de maior vigência menor ou igual à data e, na mesma vigência, o cadastrado por último. Custo do lote = litros ÷ 1000 × preço do m³; excesso do lote = max(0, litros − esperado), sem compensação entre lotes. Lote sem preço vigente entra no consumo em litros, mas fica fora dos valores em R$, com aviso. O arredondamento para centavos acontece só na exibição. |
+| Saídas | Tela "Custo da água": custo da água e custo do excesso do mês, tabela por processo com consumo (L), custo (R$), excesso (L) e custo do excesso (R$), e os avisos "Cadastre o preço do m³ para ver o custo" ou "N lotes sem preço do m³ ficaram fora do custo". |
+| Prioridade | Desejável |
+| Origem | NB-01 |
+| Situação | Implementado (cálculo no site, sobre GET /lotes do mês e GET /precos-m3). |
+| Verificação | Teste: custo.test.ts. |
+
 ### 3.1.8 Indicação visual de status
 
 #### RF24 — Classificar o lote por faixa de desvio
@@ -758,7 +772,7 @@ Os dados de consumo são permanentes: não há exclusão de lotes, de registros 
 ## 3.6 Restrições de projeto
 
 - Pilha tecnológica definida pela equipe: React, Java com Spring Boot e PostgreSQL (TAP, seção 5).
-- O esquema do banco é versionado com migrações Flyway (V1 a V14), aplicadas por um usuário dono do banco. O Hibernate não cria nem altera tabelas: ao iniciar, a API apenas confere se elas batem com as entidades e não sobe se divergirem.
+- O esquema do banco é versionado com migrações Flyway (V1 a V16), aplicadas por um usuário dono do banco. O Hibernate não cria nem altera tabelas: ao iniciar, a API apenas confere se elas batem com as entidades e não sobe se divergirem.
 - O front-end segue a estrutura exigida pelo Figma Make e roda na porta 8443 em desenvolvimento.
 - RNF18 — Padrões de dados: datas trafegam em ISO 8601 (UTC); o mês dos relatórios segue o fuso America/Recife; litros e metas com 2 casas decimais. **Implementado.**
 
@@ -932,8 +946,9 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF35 | Issues #103 e #129 | POST /usuarios/{id}/token/rotacao; Authorization: Bearer (sensor) | Usuários; sensor no Wokwi | Teste e Demonstração | Implementado |
 | RF36 | Issue #159 | — (gerado no navegador) | Relatórios | Teste | Implementado |
 | RF37 | Issues #156 e #157 | POST /telemetria | — (sensor) | Teste | Implementado |
+| RF38 | NB-01 | GET /lotes, GET /precos-m3 | Custo da água | Teste | Implementado |
 
-Resumo: 37 requisitos funcionais, 36 implementados e 1 adiado (RF31); 29 requisitos não funcionais, 28 implementados, adotados ou medidos e 1 parcial (RNF25, sem operador real).
+Resumo: 38 requisitos funcionais, 37 implementados e 1 adiado (RF31); 29 requisitos não funcionais, 28 implementados, adotados ou medidos e 1 parcial (RNF25, sem operador real).
 
 ## Apêndice D — Regras de negócio
 
