@@ -76,7 +76,7 @@ public class SecurityConfig {
                 .requestMatchers("/auditoria/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/processos").hasAnyRole("ADMIN", "GESTOR")
                 .requestMatchers(HttpMethod.PUT, "/processos/*").hasAnyRole("ADMIN", "GESTOR")
-                .requestMatchers("/alertas/**", "/relatorios/**").hasAnyRole("ADMIN", "GESTOR")
+                .requestMatchers("/alertas/**", "/relatorios/**", "/precos-m3/**").hasAnyRole("ADMIN", "GESTOR")
                 // O sensor só faz o que o envio precisa: consultar os processos e registrar lotes.
                 .requestMatchers(HttpMethod.GET, "/processos").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
                 .requestMatchers(HttpMethod.POST, "/lotes").hasAnyRole("ADMIN", "GESTOR", "OPERADOR", "SENSOR")
