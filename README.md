@@ -11,6 +11,12 @@
 
 <p align="center">
   <a href="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/ci.yml/badge.svg?branch=develop"></a>
+  <a href="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/qualidade.yml"><img alt="Qualidade" src="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/qualidade.yml/badge.svg?branch=develop"></a>
+  <a href="https://sonar.fchicout.dev/dashboard?id=aguas-do-capibaribe"><img alt="Quality Gate do SonarQube" src="https://sonar.fchicout.dev/api/project_badges/measure?project=aguas-do-capibaribe&metric=alert_status"></a>
+  <a href="https://github.com/paulomourz/aguas-do-capibaribe/tags"><img alt="Release" src="https://img.shields.io/github/v/tag/paulomourz/aguas-do-capibaribe?sort=semver&label=release"></a>
+</p>
+
+<p align="center">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white">
@@ -22,6 +28,7 @@
 
 <p align="center">
   <a href="https://aguas-do-capibaribe.onrender.com"><strong>Abrir o site</strong></a> ·
+  <a href="#-rodar-em-1-comando"><strong>Rodar em 1 comando</strong></a> ·
   <a href="#-sobre-o-projeto">Sobre</a> ·
   <a href="#-funcionalidades">Funcionalidades</a> ·
   <a href="#-arquitetura">Arquitetura</a> ·
@@ -33,6 +40,23 @@
 </p>
 
 ---
+
+## ⚡ Rodar em 1 comando
+
+Só precisa do [Docker](https://docs.docker.com/get-docker/) com o Docker Compose. Depois do `git clone`, na raiz do
+projeto:
+
+```bash
+docker compose up --build
+```
+
+- Sobe o **banco** (PostgreSQL 18), a **API** (Spring Boot) e o **site** (React), sem configurar nada e sem `.env`.
+- No meio do log aparecem os **logins e as senhas** do administrador (`capibaribe.admin`), do gestor e do sensor,
+  sorteadas na primeira subida. Para ver de novo: `docker compose logs segredos`.
+- Abra o site em <http://localhost:3000> e o Swagger em <http://localhost:3000/api/swagger-ui.html>.
+- A primeira vez baixa as imagens e compila tudo: precisa de internet e leva alguns minutos.
+- **Ctrl+C** para tudo. Para rodar em segundo plano: `docker compose up -d --build`. Mais detalhes em
+  [Com Docker](#com-docker-um-comando-só).
 
 ## 💧 Sobre o projeto
 
@@ -67,7 +91,7 @@ espere um pouco e tente de novo.
 | 📈 | **Dashboard e relatório mensal** | Gráficos de meta e consumo por processo e por dia, e relatório mensal com download em PDF |
 | 🔔 | **Aviso no Telegram** | Quando um alerta abre, chega uma mensagem no grupo da lavanderia, com o link do alerta |
 | 📤 | **Exportação em CSV** | O histórico filtrado vira uma planilha para auditoria externa (CPRH) |
-| 👥 | **Perfis** | Administrador (tudo, mais usuários e auditoria), gestor (operação), operador (registra lotes) e sensor (só envia lotes) |
+| 👥 | **Perfis** | Administrador (tudo, mais usuários e auditoria), gestor (operação), operador (registra lotes) e sensor (só envia lotes e telemetria) |
 | 🔍 | **Auditoria** | Quem criou, desativou, reativou ou redefiniu a senha de cada conta, sem poder ser apagado |
 | 📶 | **Funciona com a Wi-Fi oscilando** | O site é um PWA: abre sem conexão, guarda os lotes no aparelho (IndexedDB) e envia sozinho quando a conexão volta, sem duplicar |
 | 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API. Há um projeto público, em HTTPS, e um local, para o Docker |
@@ -295,7 +319,9 @@ ANALYZE) é rodada à mão.
 
 ## 📌 Status
 
-Última versão: **v1.1.0** (14/11/2026). A próxima, a **v1.2.0**, é a última: sai na segunda-feira, 23/11/2026, com as entregas desta semana e a demonstração incluída (roteiro e massa de dados, #115). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
+Versão final: **v2.0.0**, para a feira **ProjetAÍ**. O código congela em 27/11/2026 (code freeze, #221) e a versão
+sai na `main` com a tag `v2.0.0`; o badge **release** no topo mostra a última tag publicada. Antes dela: v1.1.0
+(14/11/2026) e v1.0.0 (02/11/2026). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
@@ -305,11 +331,13 @@ ANALYZE) é rodada à mão.
 - ✅ Registro de lote com desvio e histórico por perfil, inclusive sem conexão (PWA), e exportação em CSV
 - ✅ Alertas (3 lotes seguidos acima da meta) com status e aviso no Telegram
 - ✅ Dashboard com gráficos e relatório mensal, com download direto em PDF e em planilha Excel (.xlsx), e esqueletos no carregamento
-- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS com token de API, encontrando o processo pelo nome; telemetria validada e gravada, e saúde do sensor no Actuator
+- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS com token de API, encontrando o processo pelo nome; telemetria validada e gravada, sinal de vida a cada 15 s e saúde do sensor no Actuator (`/api/actuator/health/sensor`)
+- ✅ Descarte de efluentes de cada lote, com visão mensal de conformidade e índice de reúso
+- ✅ Custo da água: preço do m³ e custo do mês
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
-- ✅ Versionamento do banco com migrações Flyway (V1 a V14), aplicadas ao subir a API
+- ✅ Versionamento do banco com migrações Flyway (V1 a V16), aplicadas ao subir a API
 - ✅ Desempenho medido: teste de carga, índices com EXPLAIN ANALYZE e cache da lista de processos
 - ✅ Monitoramento (Actuator) e backup do banco com restauração verificada
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
@@ -323,7 +351,6 @@ ANALYZE) é rodada à mão.
 - **Token do sensor:** é colado no projeto do Wokwi, que é público, na hora de usar, e não deve ser salvo lá. A
   conta tem o perfil sensor, que só consulta processos e envia lotes e leituras, e o administrador troca o token a
   qualquer momento.
-- **Descarte de efluentes:** a tabela já existe no banco (V12), mas a rota da API e a tela ficam para depois.
 - **Certificado do sensor:** a impressão digital vale até 20/12/2026 e precisa ser atualizada quando o Render
   renovar o certificado ([como fazer](iot/LEIA-ME.md#se-der-errado)).
 - **Limites do status:** estão na API e no site, para classificar totais e médias. Se mudarem, mude nos dois.
