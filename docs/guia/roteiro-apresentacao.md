@@ -15,47 +15,50 @@ Dados há um plano C, fora da apresentação: o plano B com o banco aberto ao pg
 
 ## Apresentação na feira ProjetAÍ
 
-**5 a 7 minutos** de fala, seguidos de **3 minutos** de perguntas da banca, no auditório. A fala abaixo dá **5 min 40 s**,
-com folga para respirar. Os slides e o cartão de apoio de cada um (o que dizer e quanto tempo usar) estão em
-[`estande-projetai.html`](estande-projetai.html); para projetar, use o [`estande-projetai.pdf`](estande-projetai.pdf).
-O deck segue a estrutura oficial da feira, e a demonstração mostra o **sensor no Wokwi**, o diferencial do projeto.
-Funciona igual nos dois planos, depois de preparar a área de demonstração (seção seguinte). Deixe as abas abertas e com
-login feito antes de começar: o tempo é só para mostrar.
+**7 a 8 minutos** de fala, seguidos das perguntas da banca, no auditório. A fala dá **7 min 35 s**. **Pedro** fala os
+slides 1 a 6, até a demonstração, e **Matheus Andrade** os slides 7 a 12. O texto de cada slide está em
+[`falas-projetai.md`](falas-projetai.md); o deck, em [`estande-projetai.pdf`](estande-projetai.pdf).
 
 | Tempo | Slide | O que dizer ou mostrar | Quem fala |
 |---|---|---|---|
-| 0:00 a 0:10 | 1. Nome do projeto | Quem somos e o slogan: cada lote com a água que ele precisa | Pedro |
-| 0:10 a 0:25 | 2. Equipe | Os seis integrantes, a função de cada um e o orientador | Pedro |
-| 0:25 a 0:55 | 3. Problema | 14% a 16% do jeans do Brasil; água cara; 77% volta ao rio sem tratamento; ninguém mede por processo | Pedro |
-| 0:55 a 1:25 | 4. Oportunidade e público-alvo | Gestor, operador, fiscalização e marcas; economia de até R$ 40 mil por mês com reúso | Pedro |
-| 1:25 a 2:00 | 5. Solução | Meta por processo, lote comparado na hora, alerta no Telegram, relatórios e custo em reais | Matheus Andrade |
-| 2:00 a 3:30 | 6. **Demonstração** | Roteiro logo abaixo | Pedro (sensor) e Matheus Andrade (site) |
-| 3:30 a 4:05 | 7. Diferenciais e inovação | Sensor ESP32 falando com a API de verdade; sem Wi-Fi guarda e envia sem duplicar; sinal de vida a cada 15 s; site sem internet no celular | Pedro |
-| 4:05 a 4:35 | 8. Viabilidade e sustentabilidade | Grátis no Render e no Neon ou no Docker; 120 sensores sem erro no k6; mais de 500 testes, SonarQube, normas ISO/IEC | Pedro |
-| 4:35 a 5:05 | 9. Impactos esperados | Economia com reúso; efluente fora da CONAMA 430 na hora; custo do excesso em reais; histórico que não muda | Matheus Andrade |
-| 5:05 a 5:25 | 10. Próximos passos | Piloto com o sensor físico YF-S201, um sensor por máquina, previsão, WhatsApp, laudo para a CPRH | Matheus Andrade |
-| 5:25 a 5:40 | 11. Encerramento | Agradecer, apontar os QR codes e convidar lavanderias para um piloto | Pedro e Matheus Andrade |
+| 0:00 a 0:15 | 1. Nome do projeto | Quem somos e o slogan: cada lote com a água que ele precisa | Pedro |
+| 0:15 a 0:35 | 2. Equipe | Os seis integrantes, a função de cada um e o orientador | Pedro |
+| 0:35 a 1:20 | 3. Problema | 14% a 16% do jeans do Brasil; água cara; 77% volta ao rio sem tratamento; ninguém mede por processo | Pedro |
+| 1:20 a 2:00 | 4. Oportunidade e público-alvo | Gestor, operador, fiscalização e marcas; economia de até R$ 40 mil por mês com reúso | Pedro |
+| 2:00 a 2:45 | 5. Solução | Meta por processo, lote comparado na hora, alerta no Telegram, relatórios e custo em reais | Pedro |
+| 2:45 a 4:15 | 6. **Demonstração em vídeo** | O vídeo do lote do sensor, com o celular ao lado mostrando o Telegram (abaixo) | Pedro |
+| 4:15 a 4:50 | 7. O sistema por dentro | Telas do Dashboard, dos alertas, dos relatórios, do custo e dos efluentes | Matheus Andrade |
+| 4:50 a 5:30 | 8. Diferenciais e inovação | Sensor falando com a API de verdade; sem Wi-Fi guarda e envia sem duplicar; sinal de vida a cada 15 s; site sem internet no celular | Matheus Andrade |
+| 5:30 a 6:10 | 9. Viabilidade e sustentabilidade | Grátis no Render e no Neon ou no Docker; 120 sensores sem erro; 625 testes, SonarQube, normas ISO/IEC | Matheus Andrade |
+| 6:10 a 6:45 | 10. Impactos esperados | Economia com reúso; efluente fora da CONAMA 430 na hora; custo do excesso em reais; histórico que não muda | Matheus Andrade |
+| 6:45 a 7:15 | 11. Próximos passos | Piloto com o sensor físico YF-S201, um sensor por máquina, previsão, WhatsApp, laudo para a CPRH | Matheus Andrade |
+| 7:15 a 7:35 | 12. Encerramento | Apontar os QR codes, convidar lavanderias para um piloto e agradecer | Matheus Andrade, com Pedro no "obrigado" |
 
-**Demonstração (1 min 30 s):**
+**Demonstração em vídeo (1 min 30 s).** O slide 6 passa um vídeo gravado antes, com o celular ao lado: não depende da
+API acordada, do Wokwi rápido nem da internet do auditório. O vídeo mostra, em sequência:
 
-1. No Wokwi, gire o potenciômetro até o máximo (30 L/min) e clique no botão verde: o lote começa a contar.
-2. Enquanto ele conta, uns 40 s, mostre no site, como gestor, o **Dashboard** do mês com os gráficos dos 20 dias e o
-   alerta em análise.
-3. Clique de novo no botão. O lote dá cerca de 20 L contra a meta de 15 L: o LED vermelho acende e o buzzer apita 3
-   vezes. É o 3º lote seguido acima da meta na Estonagem, então **o alerta abre e o aviso chega ao Telegram** (mostre no
-   celular).
-4. No site, atualize com **F5**: o lote aparece no **Histórico** e o alerta novo em **Alertas**.
+1. No Wokwi, a vazão no máximo e o botão verde: o lote começa a contar.
+2. O botão de novo: o lote dá cerca de 20 L contra a meta de 15 L, o LED vermelho acende e o buzzer apita 3 vezes.
+3. No celular, ao lado, o aviso do alerta chegando ao grupo do Telegram: é o 3º lote seguido acima da meta na
+   Estonagem.
+4. No site, como gestor, **F5**: o lote no **Histórico**, registrado pelo sensor, e o alerta novo em **Alertas**.
 
-**Nas perguntas, se pedirem:** o operador registrando um lote de **Amaciamento** no celular, com a conexão desligada,
-e o selo **Sincronizado**; **Relatórios** em PDF e Excel; **Custo da água** e **Efluentes**; a **Auditoria**; o sensor
-sem Wi-Fi (**Q** no monitor serial derruba o sinal por 60 s e o lote vai sozinho quando ele volta); no GitHub, o CI
-verde, o Quality Gate do SonarQube e o SBOM na release.
+**Como gravar:** prepare a área de demonstração (seção seguinte). No computador, com o Wokwi e o site lado a lado,
+grave a tela com **Win+Alt+R**. No celular, grave a tela ao mesmo tempo, com o grupo do Telegram aberto. Os dois
+vídeos vão para o slide 6, no Canva, o do computador grande e o do celular na moldura ao lado. Depois de gravar,
+limpe o banco e rode a massa de novo.
+
+**Nas perguntas, se pedirem:** a mesma demonstração **ao vivo**, pelo passo a passo acima; o operador registrando um
+lote de **Amaciamento** no celular, com a conexão desligada, e o selo **Sincronizado**; **Relatórios** em PDF e
+Excel; **Custo da água** e **Efluentes**; a **Auditoria**; o sensor sem Wi-Fi (**Q** no monitor serial derruba o
+sinal por 60 s e o lote vai sozinho quando ele volta); no GitHub, o CI verde, o Quality Gate do SonarQube e o SBOM na
+release.
 
 **Telegram:** a massa deixa a Estonagem com 2 lotes seguidos acima da meta, sem alerta, para o lote crítico do sensor
 abrir o alerta ao vivo. Por isso, **ninguém registra lote de Estonagem antes do sensor**, nem no ensaio. Se ensaiar
 no mesmo banco, limpe e rode a massa de novo depois. Antes de começar, deixe o grupo do Telegram aberto no celular.
 
-**Se atrasar:** encurte o Dashboard na demonstração e junte os slides 9 e 10 numa frase. O sensor fica inteiro.
+**Se atrasar:** junte os slides 10 e 11 numa frase. O vídeo da demonstração fica inteiro.
 
 **Sensor:** antes de começar, cole o token, clique em ▶ e espere `Sinal de vida OK`: a primeira conexão ao Wi-Fi e à
 API leva alguns segundos (até uns 2 minutos se a API estiver dormindo). A partir daí, o sensor manda um sinal de vida a
