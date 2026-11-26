@@ -16,6 +16,7 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   e o resto roda dentro de `BEGIN ... ROLLBACK`.
 - **Comandos de teste**: se o sistema está no ar, o estado do banco, as recusas que o banco deve dar e os testes
   automáticos do projeto. O modelo passa a citar a tabela `preco_m3` (V16), com 10 tabelas.
+- **Versão em PDF**: `docs/guia/roteiro-banco-de-dados.pdf`, com o roteiro inteiro e o arquivo de testes em anexo.
 
 ### Deck do estande da ProjetAÍ
 

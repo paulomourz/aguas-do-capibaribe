@@ -6,6 +6,9 @@ abre o **próprio PostgreSQL, no pgAdmin**, para ver a mesma linha gravada na ta
 aparece na hora, no log do banco. E um script de aula mostra, bloco a bloco, triggers, `DELETE`,
 restrições, transações, permissões e o resto, sem estragar os dados.
 
+Versão para imprimir: [`roteiro-banco-de-dados.pdf`](roteiro-banco-de-dados.pdf), com o arquivo de testes do banco em
+anexo.
+
 **Não faz parte da apresentação do ProjetAÍ.** A feira usa os planos A e B do
 [roteiro de apresentação](roteiro-apresentacao.md). O plano C é o plano B (Docker no computador) com três coisas a mais:
 
