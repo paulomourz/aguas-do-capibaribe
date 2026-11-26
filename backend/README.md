@@ -265,7 +265,7 @@ mvn test
 | `CicloCompletoLavanderiaE2ETest` | herdado pelas duas classes acima | aceitação: a jornada da lavanderia por HTTP, do login ao relatório do mês (issue #12) |
 
 Dois desses testes conferem o Flyway: `flywayAplicouTodasAsMigracoesEmOrdem` (banco vazio recebe V1 a
-V14, com os processos iniciais) e `reinicioValidaChecksumsENaoRecriaNada` (uma nova subida valida os
+V16, com os processos iniciais) e `reinicioValidaChecksumsENaoRecriaNada` (uma nova subida valida os
 checksums e não executa nada).
 
 Os testes de integração **nunca usam o banco real**. O aviso do Telegram é testado com um servidor HTTP falso
@@ -302,6 +302,6 @@ para as migrações em `TESTE_FLYWAY_USER` / `TESTE_FLYWAY_PASSWORD`.
 
 Logins e nomes criados pelos testes mudam a cada rodada, então rodar duas vezes no mesmo banco
 temporário também funciona (na segunda, o Flyway só valida). Resultado com JDK 25 e o Docker
-ligado: **221 testes, todos passando** (180 unitários e de web + 41 de integração e de sistema), na CI de 20/11/2026. Os 41 de
+ligado: **253 testes, todos passando** (209 unitários e de web + 44 de integração e de sistema), na CI de 26/11/2026. Os 44 de
 `IntegracaoPostgresLocalTest` aparecem como *skipped* quando `TESTE_PG_URL` não está definida: são os mesmos testes
 de integração, na versão com banco local.

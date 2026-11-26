@@ -5,9 +5,9 @@ Plano, casos, procedimentos e relatório de testes do Águas do Capibaribe, orga
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.2, 20 de novembro de 2026 (versão 1.2.0 do sistema) |
+| Versão | 1.3, 26 de novembro de 2026 (versão 2.0.0 do sistema) |
 | Objeto de teste | Site (React), API (Spring Boot), banco (PostgreSQL 18), Docker Compose e sensor simulado (Wokwi), na branch `develop` |
-| Base | [ERS v2.6](../gestao/ERS.md): cada requisito tem o método de verificação na seção 4 e no Apêndice C |
+| Base | [ERS v2.8](../gestao/ERS.md): cada requisito tem o método de verificação na seção 4 e no Apêndice C |
 | Responsáveis | Equipe Águas do Capibaribe; revisão e teste das entregas com o DevOps |
 
 ## 1. Plano de testes
@@ -94,12 +94,15 @@ por função:
 | CSV (RF29) | `historicoCsv.test.ts` | Arquivo com BOM, ";" e CRLF, hora de Recife, ordem cronológica e fórmulas neutralizadas. |
 | CSV da API (RF33) | `CsvDeLotesTest`, `csvDoPeriodoUsaFusoDeRecifeFiltraPorProcessoEProtegeTextos`, `csvComMilharesDeLotesNaMesmaHoraNaoRepeteNemPulaNenhum`, `csvConfereOPeriodoEOProcessoAntesDeComecarESoParaGestor` | Mesmo formato do site; período fecha no fuso de Recife; 50.000 lotes na mesma hora saem todos, uma vez, em ordem; período inválido devolve 422 e operador recebe 403. |
 | Custo da água (RF38) | `custo.test.ts` | Cada lote no preço vigente na sua data em Recife; na mesma vigência vale o último cadastrado; excesso sem compensação; lote sem preço fora do custo, com aviso. |
+| Efluentes (RF39) | `DescarteControllerTest`, `DescarteServiceTest`, `descarte.test.ts`, `descartes.test.ts`, `e2e/efluentes.spec.ts` | pH fora de 0 a 14, turbidez negativa e reúso acima de 100% → 400 com a mensagem de cada campo; operador não alcança lote de outra pessoa (404); no site, descarte com pH fora de 5 a 9 mostra o aviso da CONAMA 430, sem violações do axe-core. |
 | Faixas (RF24) | `faixaDeConformidadeRespeitaAsFronteiras` | 0% = dentro; 8% = atenção; acima de 8% = crítico. |
 | Telemetria (RF37) | `TelemetriaControllerTest`, `sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada` | Leitura válida → 201 e gravada no nome do sensor; nula, negativa ou acima de 10000 → 400 `TELEMETRIA_INVALIDA`; sem token → 401. |
 | Monitoramento (RNF20) | `saudeAbertaMostraSoOStatusSemToken`, `metricasSoParaOAdmin` | Saúde aberta; métricas só para o administrador. |
 | Saúde do sensor (RNF20) | `SensorWokwiHealthIndicatorTest`, `saudeDoSensorWokwiPelaUltimaTelemetriaSemAfetarARaiz` | UP com leitura de até 59 s; DOWN (503) com 60 s ou sem leitura; a saúde principal não muda. |
 | Acessibilidade (RNF13) | `e2e/acessibilidade.spec.ts` | Nenhuma violação séria ou crítica do WCAG 2.1 AA, nos dois temas. |
 | Carregamento (RNF29) | `e2e/carregamento.spec.ts`, `esqueletos.test.ts` | Esqueletos no lugar dos dados e CLS abaixo de 0,1 com rede 3G simulada. |
+| Massa da demonstração | `database/demonstracao/testar-massa.sh`, rodado à mão (seção 4.2) | 64 lotes, 2 alertas e 34 descartes; a 2ª execução recusa sem gravar nada; o reset volta ao mesmo banco. |
+| Banco de dados (plano C) | `database/demonstracao/aula-banco-de-dados.sql` (job `docker-compose` do CI) | As 12 partes rodam; tudo o que o banco deve recusar é recusado, e a contagem final de cada tabela é igual à do começo. |
 | Migrações | `flywayAplicouTodasAsMigracoesEmOrdem`, `reinicioValidaChecksumsENaoRecriaNada` | V1 a V16 aplicadas uma vez, na ordem. |
 
 ## 3. Procedimentos
@@ -112,6 +115,7 @@ por função:
 | Site, ponta a ponta e acessibilidade | `pnpm exec playwright install chromium` (1ª vez) e `pnpm test:e2e` | Node.js e pnpm |
 | Qualidade (SonarQube) | No GitHub: Actions > Qualidade; o resultado fica em `https://sonar.fchicout.dev` | Segredo `SONAR_TOKEN` |
 | Docker | `docker compose up -d --build` e abrir `http://localhost:3000` | Docker |
+| Banco de dados (plano C) | ver [roteiro do banco de dados](../guia/roteiro-banco-de-dados.md) e `database/demonstracao/testes-banco-plano-c.sql`, bloco a bloco no pgAdmin | Docker e pgAdmin 4 |
 | Carga | ver [teste-carga.md](teste-carga.md) | k6 e Docker |
 | Sensor | ver [`iot/LEIA-ME.md`](../../iot/LEIA-ME.md) | Wokwi e a senha do sensor |
 | Usabilidade | ver [roteiro](../validacao/roteiro-teste-usabilidade.md) | Um operador e a ficha do observador |
@@ -120,19 +124,19 @@ por função:
 
 ### 4.1 Testes automáticos
 
-Última execução da `develop`: **20/11/2026, commit `0accc03` (merge do PR #195), todos os jobs verdes**, com o
-Quality Gate do SonarQube aprovado (cobertura do código novo de 92,3% e duplicação de 0%).
+Última execução da `develop`: **26/11/2026, commit `1a3b0a0` (merge do PR #239), todos os jobs verdes**, com o
+Quality Gate do SonarQube aprovado.
 
 | Conjunto | Executados | Falhas |
 |---|---|---|
-| Back-end: unidade e web | 180 | 0 |
-| Back-end: integração e sistema com PostgreSQL 18 | 41 | 0 |
-| Site: unidade (Vitest) | 286 | 0 |
-| Site: ponta a ponta e acessibilidade (Playwright) | 24 | 0 |
-| Docker Compose | 1 job | 0 |
-| **Total** | **531 testes + Docker, vulnerabilidades, mutação, SBOM e Quality Gate** | **0** |
+| Back-end: unidade e web | 209 | 0 |
+| Back-end: integração e sistema com PostgreSQL 18 | 44 | 0 |
+| Site: unidade (Vitest) | 346 | 0 |
+| Site: ponta a ponta e acessibilidade (Playwright) | 26 | 0 |
+| Docker Compose, com o plano C e o script da aula de banco de dados | 1 job | 0 |
+| **Total** | **625 testes + Docker, vulnerabilidades, mutação, SBOM e Quality Gate** | **0** |
 
-No log do Maven aparecem 262 testes, com 41 ignorados: são os mesmos testes de integração na variante que usa um
+No log do Maven aparecem 297 testes, com 44 ignorados: são os mesmos testes de integração na variante que usa um
 banco local, que não roda no CI.
 
 ### 4.2 Testes manuais e medições
@@ -142,6 +146,8 @@ banco local, que não roda no CI.
 | 03/11/2026 | Carga com 50 sensores simultâneos (local) | p95 de 68 ms, cerca de 1.000 lotes por segundo, nenhuma falha |
 | 10/11/2026 | Carga com 100 sensores no GitHub Actions, pool 10 e 20 | 0 falhas; p95 de 377 ms (pool 10) e 262 ms (pool 20); padrão da API passou a 20 conexões |
 | 17/11/2026 | Turno industrial com 120 sensores e picos de lavagem, 3 rodadas no GitHub Actions | Cerca de 50.700 leituras por turno, 0 respostas 5xx; p95 no pico entre 16 e 178 ms (meta: 250 ms) |
+| 26/11/2026 | Banco de dados pelo plano C: usuário criado no site, `DELETE` no pgAdmin e desativação; `testes-banco-plano-c.sql` inteiro | O `DELETE` é recusado pela chave estrangeira da auditoria; a desativação bloqueia o login; as 28 recusas do arquivo aparecem e as contagens terminam iguais |
+| 25/11/2026 | Acessibilidade da tela de efluentes com axe-core (WCAG 2.1 AA), issue #212 | Histórico, janela de descartes e janela com o erro de pH: 0 violações (`docs/validacao/resultados/2026-11-25-acessibilidade-efluentes.md`) |
 | 24/11/2026 | Massa de demonstração e reset do roteiro (`database/demonstracao/testar-massa.sh`) | 64 lotes, 2 alertas e 34 descartes; a 2ª execução recusa sem gravar nada; depois de um ensaio, `TRUNCATE` + massa em 0,4 a 0,6 s, sem erro de constraint e com o banco idêntico ao de antes (só o operador cadastrado ao vivo continua) |
 | 17/11/2026 | Ensaio do runbook de recuperação no Docker | Backup, banco apagado e restauração: sistema de volta em 23 s, com todos os lotes |
 | 24/11/2026 | Ensaio do runbook de recuperação no Docker com a massa da demonstração | Backup, banco apagado e restauração: sistema de volta em 35 s, com as 10 tabelas idênticas e a API gravando de novo; a verificação do backup passou a conferir também descartes, telemetria e avisos pendentes |

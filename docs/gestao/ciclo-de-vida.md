@@ -8,7 +8,7 @@ habilitadores organizacionais, gestão técnica e técnicos.
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.1, 20 de novembro de 2026 (versão 1.2.0 do sistema) |
+| Versão | 1.2, 26 de novembro de 2026 (versão 2.0.0 do sistema) |
 | Modelo de ciclo de vida | Incremental, em entregas semanais (TAP, seção 10), com integração e entrega contínuas |
 | Responsáveis | Equipe Águas do Capibaribe; orientador como patrocinador |
 
@@ -23,7 +23,7 @@ O ciclo do projeto tem cinco estágios. Cada um termina num marco verificável:
 | Concepção | Problema, solução, escopo e partes interessadas | TAP v1.0 (22/09/2026) |
 | Desenvolvimento | Requisitos, arquitetura, código e testes, em incrementos semanais | ERS v1.0 (27/10/2026) |
 | Produção e entrega | Versão publicada no Render e no Neon | Versão 1.0.0 (02/11/2026) |
-| Utilização e suporte | Uso, monitoramento, correções e melhorias pela `develop` | Itens dos pareceres; versões 1.1.0 (14/11/2026) e 1.2.0, a última, com a demonstração (23/11/2026) |
+| Utilização e suporte | Uso, monitoramento, correções e melhorias pela `develop` | Itens dos pareceres; versões 1.1.0 (14/11/2026) e 2.0.0, a final, no code freeze (27/11/2026); apresentações na feira ProjetAÍ (30/11 a 03/12/2026) |
 | Descarte | Encerramento dos serviços e arquivamento | Seção 6 |
 
 # 2. Processos de acordo
@@ -62,7 +62,7 @@ O ciclo do projeto tem cinco estágios. Cada um termina num marco verificável:
 |---|---|---|
 | Análise de negócio ou missão | Problema das lavanderias do Agreste e justificativa de custo e de impacto. | TAP, seção 3 |
 | Necessidades e requisitos dos stakeholders | Partes interessadas e histórias de usuário com cenários. | TAP, seção 7 e Parte 2; ERS, seção 1.3.5 |
-| Requisitos do sistema e do software | Especificação com 37 requisitos funcionais e 29 não funcionais. | ERS v2.6 (ISO/IEC/IEEE 29148) |
+| Requisitos do sistema e do software | Especificação com 39 requisitos funcionais e 29 não funcionais. | ERS v2.8 (ISO/IEC/IEEE 29148) |
 | Definição da arquitetura | Visões de contexto, lógica, dados, implantação e desenvolvimento. | docs/tecnico/arquitetura.md (ISO/IEC/IEEE 42010) |
 | Definição do projeto (design) | Contrato da API, modelo do banco e protótipo das telas. | docs/tecnico/api.md; migrações Flyway |
 | Análise do sistema | Medições de desempenho. | docs/tecnico/teste-carga.md; docs/tecnico/desempenho-indices.md |
@@ -71,7 +71,7 @@ O ciclo do projeto tem cinco estágios. Cada um termina num marco verificável:
 | Verificação | Testes automáticos e demonstrações ligados a cada requisito. | ERS, seção 4; docs/tecnico/testes.md (ISO/IEC/IEEE 29119) |
 | Transição | Publicação automática no Render depois do CI; versões na `main` por `release/`. | README; CHANGELOG.md |
 | Validação | Avaliação simulada, teste com pessoas de fora da equipe e avaliação heurística (Nielsen); o teste com operador real ficou como limitação. | docs/validacao/; docs/gestao/avaliacao-heuristica-usabilidade.md; issue #50 |
-| Operação | Uso pelo site e pelo sensor; guia para usuários e para quem roda o sistema. | Guia (ISO/IEC/IEEE 26514); roteiro de apresentação |
+| Operação | Uso pelo site e pelo sensor; guia para usuários e para quem roda o sistema; banco ao vivo para a disciplina de Banco de Dados (plano C). | Guia (ISO/IEC/IEEE 26514); roteiro de apresentação; roteiro do banco de dados |
 | Manutenção | Correções e melhorias pela `develop`; rollback no Render se uma publicação der erro. | Issues; README |
 | Descarte | Encerramento planejado (seção 6). | Este documento |
 

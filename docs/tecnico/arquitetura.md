@@ -7,8 +7,8 @@ os pontos de vista usados e as visões do sistema, com as decisões e a justific
 | Campo | Descrição |
 |---|---|
 | Sistema | Águas do Capibaribe — gestão de consumo de água por lote em lavanderias de jeans |
-| Versão | 1.3, 20 de novembro de 2026 (versão 1.2.0 do sistema) |
-| Requisitos | [ERS v2.0](../gestao/ERS.md) (ISO/IEC/IEEE 29148) |
+| Versão | 1.4, 26 de novembro de 2026 (versão 2.0.0 do sistema) |
+| Requisitos | [ERS v2.8](../gestao/ERS.md) (ISO/IEC/IEEE 29148) |
 | Responsáveis | Equipe Águas do Capibaribe |
 
 ## 1. Partes interessadas e preocupações
@@ -89,8 +89,8 @@ só enquanto houver lote esperando.
 
 | Camada / pacote | Responsabilidade |
 |---|---|
-| `controller` | Recebe as requisições HTTP e devolve JSON: autenticação, usuários, processos, lotes, telemetria, alertas, relatórios, auditoria e preço do m³ (`PrecoM3Controller`, GET e POST `/precos-m3`, só gestor e administrador). |
-| `service` | Regras de negócio: cálculo do desvio, regra de alerta (`RegraDeAlerta`), telemetria (`TelemetriaService`), relatórios, usuários e auditoria. |
+| `controller` | Recebe as requisições HTTP e devolve JSON: autenticação, usuários, processos, lotes, telemetria, alertas, relatórios, auditoria, descarte de efluentes (`DescarteController`, GET e POST `/lotes/{loteId}/descartes`) e preço do m³ (`PrecoM3Controller`, GET e POST `/precos-m3`, só gestor e administrador). |
+| `service` | Regras de negócio: cálculo do desvio, regra de alerta (`RegraDeAlerta`), telemetria (`TelemetriaService`), descartes (`DescarteService`), relatórios, usuários e auditoria. |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `entity`, `dto` | Modelo de dados e formatos de entrada e saída da API. |
 | `security` | JWT, token de API do sensor (`FiltroTokenDeApi`, `TokenDeApi`), perfis, limite de requisições (`FiltroDeLimite`, `Limitador`) e respostas 401/403 no formato da API. |
@@ -121,13 +121,14 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 |---|---|
 | `usuario`, `processo`, `lote`, `alerta`, `alerta_lote`, `auditoria_usuario` | Tabelas principais (detalhe na ERS, seção 3.5). |
 | `aviso_pendente` | Avisos do Telegram que não chegaram; o `aguas_api` só lê, insere e atualiza as colunas do reenvio (V10 e V11). |
-| `efluentes_descarte` | Descarte de efluentes de cada lote (volume, pH, turbidez, % reaproveitado) para a CPRH e a ISO 14001; o `aguas_api` só lê e insere (V12). |
+| `efluentes_descarte` | Descarte de efluentes de cada lote (volume, pH, turbidez, % reaproveitado) para a CPRH e a ISO 14001; o `aguas_api` só lê e insere (V12); a API e a janela "Descartes" do Histórico gravam e listam (RF39). |
 | `telemetria` | Leituras de vazão do sensor (processo, usuário, vazão e hora do servidor); só recebe INSERT, com índices pela data e por processo (V14). |
 | `preco_m3` | Histórico do preço do m³ (valor, vigência e quem cadastrou), base do custo da água (V16); o `aguas_api` só lê e insere. |
 | `usuario.token_hash` | SHA-256 do token de API das contas de sensor, único (V9). |
 | `trg_lote_esperado` | O banco calcula o esperado de cada lote pela meta do momento. |
 | `trg_lote_imutavel`, `trg_auditoria_imutavel`, `trg_preco_m3_imutavel` | Lote, auditoria e preço do m³ não podem ser alterados nem apagados, nem pela API. |
 | `v_historico_lotes`, `v_alertas` | Visões que entregam o desvio já calculado. |
+| `v_efluentes_mensal` | Conformidade e reúso dos efluentes por mês e processo: volume, pH médio, mínimo e máximo, turbidez média, índice de reúso e descartes fora do pH de 5 a 9 (V15). |
 | Migrações Flyway V1 a V16 | O esquema muda só por migração nova, aplicada pelo dono do banco. A API só confere o esquema ao iniciar. A V13 deixa o autovacuum mais frequente nas tabelas que mais recebem linhas ([manutenção do banco](manutencao-banco.md)). |
 | Usuário `aguas_api` | Lê e grava, mas não pode apagar dados nem mudar o esquema. |
 
@@ -137,6 +138,7 @@ A dependência segue sempre o mesmo sentido: `controller → service → reposit
 |---|---|---|---|---|
 | Publicado | Render (site estático, HTTPS) | Render (contêiner Docker distroless, HTTPS, checagem em `/api/actuator/health`) | Neon (PostgreSQL 18) | Uso real e apresentação (plano A) |
 | Local com Docker | contêiner `frontend` (Nginx sem root, porta 3000) | contêiner `backend` | contêiner `db` | Plano B sem internet e testes |
+| Local com Docker, plano C | igual ao plano B | igual ao plano B | contêiner `db` aberto na porta 5433 deste computador, com log de todo SQL, e o Adminer na 8081 | Aula de Banco de Dados ([roteiro](../guia/roteiro-banco-de-dados.md)) |
 | Desenvolvimento | Vite na porta 8443 | Spring Boot na porta 8080 | PostgreSQL local | Programar |
 | CI | build e testes no GitHub Actions | testes com PostgreSQL em contêiner | contêiner temporário | Conferir cada pull request |
 
@@ -146,7 +148,8 @@ root, cerca de 132 MB), e o healthcheck é uma classe Java que chama `/api/actua
 como root: o site usa o `nginx-unprivileged` e o banco roda como `postgres`; todos têm `cap_drop: ALL`,
 `no-new-privileges` e sistema de arquivos só de leitura. A recuperação de cada ambiente depois de um desastre está no
 [runbook](runbook-disaster-recovery.md). O serviço `tunel`
-(perfil `tunel`) liga o Wokwi à API local por um túnel temporário.
+(perfil `tunel`) liga o Wokwi à API local por um túnel temporário. O arquivo `docker-compose.banco.yml`, somado ao principal, forma o
+plano C: as portas extras só aceitam conexões do próprio computador.
 
 O pool de conexões da API com o banco tem 20 conexões por padrão, medido no teste de carga com 100 sensores
 ([teste-carga.md](teste-carga.md)); no Render, com 0,1 de CPU, o valor vem de `DB_POOL_MAX`.
