@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Falas da feira ProjetAÍ
+
+- **Apresentação de 7 a 8 minutos**, em 12 slides: Pedro fala do 1 ao 6, até a demonstração, e Matheus Andrade do 7
+  ao 12. O texto de cada slide fica em `docs/guia/falas-projetai.md`.
+- **Demonstração em vídeo**: o slide 6 passa o lote do sensor no Wokwi com o celular ao lado mostrando o aviso no
+  Telegram, gravado antes, e o slide 7 mostra o sistema por dentro. A demonstração ao vivo fica para as perguntas.
+
 ### Documentação final da versão 2.0.0
 
 - **ERS v2.8**: RF39 (descarte de efluentes, com aviso de pH fora da CONAMA 430 e visão mensal V15), sinal de vida
