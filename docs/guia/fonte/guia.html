@@ -116,7 +116,7 @@
   <h1>Guia do Águas do Capibaribe</h1>
   <p class="chamada">Como o sistema funciona no dia a dia da lavanderia e como colocá-lo para rodar, do banco de dados ao sensor.</p>
   <div class="rodape">
-    <span><strong>Versão 2.3</strong> · 20 de novembro de 2026</span>
+    <span><strong>Versão 2.4</strong> · 26 de novembro de 2026</span>
     <span>Toritama · Caruaru · Santa Cruz do Capibaribe</span>
   </div>
 </section>
@@ -161,7 +161,7 @@
     <li>No sistema, o ícone de informação ao lado do nome de um processo explica o termo têxtil (estonagem, amaciamento, alvejamento, tingimento).</li>
   </ul>
 
-  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve a versão 1.2.0 do sistema, a última, que sai em 23 de novembro de 2026 com a demonstração incluída. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
+  <div class="nota"><p><strong>Versão e correções.</strong> Este guia descreve a versão 2.0.0 do sistema, a final, do code freeze de 27 de novembro de 2026. Achou algo errado ou desatualizado? Abra uma issue no GitHub do projeto. A fonte do guia fica em <code>docs/guia/fonte/</code>.</p></div>
 </section>
 
 <!-- ============ 1 ============ -->
@@ -267,6 +267,7 @@
     <tr><td><strong>Registro de lotes</strong></td><td>Informar processo, peças e litros; o resultado mostra esperado, desvio e um gauge com a faixa do lote. Sem conexão, o lote fica guardado no aparelho</td><td>sim</td><td>sim</td></tr>
     <tr><td><strong>Histórico de lotes</strong></td><td>Lista dos lotes com filtros por período, processo e quem registrou, exportação em CSV e o descarte de efluentes de cada lote</td><td>todos</td><td>os próprios</td></tr>
     <tr><td><strong>Processos e metas</strong></td><td>Cadastrar processos e ajustar metas</td><td>sim</td><td>—</td></tr>
+    <tr><td><strong>Custo da água</strong></td><td>Cadastrar o preço do m³, com a data em que passa a valer, e ver o custo da água e do excesso do mês, no total e por processo</td><td>sim</td><td>—</td></tr>
     <tr><td><strong>Usuários</strong></td><td>Criar acessos, redefinir senhas, desativar e reativar pessoas e trocar o token do sensor</td><td>só o administrador</td><td>—</td></tr>
     <tr><td><strong>Auditoria</strong></td><td>Quem criou, desativou, reativou ou redefiniu a senha de cada conta, e quando; painel de eventos de segurança (logins e bloqueios)</td><td>só o administrador</td><td>—</td></tr>
     <tr><td><strong>Configurações</strong></td><td>Trocar o próprio nome e a própria senha</td><td>sim</td><td>sim</td></tr>
@@ -314,7 +315,8 @@
     <li>O <strong>Dashboard</strong> mostra o mês de referência, que também aparece no topo da tela.</li>
     <li>Os gráficos mostram a meta e o consumo de cada processo no mês e o consumo de cada dia.</li>
     <li><strong>Água por peça</strong> mostra quantos litros cada peça gastou, em média, comparado com a referência de 49 a 70 L por peça da lavanderia completa.</li>
-    <li>No <strong>Histórico de lotes</strong>, dá para filtrar por período, processo e quem registrou; <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa. Em cada lote, <strong>Descartes</strong> mostra e registra o descarte de efluentes: volume, pH, turbidez e quanto da água foi reaproveitado. Depois de salvo, o descarte não pode ser alterado.</li>
+    <li>No <strong>Histórico de lotes</strong>, dá para filtrar por período, processo e quem registrou; <strong>Exportar CSV</strong> baixa os lotes do filtro atual numa planilha, para entregar a uma auditoria externa. Em cada lote, <strong>Descartes</strong> mostra e registra o descarte de efluentes: volume, pH, turbidez e quanto da água foi reaproveitado. Descarte com pH abaixo de 5 ou acima de 9 aparece com o aviso <strong>fora de 5 a 9</strong>, a faixa de lançamento da Resolução CONAMA 430. Depois de salvo, o descarte não pode ser alterado.</li>
+    <li>Em <strong>Custo da água</strong>, cadastre o preço do m³ da água comprada (poço e caminhão-pipa) e a data em que ele passa a valer. Cada lote usa o preço que valia no dia em que foi registrado. A tela mostra o custo da água do mês e o custo do excesso, que é a água gasta acima da meta. Preço errado se corrige cadastrando outro na mesma data: o histórico não é apagado.</li>
     <li>Em <strong>Relatórios</strong>, escolha mês e ano para ver o consolidado; use <strong>Baixar PDF</strong> para salvar o arquivo <code>aguas-do-capibaribe-relatorio-AAAA-MM.pdf</code>, com o nome da lavanderia (<code>VITE_NOME_LAVANDERIA</code> no <code>.env.local</code>) e a assinatura de quem emitiu, ou <strong>Pré-visualizar e imprimir</strong>. <strong>Exportar para Excel (.xlsx)</strong> baixa uma planilha com uma aba dos lotes e outra do resumo por processo, com fórmulas que podem ser conferidas. Mês sem lotes não gera relatório.</li>
   </ul>
 </section>
@@ -403,7 +405,7 @@
     <tr><td>Só usar o sistema</td><td><code>aguas-do-capibaribe.onrender.com</code></td><td>um navegador; a API leva cerca de 2 minutos para acordar</td></tr>
     <tr><td>Rodar no computador</td><td><code>docker compose up -d --build</code> e abrir <code>localhost:3000</code></td><td>Docker Desktop; as senhas aparecem em <code>docker compose logs segredos</code></td></tr>
   </table>
-  <p>O passo a passo para apresentar está em <code>docs/guia/roteiro-apresentacao.md</code>. Os passos abaixo são para rodar cada parte separada, sem Docker.</p>
+  <p>O passo a passo para apresentar está em <code>docs/guia/roteiro-apresentacao.md</code>. Na demonstração, ninguém registra lote de Estonagem no site antes do sensor: a massa de dados deixa 2 lotes seguidos acima da meta, e o 3º, enviado ao vivo pelo Wokwi, abre o alerta e avisa no Telegram. Para a disciplina de Banco de Dados, o plano C, com o banco aberto ao pgAdmin e o log de todo SQL, está em <code>docs/guia/roteiro-banco-de-dados.md</code>. Os passos abaixo são para rodar cada parte separada, sem Docker.</p>
 
   <h3>Requisitos</h3>
   <table>

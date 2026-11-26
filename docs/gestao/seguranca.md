@@ -8,7 +8,7 @@ pede, adaptada ao porte de um projeto acadêmico, sem certificação formal.
 
 | Campo | Descrição |
 |---|---|
-| Versão | 1.4, 20 de novembro de 2026 (versão 1.2.0 do sistema: contêineres sem root, SBOM, disjuntor do Telegram, runbook de recuperação ensaiado e análise no SonarQube; antes, 1.3 com o repositório público e 1.2 com o token de API do sensor, a imagem distroless e os segredos como arquivos) |
+| Versão | 1.5, 26 de novembro de 2026 (versão 2.0.0 do sistema: auditoria antes do code freeze, em 24/11/2026, sem vulnerabilidade alta ou crítica sem tratamento, com os contêineres sem root (a exceção, documentada, é o que cria os segredos na primeira subida) e sem segredo real no histórico do Git, issue #216; antes, 1.4 com os contêineres sem root, o SBOM, o disjuntor do Telegram, o runbook de recuperação ensaiado e a análise no SonarQube, 1.3 com o repositório público e 1.2 com o token de API do sensor, a imagem distroless e os segredos como arquivos) |
 | Escopo | Site, API, banco publicado (Render e Neon), ambiente Docker, sensor simulado, repositório no GitHub e aviso no Telegram |
 | Responsável | Paulo Moura (DevOps), com apoio da equipe |
 | Revisão | A cada versão do sistema ou depois de qualquer incidente |

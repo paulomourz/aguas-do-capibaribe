@@ -80,6 +80,15 @@ espere um pouco e tente de novo.
 
 🎤 **Para apresentar ou testar:** [roteiro com os planos A e B](docs/guia/roteiro-apresentacao.md)
 
+> **Não registre lote de Estonagem no site publicado.** A massa da demonstração deixa a Estonagem com 2 lotes
+> seguidos acima da meta, e o 3º vem do sensor no Wokwi, ao vivo, para abrir o alerta e avisar no Telegram. Um lote
+> acima da meta antes disso antecipa o alerta, e um dentro da meta zera a sequência. Se acontecer, limpe o banco e
+> rode a massa de novo ([como fazer](docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração)).
+
+🗄️ **Para a disciplina de Banco de Dados:** [roteiro do plano C](docs/guia/roteiro-banco-de-dados.md)
+([PDF](docs/guia/roteiro-banco-de-dados.pdf)), com o banco aberto ao pgAdmin, o log de todo SQL e
+[todos os testes do banco](database/demonstracao/testes-banco-plano-c.sql) prontos para rodar
+
 ## ✨ Funcionalidades
 
 | | Funcionalidade | Como funciona |
@@ -275,10 +284,11 @@ mvn test
 | `AdminInicialTest`, `GestorInicialTest`, `SensorInicialTest` | não | contas criadas na inicialização |
 | `AvisoDeAlertaTest`, `DisjuntorDoTelegramTest` | não | mensagem do Telegram, falha no envio sem afetar o lote e disjuntor |
 | `TelemetriaControllerTest`, `SensorWokwiHealthIndicatorTest` | não | validação da telemetria (400, 401) e saúde do sensor |
+| `DescarteControllerTest`, `DescarteServiceTest`, `PrecoM3ControllerTest` | não | descarte de efluentes (validação e acesso por perfil) e preço do m³ |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real, perfis, auditoria, Actuator e aviso no Telegram (com um servidor falso) |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 221 testes: 180 unitários e de web + 41 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
+São 253 testes: 209 unitários e de web + 44 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
@@ -286,8 +296,8 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 **Site:**
 
 ```bash
-pnpm test        # Vitest (286 testes): fila em IndexedDB, sincronização e envio em segundo plano, CSV, planilha, tema, glossário, números, gauge, pegada, limites e esqueletos
-pnpm test:e2e    # Playwright (24 testes): modo offline, Background Sync, fluxo do operador e do alerta, planilha, privacidade, números, carregamento e acessibilidade (axe-core)
+pnpm test        # Vitest (346 testes): fila em IndexedDB, sincronização e envio em segundo plano, CSV, planilha, tema, glossário, números, gauge, pegada, limites, esqueletos, descartes e custo da água
+pnpm test:e2e    # Playwright (26 testes): modo offline, Background Sync, fluxo do operador e do alerta, efluentes, planilha, privacidade, números, carregamento e acessibilidade (axe-core)
 ```
 
 O teste ponta a ponta (`e2e/offline.spec.ts`) derruba a conexão do navegador, registra lotes, recarrega a página
@@ -297,7 +307,7 @@ resposta perdida (a API grava, o site não recebe) e confere que o reenvio não 
 
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
 `develop`: `backend-test` (no Java 25), `frontend-build` (`tsc --noEmit`, `pnpm test`, `pnpm build` e `pnpm test:e2e`) e
-`docker-compose` (sobe o Docker e testa login, processos e registro de lote pelo Nginx) e `dependencias` (procura
+`docker-compose` (sobe o Docker com o plano C, testa login, processos e registro de lote pelo Nginx e roda o script da aula de banco de dados) e `dependencias` (procura
 vulnerabilidades conhecidas no `pom.xml` e no `pnpm-lock.yaml` com o [OSV-Scanner](https://google.github.io/osv-scanner/)
 e bloqueia as de gravidade alta ou crítica, CVSS 7,0 ou mais; exceções, sempre com motivo e data, ficam em
 [`osv-scanner.toml`](osv-scanner.toml)). O Render só publica depois

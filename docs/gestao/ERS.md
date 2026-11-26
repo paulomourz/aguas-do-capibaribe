@@ -8,9 +8,9 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 
 | Campo | Descrição |
 |---|---|
-| Versão | 2.7 |
-| Data | 24 de novembro de 2026 |
-| Base | Termo de Abertura do Projeto v3.4 (20/11/2026), pareceres técnicos do orientador (27/10, 03/11, 10/11 e 17/11/2026) e código do repositório em 20/11/2026 (branch develop, versão 1.2.0) |
+| Versão | 2.8 |
+| Data | 26 de novembro de 2026 |
+| Base | Termo de Abertura do Projeto v3.5 (26/11/2026), pareceres técnicos do orientador (27/10, 03/11, 10/11, 17/11 e 24/11/2026) e código do repositório em 26/11/2026 (branch develop, versão 2.0.0, do code freeze de 27/11/2026) |
 | Equipe | Pedro (Full Stack / PO), Abraão Filipe (Back-end), João Bezerra (Back-end), Matheus Andrade (Front-end), Mateus Basilio (Banco de dados) e Paulo Moura (DevOps) |
 | Orientador | Fabio Cesar Figueiredo de Medeiros Chicout |
 | Instituição | Senac · Projeto Integrador |
@@ -30,6 +30,7 @@ Elaborada conforme a norma ISO/IEC/IEEE 29148:2018 (Engenharia de requisitos), q
 | 2.5 | 14/11/2026 | Validação de usabilidade (RNF25, issue #50 encerrada): avaliação simulada por inspeção e teste com pessoas de fora da equipe; o teste com operador real de lavanderia fica registrado como limitação. | Equipe Águas do Capibaribe |
 | 2.6 | 20/11/2026 | Consolidação para a versão 1.2.0, com as issues do parecer Week 03 (17/11/2026): relatório em planilha Excel (RF36, #159), telemetria do sensor validada e gravada (RF37, #156 e #157), saúde do sensor no Actuator (RNF20, #158), envio da fila em segundo plano (RF28, #160), carregamento sem saltos (RNF29, #161), disjuntor nos avisos do Telegram (RF30), auditoria de descarte de efluentes no banco (V12, #162), autovacuum das tabelas quentes (RNF22, #163), turno industrial com 120 sensores (RNF17, #165), Quality Gate no SonarQube e SBOM (RNF24, #168 e #169), runbook de recuperação de desastres (RNF21, #170), contêineres sem root (RNF28, #171), auditoria WCAG com axe-core (RNF13, #172), limite de login por conta (RNF19), migrações V1 a V14 e números de testes atuais. RNF28 passa para a seção 3.7.3. | Equipe Águas do Capibaribe |
 | 2.7 | 24/11/2026 | Custo da água (RF38): preço do m³ com vigência e histórico imutável (tabela preco_m3, migração V16) e custo da água e do excesso do mês, no total e por processo, na tela Custo da água. | Equipe Águas do Capibaribe |
+| 2.8 | 26/11/2026 | Consolidação para a versão 2.0.0, a final, do code freeze de 27/11/2026, com as issues do parecer Week 04 (24/11/2026): descarte de efluentes de cada lote, com aviso de pH fora da CONAMA 430 e visão mensal de conformidade e reúso (RF39, #201 a #203, V15); sinal de vida do sensor no Wokwi a cada 15 s (RF37 e RNF20, #218); auditoria WCAG e ponta a ponta dos efluentes (RNF13, #212 e #213); ensaio de restauração com a massa da demonstração (RNF21, #219); migrações V1 a V16 e números de testes atuais. | Equipe Águas do Capibaribe |
 
 <!-- sumario -->
 
@@ -74,6 +75,8 @@ Fluxo: o navegador e o dispositivo falam com a API por HTTPS e JSON; só a API f
 - **Acompanhamento:** Dashboard do mês com gráficos e relatório mensal por processo, com PDF e planilha Excel.
 - **Sensor:** envio de lotes e de leituras de vazão (telemetria) pelo dispositivo, com a saúde do sensor no monitoramento.
 - **Histórico:** consulta aos lotes, com visão restrita para o operador, e exportação em CSV.
+- **Efluentes:** registro do descarte da água de cada lote (volume, pH, turbidez e reúso), com aviso de pH fora da faixa de lançamento.
+- **Custo da água:** preço do m³ com vigência e custo da água e do excesso do mês.
 - **Usuários e conta:** cadastro, desativação, reativação e redefinição de senha pelo administrador, com auditoria; troca de nome e senha pela própria pessoa.
 
 ### 1.3.3 Características dos usuários
@@ -89,7 +92,7 @@ Fluxo: o navegador e o dispositivo falam com a API por HTTPS e JSON; só a API f
 
 - O sistema não exclui dados de uso: lotes e registros de auditoria são imutáveis e usuários são desativados, nunca apagados.
 - Hospedagem em planos gratuitos: a API dorme depois de 15 minutos sem uso, e o plano grátis do Render bloqueia o envio de e-mail (portas SMTP), por isso o aviso usa o Telegram.
-- Prazo acadêmico de cerca de 6 semanas, de 12/10/2026 até a entrega final em 23/11/2026.
+- Prazo acadêmico de cerca de 7 semanas, de 12/10/2026 até o code freeze de 27/11/2026, com a versão 2.0.0; as apresentações na feira ProjetAÍ vão de 30/11 a 03/12/2026.
 - Os relatórios são gerenciais e não têm validade jurídica.
 - O sensor é simulado (Wokwi): seus resultados não são medição real de lavanderia.
 
@@ -103,7 +106,7 @@ A ISO/IEC/IEEE 29148 pede que os requisitos de software sejam derivados das nece
 |---|---|---|---|
 | NB-01 | Reduzir o custo com água comprada, comparando o consumo de cada lote com uma meta. | Gestor da lavanderia | RF04 a RF09, RF13, RF16, RF24, RF34, RF38 |
 | NB-02 | Descobrir cedo quando um processo passa a gastar demais. | Gestor da lavanderia | RF11, RF12, RF30 |
-| NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RF36, RNF09 |
+| NB-03 | Comprovar o consumo perante clientes e órgãos ambientais, com dados que não podem ser alterados. | Gestor, marca compradora, MPPE / CPRH | RF10, RF13 a RF15, RF29, RF33, RF36, RF39, RNF09 |
 | NS-01 | Registrar o lote em poucos passos, no celular, mesmo com a conexão oscilando. | Operador de máquina | RF07, RF28, RNF12 a RNF14, RNF29 |
 | NS-02 | Controlar quem acessa o sistema e saber quem mexeu nas contas. | Administrador do sistema | RF01 a RF03, RF17 a RF22, RF27, RF32 |
 | NS-03 | Medir a água sem digitação, por um dispositivo. | Gestor e operador | RF25, RF26, RF35, RF37; RF31 adiado (Apêndice B) |
@@ -604,6 +607,19 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Situação | Implementado (cálculo no site, sobre GET /lotes do mês e GET /precos-m3). |
 | Verificação | Teste: custo.test.ts. |
 
+#### RF39 — Registrar e consultar o descarte de efluentes do lote
+
+| Atributo | Descrição |
+|---|---|
+| Descrição | O sistema deve registrar o descarte da água de cada lote, com volume, pH, turbidez e percentual reaproveitado, e mostrar os descartes no detalhe do lote, com aviso quando o pH estiver fora da faixa de lançamento. |
+| Entradas | Lote; volume descartado (L, maior que zero), pH (0 a 14), turbidez (NTU, 0 ou mais) e percentual reaproveitado (0 a 100, opcional, 0 quando vazio). |
+| Processamento | Bean Validation antes da regra de negócio, com a mensagem de cada campo. A data é a do servidor (DEFAULT now()). O operador só alcança os lotes que registrou (os outros respondem 404, sem dizer que existem); gestor e administrador alcançam todos. O descarte é registro de auditoria ambiental: não tem PUT nem DELETE, e o aguas_api só lê e insere. pH abaixo de 5 ou acima de 9 é marcado como fora da faixa de lançamento da Resolução CONAMA 430/2011. A visão v_efluentes_mensal (V15) resume por mês e processo o volume, o pH médio, mínimo e máximo, a turbidez média, o volume reaproveitado, o índice de reúso e os descartes fora do pH. |
+| Saídas | GET e POST /lotes/{loteId}/descartes; janela "Descartes" no detalhe do lote, no Histórico, com a lista do mais recente ao mais antigo e o aviso "fora de 5 a 9" em cada descarte fora da faixa. |
+| Prioridade | Desejável |
+| Origem | Issues #201, #202 e #203 (parecer Week 03) · decisão P7 · NB-03 |
+| Situação | Implementado. |
+| Verificação | Teste: DescarteControllerTest, DescarteServiceTest, descarte.test.ts, descartes.test.ts; e2e/efluentes.spec.ts (fluxo completo e pH fora de 5 a 9, com axe-core). |
+
 ### 3.1.8 Indicação visual de status
 
 #### RF24 — Classificar o lote por faixa de desvio
@@ -653,7 +669,7 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 |---|---|
 | Descrição | A API deve receber as leituras de vazão do sensor, recusar as inválidas e guardar as válidas como histórico de medição, que não se altera. |
 | Entradas | POST /telemetria com processoId e vazaoLitros, autenticado pelo token do sensor (RF35) ou por JWT. |
-| Processamento | Bean Validation antes da regra de negócio: processoId obrigatório e maior que zero; vazaoLitros obrigatória, de 0 a 10000 e com até 2 casas decimais (issue #156). A leitura válida é gravada na tabela telemetria (V14) no nome de quem enviou, com a hora do servidor; processo inexistente é recusado no campo processoId (issue #157). O aguas_api só lê e insere. A última leitura alimenta a saúde do sensor (RNF20). |
+| Processamento | Bean Validation antes da regra de negócio: processoId obrigatório e maior que zero; vazaoLitros obrigatória, de 0 a 10000 e com até 2 casas decimais (issue #156). A leitura válida é gravada na tabela telemetria (V14) no nome de quem enviou, com a hora do servidor; processo inexistente é recusado no campo processoId (issue #157). O aguas_api só lê e insere. A última leitura alimenta a saúde do sensor (RNF20). O sketch do Wokwi manda a vazão atual como sinal de vida a cada 15 s sem lote em andamento, logo depois de cada lote e ao iniciar um lote (issue #218). |
 | Saídas | 201 com a leitura gravada; 400 TELEMETRIA_INVALIDA com a mensagem de cada campo; 422 para processo inexistente; 401 sem autenticação. |
 | Prioridade | Desejável |
 | Origem | Issues #156 e #157 (parecer Week 03) · NS-03 |
@@ -716,7 +732,8 @@ Os requisitos funcionais estão agrupados por funcionalidade. RF01 a RF15 seguem
 | Alertas e detalhe do alerta | gestor, administrador | Abas por status; sequência de lotes que gerou o alerta; ações "em análise" e "resolvido" com confirmação. |
 | Relatórios e pré-visualização do PDF | gestor, administrador | Escolha de mês e ano; tabela por processo; pré-visualização A4, download em PDF e exportação em planilha Excel. |
 | Registro de lotes e resultado | operador, gestor, administrador | Processo, peças e litros; prévia do esperado; confirmação; resultado com desvio e status; lotes guardados no aparelho, com enviar agora, tentar de novo e descartar. |
-| Histórico de lotes | operador, gestor, administrador | Lista com filtro por processo e botão "Exportar CSV"; gestor e administrador também veem quem registrou. |
+| Histórico de lotes | operador, gestor, administrador | Lista com filtro por processo e botão "Exportar CSV"; gestor e administrador também veem quem registrou. No detalhe de cada lote, a janela "Descartes" registra e lista os descartes de efluentes, com o aviso de pH fora de 5 a 9 (RF39). |
+| Custo da água | gestor, administrador | Preço do m³ com vigência e histórico; custo da água e do excesso do mês, no total e por processo (RF38). |
 | Processos e metas | gestor, administrador | Lista de processos; cadastro e edição com nome, unidade e meta. |
 | Usuários | administrador | Lista com situação; cadastrar, desativar, reativar e redefinir senha. |
 | Auditoria | administrador | Registros das ações sobre contas, com filtro por período e ação, e paginação; pessoas pelo nome, com o login mascarado. |
@@ -764,8 +781,10 @@ O sistema web não exige hardware específico. O sensor simulado usa: ESP32 DevK
 | auditoria_usuario | Quem fez, quem foi afetado, ação (criação, redefinição de senha, desativação, reativação, rotação de token) e data; o trigger trg_auditoria_imutavel impede UPDATE e DELETE. |
 | aviso_pendente | Avisos do Telegram que não chegaram: alerta, tentativas, último erro e data do envio (V10 e V11). A API só atualiza as colunas da tentativa. |
 | telemetria | Leituras de vazão do sensor: processo, usuário, vazão e hora do servidor (V14). Só recebe INSERT (RF37). |
-| efluentes_descarte | Descarte de efluentes de cada lote: volume, pH, turbidez e percentual reaproveitado, com limites conferidos pelo banco (V12, issue #162). Registro de auditoria: só recebe INSERT. A tabela está pronta; a API e a tela ficam para uma versão futura (Apêndice B). |
+| efluentes_descarte | Descarte de efluentes de cada lote: volume, pH, turbidez e percentual reaproveitado, com limites conferidos pelo banco (V12, issue #162). Registro de auditoria: só recebe INSERT (RF39). |
+| preco_m3 | Preço do m³ da água comprada, com data de vigência e quem cadastrou (V16). Valor maior que zero; o trigger trg_preco_m3_imutavel impede UPDATE e DELETE (RF38). |
 | v_historico_lotes, v_alertas | Visões que entregam o desvio já calculado. |
+| v_efluentes_mensal | Conformidade e reúso dos efluentes por mês e processo (V15, RF39). |
 
 Os dados de consumo são permanentes: não há exclusão de lotes, de registros de auditoria nem de usuários. Os relatórios consideram o mês no fuso America/Recife. Índices: por data, por usuário, por processo e data (regra de alerta), por alerta em alerta_lote, por data e por processo em telemetria e por lote e por data em efluentes_descarte.
 
@@ -881,7 +900,7 @@ A ISO/IEC/IEEE 29148 pede que cada requisito tenha um meio de verificação defi
 | RNF28 | Teste | Job docker-compose do CI: confere que a imagem não tem shell, que nenhum segredo aparece no docker inspect nem no ambiente do processo e que nenhum processo do banco, da API e do site roda como root. |
 | RNF29 | Teste | e2e/carregamento.spec.ts (CLS abaixo de 0,1 com rede 3G simulada), esqueletos.test.ts e carregamento.test.ts. |
 
-**Ambiente e resultado.** Os testes automatizados rodam no GitHub Actions em toda mudança: 221 testes do back-end (com PostgreSQL 18 em contêiner), 286 de unidade e 24 de ponta a ponta do site, o teste do Docker Compose, as vulnerabilidades das dependências, o SBOM e o Quality Gate do SonarQube. Na última execução da develop (20/11/2026, merge do PR #195), todos passaram. O plano, os casos e o relatório completos estão em docs/tecnico/testes.md, conforme a ISO/IEC/IEEE 29119.
+**Ambiente e resultado.** Os testes automatizados rodam no GitHub Actions em toda mudança: 253 testes do back-end (com PostgreSQL 18 em contêiner), 346 de unidade e 26 de ponta a ponta do site, o teste do Docker Compose (com o plano C e o script da aula de banco de dados), as vulnerabilidades das dependências, o SBOM e o Quality Gate do SonarQube. Na última execução da develop (26/11/2026, merge do PR #239), todos passaram, com o Quality Gate aprovado. O plano, os casos e o relatório completos estão em docs/tecnico/testes.md, conforme a ISO/IEC/IEEE 29119.
 
 # 5. Apêndices
 
@@ -899,7 +918,6 @@ Ficam para versões futuras, ou dependem de decisão:
 
 - Inativar processo de lavagem (hoje só é possível cadastrar e editar).
 - Protótipo físico de bancada do sensor (TAP, seção 6), sujeito ao ponto de verificação.
-- Registro de volume de efluente e índice de reúso, conforme a decisão P7 do Registro de Decisões v1. A tabela efluentes_descarte já existe no banco (V12, issue #162); faltam a rota da API e a tela.
 - Integração com sensores em operação real numa lavanderia.
 - **RF31 — Identificar a linha de lavagem de cada sensor** (US-15, parecer item #19, issue #47). Adiado em 09/11/2026. O projeto foi feito sem custo, e o sensor é simulado no Wokwi, que roda no navegador. Cada sensor a mais precisa de outra aba do simulador aberta ao mesmo tempo, o que consome processador e memória do computador. No teste de 06/11/2026, com o computador carregado, um único sensor caiu para 3% da velocidade, e a conexão segura com a API falhou (SSL EOF); com dois ou mais, a demonstração ficaria instável. O limite é o simulador, não a API: ela já aceita lotes de vários dispositivos ao mesmo tempo (RNF17, teste de carga com 50 sensores simultâneos em docs/tecnico/teste-carga.md), e cada lote guarda a conta que o enviou. Com sensores físicos, o caminho é uma conta de perfil sensor por linha de lavagem (por exemplo, sensor.linha1 e sensor.linha2), sem mudar o banco.
 
@@ -947,6 +965,7 @@ Liga cada requisito funcional à história de usuário do TAP, ao endpoint da AP
 | RF36 | Issue #159 | — (gerado no navegador) | Relatórios | Teste | Implementado |
 | RF37 | Issues #156 e #157 | POST /telemetria | — (sensor) | Teste | Implementado |
 | RF38 | NB-01 | GET /lotes, GET /precos-m3 | Custo da água | Teste | Implementado |
+| RF39 | Issues #201 a #203 | GET e POST /lotes/{loteId}/descartes | Histórico (Descartes) | Teste | Implementado |
 
 Resumo: 38 requisitos funcionais, 37 implementados e 1 adiado (RF31); 29 requisitos não funcionais, 28 implementados, adotados ou medidos e 1 parcial (RNF25, sem operador real).
 

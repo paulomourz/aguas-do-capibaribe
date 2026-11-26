@@ -40,6 +40,7 @@ Regras que moram no próprio banco:
 | V13 | `V13__ajusta_autovacuum_tabelas_quentes.sql` | autovacuum e analyze mais frequentes em `lote`, `alerta_lote` e `alerta` (issue #163, ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 | V14 | `V14__cria_tabela_telemetria.sql` | `telemetria`: leituras de vazão do sensor (processo, usuário, vazão e hora do servidor), só leitura e inserção para o `aguas_api`, com índices pela data e por processo (issues #156 e #157) |
 | V15 | `V15__cria_visao_efluentes_mensal.sql` | visão `v_efluentes_mensal`: por mês (fuso de Recife) e processo, o volume descartado, o pH, a turbidez, o índice de reúso e os descartes com pH fora da faixa de lançamento da CONAMA 430 (5 a 9), com índice na expressão do mês; só leitura para o `aguas_api` (issue #203, ver [`desempenho-indices.md`](../docs/tecnico/desempenho-indices.md)) |
+| V16 | `V16__cria_preco_m3.sql` | `preco_m3`: preço do m³ da água comprada, com data de vigência e quem cadastrou; valor maior que zero e trigger que impede alterar ou apagar; só leitura e inserção para o `aguas_api` (issue #229) |
 
 V1, V2 e V4 reproduzem exatamente o antigo `banco.sql` (conferido com `pg_dump`: nenhuma diferença).
 V1 e V4 já dão ao `aguas_api` as permissões das tabelas que criam, se ele existir.
@@ -164,6 +165,7 @@ dados reais, incluindo o hash das senhas, então nunca vão para o Git nem para 
 | `../docker-compose.banco.yml` | plano C, só para a disciplina de Banco de Dados: banco aberto ao pgAdmin na porta 5433, log de todo comando SQL e o Adminer em `localhost:8081` (ver [roteiro do banco](../docs/guia/roteiro-banco-de-dados.md), issue #225) |
 | `demonstracao/aula-banco-de-dados.sql` | script da aula de Banco de Dados no plano C: catálogo, consultas, triggers, DELETE, restrições, transações, permissões, índices e visões, sem mudar os dados (ver [roteiro do banco](../docs/guia/roteiro-banco-de-dados.md#script-da-aula-tudo-o-que-o-banco-faz), issue #227) |
 | `demonstracao/testar-massa.sh` | testa a massa e o reset do roteiro num PostgreSQL temporário no Docker: 64 lotes, 2 alertas e 34 descartes, recusa na segunda vez e reset idêntico em menos de 30 s (issue #210) |
+| `demonstracao/testes-banco-plano-c.sql` | todos os testes do banco para a aula, bloco a bloco no pgAdmin: consultas, INSERT, UPDATE, DELETE, ativar e desativar usuário e 28 recusas; registros de teste apagados no fim e o resto em `BEGIN ... ROLLBACK` (ver [roteiro do banco](../docs/guia/roteiro-banco-de-dados.md#comandos-de-teste)) |
 | `manutencao/db-bloat-check.sql` | linhas mortas, inchaço e autovacuum de cada tabela, com o `VACUUM` sugerido (ver [`manutencao-banco.md`](../docs/tecnico/manutencao-banco.md)) |
 
 Os testes automáticos usam bancos temporários terminados em `_teste`, criados e apagados na hora;

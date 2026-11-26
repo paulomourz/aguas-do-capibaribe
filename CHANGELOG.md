@@ -6,6 +6,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Documentação final da versão 2.0.0
+
+- **ERS v2.8**: RF39 (descarte de efluentes, com aviso de pH fora da CONAMA 430 e visão mensal V15), sinal de vida
+  do sensor no RF37, telas de Custo da água e de Descartes, tabelas `preco_m3` e `v_efluentes_mensal`, efluentes fora
+  do Apêndice B, prazo até o code freeze de 27/11/2026 e números de testes atuais.
+- **TAP v3.5**, **auditoria v1.3**, **ciclo de vida v1.2**, **segurança v1.5**, **arquitetura v1.4**, **testes v1.3**
+  e **guia v2.4**: versão 2.0.0, code freeze em 27/11, feira ProjetAÍ de 30/11 a 03/12, entregas do parecer
+  Week 04, plano C, novos achados da auditoria (A20 a A22) e a participação de cada integrante até 26/11.
+- **Testes atuais** (CI de 26/11/2026, merge do PR #239): 253 do back-end, 346 de unidade e 26 de ponta a ponta do
+  site, total de 625, com o Quality Gate aprovado.
+- **README, guia e auditoria** explicam por que ninguém registra lote de Estonagem no site antes da demonstração.
+
 ### Roteiro do banco de dados (plano C)
 
 - **Teste guiado do usuário**: criar um usuário no site, ver a linha e a auditoria no pgAdmin, tentar o `DELETE`
