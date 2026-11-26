@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Roteiro do banco de dados (plano C)
+
+- **Teste guiado do usuário**: criar um usuário no site, ver a linha e a auditoria no pgAdmin, tentar o `DELETE`
+  (recusado pela chave estrangeira da auditoria) e desativar o usuário, conferindo o efeito no site.
+- **Comandos de teste**: se o sistema está no ar, o estado do banco, as recusas que o banco deve dar e os testes
+  automáticos do projeto. O modelo passa a citar a tabela `preco_m3` (V16), com 10 tabelas.
+
 ### Deck do estande da ProjetAÍ
 
 - **Apresentação de apoio para o estande** (issue #215): 9 slides com a identidade do site, sobre o problema da água no

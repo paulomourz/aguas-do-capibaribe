@@ -143,8 +143,8 @@ mostra a linha nova em `alerta` e as 3 em `alerta_lote`.
 
 ## O modelo
 
-São 9 tabelas, criadas e alteradas só por migrações do Flyway
-([`backend/src/main/resources/db/migration`](../../backend/src/main/resources/db/migration), V1 a V15). No pgAdmin,
+São 10 tabelas, criadas e alteradas só por migrações do Flyway
+([`backend/src/main/resources/db/migration`](../../backend/src/main/resources/db/migration), V1 a V16). No pgAdmin,
 botão direito em **aguas > ERD For Database** desenha as tabelas com as chaves estrangeiras.
 
 | Tabela | Guarda | Liga com |
@@ -158,6 +158,7 @@ botão direito em **aguas > ERD For Database** desenha as tabelas com as chaves 
 | `efluentes_descarte` | Descarte da água de cada lote: volume, pH, turbidez e reúso | `lote` |
 | `telemetria` | Sinal de vida do sensor: a vazão do momento, a cada 15 s sem lote em andamento (`POST /telemetria`) | `processo`, `usuario` |
 | `auditoria_usuario` | Quem criou, desativou ou trocou a senha de cada conta | `usuario` (2 vezes) |
+| `preco_m3` | Preço do m³ da água comprada, com a data de vigência, base do custo da água | `usuario` |
 
 Visões: `v_historico_lotes` (lote com desvio e status), `v_alertas` (alerta com o processo) e `v_efluentes_mensal`
 (conformidade e reúso dos efluentes por mês e processo). A última migração aplicada fica em `flyway_schema_history`.
@@ -180,7 +181,109 @@ Faça a ação no site e mostre a linha que aparece no log. A coluna da direita 
 | 10 | **Processos**: mudar a meta de um processo | `select ... from processo where upper(nome)=upper($1) and id<>$2` (nome repetido) e `update processo set meta=$1,...` | Os lotes antigos guardam o esperado da época: mudar a meta não reescreve o histórico |
 | 11 | **Auditoria** (administrador) | `select ... from auditoria_usuario ...` | O registro do passo 2 |
 
+## Teste guiado: criar um usuário no site e tentar apagá-lo no banco
 
+É o teste que o professor costuma pedir: uma ação no site, a linha gravada no banco e o banco protegendo os dados.
+Leva uns 3 minutos. Use um login novo, por exemplo `teste.aula`.
+
+**1. No site** (<http://localhost:3000>, como administrador): em **Usuários**, cadastre um operador com o login
+`teste.aula`.
+
+**2. No pgAdmin** (**Tools > Query Tool**), confira o usuário e a auditoria, gravados na mesma transação:
+
+```sql
+SELECT id, login, perfil, ativo FROM usuario ORDER BY id DESC LIMIT 3;
+SELECT * FROM auditoria_usuario ORDER BY id DESC LIMIT 3;
+```
+
+O usuário aparece com `ativo = true`, e a auditoria tem uma linha `CRIACAO_USUARIO`, com o administrador em
+`gestor_id` e o usuário novo em `usuario_afetado_id`.
+
+**3. Tente apagar o usuário:**
+
+```sql
+DELETE FROM usuario WHERE login = 'teste.aula';
+```
+
+O banco recusa:
+
+```text
+ERROR: update or delete on table "usuario" violates foreign key constraint "auditoria_usuario_usuario_afetado_id_fkey"
+DETAIL: Key (id)=(...) is still referenced from table "auditoria_usuario".
+```
+
+A linha da auditoria aponta para o usuário pela chave estrangeira, e o trigger `trg_auditoria_imutavel` impede apagar
+ou alterar a auditoria. Resultado: um usuário com histórico não some do banco. É integridade referencial protegendo a
+trilha de auditoria.
+
+**4. Desative o usuário**, que é o jeito certo de tirar alguém do sistema:
+
+```sql
+UPDATE usuario SET ativo = false WHERE login = 'teste.aula';
+SELECT id, login, perfil, ativo FROM usuario WHERE login = 'teste.aula';
+```
+
+**5. Confira o efeito no site:** em **Usuários**, aperte F5 e ele aparece como inativo. Tente entrar com
+`teste.aula`: o login é recusado.
+
+O `UPDATE` feito direto no banco não grava auditoria, porque quem grava é a API. Pelo botão **Desativar** do site, entra
+também uma linha `DESATIVACAO_USUARIO` em `auditoria_usuario`. Vale mostrar os dois para comparar.
+
+## Comandos de teste
+
+No PowerShell, na pasta do projeto, com o plano C no ar.
+
+**O sistema está no ar?**
+
+| Comando | Resultado esperado |
+|---|---|
+| `docker compose -f docker-compose.yml -f docker-compose.banco.yml ps` | `db`, `backend`, `frontend` e `adminer` em `Up`; `db` e `backend` em `healthy` |
+| `curl.exe http://localhost:3000/api/actuator/health` | `{"status":"UP",...}` |
+| Abrir <http://localhost:3000> e <http://localhost:8081> | O site e o Adminer |
+
+**O banco está certo?**
+
+```powershell
+# Tabelas e quantidade de linhas
+docker compose exec -T db psql -U postgres -d aguas -c "SELECT relname AS tabela, n_live_tup AS linhas FROM pg_stat_user_tables ORDER BY relname;"
+
+# Última migração do Flyway aplicada
+docker compose exec -T db psql -U postgres -d aguas -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 3;"
+
+# Usuários e auditoria
+docker compose exec -T db psql -U postgres -d aguas -c "SELECT id, login, perfil, ativo FROM usuario ORDER BY id;"
+docker compose exec -T db psql -U postgres -d aguas -c "SELECT * FROM auditoria_usuario ORDER BY id DESC LIMIT 5;"
+
+# O script da aula inteiro: termina com "igual" em todas as tabelas
+chcp 65001
+cmd /c "docker compose exec -T db psql -U postgres -d aguas < database\demonstracao\aula-banco-de-dados.sql"
+```
+
+**O banco recusa o que deve recusar?** Cole no Query Tool do pgAdmin, um por vez. Cada um para com erro e não muda
+nada:
+
+```sql
+DELETE FROM lote WHERE id = 1;                          -- trigger: lote não pode ser alterado nem excluído
+UPDATE auditoria_usuario SET acao = 'X' WHERE id = 1;   -- trigger: auditoria é imutável
+DELETE FROM usuario WHERE id = 1;                       -- chave estrangeira: o usuário tem lotes e auditoria
+INSERT INTO efluentes_descarte (lote_id, volume_litros, ph, turbidez_ntu) VALUES (1, 100, 15, 10);  -- CHECK: pH entre 0 e 14
+```
+
+**A senha do banco para o pgAdmin ou o Adminer**, copiada direto para a área de transferência, sem aparecer na tela:
+
+```powershell
+docker compose exec -T db cat /segredos/postgres | Set-Clipboard
+```
+
+**Os testes automáticos do projeto** (precisam do Node com o pnpm e do Maven instalados):
+
+| Comando | O que testa |
+|---|---|
+| `pnpm test` | Front-end (Vitest) |
+| `cd backend; mvn test` | Back-end, com um PostgreSQL de teste em contêiner (Testcontainers) |
+| `pnpm test:e2e` | O site no navegador (Playwright), fluxo de ponta a ponta |
+
+O CI roda todos eles, e também o plano C com o script da aula, em todo pull request.
 
 ## Script da aula: tudo o que o banco faz
 
