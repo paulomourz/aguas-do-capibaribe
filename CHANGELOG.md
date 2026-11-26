@@ -6,6 +6,12 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Corrigido
+
+- **Sensor recusava a API publicada** com "certificado da API diferente do esperado": o Render renovou o certificado
+  em 19/11/2026, antes do vencimento previsto (20/12). A impressão digital do `iot/sketch.ino` passa a ser a do
+  certificado novo, válido até 17/02/2027, e os documentos dizem que o Render renova uns 30 dias antes do vencimento.
+
 ### Falas da feira ProjetAÍ
 
 - **Apresentação de 7 a 8 minutos**, em 12 slides: Pedro fala do 1 ao 6, até a demonstração, e Matheus Andrade do 7

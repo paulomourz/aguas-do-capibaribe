@@ -123,7 +123,7 @@ Não precisa de deploy nem de login no Render e no Neon.
 **Antes de um dia importante**
 
 - Peça para ninguém fazer merge na `develop`: o site publicado atualiza sozinho e reinicia.
-- Depois de 20/12/2026, ou se aparecer `certificado da API diferente do esperado`, atualize `IMPRESSAO_DIGITAL`
+- Se aparecer `certificado da API diferente do esperado`, atualize `IMPRESSAO_DIGITAL`
   no projeto público ([`iot/LEIA-ME.md`](../../iot/LEIA-ME.md#se-der-errado)).
 
 ## Plano B: Docker no computador
