@@ -6,6 +6,18 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Roteiro do banco de dados (plano C)
+
+- **Teste guiado do usuário**: criar um usuário no site, ver a linha e a auditoria no pgAdmin, tentar o `DELETE`
+  (recusado pela chave estrangeira da auditoria) e desativar o usuário, conferindo o efeito no site.
+- **Todos os testes do banco num arquivo**: `database/demonstracao/testes-banco-plano-c.sql`, em 10 partes, para rodar
+  bloco a bloco no pgAdmin. Consultas, `INSERT`, `UPDATE`, `DELETE`, ativar e desativar usuário, e 28 recusas do banco
+  (`CHECK`, `UNIQUE`, `NOT NULL`, chaves estrangeiras, triggers e permissões). Os registros de teste são apagados no fim,
+  e o resto roda dentro de `BEGIN ... ROLLBACK`.
+- **Comandos de teste**: se o sistema está no ar, o estado do banco, as recusas que o banco deve dar e os testes
+  automáticos do projeto. O modelo passa a citar a tabela `preco_m3` (V16), com 10 tabelas.
+- **Versão em PDF**: `docs/guia/roteiro-banco-de-dados.pdf`, com o roteiro inteiro e o arquivo de testes em anexo.
+
 ### Deck do estande da ProjetAÍ
 
 - **Apresentação de apoio para o estande** (issue #215): 9 slides com a identidade do site, sobre o problema da água no
