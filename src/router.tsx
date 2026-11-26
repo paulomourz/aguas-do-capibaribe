@@ -1,9 +1,10 @@
 import { useEffect, useState, type AnchorHTMLAttributes } from 'react'
+import { semBarraNoFim } from './services/http'
 
 function ler() {
   const raw = window.location.hash.replace(/^#/, '') || '/'
   const [path, qs = ''] = raw.split('?')
-  return { path: path.replace(/\/+$/, '') || '/', query: new URLSearchParams(qs) }
+  return { path: semBarraNoFim(path) || '/', query: new URLSearchParams(qs) }
 }
 
 export function useRoute() {

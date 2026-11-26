@@ -40,18 +40,18 @@ export const nomeArquivoPlanilha = (mes: number, ano: number) => nomeArquivoRela
  */
 export function lerNumeroBR(texto: string): number {
   const t = texto.trim().replace(/\s/g, '')
-  if (!/^\d[\d.,]*$/.test(t)) return NaN
+  if (!/^\d[\d.,]*$/.test(t)) return Number.NaN
   let normal: string
   if (t.includes(',')) {
     // Vírgula decimal: os pontos antes dela só podem ser de milhar.
     const [inteira, decimal, ...resto] = t.split(',')
-    if (resto.length || decimal.includes('.') || (inteira.includes('.') && !/^\d{1,3}(\.\d{3})+$/.test(inteira))) return NaN
+    if (resto.length || decimal.includes('.') || (inteira.includes('.') && !/^\d{1,3}(\.\d{3})+$/.test(inteira))) return Number.NaN
     normal = `${inteira.replace(/\./g, '')}.${decimal}`
   } else if (t.includes('.')) {
-    if (!/^\d{1,3}(\.\d{3})+$/.test(t)) return NaN
+    if (!/^\d{1,3}(\.\d{3})+$/.test(t)) return Number.NaN
     normal = t.replace(/\./g, '')
   } else {
     normal = t
   }
-  return /^\d+(\.\d+)?$/.test(normal) ? Number(normal) : NaN
+  return /^\d+(\.\d+)?$/.test(normal) ? Number(normal) : Number.NaN
 }

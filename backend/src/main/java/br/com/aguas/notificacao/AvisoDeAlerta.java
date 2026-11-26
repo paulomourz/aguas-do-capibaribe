@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.RestClientResponseException;
 
+import br.com.aguas.config.Urls;
 import br.com.aguas.entity.AvisoPendente;
 import br.com.aguas.repository.AvisoPendenteRepository;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
@@ -132,7 +133,7 @@ public class AvisoDeAlerta {
                 + "Alerta #" + alerta.alertaId() + " aberto.";
         String site = props.siteUrl();
         if (site != null && !site.isBlank()) {
-            texto += "\n\nVer no sistema: " + site.trim().replaceAll("/+$", "") + "/#/alertas/" + alerta.alertaId();
+            texto += "\n\nVer no sistema: " + Urls.semBarraNoFim(site.trim()) + "/#/alertas/" + alerta.alertaId();
         }
         return texto;
     }
