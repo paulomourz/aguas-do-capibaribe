@@ -231,7 +231,30 @@ também uma linha `DESATIVACAO_USUARIO` em `auditoria_usuario`. Vale mostrar os 
 
 ## Comandos de teste
 
-No PowerShell, na pasta do projeto, com o plano C no ar.
+**Todos os testes do banco num arquivo só:**
+[`database/demonstracao/testes-banco-plano-c.sql`](../../database/demonstracao/testes-banco-plano-c.sql). Abra no
+Query Tool do pgAdmin e rode bloco a bloco (selecione e aperte F5). São 10 partes:
+
+| Parte | O que testa |
+|---|---|
+| 0 | Versão, tabelas com a quantidade de linhas e as migrações do Flyway |
+| 1 | Ver usuários: todos, ativos e inativos, por perfil, pelo login, auditoria com os nomes e quem registrou mais lotes |
+| 2 | `INSERT`, `UPDATE` e `DELETE` de um usuário de teste criado pelo SQL; login repetido, perfil inventado, login curto e senha sem hash são recusados |
+| 3 | Usuário criado pelo site: `DELETE` recusado, auditoria imutável, desativar, lote de usuário inativo recusado e reativar |
+| 4 | Processos: `INSERT`, `UPDATE` da meta e `DELETE`; meta zero, unidade inventada, nome repetido e apagar processo com lotes são recusados |
+| 5 | Lotes: consultas, consumo por processo e por dia, `INSERT` com o trigger calculando o esperado; alterar, apagar e valores inválidos são recusados |
+| 6 | Alertas: a visão, os lotes de cada alerta e a mudança de status; status inventado e lote repetido no alerta são recusados |
+| 7 | Efluentes: descartes, pH fora de 5 a 9, o resumo mensal e o `INSERT`; pH 15, turbidez negativa, reúso acima de 100% e lote inexistente são recusados |
+| 8 | Preço do m³ (imutável), sinal de vida do sensor e avisos do Telegram pendentes |
+| 9 | Permissões do `aguas_api`: lê, mas não apaga nem cria tabela |
+| 10 | Conferência: os registros de teste foram apagados |
+
+As partes 2 e 4 gravam de verdade só em registros de teste e os apagam no fim. A parte 3 desativa e reativa o usuário
+que você criou no site: troque `'teste.aula'` pelo login dele. Os blocos de lote, alerta, descarte e preço rodam
+dentro de `BEGIN ... ROLLBACK` e não deixam nada gravado. Para o lote ou o descarte aparecer no site, troque o
+`ROLLBACK` por `COMMIT`.
+
+**No PowerShell**, na pasta do projeto, com o plano C no ar:
 
 **O sistema está no ar?**
 
