@@ -12,6 +12,8 @@ export async function me(): Promise<UsuarioDTO> {
   return requisicao('/auth/me')
 }
 
-export async function logout(): Promise<void> {
+/** Sai da sessão: só apaga o token guardado, sem chamar a API. */
+export function logout(): Promise<void> {
   limparSessao()
+  return Promise.resolve()
 }
