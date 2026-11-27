@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Demonstração do sensor gravada
+
+- **Vídeo e prints da demonstração** em `docs/guia/estande/demonstracao/`: o lote do sensor no Wokwi até o LED
+  vermelho (38 s em velocidade 3x e a versão normal), o alerta da Estonagem aberto pelo 3º lote crítico seguido, a
+  lista de alertas e o Histórico com os lotes do sensor. O roteiro explica como gravar de novo sem a simulação
+  desacelerar.
+
 ### Falas da feira ProjetAÍ
 
 - **Apresentação de 7 a 8 minutos**, em 12 slides: Pedro fala do 1 ao 6, até a demonstração, e Matheus Andrade do 7
