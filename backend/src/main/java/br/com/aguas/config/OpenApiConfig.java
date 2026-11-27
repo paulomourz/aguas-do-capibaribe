@@ -27,6 +27,8 @@ public class OpenApiConfig {
 
     static final String JWT = "bearerAuth";
     static final String ERRO = "ErroApi";
+    /** Tipo "string" do OpenAPI, usado nos campos de texto do ErroApi. */
+    static final String TEXTO = "string";
 
     @Bean
     OpenAPI documentacao(@Value("${app.versao:dev}") String versao) {
@@ -47,11 +49,11 @@ public class OpenApiConfig {
                         .addSchemas(ERRO, new Schema<>()
                                 .type("object")
                                 .description("Formato de todos os erros da API.")
-                                .addProperty("codigo", new Schema<>().type("string").example("VALIDACAO"))
-                                .addProperty("mensagem", new Schema<>().type("string").example("Verifique os campos destacados."))
+                                .addProperty("codigo", new Schema<>().type(TEXTO).example("VALIDACAO"))
+                                .addProperty("mensagem", new Schema<>().type(TEXTO).example("Verifique os campos destacados."))
                                 .addProperty("campos", new Schema<>().type("object")
                                         .description("Só em erros de validação (422): campo → mensagem.")
-                                        .additionalProperties(new Schema<>().type("string")))))
+                                        .additionalProperties(new Schema<>().type(TEXTO)))))
                 .addSecurityItem(new SecurityRequirement().addList(JWT))
                 // Ordem dos grupos na página
                 .tags(List.of(
@@ -70,11 +72,11 @@ public class OpenApiConfig {
         return api -> api.getPaths().values().forEach(caminho -> caminho.readOperations().forEach(op -> {
             boolean publica = op.getSecurity() != null && op.getSecurity().isEmpty();
             if (publica) return;
-            op.getResponses().putIfAbsent("401", erro("Sem token, token inválido/expirado ou usuário desativado."));
+            op.getResponses().putIfAbsent("401", respostaDeErro("Sem token, token inválido/expirado ou usuário desativado."));
         }));
     }
 
-    static ApiResponse erro(String descricao) {
+    static ApiResponse respostaDeErro(String descricao) {
         return new ApiResponse().description(descricao).content(new Content().addMediaType("application/json",
                 new MediaType().schema(new Schema<>().$ref("#/components/schemas/" + ERRO))));
     }

@@ -19,7 +19,7 @@ public record AppProperties(Jwt jwt, String corsOrigens, String fusoRelatorios) 
         List<String> origens = Arrays.stream(corsOrigens.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .map(s -> s.replaceAll("/+$", ""))
+                .map(Urls::semBarraNoFim)
                 .toList();
         if (origens.stream().anyMatch(s -> s.contains("*"))) {
             throw new IllegalStateException("CORS_ORIGINS não aceita '*'. Liste as origens autorizadas explicitamente.");

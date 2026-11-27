@@ -14,13 +14,13 @@ $nav = $navegadores | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $nav) { throw 'Chrome ou Edge não encontrado.' }
 
 $documentos = @(
-  @{ Nome = 'TAP'; Rodape = 'Águas do Capibaribe · Termo de Abertura do Projeto v3.2' },
-  @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v2.4 · ISO/IEC/IEEE 29148' },
-  @{ Nome = 'seguranca'; Rodape = 'Águas do Capibaribe · Segurança da Informação v1.2 · ISO/IEC 27001' },
-  @{ Nome = 'auditoria'; Rodape = 'Águas do Capibaribe · Auditoria nas Normas e Cronograma v1.0' },
-  @{ Nome = 'ciclo-de-vida'; Rodape = 'Águas do Capibaribe · Processos do Ciclo de Vida v1.0 · ISO/IEC 12207' },
-  @{ Nome = 'arquitetura'; Pasta = '../tecnico'; Rodape = 'Águas do Capibaribe · Descrição da Arquitetura v1.2 · ISO/IEC/IEEE 42010' },
-  @{ Nome = 'testes'; Pasta = '../tecnico'; Rodape = 'Águas do Capibaribe · Documentação de Testes v1.1 · ISO/IEC/IEEE 29119' }
+  @{ Nome = 'TAP'; Rodape = 'Águas do Capibaribe · Termo de Abertura do Projeto v3.5' },
+  @{ Nome = 'ERS'; Rodape = 'Águas do Capibaribe · Especificação de Requisitos de Software v2.8 · ISO/IEC/IEEE 29148' },
+  @{ Nome = 'seguranca'; Rodape = 'Águas do Capibaribe · Segurança da Informação v1.5 · ISO/IEC 27001' },
+  @{ Nome = 'auditoria'; Rodape = 'Águas do Capibaribe · Auditoria nas Normas e Cronograma v1.3' },
+  @{ Nome = 'ciclo-de-vida'; Rodape = 'Águas do Capibaribe · Processos do Ciclo de Vida v1.2 · ISO/IEC 12207' },
+  @{ Nome = 'arquitetura'; Pasta = '../tecnico'; Rodape = 'Águas do Capibaribe · Descrição da Arquitetura v1.4 · ISO/IEC/IEEE 42010' },
+  @{ Nome = 'testes'; Pasta = '../tecnico'; Rodape = 'Águas do Capibaribe · Documentação de Testes v1.3 · ISO/IEC/IEEE 29119' }
 )
 
 $estilo = @'

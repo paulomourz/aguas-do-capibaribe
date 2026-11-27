@@ -1,8 +1,8 @@
 name: Teste de carga
 
-# Roda o teste de carga do registro de lotes (k6, de 10 a 100 sensores) num ambiente descartável do Docker, no
-# próprio GitHub Actions. Não toca no site publicado. Sob demanda (Actions > Teste de carga > Run workflow) e em todo
-# PR que mude o teste. Ver docs/tecnico/teste-carga.md.
+# Roda os testes de carga (k6) num ambiente descartável do Docker, no próprio GitHub Actions: o de lotes sem pausa
+# (de 10 a 100 sensores) e o do turno industrial (120 sensores com picos, #165). Não toca no site publicado.
+# Sob demanda (Actions > Teste de carga > Run workflow) e em todo PR que mude os testes. Ver docs/tecnico/teste-carga.md.
 on:
   workflow_dispatch:
     inputs:
@@ -83,6 +83,69 @@ jobs:
           path: |
             k6.txt
             testes-carga/resultados/resumo.json
+          if-no-files-found: ignore
+
+      - name: Apaga o ambiente
+        if: always()
+        run: $COMPOSE down -v
+
+  turno:
+    # Issue #165: um turno de ~10 min com 120 sensores (1 leitura a cada 2 s), rampa, platô e 2 picos de lavagem
+    # química. Mede p95, requisições por segundo e o pool do banco durante o turno, e gera um relatório HTML.
+    name: turno industrial (120 sensores)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DB_POOL_MAX: ${{ inputs.pool || '20' }}
+      # Critério da issue: p95 abaixo de 250 ms na carga máxima. Aqui a carga tem ritmo fixo (até 180 leituras/s),
+      # bem abaixo do teste de lotes sem pausa, então a meta vale também no runner de 2 CPUs.
+      META_P95_MS: '250'
+      COMPOSE: docker compose -p aguas-carga -f docker-compose.yml -f docker-compose.carga.yml --profile carga
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Turno industrial
+        shell: bash -eo pipefail {0}
+        run: |
+          mkdir -p testes-carga/resultados && chmod 777 testes-carga/resultados
+          $COMPOSE run --rm --no-TTY \
+            -e K6_WEB_DASHBOARD=true -e K6_WEB_DASHBOARD_EXPORT=/resultados/turno-painel.html \
+            k6 run /scripts/turno-industrial.js 2>&1 | tee k6-turno.txt
+
+      - name: Resultado do turno
+        if: always()
+        run: |
+          R=testes-carga/resultados/turno-industrial.json
+          if [ -f "$R" ]; then
+            {
+              echo "### Turno industrial (pool $DB_POOL_MAX, meta de p95 $META_P95_MS ms)"
+              echo "| Fase | Leituras | Média | p95 | Maior | Conexões ativas (máx.) |"
+              echo "|---|---|---|---|---|---|"
+              for f in rampa plato pico; do
+                jq -r --arg f "$f" '.metrics as $m | ($m["http_req_duration{tipo:leitura,fase:\($f)}"].values // empty) as $t
+                  | "| \($f) | \($m["leituras_aceitas{fase:\($f)}"].values.count // 0) | \($t.avg | . * 100 | round / 100) ms | \($t["p(95)"] | . * 100 | round / 100) ms | \($t.max | . * 100 | round / 100) ms | \($m["pool_conexoes_ativas{fase:\($f)}"].values.max // "-") |"' "$R"
+              done
+              jq -r '.metrics as $m | "- Leituras aceitas: \($m.leituras_aceitas.values.count) (\($m.leituras_aceitas.values.rate | . * 10 | round / 10) por segundo)",
+                "- Respostas 5xx: \($m.respostas_5xx.values.rate * 100)%",
+                "- Leituras descartadas por falta de sensor livre: \($m.dropped_iterations.values.count // 0)",
+                "- Pool (HikariCP): \($m.pool_conexoes_maximas.values.value) conexões; espera média de \($m.pool_espera_media_ms.values.value | . * 100 | round / 100) ms; maior espera de \($m.pool_maior_espera_ms.values.value | round) ms; \($m.pool_pedidos_esgotados.values.value) pedidos esgotaram o tempo",
+                "- Relatório HTML no artefato carga-turno-industrial"' "$R"
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Logs da API em caso de falha
+        if: failure()
+        run: $COMPOSE logs --no-color backend | tail -200
+
+      - name: Guarda o resultado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: carga-turno-industrial
+          path: |
+            k6-turno.txt
+            testes-carga/resultados/turno-industrial.*
+            testes-carga/resultados/turno-painel.html
           if-no-files-found: ignore
 
       - name: Apaga o ambiente

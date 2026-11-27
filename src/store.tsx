@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from 'react'
 import type { ToastData, ViewState } from './components/ui'
-import { limitesDoMes, statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
+import { limitesDoMes, statusDaApi, type Alerta, type AlertaStatus, type Lote, type Perfil, type PrecoM3, type Processo, type Resumo, type Unidade, type Usuario } from './domain'
 import * as api from './services'
 
 /*
@@ -44,6 +44,8 @@ type Ctx = {
   pendentesDeOutros: number
   /** Enviando a fila agora. */
   sincronizando: boolean
+  /** A fila acabou de chegar à API (pela página ou pelo service worker): selo de sincronizado por alguns segundos. */
+  sincronizado: boolean
   /** O último contato com a API funcionou (e o navegador diz que está online). */
   conectado: boolean
   /** Entrou sem conexão, com a sessão e os dados guardados da última vez. */
@@ -78,7 +80,7 @@ export type ResultadoRegistro = { tipo: 'enviado'; lote: Lote } | { tipo: 'pende
 export const INTERVALO_REENVIO_MS = 20_000
 
 /** Avisa as outras abas que a fila mudou. */
-const canalFila = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('aguas-fila') : null
+const canalFila = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(api.CANAL_FILA) : null
 const avisarAbas = () => canalFila?.postMessage('mudou')
 
 /** Erros de armazenamento local nunca podem impedir o uso do site com conexão. */
@@ -141,6 +143,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendentes, setPendentes] = useState<api.LotePendente[]>([])
   const [pendentesDeOutros, setPendentesDeOutros] = useState(0)
   const [sincronizando, setSincronizando] = useState(false)
+  const [sincronizado, setSincronizado] = useState(false)
+  const timerSelo = useRef<number | undefined>(undefined)
   const [conectado, setConectado] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
   const [modoOffline, setModoOffline] = useState(false)
   const [enviadosAgora, setEnviadosAgora] = useState<Record<string, Lote>>({})
@@ -158,6 +162,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToast(t)
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setToast((x) => (x?.id === t.id ? null : x)), 5000)
+  }, [])
+
+  const mostrarSelo = useCallback(() => {
+    setSincronizado(true)
+    window.clearTimeout(timerSelo.current)
+    timerSelo.current = window.setTimeout(() => setSincronizado(false), api.DURACAO_SELO_MS)
   }, [])
 
   const limpar = useCallback(() => {
@@ -301,6 +311,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (usuarioRef.current?.id !== u.id) return
     setPendentes(lista ?? [])
     setPendentesDeOutros(outros ?? 0)
+    // Nada esperando envio: o token do envio em segundo plano não precisa ficar no aparelho.
+    if (lista && !api.algumEsperando(lista)) void api.esquecerCredencial()
   }, [])
 
   /** Saiu do modo offline? Confere a sessão na API e recarrega os dados de verdade. */
@@ -336,11 +348,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           juntarLotes(novos)
           setEnviadosAgora((x) => ({ ...x, ...Object.fromEntries(r.enviados.map((e, i) => [e.chave, novos[i]])) }))
           setConectado(true)
+          mostrarSelo()
           if (u.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
           const avisar = r.enviados.filter((e) => e.chave !== chaveSilenciosa).length
           if (avisar) notificar(avisar === 1 ? 'Conexão de volta: 1 lote guardado foi enviado.' : `Conexão de volta: ${avisar} lotes guardados foram enviados.`)
         }
         if (r.parouPor === 'semConexao') setConectado(false)
+        // Sobrou lote: o service worker envia quando a rede voltar, mesmo com a aba fechada (issue #160).
+        if (api.sobrouParaDepois(r)) void semFalhar(() => api.pedirEnvioEmSegundoPlano(Number(u.id), api.obterToken()))
         const recusados = r.recusados.filter((x) => x.pendente.chave !== chaveSilenciosa).length
         if (recusados) notificar(`${recusados === 1 ? '1 lote guardado foi recusado' : `${recusados} lotes guardados foram recusados`} pelo servidor. Veja em Registro de lotes.`, 'erro')
         if (r.enviados.length || r.recusados.length) avisarAbas()
@@ -352,7 +367,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await atualizarPendentes()
       }
     },
-    [atualizarPendentes, juntarLotes, notificar],
+    [atualizarPendentes, juntarLotes, mostrarSelo, notificar],
   )
 
   /** Uma tentativa completa: se estava offline, reconecta primeiro; depois envia a fila. */
@@ -398,6 +413,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.clearInterval(intervalo)
     }
   }, [usuario, tentarAgora, atualizarPendentes])
+
+  // O service worker enviou a fila em segundo plano (Background Sync): mostra os lotes e o selo de sincronizado.
+  useEffect(() => {
+    if (!usuario) return
+    return api.ouvirSegundoPlano(Number(usuario.id), (lotes) => {
+      juntarLotes(lotes.map(deLote))
+      setConectado(true)
+      mostrarSelo()
+      notificar(api.textoEnviadosEmSegundoPlano(lotes.length))
+      if (usuario.perfil !== 'operador') api.listarAlertas().then(setAlertasDTO, () => {})
+    })
+  }, [usuario, juntarLotes, mostrarSelo, notificar])
 
   // 429 no envio de lotes: quando o Retry-After acabar, envia o que ficou na fila sem esperar o intervalo.
   useEffect(() => {
@@ -548,6 +575,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pendentes,
     pendentesDeOutros,
     sincronizando,
+    sincronizado,
     conectado,
     modoOffline,
     enviadosAgora,
@@ -632,6 +660,39 @@ export function useLotesDoMes(mes: number, ano: number) {
     }
   }, [mes, ano, versao])
   return { ...r, recarregar: () => setVersao((v) => v + 1) }
+}
+
+const dePreco = (p: api.PrecoM3DTO): PrecoM3 => ({
+  id: txt(p.id),
+  valor: Number(p.valor),
+  vigencia: p.vigencia,
+  cadastradoPor: p.cadastradoPor,
+  cadastradoEm: new Date(p.cadastradoEm),
+})
+
+/** Histórico do preço do m³ (custo da água). `cadastrar` recarrega o histórico e lança o erro da API. */
+export function usePrecosM3() {
+  const [r, setR] = useState<{ dados: PrecoM3[]; carregando: boolean; erro: boolean }>({ dados: [], carregando: true, erro: false })
+  const [versao, setVersao] = useState(0)
+  useEffect(() => {
+    let vivo = true
+    // Esqueleto só na primeira carga e no "tentar novamente": depois de cadastrar, o histórico atual fica na tela até chegar o novo.
+    setR((x) => (x.erro ? { ...x, carregando: true, erro: false } : x))
+    api.listarPrecosM3().then(
+      (dados) => vivo && setR({ dados: dados.map(dePreco), carregando: false, erro: false }),
+      () => vivo && setR({ dados: [], carregando: false, erro: true }),
+    )
+    return () => {
+      vivo = false
+    }
+  }, [versao])
+  const recarregar = () => setVersao((v) => v + 1)
+  const cadastrar = async (dados: api.NovoPrecoM3DTO) => {
+    const novo = dePreco(await api.cadastrarPrecoM3(dados))
+    recarregar()
+    return novo
+  }
+  return { ...r, recarregar, cadastrar }
 }
 
 /** Mês corrente em America/Recife. */

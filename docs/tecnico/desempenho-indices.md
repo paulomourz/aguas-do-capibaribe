@@ -208,3 +208,23 @@ primeiro passo seria o índice BRIN. Se ainda assim for preciso particionar:
    partições antigas.
 5. Migrar numa janela combinada: criar a tabela nova, copiar os lotes, recriar os triggers `trg_lote_esperado` e
    `trg_lote_imutavel` e trocar os nomes. Testar antes num banco de teste, nunca direto no Neon.
+
+## Visão mensal dos efluentes (issue #203), em 23/11/2026
+
+A visão `v_efluentes_mensal` (V15) agrupa os descartes de `efluentes_descarte` por mês, no fuso de Recife, e por
+processo do lote. O relatório de um mês filtra pela coluna `mes`, que é calculada:
+`date_trunc('month', data_descarte AT TIME ZONE 'America/Recife')`. O índice por data da V12
+(`ix_efluentes_descarte_data`) não serve para esse filtro, porque o PostgreSQL não consegue passar do mês calculado
+para um intervalo de `data_descarte`.
+
+Medido num PostgreSQL 18 no Docker, com **200.000 descartes** espalhados por 9 meses e
+`EXPLAIN (ANALYZE) SELECT * FROM v_efluentes_mensal WHERE mes = date '2026-03-01'`:
+
+| Situação | Plano | Tempo |
+|---|---|---|
+| Só com os índices da V12 | Parallel Seq Scan em `efluentes_descarte` | 58 ms |
+| Com `ix_efluentes_descarte_mes`, um índice na mesma expressão do mês (V15) | Index Scan em `ix_efluentes_descarte_mes` | 15 ms |
+
+A visão inteira, sem filtro (todos os meses), lê a tabela toda de qualquer jeito: 228 ms com os 200.000 descartes.
+Antes de medir, os totais da visão foram conferidos com uma consulta direta na tabela, sem a visão: descartes, volume,
+índice de reúso e pH fora da faixa batem.

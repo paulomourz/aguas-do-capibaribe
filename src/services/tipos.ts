@@ -33,10 +33,26 @@ export type LoteDTO = {
 }
 export type NovoLoteDTO = { processoId: Id; pecas: number; litros: number }
 
+/** Descarte de efluentes de um lote (issue #201): efluentes_descarte, V12. */
+export type DescarteDTO = {
+  id: Id
+  loteId: Id
+  data: string
+  volumeLitros: number
+  ph: number
+  turbidezNtu: number
+  reutilizadoPercentual: number
+}
+export type NovoDescarteDTO = { volumeLitros: number; ph: number; turbidezNtu: number; reutilizadoPercentual?: number }
+
 export type AlertaDTO = { id: Id; processoId: Id; loteIds: Id[]; detectado: string; status: StatusAlerta }
 
 /** Consumo de um processo no mês (mês definido no fuso America/Recife pelo servidor). */
 export type ResumoDTO = { processoId: Id; real: number; esperado: number; lotes: number; pecas: number; litrosPorPeca: number | null }
+
+/** Preço do m³ em R$; `vigencia` em AAAA-MM-DD; `cadastradoPor` é o nome de quem cadastrou. */
+export type PrecoM3DTO = { id: Id; valor: number; vigencia: string; cadastradoPor: string; cadastradoEm: string }
+export type NovoPrecoM3DTO = { valor: number; vigencia: string }
 
 export type AcaoAuditoria = 'CRIACAO_USUARIO' | 'REDEFINICAO_SENHA' | 'DESATIVACAO_USUARIO' | 'REATIVACAO_USUARIO' | 'ROTACAO_TOKEN'
 export type PessoaDTO = { id: Id; nome: string | null; usuario: string | null }

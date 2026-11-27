@@ -23,7 +23,7 @@ import br.com.aguas.entity.StatusConformidade;
  */
 final class CsvDeLotes {
 
-    static final String BOM = "﻿";
+    static final String BOM = "\uFEFF";
     static final String SEP = ";";
     static final String FIM = "\r\n";
 
@@ -39,7 +39,7 @@ final class CsvDeLotes {
 
     private CsvDeLotes() {}
 
-    static String cabecalho() {
+    static String linhaDeCabecalho() {
         return String.join(SEP, CABECALHO) + FIM;
     }
 

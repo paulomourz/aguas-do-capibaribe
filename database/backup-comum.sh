@@ -9,7 +9,8 @@ PASTA_DATABASE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Tabelas conferidas depois do restore. A API nunca apaga linhas (não tem DELETE em nenhuma tabela, e
 # lote e auditoria_usuario têm trigger que impede), então a contagem só cresce durante o backup.
-TABELAS="usuario processo lote alerta alerta_lote auditoria_usuario flyway_schema_history"
+# Toda tabela nova de uma migração entra aqui (issue #219: as da V10, V12 e V14 tinham ficado de fora).
+TABELAS="usuario processo lote alerta alerta_lote auditoria_usuario aviso_pendente efluentes_descarte telemetria preco_m3 flyway_schema_history"
 
 erro() { echo "ERRO: $*" >&2; exit 1; }
 aviso() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*"; }

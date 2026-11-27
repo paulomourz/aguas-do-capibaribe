@@ -17,6 +17,10 @@
 //     uma com sua chave Idempotency-Key, para que um reenvio nunca duplique o lote na API.
 //   - Para simular a perda de sinal: digite Q no monitor serial. O Wi-Fi cai por 60 segundos e volta sozinho.
 //     A hora de cada leitura aparece no monitor serial; a API grava a hora em que o lote chega.
+//   - Sinal de vida (issue #218): sem lote em andamento, o sensor envia a vazão atual a POST /telemetria a cada
+//     15 s, logo depois de cada lote e, com a API respondendo, também ao iniciar um lote. Pela hora da última
+//     leitura, a API diz se o sensor está no ar: /api/actuator/health/sensor fica UP com leitura há menos de 60 s.
+//     Durante o lote nada é enviado (o envio pararia o contador de pulsos), por isso o lote deve durar menos de 1 min.
 //
 // No dispositivo físico: remova o fio 25 -> 27, ligue o sinal do sensor no 27
 // e calibre o coeficiente K (PULSOS_POR_LITRO), como em iot/LEIA-ME.md, "Calibrar o coeficiente K".
@@ -63,15 +67,20 @@ const uint32_t QUEDA_WIFI_MS = 60000;  // tempo que o Wi-Fi fica fora
 const int      MAX_LEITURAS  = 100;    // leituras guardadas na RAM; cheio, a mais antiga é sobrescrita
 const uint32_t ESPERA_REENVIO_MS = 15000;  // a API não respondeu: espera antes de tentar de novo
 const uint32_t ESPERA_LIMITE_MS  = 60000;  // a API respondeu 429 (limite de lotes por minuto)
+// Sinal de vida (POST /telemetria). A saúde do sensor na API cai para DOWN sem leitura por 60 s, então o
+// intervalo precisa ficar bem abaixo disso. false desliga o envio (a saúde do sensor fica DOWN).
+const bool     ENVIAR_TELEMETRIA       = true;
+const uint32_t INTERVALO_TELEMETRIA_MS = 15000;
 // Hora das leituras: relógio da internet (NTP), no fuso de Brasília.
 const long FUSO_SEGUNDOS = -3 * 3600;
 // ========================================================
 
-// Certificado esperado da API: impressão digital SHA-256, válida até 20/12/2026. Verificar a cadeia inteira
+// Certificado esperado da API: impressão digital SHA-256 do certificado emitido em 19/11/2026, válido até
+// 17/02/2027. O Render renova cerca de 30 dias antes do vencimento, e aí a impressão digital muda. Verificar a cadeia inteira
 // deixa a conexão lenta demais no simulador. Para ver a nova, depois que o Render renovar o certificado:
 //   openssl s_client -connect aguas-api-a0vq.onrender.com:443 </dev/null | openssl x509 -noout -fingerprint -sha256
 const char* API_HOST = "aguas-api-a0vq.onrender.com";
-const char* IMPRESSAO_DIGITAL = "A8:8C:F8:E1:2B:2E:73:1A:48:5D:32:0C:92:B4:8E:A7:1E:0D:6B:F8:A8:38:68:B5:D1:10:DA:51:D4:A1:A4:5C";
+const char* IMPRESSAO_DIGITAL = "CE:FB:D8:EB:1A:68:4F:D7:89:6E:27:AF:39:69:1D:F9:5B:96:7F:89:68:1F:FD:DE:02:89:51:4A:B0:A5:8C:EA";
 
 // A API do plano grátis dorme sem uso e leva cerca de 2 minutos para acordar.
 const uint16_t TEMPO_RESPOSTA_MS = 60000;  // o HTTPClient aceita no máximo 65 s
@@ -106,6 +115,7 @@ WiFiClient clienteLocal;  // sem TLS, só para o projeto local
 const bool usaHttps = strncmp(API_URL, "https://", 8) == 0;
 HTTPClient http;
 int ultimoCodigo = 0;  // código HTTP da última requisição
+bool logHttp = true;   // false: não mostra cada requisição no monitor serial (sinal de vida, a cada 15 s)
 
 // Uma leitura = um lote encerrado. A hora é guardada em millis() e convertida para data e hora quando o
 // relógio estiver sincronizado: assim a hora sai certa mesmo se o lote foi medido antes de haver internet.
@@ -124,6 +134,10 @@ bool emQueda = false;        // perda de sinal simulada em andamento
 uint32_t fimQuedaMs = 0;
 bool wifiAntes = false;      // para avisar quando o Wi-Fi cai ou volta
 uint32_t proximoEnvioMs = 0; // antes disso, não tenta enviar o buffer
+
+int processoIdGuardado = -1;      // id de PROCESSO_NOME, guardado depois da 1ª consulta à API
+uint32_t proximaTelemetriaMs = 0; // antes disso, não envia o sinal de vida
+bool telemetriaOk = false;        // o último sinal de vida foi gravado: a API está acordada e respondendo
 
 void IRAM_ATTR contarPulso() {
   pulsos++;
@@ -190,8 +204,10 @@ void acompanharWiFi() {
     Serial.println("Wi-Fi conectado.");
     configTime(FUSO_SEGUNDOS, 0, "pool.ntp.org", "time.google.com");
     proximoEnvioMs = millis();  // envia o que estiver guardado sem esperar
+    proximaTelemetriaMs = millis();
   } else if (!agora && wifiAntes) {
     cliente.stop();
+    telemetriaOk = false;
     Serial.println("Wi-Fi caiu. As leituras ficam guardadas até ele voltar.");
   }
   wifiAntes = agora;
@@ -276,7 +292,7 @@ int concluir(int codigo, String& resposta) {
   resposta = codigo > 0 ? http.getString() : http.errorToString(codigo);
   http.end();
   ultimoCodigo = codigo;
-  Serial.printf("  -> HTTP %d\n", codigo);
+  if (logHttp) Serial.printf("  -> HTTP %d\n", codigo);
   return codigo;
 }
 
@@ -285,7 +301,7 @@ int concluir(int codigo, String& resposta) {
 int postJson(const String& url, const String& corpo, const String& token, const char* chave, String& resposta) {
   int codigo = HTTPC_ERROR_CONNECTION_REFUSED;
   for (int i = 1; i <= TENTATIVAS_CONEXAO && codigo == HTTPC_ERROR_CONNECTION_REFUSED; i++) {
-    Serial.printf("POST %s ...\n", url.c_str());
+    if (logHttp) Serial.printf("POST %s ...\n", url.c_str());
     if (!conectarSeguro()) continue;
     abrirConexao(url);
     http.addHeader("Content-Type", "application/json");
@@ -300,7 +316,7 @@ int postJson(const String& url, const String& corpo, const String& token, const 
 int getJson(const String& url, const String& token, String& resposta) {
   int codigo = HTTPC_ERROR_CONNECTION_REFUSED;
   for (int i = 1; i <= TENTATIVAS_CONEXAO && codigo == HTTPC_ERROR_CONNECTION_REFUSED; i++) {
-    Serial.printf("GET %s ...\n", url.c_str());
+    if (logHttp) Serial.printf("GET %s ...\n", url.c_str());
     if (!conectarSeguro()) continue;
     abrirConexao(url);
     http.addHeader("Authorization", "Bearer " + token);
@@ -341,13 +357,17 @@ void avisarTokenRecusado() {
 }
 
 // Procura o processo na API. Código negativo = sem resposta: a API pode estar acordando.
+// O id fica guardado depois da 1ª consulta (o sinal de vida sai a cada 15 s); a API recusar um envio por dados
+// inválidos limpa o id guardado, e a próxima chamada consulta de novo.
 int obterProcessoId() {
+  if (processoIdGuardado > 0) return processoIdGuardado;
   int processoId = -1;
   for (int i = 1; i <= TENTATIVAS_API; i++) {
     processoId = buscarProcessoId(TOKEN_API);
     if (ultimoCodigo >= 0) break;
     Serial.printf("Sem resposta da API (tentativa %d de %d).\n", i, TENTATIVAS_API);
   }
+  if (processoId > 0) processoIdGuardado = processoId;
   return processoId;
 }
 
@@ -370,6 +390,7 @@ Resultado enviarLeitura(const Leitura& l, int processoId, String& resposta) {
   }
   // Outro 4xx: a API recusou os dados, e reenviar não muda a resposta.
   Serial.printf("A API recusou a leitura (HTTP %d): %s\n", codigo, resposta.c_str());
+  processoIdGuardado = -1;  // o processo pode ter mudado: a próxima leitura consulta o id de novo
   return RECUSADA;
 }
 
@@ -387,7 +408,8 @@ void despejarLeituras() {
   detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
 
   int processoId = obterProcessoId();
-  if (ultimoCodigo == 401) {
+  // Com o id guardado, ultimoCodigo é o da requisição anterior: só vale quando o id não veio.
+  if (processoId <= 0 && ultimoCodigo == 401) {
     avisarTokenRecusado();
     proximoEnvioMs = millis() + ESPERA_LIMITE_MS;
   } else if (processoId <= 0) {
@@ -417,11 +439,63 @@ void despejarLeituras() {
         break;
       }
     }
-    if (qtdLeituras == 0) Serial.println(">>> Buffer vazio: todas as leituras foram enviadas.");
+    if (qtdLeituras == 0) {
+      Serial.println(">>> Buffer vazio: todas as leituras foram enviadas.");
+      proximaTelemetriaMs = millis();  // sinal de vida logo depois do lote
+    }
   }
 
   attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
   freqAtual = 0;
+}
+
+// Vazão atual em L/min. No Wokwi vem do potenciômetro, que faz o papel do registro da água. No dispositivo
+// físico, troque pela vazão medida: pulsos por segundo x 60 / PULSOS_POR_LITRO.
+float vazaoAtualLpm() {
+  return analogRead(PINO_POT) / 4095.0 * VAZAO_MAX_LPM;
+}
+
+// Sinal de vida (issue #218): grava a vazão atual em POST /telemetria. Pela hora da última leitura, a API diz se
+// o sensor está no ar (/api/actuator/health/sensor). Como em despejarLeituras(), o gerador e o contador param
+// durante o envio, então só é chamada sem lote em andamento (ou antes de zerar os pulsos de um lote novo).
+// Com a API respondendo, não escreve no monitor serial: só avisa quando o sinal começa ou deixa de chegar.
+void enviarTelemetria(float vazaoLpm) {
+  bool estavaOk = telemetriaOk;
+  logHttp = !estavaOk;
+  if (!estavaOk) Serial.println(">>> Enviando sinal de vida (telemetria)...");
+  ledcWrite(PINO_GERADOR, 0);
+  detachInterrupt(digitalPinToInterrupt(PINO_SENSOR));
+
+  int codigo;
+  int processoId = obterProcessoId();
+  if (processoId > 0) {
+    char corpo[64];
+    snprintf(corpo, sizeof(corpo), "{\"processoId\":%d,\"vazaoLitros\":%.2f}", processoId, vazaoLpm);
+    String resposta;
+    codigo = postJson(String(API_URL) + "/telemetria", corpo, TOKEN_API, nullptr, resposta);
+    if (codigo >= 400 && codigo < 500 && codigo != 401 && codigo != 429) {
+      Serial.printf("A API recusou o sinal de vida (HTTP %d): %s\n", codigo, resposta.c_str());
+      processoIdGuardado = -1;  // o processo pode ter mudado: o próximo envio consulta o id de novo
+    }
+  } else {
+    codigo = ultimoCodigo;  // o da consulta aos processos
+    if (codigo == 200) Serial.println("Sinal de vida NAO enviado: confira PROCESSO_NOME no sketch.ino.");
+  }
+  telemetriaOk = codigo == 201;
+
+  if (codigo == 401) {
+    Serial.println("Sinal de vida NAO enviado: token recusado (HTTP 401). Gere outro em Usuarios > Rotacionar token.");
+  } else if (telemetriaOk && !estavaOk) {
+    Serial.printf("Sinal de vida OK: a API recebe a vazao a cada %lu s (agora %.1f L/min).\n",
+                  (unsigned long)(INTERVALO_TELEMETRIA_MS / 1000), vazaoLpm);
+  } else if (!telemetriaOk && estavaOk) {
+    Serial.printf("Sinal de vida NAO chegou (HTTP %d). O sensor tenta de novo.\n", codigo);
+  }
+
+  proximaTelemetriaMs = millis() + (codigo == 401 || codigo == 429 ? ESPERA_LIMITE_MS : INTERVALO_TELEMETRIA_MS);
+  logHttp = true;
+  attachInterrupt(digitalPinToInterrupt(PINO_SENSOR), contarPulso, RISING);
+  freqAtual = 0;  // o próximo ajuste religa o gerador na vazão do potenciômetro
 }
 
 // Lê um campo de texto da resposta, como "statusConformidade":"CRITICO". Devolve "" se não achar.
@@ -515,6 +589,9 @@ void setup() {
   } else {
     iniciarWiFi();
     Serial.println("Para simular a perda de sinal, digite Q no monitor serial: o Wi-Fi cai por 60 s.");
+    if (!tokenConfigurado()) {
+      Serial.println("ATENCAO: cole o token de API do sensor em TOKEN_API (Usuarios > Rotacionar token).");
+    }
   }
   Serial.println("Gire o potenciômetro para abrir a água e aperte o botão para iniciar o lote.");
 }
@@ -541,6 +618,11 @@ void loop() {
   if (botaoAntes == HIGH && botao == LOW && agora - ultimoBotao > 300) {
     ultimoBotao = agora;
     if (!loteAtivo) {
+      // O lote começa com o sinal de vida em dia: um lote de menos de 1 min mantém o sensor UP na API.
+      // Só com a API já respondendo, para o início do lote não esperar a API acordar.
+      if (ENVIAR_TELEMETRIA && !MODO_CALIBRACAO && telemetriaOk && qtdLeituras == 0 && wifiDisponivel()) {
+        enviarTelemetria(vazaoAtualLpm());
+      }
       noInterrupts();
       pulsos = 0;
       interrupts();
@@ -571,6 +653,13 @@ void loop() {
   // O apito do lote crítico também roda com o gerador parado, sem ser atrapalhado pelos pulsos.
   if (!loteAtivo && qtdLeituras > 0 && wifiDisponivel() && (int32_t)(millis() - proximoEnvioMs) >= 0) {
     despejarLeituras();
+  }
+
+  // Sinal de vida a cada INTERVALO_TELEMETRIA_MS, só sem lote em andamento e com o buffer vazio
+  // (as leituras guardadas vão primeiro).
+  if (ENVIAR_TELEMETRIA && !MODO_CALIBRACAO && !loteAtivo && qtdLeituras == 0 && wifiDisponivel() &&
+      tokenConfigurado() && (int32_t)(millis() - proximaTelemetriaMs) >= 0) {
+    enviarTelemetria(vazaoAtualLpm());
   }
 
   if (loteAtivo && agora - ultimoStatus >= 1000) {

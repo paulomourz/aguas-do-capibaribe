@@ -19,6 +19,7 @@ import br.com.aguas.repository.AlertaLoteRepository;
 import br.com.aguas.repository.AlertaRepository;
 import br.com.aguas.repository.AvisoPendenteRepository;
 import br.com.aguas.repository.ProcessoRepository;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 
 /**
  * Reenvia os avisos que ficaram pendentes em aviso_pendente (#97). Roda a cada app.telegram.reenvio-a-cada
@@ -33,6 +34,11 @@ import br.com.aguas.repository.ProcessoRepository;
  *
  * Só sai aviso de alerta que continua aberto: se alguém já pôs o alerta em análise ou resolveu na tela, o
  * aviso atrasado não ajuda mais e fica pendente até passar do limite.
+ *
+ * Com o disjuntor aberto a rodada para logo no primeiro aviso, sem contar tentativa: nenhuma chamada chegou a
+ * sair. Como o disjuntor fica aberto por 1 minuto e a rodada roda a cada 5, a rodada seguinte sempre encontra
+ * o disjuntor pronto para deixar passar uma chamada de teste — é ela que fecha o disjuntor quando o Telegram
+ * volta.
  */
 @Component
 public class ReenvioDeAvisos {
@@ -101,6 +107,11 @@ public class ReenvioDeAvisos {
 
         try {
             telegram.enviar(texto);
+        } catch (CallNotPermittedException _) {
+            // Disjuntor aberto: nenhuma chamada saiu, então não conta como tentativa nem muda o ultimo_erro.
+            // A rodada para aqui; na próxima o disjuntor já deixa passar uma chamada de teste.
+            log.debug("Reenvio do aviso do alerta {} adiado: disjuntor aberto.", alertaId);
+            return false;
         } catch (RuntimeException e) {
             String erro = AvisoDeAlerta.descrever(e);
             pendente.registrarFalha(erro);

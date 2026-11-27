@@ -6,6 +6,429 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+## [2.0.0] - 2026-11-27
+
+Versão do code freeze da feira ProjetAÍ, com as entregas das Weeks 03 e 04: descarte e conformidade dos efluentes,
+custo da água, disjuntor e fila em segundo plano nos avisos, saúde e sinal de vida do sensor, relatório em Excel,
+SBOM, Quality Gate do SonarQube, acessibilidade no CI, runbook de recuperação, plano C do banco, roteiro e deck da
+demonstração.
+
+### Deck pronto para o telão
+
+- **Molduras novas** em `docs/guia/estande/molduras/`: janela de navegador azul-marinho para o Dashboard, o Alerta 3 e
+  o circuito do Wokwi, uma moldura vazada para o vídeo e um celular para o Telegram, em PNG 2x. As telas do site vêm
+  do sistema publicado, ampliadas e sem o menu lateral, com os mesmos números do Telegram (lotes 72, 73 e 74, +41,5%).
+  O script `gerar-molduras.mjs` refaz todas a partir das capturas em `fonte/`.
+- **Slide 9 com o caderno da economia** (`molduras/caderno-economia.png`, gerado por `gerar-caderno.mjs`): anotações
+  à mão e gráfico da economia acumulada estimada no piloto, de R$ 40 mil a R$ 240 mil em seis meses, com a água
+  poupada (2.760 m³ por mês, a R$ 14,50 o m³). Os textos e a fala do slide 9 passaram a explicar que o sistema custa
+  pouco, se paga, poupa água e é confiável.
+- **Prints e vídeo maiores** nos slides 5 a 8 e 10, com sombra leve e fundo creme, e o celular inteiro no slide 6.
+- **Falas alinhadas com as notas do Canva** e deck exportado de novo (12 JPGs, PDF e PPTX).
+- **Vídeo do sensor centralizado** (`demo-iot-sensor-loop.mp4`), sem as bordas da janela do navegador.
+- **Guia para editar o deck** em `docs/guia/estande/COMO-EDITAR-O-DECK.md`: onde fica cada arquivo, as regras para o
+  telão, como trocar uma print e o vídeo e o que atualizar no repositório depois.
+
+### Demonstração do sensor gravada
+
+- **Vídeo e prints da demonstração** em `docs/guia/estande/demonstracao/`: o lote do sensor no Wokwi até o LED
+  vermelho (19 s em loop para o slide, 38 s em velocidade 3x e a versão normal), o alerta da Estonagem aberto pelo 3º lote crítico seguido, a
+  lista de alertas e o Histórico com os lotes do sensor. O roteiro explica como gravar de novo sem a simulação
+  desacelerar.
+
+### Corrigido
+
+- **Sensor recusava a API publicada** com "certificado da API diferente do esperado": o Render renovou o certificado
+  em 19/11/2026, antes do vencimento previsto (20/12). A impressão digital do `iot/sketch.ino` passa a ser a do
+  certificado novo, válido até 17/02/2027, e os documentos dizem que o Render renova uns 30 dias antes do vencimento.
+
+### Falas da feira ProjetAÍ
+
+- **Apresentação de 7 a 8 minutos**, em 12 slides: Pedro fala do 1 ao 6, até a demonstração, e Matheus Andrade do 7
+  ao 12. O texto de cada slide fica em `docs/guia/falas-projetai.md`.
+- **Demonstração em vídeo**: o slide 6 passa o lote do sensor no Wokwi com o celular ao lado mostrando o aviso no
+  Telegram, gravado antes, e o slide 7 mostra o sistema por dentro. A demonstração ao vivo fica para as perguntas.
+
+### Documentação final da versão 2.0.0
+
+- **ERS v2.8**: RF39 (descarte de efluentes, com aviso de pH fora da CONAMA 430 e visão mensal V15), sinal de vida
+  do sensor no RF37, telas de Custo da água e de Descartes, tabelas `preco_m3` e `v_efluentes_mensal`, efluentes fora
+  do Apêndice B, prazo até o code freeze de 27/11/2026 e números de testes atuais.
+- **TAP v3.5**, **auditoria v1.3**, **ciclo de vida v1.2**, **segurança v1.5**, **arquitetura v1.4**, **testes v1.3**
+  e **guia v2.4**: versão 2.0.0, code freeze em 27/11, feira ProjetAÍ de 30/11 a 03/12, entregas do parecer
+  Week 04, plano C, novos achados da auditoria (A20 a A22) e a participação de cada integrante até 26/11.
+- **Testes atuais** (CI de 26/11/2026, merge do PR #239): 253 do back-end, 346 de unidade e 26 de ponta a ponta do
+  site, total de 625, com o Quality Gate aprovado.
+- **README, guia e auditoria** explicam por que ninguém registra lote de Estonagem no site antes da demonstração.
+
+### Roteiro do banco de dados (plano C)
+
+- **Teste guiado do usuário**: criar um usuário no site, ver a linha e a auditoria no pgAdmin, tentar o `DELETE`
+  (recusado pela chave estrangeira da auditoria) e desativar o usuário, conferindo o efeito no site.
+- **Todos os testes do banco num arquivo**: `database/demonstracao/testes-banco-plano-c.sql`, em 10 partes, para rodar
+  bloco a bloco no pgAdmin. Consultas, `INSERT`, `UPDATE`, `DELETE`, ativar e desativar usuário, e 28 recusas do banco
+  (`CHECK`, `UNIQUE`, `NOT NULL`, chaves estrangeiras, triggers e permissões). Os registros de teste são apagados no fim,
+  e o resto roda dentro de `BEGIN ... ROLLBACK`.
+- **Comandos de teste**: se o sistema está no ar, o estado do banco, as recusas que o banco deve dar e os testes
+  automáticos do projeto. O modelo passa a citar a tabela `preco_m3` (V16), com 10 tabelas.
+- **Versão em PDF**: `docs/guia/roteiro-banco-de-dados.pdf`, com o roteiro inteiro e o arquivo de testes em anexo.
+
+### Deck do estande da ProjetAÍ
+
+- **Apresentação de apoio para o estande** (issue #215): 9 slides com a identidade do site, sobre o problema da água no
+  polo do jeans, o custo (estimativas do TAP), a solução, a arquitetura, o sensor no Wokwi, o teste de carga com k6, a
+  qualidade e onde ver o sistema ao vivo. Em `docs/guia/estande-projetai.pdf` (para imprimir ou projetar) e
+  `docs/guia/estande-projetai.html` (abre no navegador e mostra, abaixo de cada slide, o cartão de apoio com o que
+  falar em cerca de 30 segundos).
+- **Deck refeito no Canva com a estrutura oficial da feira**: 11 slides (nome do projeto, equipe com a função de
+  cada um e o orientador, problema, oportunidade e público-alvo, solução, demonstração, diferenciais, viabilidade,
+  impactos, próximos passos e encerramento), letras grandes para o auditório, telas do sistema em moldura de navegador e
+  celular, o circuito do Wokwi e QR codes para o site publicado e o GitHub. As imagens ficam em `docs/guia/estande/`, e
+  o cartão de apoio de cada slide traz a fala e o tempo, somando 5 min 40 s.
+- **Roteiro de apresentação para 5 a 7 minutos**: a demonstração de 10 minutos virou 1 min 30 s dentro do deck, com o
+  lote crítico do sensor contando enquanto o Dashboard aparece; o resto fica para as perguntas da banca.
+
+### README para a banca
+
+- **Badges de situação no topo** (issue #217): CI, Qualidade (workflow), Quality Gate do SonarQube e Release (última
+  tag publicada, que passa sozinha para a `v2.0.0`), separados dos badges de tecnologia.
+- **"Rodar em 1 comando"** logo no início: `docker compose up --build` sobe banco, API e site sem configurar nada, e os
+  logins e senhas aparecem no próprio log.
+- **Status atualizado para a v2.0.0** (code freeze em 27/11/2026, feira ProjetAÍ), com as entregas da semana: descarte
+  de efluentes, custo da água, sinal de vida do sensor e migrações até a V16.
+
+### Sinal de vida do sensor no Wokwi
+
+- **O sensor passa a enviar telemetria** (issue #218): sem lote em andamento, `iot/sketch.ino` manda a vazão atual para
+  `POST /telemetria` a cada 15 s, logo depois de cada lote e, com a API respondendo, ao iniciar um lote. Antes, ele só
+  enviava lotes, e a saúde do sensor (`/api/actuator/health/sensor`, issue #158) ficava sempre DOWN em produção.
+- Durante o lote nada é enviado (o envio para o contador de pulsos), então um lote de menos de 1 minuto mantém o sensor
+  UP. Sem Wi-Fi (comando Q), a saúde cai para DOWN depois de 60 s e volta quando o sinal retorna.
+- O id do processo fica guardado depois da 1ª consulta, e os envios a cada 15 s não aparecem no monitor serial: só os
+  avisos `Sinal de vida OK` e `Sinal de vida NAO chegou`. `ENVIAR_TELEMETRIA = false` desliga.
+- Passo a passo para validar no Render em `iot/LEIA-ME.md` ("Sinal de vida: a saúde do sensor na API"); o roteiro da
+  demonstração manda esperar `Sinal de vida OK` antes do primeiro lote.
+
+### Plano C: banco de dados ao vivo
+
+- **Script da aula** em `database/demonstracao/aula-banco-de-dados.sql` (issue #227): 12 partes, um bloco de cada vez
+  no pgAdmin ou inteiro no psql. Mostra o catálogo (restrições, índices, triggers, funções e visões), consultas com JOIN,
+  HAVING, subconsulta, CTE e funções de janela (a regra do alerta em SQL), INSERT com o trigger do esperado, UPDATE e
+  DELETE permitidos e recusados (triggers e chave estrangeira), TRUNCATE com ROLLBACK, CHECK, NOT NULL, UNIQUE, FK e
+  PK, SAVEPOINT, sequências, permissões do `aguas_api` com `SET LOCAL ROLE`, EXPLAIN ANALYZE e as visões. Grava só
+  dentro de `BEGIN ... ROLLBACK`, mostra as recusas como NOTICE sem parar e confere no fim que todas as tabelas
+  terminaram com as mesmas linhas. O CI roda o script no plano C e confere as recusas e o banco igual.
+- **`docker-compose.banco.yml`** (issue #225), só para a disciplina de Banco de Dados, fora da apresentação do
+  ProjetAÍ: somado ao `docker-compose.yml`, abre o banco do Docker ao pgAdmin na porta 5433 (só neste computador), faz o
+  PostgreSQL registrar no log todo comando SQL, com a hora de Recife, o usuário do banco e os valores dos parâmetros, e
+  sobe o Adminer (5.5.1, sem root, só em `127.0.0.1:8081`) para quem não tem o pgAdmin.
+- **Roteiro** em `docs/guia/roteiro-banco-de-dados.md`: preparação com a conexão do pgAdmin, um lote de ponta a ponta
+  (do Wokwi ao log de SQL, ao site e à linha na tabela, no pgAdmin), o modelo (9 tabelas e 3 visões), cada ação do site
+  com o SQL que aparece no log e o recurso de banco que ela mostra (transações, trigger, índice único, travamento,
+  agregação, paginação por cursor), e os blocos para o Adminer (trigger de lote imutável, permissões do usuário
+  restrito com `SET ROLE`, `CHECK`, `EXPLAIN` com e sem índice, visão dos efluentes e histórico do Flyway).
+- **CI:** o job `docker-compose` sobe o plano C, registra um lote e confere o `INSERT` no log de SQL feito pelo
+  `aguas_api`, que a senha do administrador não aparece no log, que o banco atende na porta 5433 e que o Adminer
+  responde sem root.
+
+### Descarte de efluentes no Histórico
+
+- **Botão "Descartes" em cada lote do Histórico** (issue #202): abre uma janela com os descartes de efluentes do
+  lote (data, volume, pH, turbidez e % reaproveitado) e o formulário para registrar um novo. Os números seguem o padrão
+  brasileiro ("7,2"), com as mesmas faixas da API; o erro aparece junto ao campo, e o erro de campo da API (422)
+  volta para o campo certo. O pH fora da faixa de lançamento da CONAMA 430 (5 a 9) ganha o aviso em texto, não só em
+  cor. Estados de carregamento, de lista vazia e de erro com "tentar de novo".
+- **Testes:** `src/domain/__testes__/descarte.test.ts` (validação), `src/services/__testes__/descartes.test.ts` (API e
+  salvar, sem rede), `src/components/__testes__/descartes.test.ts` (janela renderizada em HTML) e
+  `e2e/efluentes.spec.ts`, que registra um descarte pelo Histórico, confere o erro do pH e roda o axe-core dentro da
+  janela. A API falsa dos testes de ponta a ponta ganhou as rotas dos descartes.
+
+### Visão mensal de conformidade dos efluentes
+
+- **Migração V15, visão `v_efluentes_mensal`** (issue #203): por mês, no fuso de Recife, e por processo do lote,
+  traz quantos descartes houve, o volume descartado, o pH médio, mínimo e máximo, a turbidez média, o volume
+  reaproveitado e o **índice de reúso** (volume reaproveitado ÷ volume descartado, com cada descarte pesando pelo seu
+  volume), além de quantos descartes ficaram **fora da faixa de pH de lançamento da CONAMA 430/2011** (5 a 9). O
+  `aguas_api` só lê (na migração e em `database/seguranca-usuario-api.sql`).
+- **Índice `ix_efluentes_descarte_mes`** na mesma expressão do mês: com 200.000 descartes, o filtro de um mês caiu de
+  58 ms (Seq Scan) para 15 ms (Index Scan). Medição em `docs/tecnico/desempenho-indices.md`; os totais da visão foram
+  conferidos com uma consulta direta na tabela.
+- **Massa de demonstração:** um descarte para cada lote de Tingimento e Alvejamento (34 no total), 5 deles com o pH
+  acima de 9.
+### Descarte de efluentes pela API
+
+- **`POST` e `GET /lotes/{id}/descartes`** (issue #201): registra e lista os descartes de efluentes de cada lote
+  (volume, pH, turbidez e percentual reaproveitado) na tabela `efluentes_descarte` (V12, #162), para a auditoria
+  ambiental da CPRH e da ISO 14001. Bean Validation com os mesmos limites das restrições da V12 (volume maior que 0,
+  pH de 0 a 14, turbidez de pelo menos 0, reaproveitado de 0 a 100, padrão 0); campo fora da faixa responde 422
+  `VALIDACAO`. A data é a do servidor. Entidade `DescarteEfluente` imutável, sem PUT nem DELETE.
+- **Acesso:** a mesma regra de `GET /lotes/{id}`. O operador só alcança os próprios lotes (os outros respondem 404,
+  sem revelar que existem); gestor e administrador alcançam todos; o sensor recebe 403.
+- **Testes:** `DescarteControllerTest` (`@WebMvcTest`: 201, 422 em cada regra sem chamar o serviço, 404, 403 e 401),
+  `DescarteServiceTest` (acesso por perfil e reaproveitamento padrão) e, na integração com PostgreSQL,
+  `descarteDeEfluentesFicaGravadoNoLoteESoQuemAlcancaOLoteRegistra`.
+
+Tudo o que está aqui entra na **versão 1.2.0, a última**, que sai na segunda-feira, 23/11/2026, com a demonstração
+incluída (roteiro e massa de dados, issue #115).
+
+### Demonstração (roteiro e massa de dados)
+
+- **Massa de dados** (`database/demonstracao/massa-demonstracao.sql`, issue #115): 64 lotes dos 4 processos nos
+  últimos 20 dias, de 3 operadores fictícios (que não entram no sistema), e 2 alertas já tratados (Tingimento
+  resolvido e Alvejamento em análise). A Estonagem termina com 2 lotes acima da meta, para o lote crítico do sensor
+  abrir o alerta ao vivo, com o aviso no Telegram. Os dados respeitam a regra de alertas (nenhuma
+  sequência de 3 lotes acima da meta fica sem alerta) e o esperado vem do trigger do banco. As datas contam a partir
+  do dia em que o script roda, e os valores são fixos. Só roda num banco sem lotes; se houver algum, para sem mudar
+  nada. Funciona no Docker (`psql`) e no SQL Editor do Neon.
+- **Roteiro cronometrado** em `docs/guia/roteiro-apresentacao.md`: 10 minutos, do problema ao relatório,
+  com o sensor no Wokwi como destaque (lote crítico com LED e buzzer e buffer sem Wi-Fi; a meta da Estonagem fica
+  na escala da bancada, 15 L por lote),
+  com o que mostrar em cada parte, de quem é cada entrega e quem fala, como preparar a área de demonstração e uma
+  tabela para anotar o ensaio.
+- **Limpeza do histórico corrigida:** o comando do roteiro (`TRUNCATE alerta_lote, alerta, lote`) falhava desde a
+  V10 e a V12, porque `aviso_pendente` e `efluentes_descarte` apontam para `alerta` e `lote`. Agora limpa as seis
+  tabelas juntas, inclusive a `telemetria`.
+
+### Documentação da versão 1.2.0
+
+- **ERS v2.6:** RF36 (planilha Excel, #159), RF37 (telemetria validada e gravada, #156 e #157) e RNF29 (carregamento
+  sem saltos, #161) criados; RF28 (Background Sync), RF30 (disjuntor), RNF13 (axe-core), RNF15 (números de testes),
+  RNF17 (turno com 120 sensores), RNF19 (limite por conta), RNF20 (saúde do sensor), RNF21 (runbook), RNF22
+  (autovacuum), RNF24 (Quality Gate e SBOM) e RNF28 (contêineres sem root) atualizados; tabelas `aviso_pendente`,
+  `telemetria` e `efluentes_descarte` na seção 3.5; 24 endpoints; migrações V1 a V14; data final 23/11/2026. A linha
+  do RNF28, que estava na tabela de necessidades, foi para a seção 3.7.3.
+- **Testes v1.2:** 531 testes automáticos em 20/11/2026 (180 de unidade e web e 41 de integração na API; 286 de
+  unidade e 24 de ponta a ponta no site), níveis novos (acessibilidade, análise estática, SBOM e continuidade) e casos
+  das entregas novas.
+- **TAP v3.4, auditoria v1.2, arquitetura v1.3, segurança v1.4, ciclo de vida v1.1 e guia v2.3:** entregas do parecer
+  Week 03, achados A14 a A19 da auditoria, participação de cada integrante até 20/11, riscos R15 a R17, runbook no
+  plano de continuidade e planilha e envio em segundo plano no guia. PDFs gerados de novo.
+- **Códigos de requisito corrigidos:** as issues do parecer Week 03 citavam RF18, RNF03 e RNF04, que na ERS são outros
+  requisitos; o CHANGELOG, a documentação da API e o teste de carga passaram a citar RF36, RF37, RNF17 e RNF20.
+- **Quality Gate:** o projeto usa o gate padrão do servidor (Sonar way), e não o `SENAC-PI-Quality-Gate`, como diziam
+  o CHANGELOG, o `sonar-project.properties` e o workflow.
+
+### Disjuntor nos avisos do Telegram
+
+- **Circuit breaker do Resilience4j** (`resilience4j-circuitbreaker` 2.3.0) nas chamadas à Bot API: o `Telegram`
+  passou a executar o POST dentro de um disjuntor. Ele olha as últimas 10 chamadas e, a partir de 5 nessa conta,
+  abre se 50% ou mais tiverem falhado. É porcentagem na janela, não falhas seguidas: 5 em 10 abrem, 3 em 10 não.
+- **Aberto, a chamada volta na hora:** antes, com o Telegram fora do ar, cada aviso gastava até 15 s de espera de
+  rede (5 s para conectar + 10 s de resposta) e repetia isso 3 vezes, entupindo a fila de avisos. Agora a chamada é
+  recusada localmente com `CallNotPermittedException`, sem abrir conexão, e o `AvisoDeAlerta` manda o aviso direto
+  para a fila local (`aviso_pendente`), sem repetir e sem as pausas de 1 s e 2 s. Em `ultimo_erro` fica
+  `DisjuntorAberto`.
+- **Volta sozinho:** depois de 1 minuto aberto, uma única chamada testa se o Telegram voltou. Como o reenvio dos
+  pendentes roda a cada 5 minutos, é ele que faz esse teste. Com o disjuntor aberto a rodada de reenvio para sem
+  contar tentativa, já que nenhuma chamada chegou a sair.
+- **Respostas 4xx não abrem o disjuntor** (fora 408 e 429): `401` (token errado) e `400` (grupo errado) são recusa da
+  nossa requisição, e abrir o disjuntor esconderia o status HTTP que diz o que corrigir.
+- **Configuração** em `app.telegram.disjuntor` (`janela`, `minimo-chamadas`, `limite-falhas`, `espera-aberto`).
+  O estado sai no log a cada mudança e nas métricas `resilience4j.circuitbreaker.*` de `/api/actuator/metrics`
+  (`resilience4j-micrometer`).
+- **Testes** (`DisjuntorDoTelegramTest`, 12 testes): um Telegram de mentira num `HttpServer` local conta as
+  requisições que chegam de verdade, mostrando que o disjuntor aberto não toca na rede e que a chamada recusada volta
+  em menos de 1 s mesmo com o servidor demorando 2 s para responder. Mais um teste em `AvisoDeAlertaTest` (vai direto
+  para os pendentes, sem pausa) e outro em `ReenvioDeAvisosTest` (a rodada para sem contar tentativa).
+- **Isolamento nos testes de integração:** o disjuntor é um bean único, então `IntegracaoPostgresBase` zera o
+  estado dele antes de cada teste (`CircuitBreaker.reset()`). Sem isso, as falhas que um teste provoca de propósito
+  entravam na janela do seguinte e mudavam quantas tentativas aconteciam.
+- Documentação em `docs/tecnico/telegram.md` (seção "Disjuntor" e três linhas novas na tabela de log).
+
+### Saúde do sensor Wokwi no Actuator
+
+- **`GET /actuator/health/sensor`** (issue #158, RNF20): o `SensorWokwiHealthIndicator` (componente `sensorWokwi`)
+  consulta a última telemetria gravada. `UP` se ela chegou há menos de 60 s, com a hora da leitura; `DOWN` (503) se
+  passou disso ou se nunca houve leitura, com os segundos decorridos. Os detalhes listam cada linha de lavagem ativa
+  (processo com leitura nas últimas 24 h) com a sua última leitura e o seu status. Para admin, gestor e operador; o
+  limite muda com `SENSOR_LIMITE_SEM_LEITURA` (padrão `60s`). Erro no banco deixa o sensor `DOWN`, sem quebrar o endpoint.
+- **A raiz `/actuator/health` não depende do sensor:** o `SaudeDoSensorForaDaRaiz` tira o `sensorWokwi` do grupo
+  principal. O Render e o healthcheck do Docker reiniciam a API quando a raiz dá 503, e um sensor parado não pode
+  causar isso.
+- **Testes:** `SensorWokwiHealthIndicatorTest` (relógio fixo: 10 s, 59 s, exatamente 60 s, 185 s, sem leitura, linhas
+  com status diferentes, janela de 24 h, banco fora do ar, limite configurável), `SaudeDoSensorForaDaRaizTest` e, na
+  integração com PostgreSQL, `saudeDoSensorWokwiPelaUltimaTelemetriaSemAfetarARaiz` (401, 403, UP com a hora gravada e
+  a raiz sem o componente).
+
+### Telemetria gravada e testes da camada web
+
+- **`POST /telemetria` grava a leitura e responde `201`** (issue #157). Nova tabela `telemetria` (migração V14:
+  processo, usuário, vazão e hora do servidor; só recebe INSERT, com índices pela data e por processo e autovacuum
+  mais frequente), entidade imutável `Telemetria` e `TelemetriaService`. A leitura fica no nome de quem enviou (o
+  sensor, pelo token); processo inexistente → `422` no campo `processoId`, como em `POST /lotes`. O `aguas_api` só lê
+  e insere (`database/seguranca-usuario-api.sql`).
+- **Testes:** `TelemetriaControllerTest` virou slice `@WebMvcTest` com o `TelemetriaService` simulado (`@MockitoBean`)
+  e sem banco: 201 (token de API do sensor e JWT), 400 (cada regra de validação; o serviço nunca é chamado) e 401
+  (sem cabeçalho, token de sensor desconhecido, conta desativada, JWT inválido). Na integração com PostgreSQL,
+  `sensorRegistraTelemetriaQueFicaGravadaNoNomeDeleENaoPodeSerAlterada` confere a linha gravada e as restrições da V14.
+
+### Validação da telemetria do sensor
+
+- **`POST /telemetria` recusa leitura inválida com 400** (issue #156, RF37). O `TelemetriaRequestDTO` usa Bean
+  Validation: `processoId` obrigatório e maior que zero; `vazaoLitros` obrigatória, sem valor negativo, até 10000 e com
+  no máximo 2 casas decimais. O `@Valid` no controller barra a leitura antes da regra de negócio, e o
+  `TelemetriaExceptionHandler` devolve `400 TELEMETRIA_INVALIDA` com a mensagem em português de cada campo em `campos`.
+  As outras rotas continuam com o `422 VALIDACAO` de sempre. O perfil `sensor` pode chamar a rota.
+- **Testes:** `TelemetriaControllerTest` (vazão nula, ausente, negativa, acima do máximo, processo inválido e leitura válida).
+
+### Limpeza apontada pelo SonarQube (back-end)
+
+- **6 code smells críticos e bloqueantes:** o BOM do CSV virou `\uFEFF` escrito por extenso (S2479); os métodos que tinham
+  o mesmo nome de uma constante passaram a `CsvDeLotes.linhaDeCabecalho()` e `OpenApiConfig.respostaDeErro()` (S1845);
+  os perfis repetidos no `SecurityConfig` e a mensagem "Usuário não encontrado." no `UsuarioService` viraram
+  constantes (S1192). Sem mudança de comportamento: o CSV, a documentação da API e as permissões continuam iguais.
+
+### Envio da fila offline em segundo plano (Background Sync)
+
+- **O service worker envia os lotes guardados sozinho** quando a conexão volta, mesmo com a aba fechada ou em
+  segundo plano (issue #160, RNF12). Quando sobra lote sem conexão, o site registra a tag `sync-lotes` na Background
+  Sync API; no evento `sync`, o service worker lê a fila do IndexedDB e envia pela mesma regra da página: na ordem do
+  registro, com a mesma `Idempotency-Key` (não duplica) e com a mesma trava entre abas. Sem conexão de novo, o
+  navegador repete o `sync` mais tarde.
+- **Selo "Sincronizado"** no cabeçalho por 5 segundos quando a fila chega ao servidor, pela página ou pelo service
+  worker. As abas abertas recebem o aviso do service worker por BroadcastChannel e mostram os lotes enviados.
+- **Token só enquanto houver lote esperando.** O service worker não lê o `sessionStorage`, então o token vai para o
+  IndexedDB (banco `aguas-offline` versão 2, store `credencial`) só nos navegadores com Background Sync (Chrome, Edge
+  e Android). Ele sai quando a fila esvazia, ao sair, no 401 e quando o token expira. No Firefox e no Safari nada
+  muda: a página continua enviando a fila quando está aberta.
+- **Service worker próprio** (`src/sw.ts`, estratégia `injectManifest` do vite-plugin-pwa), com o mesmo cache de
+  antes: casca do site para abrir sem conexão, API sempre pela rede.
+- **Testes:** `src/services/__testes__/envioSegundoPlano.test.ts` (envio pelo service worker, token, avisos),
+  `src/services/__testes__/sw.test.ts`, `src/components/__testes__/seloSincronizado.test.ts` e
+  `e2e/backgroundSync.spec.ts`, que fecha a aba, devolve a rede e dispara o `sync` pelo DevTools Protocol.
+
+### Correções apontadas pelo SonarQube
+
+- **Os 2 bugs da primeira análise:** em `AvisoDeAlerta`, a pausa entre as tentativas do Telegram calcula o expoente já
+  em `double` (regra S2184); em `Limitador`, o último uso de cada chave passou de `long[]` para `AtomicLong`, o que
+  tira o array do `record` (regra S6218) e deixa a atualização segura com várias requisições ao mesmo tempo. Testes do
+  limite, do aviso e do reenvio passando.
+
+### Relatório em planilha Excel (.xlsx)
+
+- **Botão "Exportar para Excel (.xlsx)"** na tela de Relatórios (issue #159, RF36), ao lado do PDF. Baixa
+  `aguas-do-capibaribe-relatorio-AAAA-MM.xlsx` do período escolhido, gerado no navegador com o ExcelJS 4.4.0, que só
+  é carregado no primeiro clique (pedaço separado do site, 260 KB comprimido).
+- **Aba "Lotes"**: um lote por linha, em ordem cronológica (código, data e hora de Recife, processo, peças, meta,
+  consumo real, diferença, desvio, status e água por peça), com a linha de total. **Aba "Resumo por processo"**: os
+  totais de cada tipo de processo. As duas têm o cabeçalho da empresa (lavanderia, período, emissão e responsável),
+  filtro e cabeçalho congelado.
+- **Fórmulas de verdade** na planilha: soma do volume, das peças e das metas, diferença, desvio e pegada hídrica
+  (litros por peça), com o resultado já guardado para quem abre sem recalcular.
+- **Desvio colorido pelas faixas de status** do sistema (formatação condicional): verde até 0%, âmbar até 8% e
+  vermelho acima. O status de cada lote usa as cores do site.
+- **Dependências:** a `xlsx` (SheetJS) do npm foi descartada por ter vulnerabilidades altas sem correção, que o job
+  `dependencias` bloqueia. O `uuid` usado pelo ExcelJS foi forçado para a 11.1.1 (override do pnpm), que corrige o
+  GHSA-w5hq-g745-h8pq; o `pnpm audit` fica sem nenhum aviso.
+- **Testes:** `src/services/__testes__/exportToExcel.test.ts` gera o arquivo e lê de volta célula por célula;
+  `src/screens/__testes__/relatorios.test.ts` confere quando o botão fica habilitado; `e2e/planilha.spec.ts` clica
+  no botão, baixa e abre o .xlsx.
+
+### Repositório público
+
+- **O repositório passou a ser público em 17/11/2026.** Privado, o plano grátis do GitHub dá 2.000 minutos por mês ao
+  GitHub Actions, e eles acabaram com o CI ampliado (SBOM, Sonar, mutação e carga): todo job falhava em 2 segundos
+  com aviso de cobrança, inclusive nos merges da `develop`. Público, os minutos são ilimitados. Antes da abertura, o
+  histórico inteiro foi varrido atrás de tokens, chaves e senhas (só havia textos de exemplo); os segredos continuam
+  só no GitHub, no Render e no Docker. Registrado no risco R01 de `docs/gestao/seguranca.md` (v1.3) e no TAP (v3.3).
+
+### Carregamento sem saltos (skeleton screens)
+
+- **Esqueletos no formato do conteúdo** (issue #161): `SkeletonCard` (indicadores) e `SkeletonChart` (colunas de
+  água Meta x real, barras Real x esperado e linhas por dia) repetem a tipografia, os espaçamentos e a altura do
+  componente real. O rótulo de cada indicador já aparece de verdade e os textos de legenda e rodapé ficam
+  transparentes sobre o esqueleto, então quebram linha igual ao conteúdo carregado. A lista de alertas ativos do
+  dashboard também ganhou esqueleto no formato de cada item.
+- **Relatórios:** a seção de gráficos aparecia só depois dos dados e empurrava a tabela para baixo (CLS de 0,29
+  no celular com 3G simulado). Agora ela ocupa o seu lugar desde o carregamento, com os esqueletos.
+- **Teste de ponta a ponta** (`e2e/carregamento.spec.ts`): com rede 3G simulada e a API atrasada, confere os
+  esqueletos no dashboard e nos relatórios e exige CLS < 0,1, no computador e no celular. Antes → depois:
+  dashboard 0,065 → 0,026 (computador) e 0,075 → 0,004 (celular); relatórios 0,132 → 0,003 (computador) e
+  0,288 → 0 (celular).
+- **Testes de unidade** (`src/components/__testes__/esqueletos.test.ts` e `src/screens/__testes__/carregamento.test.ts`,
+  26 testes): renderizam os esqueletos e as telas em HTML com o `react-dom/server`, sem dependência nova, e conferem
+  o que o leitor de tela anuncia, os textos fantasmas e a troca pelos dados. Cobrem 96,6% das linhas e todas as
+  condições do código novo, acima dos 80% do Quality Gate.
+- Com movimento reduzido, os esqueletos ficam parados, como os outros efeitos do site.
+
+### Qualidade (Quality Gate com SonarQube)
+
+- **Cobertura de testes medida** (issue #168): JaCoCo 0.8.16 no `mvn test` (`backend/target/site/jacoco`) e
+  `pnpm test:cobertura` no site (`coverage/lcov.info`, `@vitest/coverage-v8`). Em 17/11/2026: API com 93,7% das
+  linhas e 80,3% das decisões cobertas; site com 13,8% nos testes de unidade (as telas são cobertas pelos testes de
+  ponta a ponta, que não entram nessa conta).
+- **Workflow "Qualidade"** com o SonarQube da disciplina (`https://sonar.fchicout.dev`, `sonar-project.properties`):
+  analisa a API e o site com a cobertura e espera o Quality Gate padrão do servidor (Sonar way); se ele reprovar, o PR fica
+  bloqueado. No código novo: nenhum problema novo, cobertura de pelo menos 80% e duplicação de no máximo 3%. Precisa do segredo `SONAR_TOKEN`; sem ele, o job
+  só avisa.
+
+### Acessibilidade (axe-core no CI)
+
+- **Auditoria automática WCAG 2.1 A e AA** (issue #172, `e2e/acessibilidade.spec.ts`, `@axe-core/playwright` 4.14.0).
+  Roda nos testes de ponta a ponta, nos temas claro e escuro, nas telas de acesso, aviso de privacidade, registro de
+  lote, resultado com o gauge, histórico, dashboard e relatórios. Violação séria ou crítica falha o job
+  `frontend-build`; o relatório de cada tela fica no artefato `acessibilidade`. A API falsa dos testes ganhou o
+  perfil de gestor, com resumo, alertas e usuários.
+- **Correção achada na primeira execução:** o link do logo no cabeçalho tinha um nome para leitor de tela diferente
+  do texto visível (WCAG 2.5.3, `label-content-name-mismatch`). Agora o nome começa pelo texto que aparece na tela.
+- O teste espera as animações de entrada terminarem antes de medir, para o contraste ser o das cores finais.
+
+### Continuidade (runbook de recuperação de desastres)
+
+- **Runbook** em `docs/tecnico/runbook-disaster-recovery.md` (issue #170): árvore de decisão, matriz de escalonamento
+  e procedimentos para API ou site fora no Render, banco do Neon apagado ou com dados errados (restauração por ponto
+  no tempo ou pelo último backup), plano B no Docker e troca de cada senha e token vazado. Metas RTO < 10 min e
+  RPO < 1 min, com a situação de cada uma por ambiente.
+- **Ensaio no Docker em 17/11/2026:** backup, banco apagado, restauração e sistema de pé em **23 segundos**, com os
+  20 lotes de volta.
+- **`database/seguranca-usuario-api.sql` pode rodar de novo:** se o `aguas_api` já existir (banco novo do Docker
+  depois de um restore), ele só confirma as restrições e a senha, em vez de falhar no `CREATE ROLE`.
+
+### Segurança da cadeia de suprimentos (SBOM)
+
+- **SBOM CycloneDX 1.6 da API e do site** (issue #169). O `cyclonedx-maven-plugin` 2.9.3 gera `backend/target/bom.json`
+  e `bom.xml` no `mvn package`, só com as dependências que vão para a imagem: 99 componentes, todos com hash e
+  licença. O workflow novo "SBOM" gera também o do site (`cdxgen`, só dependências de produção), confere os dois,
+  mostra o resumo no CI, guarda como artefato por 90 dias e, quando uma release é publicada, anexa `bom-api.json`,
+  `bom-api.xml` e `bom-site.json` a ela. Só o job da release tem permissão de escrita.
+
+### Docker com privilégios mínimos
+
+- **Contêineres sem root** (issue #171). O site passa para `nginxinc/nginx-unprivileged:1.30-alpine` (uid 101, porta
+  8080 dentro do contêiner; continua em `localhost:3000`), e o banco roda direto como `postgres` (uid 70), sem passar
+  pelo root. A API já rodava como `nonroot`.
+- **Privilégios mínimos em todos os serviços:** `cap_drop: [ALL]`, `no-new-privileges` e sistema de arquivos só de
+  leitura, com `tmpfs` só onde precisa escrever. O serviço `segredos`, que cria os arquivos nos volumes novos, é o
+  único que roda como root, sem nenhuma capability, e termina em seguida.
+- **CI:** o job `docker-compose` confere, pelo host, que nenhum processo do banco, da API e do site roda como root e
+  que as três opções estão ativas, com uma tabela no resumo. Testado localmente: subida, login, cabeçalhos do site e
+  nova subida com os mesmos volumes.
+
+### Documentação (validação e auditoria)
+
+- **ERS v2.5:** RNF25 passa a parcial. A validação foi feita por avaliação simulada (PR #140) e com pessoas de fora da
+  equipe, sem dificuldades relevantes; o teste com operador real de lavanderia fica como limitação (issue #50
+  encerrada). Testes e README com a mesma situação.
+- **Auditoria v1.1:** equipe em ordem alfabética, achado A13 (revisão de segurança, PR #153) e cronograma novo:
+  17 a 19/11 últimas entregas, issues novas e feedbacks do professor; 20 e 21/11 revisão final e correções; 22/11
+  congelar, limpeza do banco e ensaio; 23/11 prazo final, com o formato a confirmar com o professor. PDFs gerados de novo.
+
+### Segurança (revisão de 14/11/2026)
+
+- **Cabeçalhos de segurança no site do Docker** (`docker/cabecalhos-seguranca.conf`): Content-Security-Policy (só
+  scripts do próprio site; estilos e fontes também do Google Fonts), `frame-ancestors 'none'` e `X-Frame-Options:
+  DENY` contra clickjacking, `Referrer-Policy`, `Permissions-Policy` e `nosniff`, também no `sw.js` e no manifesto.
+  O Nginx não mostra mais a versão. O job `docker-compose` do CI confere os cabeçalhos. No Render, os mesmos
+  cabeçalhos vão nas configurações do site estático. Testado no Chrome com o site gerado: nenhuma violação, fontes e
+  service worker carregando.
+- **Limite de login por conta** (`LIMITE_LOGIN_POR_CONTA_POR_MINUTO`, padrão 10): soma as tentativas de cada conta
+  vindas de qualquer IP, contra a tentativa de senhas espalhada por muitos IPs. Responde o mesmo 429 com
+  `Retry-After`, então o contador do site continua funcionando.
+- **Limitador sem zerar a memória:** com 10.000 chaves em uso no mesmo minuto, as novas dividem um balde só, em vez de
+  apagar todos os limites. Antes, muitos IPs diferentes zeravam o limite de todo mundo, inclusive o de quem já estava
+  bloqueado.
+- **Testes:** `mesmaContaTentadaDeMuitosIpsRecebe429` e `memoriaCheiaNaoZeraOLimiteDeQuemJaEstaBloqueado`.
+
 ## [1.1.0] - 2026-11-14
 
 Versão com as entregas dos pareceres das Weeks 01 e 02: perfis e auditoria, modo offline, avisos no Telegram com
@@ -381,6 +804,7 @@ Primeira versão preliminar: baseline das semanas 1 a 3 do cronograma do TAP.
 
 - README, guia em PDF, Termo de Abertura v2.1 e Especificação de Requisitos de Software (IEEE 830).
 
+[2.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v2.0.0
 [1.1.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.1.0
 [1.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.0.0
 [0.1.0-alpha]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v0.1.0-alpha

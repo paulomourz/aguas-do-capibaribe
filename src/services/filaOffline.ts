@@ -9,6 +9,9 @@ import type { Id, LoteDTO, ProcessoDTO, UsuarioDTO } from './tipos'
  *   o lote continua guardado e é reenviado com a MESMA chave (Idempotency-Key), então a API não duplica.
  * - cache: última sessão, processos e lotes vistos, para o operador abrir o site e registrar mesmo se a
  *   página for recarregada sem conexão.
+ * - credencial: o token da sessão, para o service worker enviar a fila sozinho (Background Sync) com a aba
+ *   fechada. Só existe enquanto houver lote pendente: sai quando a fila esvazia, no logout, no 401 e quando o
+ *   token expira (src/services/envioSegundoPlano.ts).
  *
  * Fica no aparelho até ser enviado: sobrevive a fechar o navegador, mas não a "limpar dados do site".
  */
@@ -35,6 +38,9 @@ export type LotePendente = {
   ultimoErro?: string
 }
 
+/** Token guardado para o envio em segundo plano. `expiraEm` em milissegundos desde 1970 (o `exp` do JWT). */
+export type Credencial = { token: string; usuarioId: Id; expiraEm: number }
+
 /** Sessão salva sem o token: só um hash dele, para conferir que é a mesma sessão do sessionStorage. */
 export type SessaoSalva = { hashToken: string; usuario: UsuarioDTO }
 
@@ -47,17 +53,22 @@ type Cache = {
 interface Esquema extends DBSchema {
   lotesPendentes: { key: string; value: LotePendente; indexes: { porUsuario: number } }
   cache: { key: string; value: unknown }
+  credencial: { key: string; value: Credencial }
 }
 
 const NOME_BANCO = 'aguas-offline'
 let conexao: Promise<IDBPDatabase<Esquema>> | null = null
 
 function banco() {
-  conexao ??= openDB<Esquema>(NOME_BANCO, 1, {
-    upgrade(db) {
-      const lotes = db.createObjectStore('lotesPendentes', { keyPath: 'chave' })
-      lotes.createIndex('porUsuario', 'usuarioId')
-      db.createObjectStore('cache')
+  conexao ??= openDB<Esquema>(NOME_BANCO, 2, {
+    upgrade(db, versaoAntiga) {
+      if (versaoAntiga < 1) {
+        const lotes = db.createObjectStore('lotesPendentes', { keyPath: 'chave' })
+        lotes.createIndex('porUsuario', 'usuarioId')
+        db.createObjectStore('cache')
+      }
+      // Versão 2 (issue #160): token para o service worker enviar a fila com a aba fechada.
+      if (versaoAntiga < 2) db.createObjectStore('credencial')
     },
     // Outra aba abriu uma versão nova do banco: fecha esta conexão para não bloquear a atualização.
     blocking() {
@@ -132,6 +143,32 @@ export async function salvarCache<K extends keyof Cache>(chave: K, valor: Cache[
 
 export async function limparCache(): Promise<void> {
   await (await banco()).clear('cache')
+}
+
+/* ---------- Credencial do envio em segundo plano ---------- */
+
+const CHAVE_CREDENCIAL = 'atual'
+
+export async function guardarCredencial(c: Credencial): Promise<void> {
+  await (await banco()).put('credencial', c, CHAVE_CREDENCIAL)
+}
+
+export async function lerCredencial(): Promise<Credencial | undefined> {
+  return (await banco()).get('credencial', CHAVE_CREDENCIAL)
+}
+
+export async function apagarCredencial(): Promise<void> {
+  await (await banco()).delete('credencial', CHAVE_CREDENCIAL)
+}
+
+/** Apaga o token sem nunca falhar: chamado ao sair, no 401 e quando a fila esvazia. */
+export async function esquecerCredencial(): Promise<void> {
+  if (!temArmazenamentoLocal()) return
+  try {
+    await apagarCredencial()
+  } catch {
+    /* sem IndexedDB utilizável: não havia token guardado */
+  }
 }
 
 /** SHA-256 do token em hexadecimal. Sem crypto.subtle (HTTP fora de localhost), não há sessão offline. */

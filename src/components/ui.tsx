@@ -6,6 +6,7 @@ import {
   useState,
   type ButtonHTMLAttributes,
   type ComponentProps,
+  type CSSProperties,
   type ReactNode,
 } from 'react'
 import {
@@ -685,8 +686,32 @@ export function Tabs<T extends string>({
    Estados
    ========================================================= */
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden="true" className={cx('skeleton rounded-md', className)} />
+export function Skeleton({ className, style }: Readonly<{ className?: string; style?: CSSProperties }>) {
+  return <div aria-hidden="true" className={cx('skeleton rounded-md', className)} style={style} />
+}
+
+/**
+ * Texto invisível sobre o fundo do esqueleto: ocupa exatamente o espaço (e as quebras de linha) que um texto
+ * parecido vai ocupar quando os dados chegarem. Usado nos esqueletos para não deslocar a tela (issue #161).
+ */
+export function TextoFantasma({ children, className }: Readonly<{ children: ReactNode; className?: string }>) {
+  return <span className={cx('skeleton rounded text-transparent', className)}>{children}</span>
+}
+
+/** Esqueleto de um selo pequeno (StatusBadge ou AlertBadge com size="sm"), com o mesmo tamanho. */
+export function SeloFantasma({ children, forma = 'pilula' }: Readonly<{ children: ReactNode; forma?: 'pilula' | 'etiqueta' }>) {
+  return (
+    <span
+      className={cx(
+        'skeleton inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-semibold text-transparent',
+        forma === 'pilula' ? 'rounded-full' : 'rounded-md',
+        badgeSize.sm,
+      )}
+    >
+      <span className="inline-block h-4 w-4" />
+      {children}
+    </span>
+  )
 }
 
 export function LoadingBlock({ rows = 4, label = 'Carregando dados…' }: { rows?: number; label?: string }) {

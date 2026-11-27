@@ -1,7 +1,7 @@
 # API REST: endpoints
 
 > **Documentação interativa:** com a API no ar, abra `http://<host>:8080/api/swagger-ui.html` (Swagger UI).
-> Lá estão as 21 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
+> Lá estão as 23 rotas com exemplos, e dá para testá-las: faça o login em `POST /auth/login`, copie o
 > `token`, clique em **Authorize** e cole. A especificação OpenAPI em JSON fica em `/api/v3/api-docs`.
 
 Base: `https://aguas-api-a0vq.onrender.com/api` no sistema publicado e `http://localhost:8080/api` no computador. Corpo e respostas em JSON. Datas em ISO 8601 UTC (ex.:
@@ -11,7 +11,7 @@ Autenticação: `Authorization: Bearer <token>`, com o token obtido em `POST /au
 8 horas e não é renovado automaticamente.
 
 **Perfis:** `admin` (tudo, mais usuários e auditoria), `gestor` (operação; só lê a lista de usuários), `operador`
-(registra lotes e vê os próprios) e `sensor` (só `GET /processos` e `POST /lotes`). Na tabela, "gestor" quer dizer
+(registra lotes e vê os próprios) e `sensor` (só `GET /processos`, `POST /lotes` e `POST /telemetria`; não alcança os descartes de efluentes). Na tabela, "gestor" quer dizer
 gestor ou admin.
 
 ## Erros
@@ -25,6 +25,7 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | HTTP | `codigo` | Quando |
 |---|---|---|
 | 400 | `REQUISICAO_INVALIDA` | JSON malformado ou tipo de parâmetro inválido |
+| 400 | `TELEMETRIA_INVALIDA` | leitura de `POST /telemetria` com campo nulo, negativo ou fora da faixa (detalhes em `campos`) |
 | 401 | `CREDENCIAIS_INVALIDAS` | login com usuário ou senha errados, ou usuário desativado |
 | 401 | `NAO_AUTENTICADO` | sem token, token inválido ou expirado, ou usuário desativado depois do login |
 | 403 | `ACESSO_NEGADO` | perfil sem permissão, ou tentativa de alterar a conta de outra pessoa |
@@ -54,13 +55,19 @@ Todos os erros seguem o formato que o front já trata (`ErroApiDTO` em `src/serv
 | `GET /lotes?processoId=&usuarioId=&inicio=&fim=` | gestor vê todos; operador, os próprios | filtros opcionais, combináveis (`inicio`/`fim` em ISO 8601 com fuso); `usuarioId` (quem registrou) vale para gestor e administrador, e para o operador é ignorado: ele continua vendo só os próprios (issue #107) | `LoteDTO[]`, do mais recente ao mais antigo |
 | `GET /lotes/{id}` | mesma regra | — | `LoteDTO` |
 | `POST /lotes` | autenticado, inclusive o sensor | `{processoId, pecas, litros}` (o usuário vem do token); cabeçalho opcional `Idempotency-Key: <UUID>` | `201 LoteDTO`; reenvio da mesma chave → `200` com o lote já gravado; mesma chave com outros dados ou de outro usuário → `409 CHAVE_DE_ENVIO_REPETIDA` |
+| `GET /lotes/{id}/descartes` | gestor vê todos; operador, os dos próprios lotes | — | `DescarteDTO[]`, do mais recente ao mais antigo; lote inexistente ou de outra pessoa (para o operador) → `404` (issue #201) |
+| `POST /lotes/{id}/descartes` | mesma regra | `{volumeLitros, ph, turbidezNtu, reutilizadoPercentual?}` (volume > 0; pH de 0 a 14; turbidez ≥ 0; reaproveitado de 0 a 100, padrão 0) | `201 DescarteDTO`; a data é a do servidor; o descarte não pode ser alterado nem excluído; campo fora da faixa → `422 VALIDACAO`; lote que a pessoa não alcança → `404` (issue #201) |
+| `POST /telemetria` | autenticado, inclusive o sensor | `{processoId, vazaoLitros}` (`processoId` ≥ 1; `vazaoLitros` de 0 a 10000, até 2 casas decimais) | `201 {id, processoId, vazaoLitros, data}`, a leitura gravada no nome de quem enviou (`data` é a hora do servidor); processo inexistente → `422` no campo `processoId`; campo nulo, negativo ou fora da faixa → `400 TELEMETRIA_INVALIDA` com o problema de cada campo em `campos` (issues #156 e #157, RF37) |
 | `GET /alertas?status=` | gestor | `status` opcional: `aberto`, `analise` ou `resolvido` | `AlertaDTO[]` |
 | `PATCH /alertas/{id}/status` | gestor | `{status}` | `AlertaDTO` |
 | `GET /relatorios/resumo?mes=&ano=` | gestor | `mes` de 1 a 12; `ano` de 2000 a 2100 | `ResumoDTO[]` (só processos com lotes no mês) |
 | `GET /relatorios/csv?inicio=&fim=&processoId=` | gestor | `inicio` e `fim` em `AAAA-MM-DD` (inclusivos, fuso America/Recife), no máximo 1 ano; `processoId` opcional | arquivo `text/csv` em streaming, no formato do CSV do Histórico (ver [Exportação em CSV](#exportação-em-csv-issue-99)); período invertido, maior que 1 ano ou processo inexistente → `422` |
+| `GET /precos-m3` | gestor | — | `PrecoM3DTO[]`, o histórico inteiro, por `vigencia` e, na mesma vigência, por `cadastradoEm` (do mais antigo ao mais novo) |
+| `POST /precos-m3` | gestor | `{valor, vigencia}` (`vigencia` em `AAAA-MM-DD`: o preço vale a partir desse dia; quem cadastrou vem do token) | `201 PrecoM3DTO`; não há rota para editar nem apagar: para corrigir, cadastre outro preço com a mesma vigência, e vale o cadastrado por último |
 | `GET /auditoria?inicio=&fim=&acao=&pagina=&tamanho=` | admin | todos opcionais: `inicio`/`fim` em ISO 8601 com fuso, `acao` (`CRIACAO_USUARIO`, `REDEFINICAO_SENHA`, `DESATIVACAO_USUARIO`, `REATIVACAO_USUARIO` ou `ROTACAO_TOKEN`), `pagina` a partir de 0, `tamanho` de 1 a 100 (padrão 20) | `{itens: [{id, acao, data, gestor, usuarioAfetado}], total, pagina, tamanho}`, do mais recente ao mais antigo; `gestor` e `usuarioAfetado` com `{id, nome, usuario}`, o `usuario` (login) mascarado (ex.: `ca****in`, LGPD, RNF27); sem senha nem hash |
 | `GET /auditoria/seguranca` | admin | — | `{desde, loginsAceitos, loginsRecusados, bloqueiosLogin, bloqueiosLotes, senhasTrocadas, senhasRedefinidas, bloqueios: [{rota, ip, primeiro, ultimo, tentativas}]}`; contado em memória desde `desde` (o último início da API), zera quando ela reinicia; `rota` é `login` ou `lotes`; `ip` mascarado (ex.: `200.17.33.***`, LGPD); no máximo 100 linhas em `bloqueios`, do bloqueio mais recente ao mais antigo; sem senha (issue #109) |
 | `GET /actuator/health` | público | — | `200 {status: "UP"}` ou `503 {status: "DOWN"}`; o admin vê também `components` (banco, disco) |
+| `GET /actuator/health/sensor` | admin, gestor e operador | — | `200 {status: "UP", components: {sensorWokwi: {status, details}}}` se a última telemetria chegou há menos de 60 s; senão `503` com `DOWN` (ver [Monitoramento](#monitoramento-actuator)) |
 | `GET /actuator/metrics` | admin | — | `{names: [...]}`, a lista de métricas |
 | `GET /actuator/metrics/{nome}?tag=` | admin | `tag` opcional, `chave:valor` | `{name, measurements, availableTags}` |
 
@@ -72,6 +79,13 @@ Issue #51. O Spring Boot Actuator expõe só `health` e `metrics`. Os outros end
 - **Saúde:** `GET /api/actuator/health` responde `UP` quando a API e o banco estão no ar e `503 DOWN` se o banco
   cair. É aberto para o Render e serviços de monitoramento (como o UptimeRobot) consultarem sem token. Sem token, só
   diz o status.
+- **Saúde do sensor (issue #158, RNF20):** `GET /api/actuator/health/sensor` (admin, gestor e operador) traz o
+  componente `sensorWokwi`. Ele fica `UP` se a última telemetria (`POST /telemetria`) chegou há menos de 60 s e `DOWN`
+  (HTTP 503) se passou disso ou se o sensor nunca enviou nada. Os detalhes trazem `ultimaLeitura`,
+  `segundosDesdeUltimaLeitura`, `limiteSemLeituraSegundos`, `motivo` (quando `DOWN`) e `linhasAtivas`: cada processo
+  com leitura nas últimas 24 h, com a sua última leitura e o seu status. O limite muda com `SENSOR_LIMITE_SEM_LEITURA`.
+  O sensor **não** entra no `/actuator/health` raiz (`SaudeDoSensorForaDaRaiz`): o Render e o healthcheck do Docker
+  reiniciam a API quando a raiz dá 503, e um sensor parado não é motivo para isso.
 - **Métricas (só admin):**
 
 | Métrica | O que mostra |
@@ -153,7 +167,9 @@ ProcessoDTO = { id, nome, unidade: 'lote' | 'peca', meta }
 LoteDTO     = { id, processoId, pecas, litros, esperado, desvio, statusConformidade, data, usuarioId }  // desvio em %, 2 casas
               // statusConformidade: 'DENTRO_DA_META' (≤ 0%) | 'ATENCAO' (≤ 8%) | 'CRITICO' (> 8%)
 AlertaDTO   = { id, processoId, loteIds: number[], detectado, status }
+DescarteDTO = { id, loteId, data, volumeLitros, ph, turbidezNtu, reutilizadoPercentual }   // efluentes_descarte (V12, #201)
 ResumoDTO   = { processoId, real, esperado, lotes, pecas, litrosPorPeca }   // litrosPorPeca = real ÷ pecas, 2 casas; null sem peças (#116)
+PrecoM3DTO  = { id, valor, vigencia, cadastradoPor, cadastradoEm }   // valor em R$ por m³; vigencia 'AAAA-MM-DD'; cadastradoPor = nome
 ```
 
 ## Validações
@@ -169,3 +185,5 @@ Os limites vêm das colunas e restrições criadas pelas migrações (`V1__cria_
 | `meta` | maior que 0; até 8 dígitos inteiros e 2 decimais |
 | `pecas` | inteiro maior que 0 |
 | `litros` | maior que 0; até 10 dígitos inteiros e 2 decimais |
+| `valor` do preço do m³ | obrigatório; maior que 0; até 8 dígitos inteiros e 2 decimais (`V16__cria_preco_m3.sql`) |
+| `vigencia` do preço do m³ | obrigatória; só a data, sem hora; pode ser passada ou futura |

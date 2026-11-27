@@ -11,6 +11,12 @@
 
 <p align="center">
   <a href="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/ci.yml/badge.svg?branch=develop"></a>
+  <a href="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/qualidade.yml"><img alt="Qualidade" src="https://github.com/paulomourz/aguas-do-capibaribe/actions/workflows/qualidade.yml/badge.svg?branch=develop"></a>
+  <a href="https://sonar.fchicout.dev/dashboard?id=aguas-do-capibaribe"><img alt="Quality Gate do SonarQube" src="https://sonar.fchicout.dev/api/project_badges/measure?project=aguas-do-capibaribe&metric=alert_status"></a>
+  <a href="https://github.com/paulomourz/aguas-do-capibaribe/tags"><img alt="Release" src="https://img.shields.io/github/v/tag/paulomourz/aguas-do-capibaribe?sort=semver&label=release"></a>
+</p>
+
+<p align="center">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white">
@@ -22,6 +28,7 @@
 
 <p align="center">
   <a href="https://aguas-do-capibaribe.onrender.com"><strong>Abrir o site</strong></a> ·
+  <a href="#-rodar-em-1-comando"><strong>Rodar em 1 comando</strong></a> ·
   <a href="#-sobre-o-projeto">Sobre</a> ·
   <a href="#-funcionalidades">Funcionalidades</a> ·
   <a href="#-arquitetura">Arquitetura</a> ·
@@ -33,6 +40,23 @@
 </p>
 
 ---
+
+## ⚡ Rodar em 1 comando
+
+Só precisa do [Docker](https://docs.docker.com/get-docker/) com o Docker Compose. Depois do `git clone`, na raiz do
+projeto:
+
+```bash
+docker compose up --build
+```
+
+- Sobe o **banco** (PostgreSQL 18), a **API** (Spring Boot) e o **site** (React), sem configurar nada e sem `.env`.
+- No meio do log aparecem os **logins e as senhas** do administrador (`capibaribe.admin`), do gestor e do sensor,
+  sorteadas na primeira subida. Para ver de novo: `docker compose logs segredos`.
+- Abra o site em <http://localhost:3000> e o Swagger em <http://localhost:3000/api/swagger-ui.html>.
+- A primeira vez baixa as imagens e compila tudo: precisa de internet e leva alguns minutos.
+- **Ctrl+C** para tudo. Para rodar em segundo plano: `docker compose up -d --build`. Mais detalhes em
+  [Com Docker](#com-docker-um-comando-só).
 
 ## 💧 Sobre o projeto
 
@@ -56,6 +80,15 @@ espere um pouco e tente de novo.
 
 🎤 **Para apresentar ou testar:** [roteiro com os planos A e B](docs/guia/roteiro-apresentacao.md)
 
+> **Não registre lote de Estonagem no site publicado.** A massa da demonstração deixa a Estonagem com 2 lotes
+> seguidos acima da meta, e o 3º vem do sensor no Wokwi, ao vivo, para abrir o alerta e avisar no Telegram. Um lote
+> acima da meta antes disso antecipa o alerta, e um dentro da meta zera a sequência. Se acontecer, limpe o banco e
+> rode a massa de novo ([como fazer](docs/guia/roteiro-apresentacao.md#preparar-a-área-de-demonstração)).
+
+🗄️ **Para a disciplina de Banco de Dados:** [roteiro do plano C](docs/guia/roteiro-banco-de-dados.md)
+([PDF](docs/guia/roteiro-banco-de-dados.pdf)), com o banco aberto ao pgAdmin, o log de todo SQL e
+[todos os testes do banco](database/demonstracao/testes-banco-plano-c.sql) prontos para rodar
+
 ## ✨ Funcionalidades
 
 | | Funcionalidade | Como funciona |
@@ -67,7 +100,7 @@ espere um pouco e tente de novo.
 | 📈 | **Dashboard e relatório mensal** | Gráficos de meta e consumo por processo e por dia, e relatório mensal com download em PDF |
 | 🔔 | **Aviso no Telegram** | Quando um alerta abre, chega uma mensagem no grupo da lavanderia, com o link do alerta |
 | 📤 | **Exportação em CSV** | O histórico filtrado vira uma planilha para auditoria externa (CPRH) |
-| 👥 | **Perfis** | Administrador (tudo, mais usuários e auditoria), gestor (operação), operador (registra lotes) e sensor (só envia lotes) |
+| 👥 | **Perfis** | Administrador (tudo, mais usuários e auditoria), gestor (operação), operador (registra lotes) e sensor (só envia lotes e telemetria) |
 | 🔍 | **Auditoria** | Quem criou, desativou, reativou ou redefiniu a senha de cada conta, sem poder ser apagado |
 | 📶 | **Funciona com a Wi-Fi oscilando** | O site é um PWA: abre sem conexão, guarda os lotes no aparelho (IndexedDB) e envia sozinho quando a conexão volta, sem duplicar |
 | 📡 | **Sensor IoT** | ESP32 simulado no Wokwi mede a vazão e envia o lote pela API. Há um projeto público, em HTTPS, e um local, para o Docker |
@@ -249,11 +282,13 @@ mvn test
 | `ProcessoControllerTest`, `ProcessoServiceCacheTest` | não | cadastro de processos e cache da lista |
 | `AuditoriaUsuarioTest`, `AuditoriaServiceTest` | não | registro e consulta da auditoria |
 | `AdminInicialTest`, `GestorInicialTest`, `SensorInicialTest` | não | contas criadas na inicialização |
-| `AvisoDeAlertaTest` | não | mensagem do Telegram e falha no envio sem afetar o lote |
+| `AvisoDeAlertaTest`, `DisjuntorDoTelegramTest` | não | mensagem do Telegram, falha no envio sem afetar o lote e disjuntor |
+| `TelemetriaControllerTest`, `SensorWokwiHealthIndicatorTest` | não | validação da telemetria (400, 401) e saúde do sensor |
+| `DescarteControllerTest`, `DescarteServiceTest`, `PrecoM3ControllerTest` | não | descarte de efluentes (validação e acesso por perfil) e preço do m³ |
 | `IntegracaoPostgres*Test` | Docker ou banco temporário `*_teste` | fluxo completo num banco real, perfis, auditoria, Actuator e aviso no Telegram (com um servidor falso) |
 | `CicloCompletoLavanderiaE2ETest` | Docker ou banco temporário `*_teste` | jornada completa por HTTP: login, processo, operador, lotes, alerta e relatório |
 
-São 169 testes: 132 unitários e de web + 37 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
+São 253 testes: 209 unitários e de web + 44 de integração e de sistema com PostgreSQL 18 (o banco começa vazio e o
 Flyway aplica todas as migrações). Os de integração usam um
 banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo em
 [`backend/README.md`](backend/README.md#testes).
@@ -261,8 +296,8 @@ banco temporário, criado e apagado na hora, **nunca** o `aguas`. Passo a passo 
 **Site:**
 
 ```bash
-pnpm test        # Vitest (199 testes): fila em IndexedDB, sincronização, CSV, tema, glossário, números, gauge, pegada e limites
-pnpm test:e2e    # Playwright (10 testes): modo offline, fluxo do operador, privacidade e números
+pnpm test        # Vitest (346 testes): fila em IndexedDB, sincronização e envio em segundo plano, CSV, planilha, tema, glossário, números, gauge, pegada, limites, esqueletos, descartes e custo da água
+pnpm test:e2e    # Playwright (26 testes): modo offline, Background Sync, fluxo do operador e do alerta, efluentes, planilha, privacidade, números, carregamento e acessibilidade (axe-core)
 ```
 
 O teste ponta a ponta (`e2e/offline.spec.ts`) derruba a conexão do navegador, registra lotes, recarrega a página
@@ -272,7 +307,7 @@ resposta perdida (a API grava, o site não recebe) e confere que o reenvio não 
 
 A CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda em todo push e PR para `main` e
 `develop`: `backend-test` (no Java 25), `frontend-build` (`tsc --noEmit`, `pnpm test`, `pnpm build` e `pnpm test:e2e`) e
-`docker-compose` (sobe o Docker e testa login, processos e registro de lote pelo Nginx) e `dependencias` (procura
+`docker-compose` (sobe o Docker com o plano C, testa login, processos e registro de lote pelo Nginx e roda o script da aula de banco de dados) e `dependencias` (procura
 vulnerabilidades conhecidas no `pom.xml` e no `pnpm-lock.yaml` com o [OSV-Scanner](https://google.github.io/osv-scanner/)
 e bloqueia as de gravidade alta ou crítica, CVSS 7,0 ou mais; exceções, sempre com motivo e data, ficam em
 [`osv-scanner.toml`](osv-scanner.toml)). O Render só publica depois
@@ -288,12 +323,15 @@ que esses checks passam. **Não faça merge com check vermelho.**
 3. **Banco:** o rollback não desfaz migração do Flyway. Se o problema veio de uma migração, corrija com uma
    migração nova (próximo número livre), nunca editando a que já rodou.
 
-[Teste de carga](docs/tecnico/teste-carga.md) (k6, 50 sensores ao mesmo tempo) e [análise de índices](docs/tecnico/desempenho-indices.md)
-(EXPLAIN ANALYZE) ficam fora da CI e são rodados à mão.
+O [teste de carga](docs/tecnico/teste-carga.md) (k6: 100 sensores ao mesmo tempo e turno industrial com 120) roda no
+workflow "Teste de carga", disparado à mão; a [análise de índices](docs/tecnico/desempenho-indices.md) (EXPLAIN
+ANALYZE) é rodada à mão.
 
 ## 📌 Status
 
-Última versão: **v1.1.0** (14/11/2026). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
+Versão final: **v2.0.0**, para a feira **ProjetAÍ**. O código congela em 27/11/2026 (code freeze, #221) e a versão
+sai na `main` com a tag `v2.0.0`; o badge **release** no topo mostra a última tag publicada. Antes dela: v1.1.0
+(14/11/2026) e v1.0.0 (02/11/2026). O histórico de cada versão está no [`CHANGELOG.md`](CHANGELOG.md).
 
 **Pronto**
 
@@ -302,31 +340,36 @@ que esses checks passam. **Não faça merge com check vermelho.**
 - ✅ Processos e metas
 - ✅ Registro de lote com desvio e histórico por perfil, inclusive sem conexão (PWA), e exportação em CSV
 - ✅ Alertas (3 lotes seguidos acima da meta) com status e aviso no Telegram
-- ✅ Dashboard com gráficos e relatório mensal, com download direto em PDF
-- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS, encontrando o processo pelo nome e renovando o login sozinho
+- ✅ Dashboard com gráficos e relatório mensal, com download direto em PDF e em planilha Excel (.xlsx), e esqueletos no carregamento
+- ✅ IoT fase 1: ESP32 simulado no Wokwi enviando lotes por HTTPS com token de API, encontrando o processo pelo nome; telemetria validada e gravada, sinal de vida a cada 15 s e saúde do sensor no Actuator (`/api/actuator/health/sensor`)
+- ✅ Descarte de efluentes de cada lote, com visão mensal de conformidade e índice de reúso
+- ✅ Custo da água: preço do m³ e custo do mês
 - ✅ Identidade visual "sertão e água", com navegação por teclado e contraste WCAG 2.1 AA
 - ✅ Documentação interativa da API (Swagger) em `/api/swagger-ui.html`
 - ✅ API conectada ao banco com o usuário restrito `aguas_api` (sem apagar dados nem mudar tabelas)
-- ✅ Versionamento do banco com migrações Flyway (V1 a V11), aplicadas ao subir a API
+- ✅ Versionamento do banco com migrações Flyway (V1 a V16), aplicadas ao subir a API
 - ✅ Desempenho medido: teste de carga, índices com EXPLAIN ANALYZE e cache da lista de processos
 - ✅ Monitoramento (Actuator) e backup do banco com restauração verificada
 - ✅ Status verde, amarelo e vermelho calculado pela API, com limites de 0% e 8%
 - ✅ Sistema publicado na internet, com endereço fixo e HTTPS
 - ✅ Docker Compose: banco, API e site com um comando
-- ✅ CI no GitHub Actions com testes da API, do site e do Docker; o Render só publica depois do CI
+- ✅ CI no GitHub Actions com testes da API, do site (com acessibilidade) e do Docker, vulnerabilidades, SBOM e Quality Gate no SonarQube; o Render só publica depois do CI
+- ✅ Contêineres sem root, aviso do Telegram com disjuntor e runbook de recuperação de desastres ensaiado
 
 **Limitações conhecidas**
 
-- **Senha do sensor:** é colada no projeto do Wokwi, que é público, na hora de usar, e não deve ser salva lá. A
-  conta tem o perfil sensor, que só consulta processos e registra lotes.
-- **Certificado do sensor:** a impressão digital vale até 20/12/2026 e precisa ser atualizada quando o Render
+- **Token do sensor:** é colado no projeto do Wokwi, que é público, na hora de usar, e não deve ser salvo lá. A
+  conta tem o perfil sensor, que só consulta processos e envia lotes e leituras, e o administrador troca o token a
+  qualquer momento.
+- **Certificado do sensor:** a impressão digital é a do certificado emitido em 19/11/2026, que vale até 17/02/2027, e precisa ser atualizada quando o Render
   renovar o certificado ([como fazer](iot/LEIA-ME.md#se-der-errado)).
 - **Limites do status:** estão na API e no site, para classificar totais e médias. Se mudarem, mude nos dois.
 - **Inativar processo:** ainda não existe.
 - **Plano grátis:** a API dorme sem uso, e o banco pode ser apagado depois de 90 dias parado. O Render grátis bloqueia
   e-mail, por isso o aviso de alerta vai pelo Telegram.
-- **Em desenvolvimento:** vários sensores por linha de lavagem (#47), glossário têxtil (#55) e validação com um
-  operador real (#50).
+- **Vários sensores por linha de lavagem:** adiado, com o motivo no Apêndice B da ERS (#47).
+- **Validação com operador real:** não houve acesso a uma lavanderia no prazo. A validação foi feita com pessoas de
+  fora da equipe e por avaliação simulada (#50); o kit em [`docs/validacao/`](docs/validacao/LEIA-ME.md) está pronto.
 - **Bancada física:** não foi montada. A entrega usa a simulação; a especificação está em
   [`docs/tecnico/hardware-bancada.md`](docs/tecnico/hardware-bancada.md).
 

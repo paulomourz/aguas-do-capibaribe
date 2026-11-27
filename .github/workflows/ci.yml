@@ -80,6 +80,17 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+      # Relatório do axe-core de cada tela e tema (e2e/acessibilidade.spec.ts, issue #172), com todas as violações,
+      # inclusive as moderadas e leves, que não bloqueiam o merge.
+      - name: Guarda o relatório de acessibilidade
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acessibilidade
+          path: test-results/**/axe-*.json
+          retention-days: 14
+          if-no-files-found: ignore
+
   # Vulnerabilidades conhecidas (CVEs) nas dependências do back-end (pom.xml) e do site (pnpm-lock.yaml),
   # pela base pública OSV.dev, sem token. Bloqueia com gravidade alta ou crítica (CVSS 7.0 ou mais).
   dependencias:
@@ -144,6 +155,12 @@ jobs:
           testar() {
             # O Nginx pode levar alguns segundos para aceitar a primeira conexão.
             curl -fsS --retry 15 --retry-delay 2 --retry-all-errors http://localhost:3000/ | grep -q 'id="root"'
+            # Cabeçalhos de segurança do site, também no service worker (location com add_header próprio).
+            for caminho in / /sw.js; do
+              cabecalhos=$(curl -fsS -D - -o /dev/null "http://localhost:3000$caminho")
+              grep -qi "^content-security-policy: .*frame-ancestors 'none'" <<< "$cabecalhos"
+              grep -qi '^x-frame-options: DENY' <<< "$cabecalhos"
+            done
             curl -fsS -o /dev/null http://localhost:3000/api/swagger-ui/index.html
             # A API é distroless (sem cat): a senha é lida do contêiner do banco, que monta os segredos.
             senha=$(docker compose exec -T db cat /segredos/admin)
@@ -176,6 +193,29 @@ jobs:
           done
           echo "Nenhum segredo nas variáveis de ambiente da API."
 
+      - name: Contêineres sem root e com privilégios mínimos
+        run: |
+          for servico in db backend frontend; do
+            id=$(docker compose ps -q "$servico")
+            # Usuário real do processo principal, lido pelo host (as imagens distroless não têm shell).
+            uid=$(sudo awk '/^Uid:/ {print $2}' "/proc/$(docker inspect "$id" --format '{{.State.Pid}}')/status")
+            caps=$(docker inspect "$id" --format '{{join .HostConfig.CapDrop ","}}')
+            opcoes=$(docker inspect "$id" --format '{{join .HostConfig.SecurityOpt ","}}')
+            leitura=$(docker inspect "$id" --format '{{.HostConfig.ReadonlyRootfs}}')
+            echo "| $servico | $uid | $caps | $opcoes | $leitura |" >> resumo-privilegios.txt
+            if [ "$uid" = "0" ]; then echo "::error::$servico roda como root."; exit 1; fi
+            if [ "$caps" != "ALL" ]; then echo "::error::$servico não remove todas as capabilities."; exit 1; fi
+            case "$opcoes" in *no-new-privileges*) ;; *) echo "::error::$servico sem no-new-privileges."; exit 1;; esac
+            if [ "$leitura" != "true" ]; then echo "::error::$servico com sistema de arquivos gravável."; exit 1; fi
+          done
+          {
+            echo "### Privilégios dos contêineres"
+            echo
+            echo "| Serviço | UID | cap_drop | security_opt | Só leitura |"
+            echo "|---|---|---|---|---|"
+            cat resumo-privilegios.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Imagem da API (distroless, sem shell)
         run: |
           imagem=$(docker inspect "$(docker compose ps -q backend)" --format '{{.Image}}')
@@ -187,6 +227,44 @@ jobs:
             exit 1
           fi
           test "$(docker inspect "$(docker compose ps -q backend)" --format '{{.State.Health.Status}}')" = healthy
+
+      # Plano C (issue #225, docs/guia/roteiro-banco-de-dados.md): o mesmo sistema com o log de SQL e o Adminer.
+      - name: Plano C (log de SQL e Adminer)
+        run: |
+          compose() { docker compose -f docker-compose.yml -f docker-compose.banco.yml "$@"; }
+          compose up -d --wait
+          senha=$(compose exec -T db cat /segredos/admin)
+          corpo=$(jq -n --arg s "$senha" '{usuario: "capibaribe.admin", senha: $s}')
+          token=$(curl -fsS --retry 15 --retry-delay 2 --retry-all-errors -H 'Content-Type: application/json' -d "$corpo" http://localhost:3000/api/auth/login | jq -r .token)
+          lote=$(curl -fsS -H "Authorization: Bearer $token" http://localhost:3000/api/processos | jq -c '{processoId: .[0].id, pecas: 1, litros: 100}')
+          curl -fsS -o /dev/null -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$lote" http://localhost:3000/api/lotes
+          # O INSERT do lote aparece no log do banco, feito pelo usuário restrito da API.
+          compose logs --no-log-prefix db | grep -q '\[aguas_api\] LOG:  execute .*insert into lote'
+          # A senha não aparece no log: o login compara o hash na API, não no SQL.
+          if compose logs --no-log-prefix db | grep -qF "$senha"; then
+            echo "::error::A senha do administrador apareceu no log de SQL."
+            exit 1
+          fi
+          # O script da aula (issue #227) roda inteiro sem erro, todo bloco proibido é recusado e o banco termina igual.
+          compose exec -T db psql -U postgres -d aguas -v ON_ERROR_STOP=1 < database/demonstracao/aula-banco-de-dados.sql > aula.txt 2>&1
+          if grep -q 'ACEITO (não devia)' aula.txt; then
+            echo "::error::O banco aceitou uma operação que o script da aula espera ver recusada."
+            exit 1
+          fi
+          if grep -q 'MUDOU' aula.txt; then
+            echo "::error::O script da aula mudou os dados do banco."
+            exit 1
+          fi
+          recusas=$(grep -c 'RECUSADO' aula.txt)
+          test "$recusas" -ge 12 || { echo "::error::Só $recusas recusas no script da aula (esperava 12 ou mais)."; exit 1; }
+          echo "Script da aula: $recusas recusas do banco e todas as tabelas iguais no fim." | tee -a "$GITHUB_STEP_SUMMARY"
+          # O banco atende o pgAdmin na porta 5433 deste computador.
+          pg_isready -h 127.0.0.1 -p 5433 -U postgres -d aguas
+          curl -fsS --retry 10 --retry-delay 2 --retry-all-errors -o /dev/null http://127.0.0.1:8081/
+          id=$(compose ps -q adminer)
+          uid=$(sudo awk '/^Uid:/ {print $2}' "/proc/$(docker inspect "$id" --format '{{.State.Pid}}')/status")
+          test "$uid" != 0 || { echo "::error::O Adminer roda como root."; exit 1; }
+          echo "Plano C: INSERT do lote no log de SQL, banco na porta 5433 e Adminer de pé (UID $uid)." | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Logs em caso de falha
         if: failure()

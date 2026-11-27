@@ -9,7 +9,9 @@ ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm build
 
-# Estágio final: Nginx serve o site e encaminha /api para a API.
-FROM nginx:1.28-alpine
+# Estágio final: Nginx serve o site e encaminha /api para a API. Imagem sem root (uid 101), na porta 8080
+# (issue #171); o pid e os arquivos temporários ficam em /tmp, que no Docker Compose é um tmpfs.
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/cabecalhos-seguranca.conf /etc/nginx/snippets/cabecalhos-seguranca.conf
 COPY --from=build /build/dist /usr/share/nginx/html

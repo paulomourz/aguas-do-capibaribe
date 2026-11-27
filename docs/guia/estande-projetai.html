@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Águas do Capibaribe · Apresentação ProjetAÍ</title>
+<!-- Deck da feira ProjetAÍ (issue #215), feito no Canva e exportado em estande/. Abra no navegador: abaixo de cada
+     slide fica o cartão de apoio com a fala e o tempo. O PDF ao lado é a versão para projetar ou imprimir. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+:root { --marinho: #0d364d; --areia: #f1e6d6; --terracota: #a3441f; --texto: #1f2933; }
+html, body { margin: 0; background: #0a2941; font-family: 'Inter', Arial, sans-serif; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 64px; }
+header { color: #f1e6d6; margin-bottom: 24px; }
+header h1 { font-size: 28px; margin: 0 0 8px; }
+header p { font-size: 17px; line-height: 1.5; margin: 0; color: #c9d9e5; }
+header a { color: #7dc8ed; }
+figure { margin: 0 0 40px; border-radius: 12px; overflow: hidden; background: var(--areia); box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { padding: 20px 28px 24px; border-top: 6px solid var(--terracota); }
+.titulo { font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--terracota); margin: 0 0 6px; }
+.fala { font-size: 20px; line-height: 1.5; color: var(--texto); margin: 0; }
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  html, body { background: none; }
+  main { max-width: none; padding: 0; }
+  header, figcaption { display: none; }
+  figure { margin: 0; border-radius: 0; box-shadow: none; break-after: page; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Águas do Capibaribe · apresentação na feira ProjetAÍ</h1>
+  <p>Fala de 5 min 40 s (o limite é de 5 a 7 minutos), seguida de 3 minutos de perguntas da banca. Abaixo de cada slide
+  está o cartão de apoio: o que dizer. Os tempos para o ensaio ficam no roteiro. A demonstração segue o
+  <a href="roteiro-apresentacao.md">roteiro de apresentação</a>. Para projetar, use o
+  <a href="estande-projetai.pdf">PDF</a>.</p>
+</header>
+<figure id="slide-01">
+  <img src="estande/slide-01.jpg" width="1920" height="1080" alt="Slide 1. Capa: Águas do Capibaribe, gestão de água por lote em lavanderias de jeans do Agreste" loading="lazy">
+  <figcaption><p class="titulo">Slide 1 de 11 · O projeto</p><p class="fala">“Somos o Águas do Capibaribe. Ajudamos a lavanderia de jeans a saber quanta água cada lote gastou e se passou da meta. Cada lote com a água que ele precisa, nem uma gota a mais.”</p></figcaption>
+</figure>
+<figure id="slide-02">
+  <img src="estande/slide-02.jpg" width="1920" height="1080" alt="Slide 2. A equipe, com a função de cada um e o orientador" loading="lazy">
+  <figcaption><p class="titulo">Slide 2 de 11 · A equipe</p><p class="fala">Seis pessoas: Pedro (Full Stack e PO), Abraão Filipe (Back-End), João Bezerra (Back-End e IoT), Matheus Andrade (Front-End), Mateus Basilio (Banco de Dados) e Paulo Moura (DevOps), com orientação do Prof. Fábio Chicout.</p></figcaption>
+</figure>
+<figure id="slide-03">
+  <img src="estande/slide-03.jpg" width="1920" height="1080" alt="Slide 3. O problema: consumo de água sem controle nas lavanderias do Agreste" loading="lazy">
+  <figcaption><p class="titulo">Slide 3 de 11 · Problema</p><p class="fala">“O Agreste faz de 14% a 16% do jeans do Brasil. A água é cara, de poço e caminhão-pipa: cerca de R$ 56 mil por mês numa lavanderia média. E mais de 77% volta ao rio sem tratamento. Hoje ninguém sabe quanto cada processo gasta: é tudo no olho.” Os números são estimativas do Termo de Abertura.</p></figcaption>
+</figure>
+<figure id="slide-04">
+  <img src="estande/slide-04.jpg" width="1920" height="1080" alt="Slide 4. Oportunidade e público-alvo: gestor, operador, fiscalização e marcas" loading="lazy">
+  <figcaption><p class="titulo">Slide 4 de 11 · Oportunidade e público-alvo</p><p class="fala">“Nosso público são as lavanderias de jeans do Agreste. O gestor vê consumo, alertas e custo. O operador registra o lote no celular, até sem internet, ou o sensor registra por ele. Fiscalização e marcas ganham um histórico que não pode ser alterado. Com reúso, a economia pode passar de R$ 40 mil por mês.”</p></figcaption>
+</figure>
+<figure id="slide-05">
+  <img src="estande/slide-05.jpg" width="1920" height="1080" alt="Slide 5. A solução: o Dashboard com o alerta ativo e o consumo do mês" loading="lazy">
+  <figcaption><p class="titulo">Slide 5 de 11 · Solução</p><p class="fala">“O gestor define a meta de cada processo. Cada lote é comparado com a meta na hora: dentro, atenção ou crítico. Três lotes seguidos acima da meta abrem um alerta, com aviso no Telegram. No fim do mês, o relatório sai em PDF, Excel ou CSV, e o custo aparece em reais.”</p></figcaption>
+</figure>
+<figure id="slide-06">
+  <img src="estande/slide-06.jpg" width="1920" height="1080" alt="Slide 6. O protótipo no ar: registro de lote, alertas, relatórios, efluentes, custo da água e sensor IoT" loading="lazy">
+  <figcaption><p class="titulo">Slide 6 de 11 · Demonstração do protótipo</p><p class="fala">Tudo já aberto e logado como gestor. 1) No Wokwi, potenciômetro no máximo e botão verde: o lote começa. 2) Enquanto ele conta (uns 40 s), mostre no site o Dashboard do mês e o alerta em análise. 3) Botão de novo: LED vermelho, buzzer e o aviso no Telegram, no celular. 4) No site, F5: o lote no Histórico e o alerta novo. Ninguém registra lote de Estonagem antes do sensor.</p></figcaption>
+</figure>
+<figure id="slide-07">
+  <img src="estande/slide-07.jpg" width="1920" height="1080" alt="Slide 7. Diferenciais: o circuito do sensor IoT no simulador Wokwi" loading="lazy">
+  <figcaption><p class="titulo">Slide 7 de 11 · Diferenciais e inovação</p><p class="fala">“O lote pode ser registrado sozinho por um sensor de vazão no ESP32, que vocês viram no Wokwi falando com a API de verdade. Sem Wi-Fi, ele guarda as leituras e envia depois, sem duplicar. A cada 15 segundos manda um sinal de vida. E o site também funciona sem internet no celular.”</p></figcaption>
+</figure>
+<figure id="slide-08">
+  <img src="estande/slide-08.jpg" width="1920" height="1080" alt="Slide 8. Viável e sustentável: plano grátis, Docker, 120 sensores, mais de 500 testes, código aberto" loading="lazy">
+  <figcaption><p class="titulo">Slide 8 de 11 · Viabilidade e sustentabilidade</p><p class="fala">“Roda de graça no Render e no Neon, ou num computador com um comando do Docker. No teste de carga com o k6, aguentou 120 sensores sem nenhum erro. O código é aberto, tem mais de 500 testes, passou no SonarQube e está documentado nas normas ISO/IEC.”</p></figcaption>
+</figure>
+<figure id="slide-09">
+  <img src="estande/slide-09.jpg" width="1920" height="1080" alt="Slide 9. Impactos esperados, com a tela Custo da água" loading="lazy">
+  <figcaption><p class="titulo">Slide 9 de 11 · Impactos e resultados esperados</p><p class="fala">“Medir cada lote é o primeiro passo para gastar menos: com reúso, até R$ 40 mil por mês. O efluente fora da CONAMA 430, pH de 5 a 9, aparece na hora. O custo da água e do excesso sai em reais. E o histórico não muda: é prova para cliente e fiscalização.”</p></figcaption>
+</figure>
+<figure id="slide-10">
+  <img src="estande/slide-10.jpg" width="1920" height="1080" alt="Slide 10. Próximos passos após a feira, do piloto ao laudo ambiental" loading="lazy">
+  <figcaption><p class="titulo">Slide 10 de 11 · Próximos passos</p><p class="fala">“Primeiro, um piloto numa lavanderia real com o sensor físico YF-S201. Depois, um sensor em cada máquina, previsão do consumo, aviso também no WhatsApp e um laudo ambiental para a CPRH.”</p></figcaption>
+</figure>
+<figure id="slide-11">
+  <img src="estande/slide-11.jpg" width="1920" height="1080" alt="Slide 11. Obrigado, com os QR codes do site publicado e do código no GitHub" loading="lazy">
+  <figcaption><p class="titulo">Slide 11 de 11 · Encerramento e chamada para ação</p><p class="fala">“Obrigado! Aponte a câmera para o QR code: o site está no ar e o código é aberto. Se você conhece uma lavanderia, fale com a gente para um piloto.” Depois, 3 minutos de perguntas da banca. Nenhuma conta é passada aos visitantes.</p></figcaption>
+</figure>
+</main>
+</body>
+</html>
