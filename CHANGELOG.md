@@ -6,6 +6,13 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+## [2.0.0] - 2026-11-27
+
+Versão do code freeze da feira ProjetAÍ, com as entregas das Weeks 03 e 04: descarte e conformidade dos efluentes,
+custo da água, disjuntor e fila em segundo plano nos avisos, saúde e sinal de vida do sensor, relatório em Excel,
+SBOM, Quality Gate do SonarQube, acessibilidade no CI, runbook de recuperação, plano C do banco, roteiro e deck da
+demonstração.
+
 ### Deck pronto para o telão
 
 - **Molduras novas** em `docs/guia/estande/molduras/`: janela de navegador azul-marinho para o Dashboard, o Alerta 3 e
@@ -797,6 +804,7 @@ Primeira versão preliminar: baseline das semanas 1 a 3 do cronograma do TAP.
 
 - README, guia em PDF, Termo de Abertura v2.1 e Especificação de Requisitos de Software (IEEE 830).
 
+[2.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v2.0.0
 [1.1.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.1.0
 [1.0.0]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v1.0.0
 [0.1.0-alpha]: https://github.com/paulomourz/aguas-do-capibaribe/releases/tag/v0.1.0-alpha
