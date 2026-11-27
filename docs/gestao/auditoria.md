@@ -116,4 +116,4 @@ avaliação. As apresentações na feira ProjetAÍ vão de 30/11 a 03/12/2026.
 | API do plano grátis dorme sem uso | Risco | Abrir o site antes; Docker como plano B |
 | Lote de Estonagem registrado no site publicado antes da demonstração | Risco | A massa deixa 2 lotes seguidos acima da meta, e o 3º vem do sensor ao vivo e abre o alerta. Um lote acima antecipa o alerta, e um dentro da meta zera a sequência. Se acontecer, limpar o banco e rodar a massa de novo |
 | Simulador lento derruba a conexão do sensor | Risco | Fechar programas pesados e testar antes |
-| Certificado da API (vale até 20/12/2026) | Risco baixo | Comando para atualizar a impressão digital no sketch |
+| Certificado da API (o Render renovou em 19/11/2026, antes do vencimento de 20/12, e o sensor passou a recusar a API) | Tratado em 26/11 | Impressão digital do certificado novo, que vale até 17/02/2027; conferir com o comando do sketch antes de cada apresentação |

@@ -177,7 +177,7 @@ Os documentos seguem a estrutura de cada norma, adaptada ao porte de um projeto 
 | A API do plano grátis dorme sem uso e leva cerca de 2 minutos para acordar. | Abrir o site antes de apresentar; plano B com Docker no computador. |
 | Perda de dados do banco publicado. | Scripts de backup e restauração com verificação do backup; lotes e auditoria protegidos contra alteração pelo próprio banco; runbook de recuperação de desastres, ensaiado no Docker em 17/11/2026 (sistema de volta em 23 s) e em 24/11/2026 com a massa da demonstração (35 s, com as 10 tabelas idênticas). |
 | O Telegram fora do ar atrasar os avisos. | Disjuntor nas chamadas: com o Telegram fora, o aviso vai direto para a fila de pendentes, sem esperar a rede, e é reenviado quando ele volta. |
-| O certificado da API muda (o atual vale até 20/12/2026) e o sensor recusa a conexão. | Atualizar a impressão digital no sketch do sensor. |
+| O certificado da API muda (o atual, emitido em 19/11/2026, vale até 17/02/2027; o Render renova uns 30 dias antes) e o sensor recusa a conexão. | Atualizar a impressão digital no sketch do sensor. |
 | Vazamento do token do sensor, que é colado no simulador público. | Perfil sensor só consulta processos e envia lotes e leituras; o token não fica salvo no projeto, o banco guarda só o hash dele e o administrador pode trocá-lo a qualquer momento, o que invalida o anterior na hora. |
 | A trilha de IoT consumir tempo do núcleo do MVP. | Começar pela simulação, manter a trilha separada e só iniciar o físico se o ponto de verificação for atingido. |
 

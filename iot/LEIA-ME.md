@@ -220,7 +220,7 @@ Sem Docker, abra o túnel com `cloudflared tunnel --url http://localhost:8080`, 
 | `undefined reference to setup` (ao compilar) | o código não foi colado na aba `sketch.ino` |
 | `Sem resposta da API` | a API está acordando (ele tenta de novo sozinho) ou o endereço está errado |
 | `SSL - The connection indicated an EOF` em todas as tentativas | a simulação está lenta (bem abaixo de 100% no canto de cima), e a API desiste da conexão segura: feche programas pesados no PC e reinicie a simulação |
-| `certificado da API diferente do esperado` | o Render renovou o certificado (o atual vale até 20/12/2026): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
+| `certificado da API diferente do esperado` | o Render renovou o certificado (o atual, emitido em 19/11/2026, vale até 17/02/2027, mas o Render renova uns 30 dias antes): atualize `IMPRESSAO_DIGITAL`; o comando está no sketch |
 | `Buffer cheio (100 leituras)` | o Wi-Fi ficou fora tempo demais: a leitura mais antiga foi descartada |
 | `Sem envio agora (HTTP ...)`, `A leitura continua guardada` | a API não respondeu ou recusou por limite: o sensor tenta de novo sozinho |
 | `Lote NAO enviado: cole o token de API` | `TOKEN_API` ainda com `COLE-AQUI-...` ou colado incompleto (são 64 letras e números) |
