@@ -10,6 +10,7 @@ da Estonagem (20,70 L contra a meta de 15 L) abriu o Alerta 3 e mandou o aviso n
 | `demo-iot-sensor-3x.mp4` | O lote do sensor contando, em velocidade 3x, até o LED vermelho e o "LOTE CRÍTICO" no monitor serial (38 s, sem som) |
 | `demo-iot-sensor.mp4` | O mesmo lote em velocidade normal, de reserva (1 min 53 s, sem som) |
 | `03-site-alerta-detalhe.jpg` | **A print principal.** O alerta da Estonagem: 3 lotes acima da meta, desvio médio de +41,5%, com os lotes 72, 73 e 74 do sensor |
+| `06-telegram-alerta.jpg` | A mensagem do alerta no grupo do Telegram, às 21:07: Estonagem, lotes #72, #73 e #74, Alerta #3 aberto e o link para o sistema. Vai na moldura de celular ao lado do vídeo |
 | `02-wokwi-terceiro-lote-critico.jpg` | O Wokwi com o LED vermelho aceso e o lote 74 crítico no monitor serial |
 | `01-wokwi-lote-critico.jpg` | O Wokwi com um lote crítico anterior |
 | `04-site-alertas-lista.jpg` | A lista de alertas com o alerta novo, aberto |

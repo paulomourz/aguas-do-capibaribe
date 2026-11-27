@@ -45,7 +45,7 @@ API acordada, do Wokwi rápido nem da internet do auditório. O vídeo mostra, e
 
 **Gravado em 26/11/2026,** na pasta [`estande/demonstracao/`](estande/demonstracao/LEIA-ME.md): o vídeo do sensor
 (`demo-iot-sensor-loop.mp4`, 19 s em loop, para o slide; `demo-iot-sensor-3x.mp4`, 38 s em 3x; `demo-iot-sensor.mp4`, 1 min 53 s, de reserva) e as
-prints do Wokwi com o LED vermelho, do alerta aberto e do Histórico. A print da mensagem no Telegram vem do celular.
+prints do Wokwi com o LED vermelho, do alerta aberto, do Histórico e da mensagem do alerta no Telegram.
 
 **Para gravar de novo:** prepare a área de demonstração (seção seguinte) e deixe a janela do Chrome com o Wokwi
 **sempre visível**, por exemplo com a tela dividida (Win+← e Win+→): coberta por outra janela, a simulação cai para
