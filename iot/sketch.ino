@@ -75,11 +75,12 @@ const uint32_t INTERVALO_TELEMETRIA_MS = 15000;
 const long FUSO_SEGUNDOS = -3 * 3600;
 // ========================================================
 
-// Certificado esperado da API: impressão digital SHA-256, válida até 20/12/2026. Verificar a cadeia inteira
+// Certificado esperado da API: impressão digital SHA-256 do certificado emitido em 19/11/2026, válido até
+// 17/02/2027. O Render renova cerca de 30 dias antes do vencimento, e aí a impressão digital muda. Verificar a cadeia inteira
 // deixa a conexão lenta demais no simulador. Para ver a nova, depois que o Render renovar o certificado:
 //   openssl s_client -connect aguas-api-a0vq.onrender.com:443 </dev/null | openssl x509 -noout -fingerprint -sha256
 const char* API_HOST = "aguas-api-a0vq.onrender.com";
-const char* IMPRESSAO_DIGITAL = "A8:8C:F8:E1:2B:2E:73:1A:48:5D:32:0C:92:B4:8E:A7:1E:0D:6B:F8:A8:38:68:B5:D1:10:DA:51:D4:A1:A4:5C";
+const char* IMPRESSAO_DIGITAL = "CE:FB:D8:EB:1A:68:4F:D7:89:6E:27:AF:39:69:1D:F9:5B:96:7F:89:68:1F:FD:DE:02:89:51:4A:B0:A5:8C:EA";
 
 // A API do plano grátis dorme sem uso e leva cerca de 2 minutos para acordar.
 const uint16_t TEMPO_RESPOSTA_MS = 60000;  // o HTTPClient aceita no máximo 65 s

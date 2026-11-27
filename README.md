@@ -361,7 +361,7 @@ sai na `main` com a tag `v2.0.0`; o badge **release** no topo mostra a última t
 - **Token do sensor:** é colado no projeto do Wokwi, que é público, na hora de usar, e não deve ser salvo lá. A
   conta tem o perfil sensor, que só consulta processos e envia lotes e leituras, e o administrador troca o token a
   qualquer momento.
-- **Certificado do sensor:** a impressão digital vale até 20/12/2026 e precisa ser atualizada quando o Render
+- **Certificado do sensor:** a impressão digital é a do certificado emitido em 19/11/2026, que vale até 17/02/2027, e precisa ser atualizada quando o Render
   renovar o certificado ([como fazer](iot/LEIA-ME.md#se-der-errado)).
 - **Limites do status:** estão na API e no site, para classificar totais e médias. Se mudarem, mude nos dois.
 - **Inativar processo:** ainda não existe.

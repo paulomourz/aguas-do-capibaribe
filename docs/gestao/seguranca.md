@@ -65,7 +65,7 @@ Probabilidade e impacto em três níveis (baixo, médio, alto). O risco residual
 | R09 | Indisponibilidade do Render, do Neon ou da internet na apresentação | Média | Médio | Plano B com Docker no computador, sem internet | Baixo |
 | R10 | Token do bot do Telegram vazar | Baixa | Baixo | Token só nas variáveis do Render; `/revoke` no BotFather (docs/tecnico/telegram.md) | Baixo |
 | R11 | Sessão roubada ou usada por muito tempo | Baixa | Médio | JWT de 8 horas, sem renovação; desativar a conta corta o acesso na hora | Baixo |
-| R12 | Certificado da API mudar e o sensor recusar a conexão | Alta | Baixo | Impressão digital atual vale até 20/12/2026; o comando para atualizar está no sketch | Baixo |
+| R12 | Certificado da API mudar e o sensor recusar a conexão | Alta | Baixo | A impressão digital é a do certificado emitido em 19/11/2026, que vale até 17/02/2027; o Render renova uns 30 dias antes, então conferir antes de cada apresentação; o comando para atualizar está no sketch | Baixo |
 | R13 | Dependência com vulnerabilidade conhecida (CVE) | Alta | Alto | Job `dependencias` do CI com o OSV-Scanner; atualização das versões; exceção só com motivo e prazo; SBOM CycloneDX de cada versão, para saber na hora se uma vulnerabilidade nova nos atinge | Baixo |
 | R14 | Exposição de dados pessoais além do necessário (LGPD) | Média | Médio | Aviso de privacidade no login; login de outras pessoas mascarado na API; CSV e PDF só com o nome (seção 6) | Baixo |
 | R15 | Invasor que entre num contêiner ganhar o controle da máquina | Baixa | Alto | Nenhum contêiner roda como root; `cap_drop: ALL`, `no-new-privileges` e sistema de arquivos só de leitura; o CI confere | Baixo |
