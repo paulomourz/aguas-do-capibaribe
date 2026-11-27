@@ -43,10 +43,14 @@ API acordada, do Wokwi rápido nem da internet do auditório. O vídeo mostra, e
    Estonagem.
 4. No site, como gestor, **F5**: o lote no **Histórico**, registrado pelo sensor, e o alerta novo em **Alertas**.
 
-**Como gravar:** prepare a área de demonstração (seção seguinte). No computador, com o Wokwi e o site lado a lado,
-grave a tela com **Win+Alt+R**. No celular, grave a tela ao mesmo tempo, com o grupo do Telegram aberto. Os dois
-vídeos vão para o slide 6, no Canva, o do computador grande e o do celular na moldura ao lado. Depois de gravar,
-limpe o banco e rode a massa de novo.
+**Gravado em 26/11/2026,** na pasta [`estande/demonstracao/`](estande/demonstracao/LEIA-ME.md): o vídeo do sensor
+(`demo-iot-sensor-loop.mp4`, 19 s em loop, para o slide; `demo-iot-sensor-3x.mp4`, 38 s em 3x; `demo-iot-sensor.mp4`, 1 min 53 s, de reserva) e as
+prints do Wokwi com o LED vermelho, do alerta aberto, do Histórico e da mensagem do alerta no Telegram.
+
+**Para gravar de novo:** prepare a área de demonstração (seção seguinte) e deixe a janela do Chrome com o Wokwi
+**sempre visível**, por exemplo com a tela dividida (Win+← e Win+→): coberta por outra janela, a simulação cai para
+3% da velocidade, e o lote sai dentro da meta. Com a vazão no máximo, cada lote precisa de uns 75 s para passar de
+16,2 L, a meta mais 8%. Depois de gravar, limpe o banco e rode a massa de novo.
 
 **Nas perguntas, se pedirem:** a mesma demonstração **ao vivo**, pelo passo a passo acima; o operador registrando um
 lote de **Amaciamento** no celular, com a conexão desligada, e o selo **Sincronizado**; **Relatórios** em PDF e
