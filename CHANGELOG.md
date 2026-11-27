@@ -12,6 +12,12 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
   o circuito do Wokwi, uma moldura vazada para o vídeo e um celular para o Telegram, em PNG 2x. As telas do site vêm
   do sistema publicado, ampliadas e sem o menu lateral, com os mesmos números do Telegram (lotes 72, 73 e 74, +41,5%).
   O script `gerar-molduras.mjs` refaz todas a partir das capturas em `fonte/`.
+- **Slide 9 com o caderno da economia** (`molduras/caderno-economia.png`, gerado por `gerar-caderno.mjs`): anotações
+  à mão e gráfico da economia acumulada estimada no piloto, de R$ 40 mil a R$ 240 mil em seis meses, com a água
+  poupada (2.760 m³ por mês, a R$ 14,50 o m³). Os textos e a fala do slide 9 passaram a explicar que o sistema custa
+  pouco, se paga, poupa água e é confiável.
+- **Prints e vídeo maiores** nos slides 5 a 8 e 10, com sombra leve e fundo creme, e o celular inteiro no slide 6.
+- **Falas alinhadas com as notas do Canva** e deck exportado de novo (12 JPGs, PDF e PPTX).
 - **Vídeo do sensor centralizado** (`demo-iot-sensor-loop.mp4`), sem as bordas da janela do navegador.
 - **Guia para editar o deck** em `docs/guia/estande/COMO-EDITAR-O-DECK.md`: onde fica cada arquivo, as regras para o
   telão, como trocar uma print e o vídeo e o que atualizar no repositório depois.

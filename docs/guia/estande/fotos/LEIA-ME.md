@@ -9,8 +9,9 @@ transparente, no tamanho em que entra no slide (2x).
 | `slide02-equipe.webp` | 2. Equipe | [Trabalhador entre pilhas de jeans](https://www.pexels.com/photo/41108326/) |
 | `slide03-problema.webp` | 3. O problema | [Tingimento com corante índigo](https://www.pexels.com/photo/6850858/) |
 | `slide04-oportunidade.webp` | 4. Oportunidade e público-alvo | [Jeans empilhados](https://www.pexels.com/photo/6764128/) |
-| `slide05-solucao.webp` | 5. A solução | [Lavadora industrial](https://www.pexels.com/photo/8774512/) |
-| `slide06-demonstracao.webp` | 6. A demonstração | [Lavanderia industrial com lavadoras](https://www.pexels.com/photo/8774639/) |
+| `slide05-solucao-painel.webp` | 5. A solução | Painel liso azul-marinho com a curva do deck, para o Dashboard ter contraste |
+| `slide06-demonstracao-painel.webp` | 6. A demonstração | Painel liso azul-marinho com a curva e a faixa azul-água, para o celular ter contraste |
+| `slide09-viabilidade.webp` | 9. Viável e sustentável | [Lavadora industrial](https://www.pexels.com/photo/8774414/) |
 | `slide11-proximos.webp` | 11. Próximos passos | [Galpão de lavanderia industrial](https://www.pexels.com/photo/38362010/) |
 
 Não há fotos de lavanderias do Agreste com licença livre. Se a equipe tiver fotos próprias de uma lavanderia de

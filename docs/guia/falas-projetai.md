@@ -1,6 +1,6 @@
 # Falas da apresentação na feira ProjetAÍ
 
-O texto de cada slide, para ensaiar. São **7 min 35 s** de fala, seguidos das perguntas da banca. **Pedro** fala os
+O texto de cada slide, para ensaiar. São **7 min 40 s** de fala, seguidos das perguntas da banca. **Pedro** fala os
 slides 1 a 6, até a demonstração, e **Matheus Andrade** os slides 7 a 12. O roteiro, com o vídeo da demonstração e o
 plano para as perguntas, está em [`roteiro-apresentacao.md`](roteiro-apresentacao.md#apresentação-na-feira-projetaí).
 
@@ -15,9 +15,9 @@ plano para as perguntas, está em [`roteiro-apresentacao.md`](roteiro-apresentac
 | 4:15 | 7. O sistema por dentro | Matheus |
 | 4:50 | 8. Diferenciais e inovação | Matheus |
 | 5:30 | 9. Viabilidade e sustentabilidade | Matheus |
-| 6:10 | 10. Impactos esperados | Matheus |
-| 6:45 | 11. Próximos passos | Matheus |
-| 7:15 | 12. Encerramento | Matheus, com Pedro no "obrigado" |
+| 6:15 | 10. Impactos esperados | Matheus |
+| 6:50 | 11. Próximos passos | Matheus |
+| 7:20 | 12. Encerramento | Matheus, com Pedro no "obrigado" |
 
 ## Pedro
 
@@ -40,9 +40,10 @@ desperdício."
 
 **4. Oportunidade e público-alvo (40 s)**
 
-"Quem ganha com isso? O gestor, que paga a água; o operador, que lava os lotes; a fiscalização ambiental, como a
-CPRH; e as marcas, que cobram produção sustentável. Com medição e reúso, a nossa estimativa é uma economia de até
-40 mil reais por mês numa lavanderia média. E não existe hoje uma ferramenta simples e barata para isso no polo."
+"Quem ganha com isso? O gestor, que paga a água; o operador, que lava os lotes; o MPPE e a CPRH, que fiscalizam;
+e as marcas, que cobram produção sustentável. São dezenas de lavanderias em Toritama, Caruaru e Santa Cruz. Com
+medição e reúso, a nossa estimativa é uma economia de até 40 mil reais por mês numa lavanderia média. E não existe
+hoje uma ferramenta simples e barata para isso no polo."
 
 **5. Solução (45 s)**
 
@@ -65,15 +66,15 @@ apita, então o operador sabe na hora, na própria máquina.
 *(o celular)* E olhem o celular: esse foi o terceiro lote seguido acima da meta, então o sistema abriu um alerta e
 mandou o aviso no Telegram do gestor. Ninguém digitou nada.
 
-*(o site)* No sistema, o lote já está no histórico, registrado pelo sensor, e o alerta aparece para o gestor tratar.
 Do sensor ao celular do dono da lavanderia, em segundos. Agora o Matheus mostra o que o gestor vê no dia a dia."
 
 ## Matheus Andrade
 
 **7. O sistema por dentro (35 s)**
 
-"Aqui é o que o gestor vê no dia a dia. O Dashboard mostra o consumo do mês, a meta e os gráficos por processo e por
-dia. Ele trata os alertas, baixa o relatório em PDF ou Excel, vê o custo da água e do excesso em reais e registra o
+"Aqui é o que o gestor vê no dia a dia. O alerta que o sensor abriu aparece sozinho, com os três lotes e o desvio
+médio, e ele marca em análise e depois resolvido. Além disso, o Dashboard mostra o consumo do mês e os gráficos por
+processo e por dia, ele baixa o relatório em PDF ou Excel, vê o custo da água e do excesso em reais e registra o
 descarte dos efluentes. E funciona no celular, até sem internet."
 
 **8. Diferenciais e inovação (40 s)**
@@ -83,16 +84,18 @@ o Wi-Fi da fábrica cair, o sensor guarda as leituras e envia quando a conexão 
 sensor manda um sinal de vida a cada 15 segundos, então sabemos se ele parou. E o site registra lotes mesmo sem
 internet no celular do operador."
 
-**9. Viabilidade e sustentabilidade (40 s)**
+**9. Viabilidade e sustentabilidade (45 s)**
 
-"É viável porque custa quase nada: o sistema roda em serviços gratuitos ou num computador comum, com Docker. Testamos
-com 120 sensores ao mesmo tempo, sem nenhum erro. São 625 testes automáticos rodando a cada mudança, análise de
-qualidade no SonarQube e documentação nas normas ISO/IEC. Não é só um protótipo: é um sistema pronto para crescer."
+"É viável porque custa quase nada: o sistema roda em serviços gratuitos ou num computador comum, com Docker, e
+aguentou 120 sensores ao mesmo tempo sem nenhum erro. E ele se paga: uma lavanderia compra cerca de 56 mil reais de
+água por mês. Com meta por lote e alerta, o excesso aparece na hora e deixa de virar prejuízo. Pela nossa estimativa,
+são até 40 mil reais a menos por mês, cerca de 2.760 metros cúbicos que deixam de sair do poço e do rio. Em seis meses
+de piloto, 240 mil reais. E é confiável: 625 testes automáticos, SonarQube aprovado e documentação nas normas ISO/IEC."
 
 **10. Impactos esperados (35 s)**
 
-"O impacto é econômico e ambiental. A lavanderia economiza com reúso e enxerga em reais quanto perde com o excesso.
-Se o efluente sai fora da faixa de pH da CONAMA 430, o sistema avisa na hora. E todo registro fica guardado sem poder
+"O impacto é econômico e ambiental. A lavanderia economiza com reúso e enxerga em reais quanto perde com o excesso,
+como nesta tela do custo da água. Se o efluente sai fora da faixa de pH da CONAMA 430, o sistema avisa na hora. E todo registro fica guardado sem poder
 ser alterado, o que dá confiança para a fiscalização e para as marcas."
 
 **11. Próximos passos (30 s)**
