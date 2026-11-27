@@ -6,6 +6,16 @@ Todas as mudanças relevantes do projeto ficam registradas aqui. O formato segue
 
 ## [Não lançado]
 
+### Deck pronto para o telão
+
+- **Molduras novas** em `docs/guia/estande/molduras/`: janela de navegador azul-marinho para o Dashboard, o Alerta 3 e
+  o circuito do Wokwi, uma moldura vazada para o vídeo e um celular para o Telegram, em PNG 2x. As telas do site vêm
+  do sistema publicado, ampliadas e sem o menu lateral, com os mesmos números do Telegram (lotes 72, 73 e 74, +41,5%).
+  O script `gerar-molduras.mjs` refaz todas a partir das capturas em `fonte/`.
+- **Vídeo do sensor centralizado** (`demo-iot-sensor-loop.mp4`), sem as bordas da janela do navegador.
+- **Guia para editar o deck** em `docs/guia/estande/COMO-EDITAR-O-DECK.md`: onde fica cada arquivo, as regras para o
+  telão, como trocar uma print e o vídeo e o que atualizar no repositório depois.
+
 ### Demonstração do sensor gravada
 
 - **Vídeo e prints da demonstração** em `docs/guia/estande/demonstracao/`: o lote do sensor no Wokwi até o LED

@@ -11,3 +11,14 @@ arredondada.
 | `celular-telegram.png` | 6. A demonstração | A mensagem do Alerta 3 no grupo do Telegram |
 | `navegador-alerta.png` | 7. O sistema por dentro | O detalhe do Alerta 3, com os 3 lotes do sensor |
 | `navegador-wokwi.png` | 8. Diferenciais | O circuito do sensor no simulador Wokwi |
+
+## Refazer as molduras
+
+As capturas de origem ficam em [`fonte/`](fonte/): o Dashboard e o Alerta 3 do site publicado, ampliados e sem o menu
+lateral, e o circuito do Wokwi. Para refazer, troque a captura em `fonte/` e rode, na raiz do projeto:
+
+```bash
+node docs/guia/estande/molduras/gerar-molduras.mjs
+```
+
+O passo a passo para trocar uma print e subir no Canva está em [`../COMO-EDITAR-O-DECK.md`](../COMO-EDITAR-O-DECK.md).

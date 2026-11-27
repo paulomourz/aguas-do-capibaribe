@@ -17,7 +17,7 @@ Dados há um plano C, fora da apresentação: o plano B com o banco aberto ao pg
 
 **7 a 8 minutos** de fala, seguidos das perguntas da banca, no auditório. A fala dá **7 min 35 s**. **Pedro** fala os
 slides 1 a 6, até a demonstração, e **Matheus Andrade** os slides 7 a 12. O texto de cada slide está em
-[`falas-projetai.md`](falas-projetai.md); o deck, em [`estande-projetai.pdf`](estande-projetai.pdf).
+[`falas-projetai.md`](falas-projetai.md); o deck, em [`estande-projetai.pdf`](estande-projetai.pdf). Para mexer nos slides, siga [`estande/COMO-EDITAR-O-DECK.md`](estande/COMO-EDITAR-O-DECK.md).
 
 | Tempo | Slide | O que dizer ou mostrar | Quem fala |
 |---|---|---|---|
